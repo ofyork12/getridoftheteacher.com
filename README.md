@@ -1,0 +1,2 @@
+# GetRidOfTheTeacher.com
+ColorMyMath website

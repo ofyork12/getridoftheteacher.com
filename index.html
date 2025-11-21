@@ -5,86 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get Rid of the Teacher</title>
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #000;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 110px;
+    body{margin:0;height:100vh;background:#000;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:110px;}
+    .circle{
+      width:240px;height:240px;border-radius:50%;background:#111;border:12px solid #fff;
+      cursor:pointer;transition:all 0.5s ease;box-shadow:0 0 60px rgba(255,255,255,0.25);
     }
-    .circle {
-      width: 240px;
-      height: 240px;
-      border-radius: 50%;
-      background: #111;
-      border: 12px solid #fff;
-      cursor: pointer;
-      transition: all 0.5s ease;
-      box-shadow: 0 0 60px rgba(255,255,255,0.25);
-    }
-    .circle.red    { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
-    .circle.orange { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
-    .pair { display: flex; gap: -72px; }
+    .circle.red    {background:#ff0000; box-shadow:0 0 110px #ff0000;}
+    .circle.orange {background:#ff6200; box-shadow:0 0 110px #ff6200;}
+    .pair{display:flex;gap:-72px;}
   </style>
 </head>
 <body>
 
-  <!-- Top circle (#1) — perfect red/black toggle -->
+  <!-- Top single circle -->
   <div class="circle" id="one"></div>
 
-  <!-- Bottom two touching circles (#2) -->
+  <!-- Bottom two touching circles -->
   <div class="pair">
     <div class="circle" id="a"></div>
     <div class="circle" id="b"></div>
   </div>
 
 <script>
-  // Top circle — simple toggle
-  document.getElementById("one").addEventListener("click", e => {
-    e.target.classList.toggle("red");
-  });
+  // Top circle — simple red/black toggle
+  document.getElementById("one").onclick = () => this.classList.toggle("red");
 
   const a = document.getElementById("a");
   const b = document.getElementById("b");
 
-  function updateBottom() {
-    const aRed = a.classList.contains("red");
-    const aOrange = a.classList.contains("orange");
-    const bRed = b.classList.contains("red");
-    const bOrange = b.classList.contains("orange");
+  function update() {
+    const aOn = a.classList.contains("red");
+    const bOn = b.classList.contains("red");
 
-    const activeCount = (aRed || aOrange ? 1 : 0) + (bRed || bOrange ? 1 : 0);
+    // Remove orange from both first
+    a.classList.remove("orange");
+    b.classList.remove("orange");
 
-    // Clear all colors first
-    a.classList.remove("red", "orange");
-    b.classList.remove("red", "orange");
-
-    if (activeCount === 0) return;                    // both black
-    if (activeCount === 1) {
-      if (aRed || aOrange) a.classList.add("red");
-      if (bRed || bOrange) b.classList.add("red");
-    }
-    if (activeCount === 2) {
+    if (aOn && bOn) {
+      // Two active → both orange
       a.classList.add("orange");
       b.classList.add("orange");
     }
   }
 
-  // Click on A or B
-  a.addEventListener("click", () => {
-    a.classList.toggle("red");
-    a.classList.toggle("orange");
-    updateBottom();
-  });
+  a.onclick = () => {
+    a.classList.toggle("red");   // toggle this dot on/off
+    update();
+  };
 
-  b.addEventListener("click", () => {
-    b.classList.toggle("red");
-    b.classList.toggle("orange");
-    updateBottom();
-  });
+  b.onclick = () => {
+    b.classList.toggle("red");   // toggle this dot on/off
+    update();
+  };
 </script>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- These 3 lines KILL ALL CACHING forever -->
+  <!-- These lines kill all caching forever -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -14,14 +14,14 @@
       height: 100vh;
       background: #000;
       display: flex;
-      flex-direction: column;
+      flex-direction: column;   /* ← THIS WAS THE BUG ("center" is invalid) */
       justify-content: center;
       align-items: center;
-      gap: 100px;
+      gap: 80px;
     }
     .circle {
-      width: 240px;
-      height: 240px;
+      width: 220px;
+      height: 220px;
       border-radius: 50%;
       background: #111;
       border: 12px solid #fff;
@@ -32,87 +32,83 @@
     .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
     .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
-
-    .row { display: flex; gap: -72px; }
-    .triangle {
+    
+    /* Layout - perfect pyramid */
+    .pyramid {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: -72px;
+      gap: -60px;
+    }
+    .row1 { display: flex; justify-content: center; }
+    .row2 { display: flex; gap: -60px; justify-content: center; }
+    .row3 { 
+      display: flex; 
+      gap: -60px; 
+      justify-content: center; 
+      margin-top: 60px;
     }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 -->
-  <div class="circle" id="num1"></div>
+  <div class="pyramid">
 
-  <!-- NUMBER 2 -->
-  <div class="row">
-    <div class="circle" id="num2a"></div>
-    <div class="circle" id="num2b"></div>
-  </div>
-
-  <!-- NUMBER 3 – perfect triangle -->
-  <div class="triangle">
-    <div class="circle" id="num3-top"></div>
-    <div class="row">
-      <div class="circle" id="num3-left"></div>
-      <div class="circle" id="num3-right"></div>
+    <!-- NUMBER 1 -->
+    <div class="row1">
+      <div class="circle" data-group="1" id="g1-1"></div>
     </div>
+
+    <!-- NUMBER 2 -->
+    <div class="row2">
+      <div class="circle" data-group="2" id="g2-1"></div>
+      <div class="circle" data-group="2" id="g2-2"></div>
+    </div>
+
+    <!-- NUMBER 3 - perfect triangle -->
+    <div class="row3">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:-60px;">
+        <div class="circle" data-group="3" id="g3-top"></div>
+        <div style="display:flex;gap:-60px;">
+          <div class="circle" data-group="3" id="g3-left"></div>
+          <div class="circle" data-group="3" id="g3-right"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 <script>
-// NUMBER 1
-document.getElementById("num1").addEventListener("click", function() {
-  this.classList.toggle("red");
+// Universal system - works for any group size, completely independent
+const groups = {
+  1: document.querySelectorAll('[data-group="1"]'),
+  2: document.querySelectorAll('[data-group="2"]'),
+  3: document.querySelectorAll('[data-group="3"]')
+};
+
+Object.keys(groups).forEach(groupNum => {
+  const circles = groups[groupNum];
+  const max = parseInt(groupNum);
+
+  circles.forEach(circle => {
+    circle.dataset.active = "false";
+    circle.addEventListener("click", () => {
+      circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
+      updateGroup(circles, max);
+    });
+  });
+
+  function updateGroup(circles, max) {
+    const active = Array.from(circles).filter(c => c.dataset.active === "true");
+    const count = active.length;
+
+    circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
+
+    if (count === 1) active.forEach(c => c.classList.add("red"));
+    else if (count === 2) active.forEach(c => c.classList.add("orange"));
+    else if (count === 3 && max === 3) active.forEach(c => c.classList.add("yellow"));
+  }
 });
-
-// NUMBER 2
-const a = document.getElementById("num2a");
-const b = document.getElementById("num2b");
-
-function update2() {
-  a.classList.remove("orange");
-  b.classList.remove("orange");
-  if (a.classList.contains("red") && b.classList.contains("red")) {
-    a.classList.add("orange");
-    b.classList.add("orange");
-  }
-}
-
-a.addEventListener("click", () => { a.classList.toggle("red"); update2(); });
-b.addEventListener("click", () => { b.classList.toggle("red"); update2(); });
-
-// NUMBER 3
-const top = document.getElementById("num3-top");
-const left = document.getElementById("num3-left");
-const right = document.getElementById("num3-right");
-
-function update3() {
-  const count = (top.classList.contains("red") ? 1 : 0) +
-                (left.classList.contains("red") ? 1 : 0) +
-                (right.classList.contains("red") ? 1 : 0);
-
-  top.classList.remove("red", "orange", "yellow");
-  left.classList.remove("red", "orange", "yellow");
-  right.classList.remove("red", "orange", "yellow");
-
-  let color = "";
-  if (count === 1) color = "red";
-  else if (count === 2) color = "orange";
-  else if (count === 3) color = "yellow";
-
-  if (color) {
-    if (top.classList.contains("red")) top.classList.add(color);
-    if (left.classList.contains("red")) left.classList.add(color);
-    if (right.classList.contains("red")) right.classList.add(color);
-  }
-}
-
-top.addEventListener("click", () => { top.classList.toggle("red"); update3(); });
-left.addEventListener("click", () => { left.classList.toggle("red"); update3(); });
-right.addEventListener("click", () => { right.classList.toggle("red"); update3(); });
 </script>
 
 </body>

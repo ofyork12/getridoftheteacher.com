@@ -53,7 +53,8 @@
     .circle.red    { background: #ff0000; }
     .circle.orange { background: #ff6200; }
     .circle.yellow { background: #ffe600; }
-    .circle.green  { background: #00c04b; }
+    .circle.green  { background: #007a1c; }
+    .circle.blue   { background: #005bff; }
 
     .pair {
       display: flex;
@@ -110,6 +111,35 @@
       top: var(--circle-total);
       left: var(--circle-total);
     }
+
+    .stack-five {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+    }
+    .stack-five .circle {
+      position: absolute;
+    }
+    .stack-five .row2-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: var(--triangle-rise);
+    }
+    .stack-five .row2-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: var(--triangle-rise);
+    }
+    .stack-five .row1-left {
+      left: 0;
+      bottom: 0;
+    }
+    .stack-five .row1-center {
+      left: var(--circle-total);
+      bottom: 0;
+    }
+    .stack-five .row1-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -143,6 +173,17 @@
       <div class="circle top-right"></div>
       <div class="circle bottom-left"></div>
       <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 5</h2>
+    <div class="stack-five" id="five">
+      <div class="circle row2-left"></div>
+      <div class="circle row2-right"></div>
+      <div class="circle row1-left"></div>
+      <div class="circle row1-center"></div>
+      <div class="circle row1-right"></div>
     </div>
   </section>
 
@@ -211,6 +252,32 @@ quad.forEach(circle => {
   circle.addEventListener("click", () => {
     circle.classList.toggle("red");
     updateQuad();
+  });
+});
+
+// NUMBER 5 – 2-on-top-of-3 pyramid with blue finish
+const five = Array.from(document.querySelectorAll("#five .circle"));
+
+function updateFive() {
+  five.forEach(circle => circle.classList.remove("orange", "yellow", "green", "blue"));
+
+  const active = five.filter(circle => circle.classList.contains("red"));
+
+  if (active.length === 5) {
+    active.forEach(circle => circle.classList.add("blue"));
+  } else if (active.length === 4) {
+    active.forEach(circle => circle.classList.add("green"));
+  } else if (active.length === 3) {
+    active.forEach(circle => circle.classList.add("yellow"));
+  } else if (active.length === 2) {
+    active.forEach(circle => circle.classList.add("orange"));
+  }
+}
+
+five.forEach(circle => {
+  circle.addEventListener("click", () => {
+    circle.classList.toggle("red");
+    updateFive();
   });
 });
 </script>

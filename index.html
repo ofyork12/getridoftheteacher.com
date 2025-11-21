@@ -14,49 +14,37 @@
     .circle.orange {background:#ff6200; box-shadow:0 0 110px #ff6200;}
     .pair{display:flex;gap:-72px;}
   </style>
-</head>
+</body>
 <body>
 
-  <!-- Top single circle -->
-  <div class="circle" id="one"></div>
+  <!-- Top circle -->
+  <div class="circle" id="c1"></div>
 
   <!-- Bottom two touching circles -->
   <div class="pair">
-    <div class="circle" id="a"></div>
-    <div class="circle" id="b"></div>
+    <div class="circle" id="c2"></div>
+    <div class="circle" id="c3"></div>
   </div>
 
 <script>
-  // Top circle — simple red/black toggle
-  document.getElementById("one").onclick = () => this.classList.toggle("red");
+  const circles = document.querySelectorAll(".circle");
 
-  const a = document.getElementById("a");
-  const b = document.getElementById("b");
+  circles.forEach(circle => {
+    circle.onclick = () => {
+      circle.classList.toggle("red");   // every circle toggles red/black like the top one
 
-  function update() {
-    const aOn = a.classList.contains("red");
-    const bOn = b.classList.contains("red");
+      // Check how many are red
+      const redCount = document.querySelectorAll(".circle.red").length;
 
-    // Remove orange from both first
-    a.classList.remove("orange");
-    b.classList.remove("orange");
+      // Remove orange from all first
+      circles.forEach(c => c.classList.remove("orange"));
 
-    if (aOn && bOn) {
-      // Two active → both orange
-      a.classList.add("orange");
-      b.classList.add("orange");
-    }
-  }
-
-  a.onclick = () => {
-    a.classList.toggle("red");   // toggle this dot on/off
-    update();
-  };
-
-  b.onclick = () => {
-    b.classList.toggle("red");   // toggle this dot on/off
-    update();
-  };
+      // If exactly two are red → make both orange
+      if (redCount === 2) {
+        document.querySelectorAll(".circle.red").forEach(c => c.classList.add("orange"));
+      }
+    };
+  });
 </script>
 
 </body>

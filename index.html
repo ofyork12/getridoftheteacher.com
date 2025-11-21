@@ -37,7 +37,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: -112px;   /* <-- Top dot now touches both bottom ones perfectly – no floating */
+      gap: -116px;   /* <-- PERFECT touching – top dot sits right on the two bottom ones */
     }
     .version {
       position: fixed;
@@ -45,17 +45,17 @@
       left: 50%;
       transform: translateX(-50%);
       color: #0f0;
-      font-size: 120px;
+      font-size: 140px;
       font-weight: bold;
-      text-shadow: 0 0 40px #0f0;
+      text-shadow: 0 0 50px #0f0;
       z-index: 10;
     }
   </style>
 </head>
 <body>
 
-  <!-- BIG VERSION NUMBER – YOU WILL SEE THIS HUGE 7 IMMEDIATELY -->
-  <div class="version">7</div>
+  <!-- BIG VERSION NUMBER – YOU WILL SEE THIS HUGE 8 IMMEDIATELY -->
+  <div class="version">8</div>
 
   <!-- NUMBER 1 – single top circle -->
   <div class="circle" id="num1"></div>

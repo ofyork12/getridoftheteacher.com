@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- These lines kill ALL caching forever – you will always see the latest version -->
+  <!-- These kill ALL caching forever – latest version every refresh -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -20,11 +20,11 @@
       gap: 100px;               /* space between top circle and the pair */
     }
     .circle {
-      width: 220px;             /* smaller circles – perfect for kids */
+      width: 220px;             /* smaller, perfect for kids */
       height: 220px;
       border-radius: 50%;
       background: #111;
-      border: 14px solid #fff;  /* thick white outline */
+      border: 14px solid #fff;
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 70px rgba(255,255,255,0.3);
@@ -40,22 +40,22 @@
 </head>
 <body>
 
-  <!-- NUMBER 1 – single top circle (red/black toggle) -->
+  <!-- NUMBER 1 – your original single circle (unchanged) -->
   <div class="circle" id="one"></div>
 
-  <!-- NUMBER 2 – two touching circles below -->
+  <!-- NUMBER 2 – two smaller touching circles below -->
   <div class="pair">
     <div class="circle" id="twoA"></div>
     <div class="circle" id="twoB"></div>
   </div>
 
 <script>
-// NUMBER 1 – simple red/black toggle
+// NUMBER 1 – perfect red/black toggle
 document.getElementById("one").addEventListener("click", function() {
   this.classList.toggle("red");
 });
 
-// NUMBER 2 – red/orange logic
+// NUMBER 2 – perfect red/orange logic
 const a = document.getElementById("twoA");
 const b = document.getElementById("twoB");
 
@@ -68,15 +68,8 @@ function updatePair() {
   }
 }
 
-a.addEventListener("click", () => {
-  a.classList.toggle("red");
-  updatePair();
-});
-
-b.addEventListener("click", () => {
-  b.classList.toggle("red");
-  updatePair();
-});
+a.addEventListener("click", () => { a.classList.toggle("red"); updatePair(); });
+b.addEventListener("click", () => { b.classList.toggle("red"); updatePair(); });
 </script>
 
 </body>

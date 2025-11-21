@@ -10,11 +10,12 @@
   <title>Get Rid of the Teacher</title>
   <style>
     :root {
-      --circle-size: 220px;            /* inside color */
-      --circle-border: 14px;
+      --circle-size: clamp(90px, 18vw, 170px);   /* inside color */
+      --circle-border: clamp(8px, 1.4vw, 12px);
       --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
       --circle-radius: calc(var(--circle-total) / 2);
       --triangle-rise: calc(var(--circle-total) * 0.8660254);
+      --section-gap: clamp(50px, 10vw, 90px);
     }
     body {
       margin: 0;
@@ -25,36 +26,56 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 120px;
-      padding: 60px 20px 160px;
+      gap: var(--section-gap);
+      padding: 40px 12px 120px;
       overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
     }
     .set {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 30px;
+      gap: 12px;
+      width: 100%;
+      text-align: center;
+    }
+    .set > :last-child {
+      margin: 0 auto;
     }
     .set h2 {
       margin: 0;
-      font-size: 32px;
+      font-size: 28px;
+      font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
     .circle {
-      width: var(--circle-size);
-      height: var(--circle-size);
+      width: var(--circle-total);
+      height: var(--circle-total);
       border-radius: 50%;
       background: #222;
       border: var(--circle-border) solid #fff;
       cursor: pointer;
       transition: background 0.25s ease;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
     }
-    .circle.red    { background: #ff0000; }
-    .circle.orange { background: #ff6200; }
-    .circle.yellow { background: #ffe600; }
-    .circle.green  { background: #007a1c; }
-    .circle.blue   { background: #005bff; }
+    .circle:focus-visible,
+    .circle:focus,
+    .circle:active {
+      outline: none;
+    }
+    .circle.red        { background: #ff0000; }
+    .circle.orange     { background: #ff6200; }
+    .circle.yellow     { background: #ffe600; }
+    .circle.green      { background: #00a12c; }
+    .circle.blue       { background: #0030ff; }
+    .circle.purple     { background: #8b3dff; }
+    .circle.brown      { background: #7a3b00; }
+    .circle.pink       { background: #ff3fa6; }
+    .circle.sky        { background: #38c7ff; }
+    .circle.red-final  { background: #ff0000; }
 
     .pair {
       display: flex;
@@ -115,7 +136,7 @@
     .stack-five {
       position: relative;
       width: calc(var(--circle-total) * 3);
-      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+      height: calc(var(--triangle-rise) + var(--circle-total));
     }
     .stack-five .circle {
       position: absolute;
@@ -140,6 +161,121 @@
       left: calc(var(--circle-total) * 2);
       bottom: 0;
     }
+
+    .stack-six {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+    }
+    .stack-six .circle { position: absolute; }
+    .stack-six .row1-left   { left: 0; bottom: 0; }
+    .stack-six .row1-center { left: var(--circle-total); bottom: 0; }
+    .stack-six .row1-right  { left: calc(var(--circle-total) * 2); bottom: 0; }
+    .stack-six .row2-left   { left: calc(var(--circle-total) / 2); bottom: var(--triangle-rise); }
+    .stack-six .row2-right  { left: calc(var(--circle-total) * 1.5); bottom: var(--triangle-rise); }
+    .stack-six .row3 {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: calc(var(--triangle-rise) * 2);
+      transform: translateX(-50%);
+    }
+
+    .stack-seven {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+    }
+    .stack-seven .circle { position: absolute; }
+    .stack-seven .top-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-seven .top-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-seven .mid-left {
+      left: 0;
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .mid-center {
+      left: var(--circle-total);
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .mid-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .bottom-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: 0;
+    }
+    .stack-seven .bottom-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: 0;
+    }
+
+    .stack-eight {
+      display: grid;
+      grid-template-columns: repeat(3, var(--circle-total));
+      grid-auto-rows: var(--circle-total);
+      gap: 0;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--circle-total) * 3);
+      justify-items: center;
+      align-items: center;
+    }
+    .stack-eight .circle,
+    .stack-eight .gap {
+      width: var(--circle-total);
+      height: var(--circle-total);
+    }
+    .stack-eight .circle {
+      position: static;
+    }
+    .stack-eight .gap {
+      pointer-events: none;
+    }
+
+    .stack-nine {
+      display: grid;
+      grid-template-columns: repeat(3, var(--circle-total));
+      grid-auto-rows: var(--circle-total);
+      gap: 0;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--circle-total) * 3);
+      justify-items: center;
+      align-items: center;
+    }
+    .stack-nine .circle {
+      position: static;
+    }
+
+    .stack-ten {
+      position: relative;
+      width: calc(var(--circle-total) * 4);
+      height: calc(var(--triangle-rise) * 3 + var(--circle-total));
+    }
+    .stack-ten .circle { position: absolute; }
+    .stack-ten .row1-1 { left: 0; bottom: 0; }
+    .stack-ten .row1-2 { left: var(--circle-total); bottom: 0; }
+    .stack-ten .row1-3 { left: calc(var(--circle-total) * 2); bottom: 0; }
+    .stack-ten .row1-4 { left: calc(var(--circle-total) * 3); bottom: 0; }
+    .stack-ten .row2-1 { left: calc(var(--circle-total) / 2); bottom: var(--triangle-rise); }
+    .stack-ten .row2-2 { left: calc(var(--circle-total) * 1.5); bottom: var(--triangle-rise); }
+    .stack-ten .row2-3 { left: calc(var(--circle-total) * 2.5); bottom: var(--triangle-rise); }
+    .stack-ten .row3-left {
+      left: calc(var(--circle-total));
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-ten .row3-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-ten .row4 {
+      left: calc(var(--circle-total) * 2);
+      bottom: calc(var(--triangle-rise) * 3);
+      transform: translateX(-50%);
+    }
   </style>
 </head>
 <body>
@@ -151,9 +287,9 @@
 
   <section class="set">
     <h2>Number 2</h2>
-    <div class="pair">
-      <div class="circle" id="twoA"></div>
-      <div class="circle" id="twoB"></div>
+    <div class="pair" id="two">
+      <div class="circle"></div>
+      <div class="circle"></div>
     </div>
   </section>
 
@@ -187,99 +323,160 @@
     </div>
   </section>
 
+  <section class="set">
+    <h2>Number 6</h2>
+    <div class="stack-six" id="six">
+      <div class="circle row3"></div>
+      <div class="circle row2-left"></div>
+      <div class="circle row2-right"></div>
+      <div class="circle row1-left"></div>
+      <div class="circle row1-center"></div>
+      <div class="circle row1-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 7</h2>
+    <div class="stack-seven" id="seven">
+      <div class="circle top-left"></div>
+      <div class="circle top-right"></div>
+      <div class="circle mid-left"></div>
+      <div class="circle mid-center"></div>
+      <div class="circle mid-right"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 8</h2>
+    <div class="stack-eight" id="eight">
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="gap"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 9</h2>
+    <div class="stack-nine" id="nine">
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 10</h2>
+    <div class="stack-ten" id="ten">
+      <div class="circle row4"></div>
+      <div class="circle row3-left"></div>
+      <div class="circle row3-right"></div>
+      <div class="circle row2-1"></div>
+      <div class="circle row2-2"></div>
+      <div class="circle row2-3"></div>
+      <div class="circle row1-1"></div>
+      <div class="circle row1-2"></div>
+      <div class="circle row1-3"></div>
+      <div class="circle row1-4"></div>
+    </div>
+  </section>
+
 <script>
-// NUMBER 1 – perfect red/black toggle
-document.getElementById("one").addEventListener("click", function() {
+const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];
+const NUMBER_WORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+let preferredVoice = null;
+
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+
+  const targetNames = [
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
+  ];
+
+  for (const name of targetNames) {
+    const voice = voices.find(v => v.name === name);
+    if (voice) return voice;
+  }
+  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
+}
+
+function initVoices() {
+  preferredVoice = pickVoice();
+}
+
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = initVoices;
+  initVoices();
+}
+
+function speakNumber(count) {
+  if (count < 0 || count >= NUMBER_WORDS.length) return;
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(NUMBER_WORDS[count]);
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  if (preferredVoice) utterance.voice = preferredVoice;
+  window.speechSynthesis.speak(utterance);
+}
+
+function setupGroup(selector, palette) {
+  const circles = Array.from(document.querySelectorAll(selector));
+
+  function refreshColors() {
+    circles.forEach(circle => circle.classList.remove(...COLOR_CLASSES));
+    const active = circles.filter(circle => circle.classList.contains("red"));
+    const color = palette[active.length];
+
+    if (color) {
+      active.forEach(circle => circle.classList.add(color));
+    }
+    return active.length;
+  }
+
+  circles.forEach(circle => {
+    circle.addEventListener("click", () => {
+      circle.classList.toggle("red");
+      const count = refreshColors();
+      speakNumber(count);
+    });
+  });
+}
+
+// NUMBER 1 – single circle with voice feedback
+const single = document.getElementById("one");
+single.addEventListener("click", function() {
   this.classList.toggle("red");
+  speakNumber(this.classList.contains("red") ? 1 : 0);
 });
 
-// NUMBER 2 – perfect red/orange logic
-const a = document.getElementById("twoA");
-const b = document.getElementById("twoB");
-
-function updatePair() {
-  a.classList.remove("orange");
-  b.classList.remove("orange");
-  if (a.classList.contains("red") && b.classList.contains("red")) {
-    a.classList.add("orange");
-    b.classList.add("orange");
-  }
-}
-
-a.addEventListener("click", () => { a.classList.toggle("red"); updatePair(); });
-b.addEventListener("click", () => { b.classList.toggle("red"); updatePair(); });
-
-// NUMBER 3 – two-on-bottom, one-on-top triangle with yellow finish
-const trio = Array.from(document.querySelectorAll("#three .circle"));
-
-function updateTrio() {
-  trio.forEach(circle => circle.classList.remove("orange", "yellow"));
-
-  const active = trio.filter(circle => circle.classList.contains("red"));
-
-  if (active.length === 3) {
-    active.forEach(circle => circle.classList.add("yellow"));
-  } else if (active.length === 2) {
-    active.forEach(circle => circle.classList.add("orange"));
-  }
-}
-
-trio.forEach(circle => {
-  circle.addEventListener("click", () => {
-    circle.classList.toggle("red");
-    updateTrio();
-  });
-});
-
-// NUMBER 4 – two-by-two square with final green highlight
-const quad = Array.from(document.querySelectorAll("#four .circle"));
-
-function updateQuad() {
-  quad.forEach(circle => circle.classList.remove("orange", "yellow", "green"));
-
-  const active = quad.filter(circle => circle.classList.contains("red"));
-
-  if (active.length === 4) {
-    active.forEach(circle => circle.classList.add("green"));
-  } else if (active.length === 3) {
-    active.forEach(circle => circle.classList.add("yellow"));
-  } else if (active.length === 2) {
-    active.forEach(circle => circle.classList.add("orange"));
-  }
-}
-
-quad.forEach(circle => {
-  circle.addEventListener("click", () => {
-    circle.classList.toggle("red");
-    updateQuad();
-  });
-});
-
-// NUMBER 5 – 2-on-top-of-3 pyramid with blue finish
-const five = Array.from(document.querySelectorAll("#five .circle"));
-
-function updateFive() {
-  five.forEach(circle => circle.classList.remove("orange", "yellow", "green", "blue"));
-
-  const active = five.filter(circle => circle.classList.contains("red"));
-
-  if (active.length === 5) {
-    active.forEach(circle => circle.classList.add("blue"));
-  } else if (active.length === 4) {
-    active.forEach(circle => circle.classList.add("green"));
-  } else if (active.length === 3) {
-    active.forEach(circle => circle.classList.add("yellow"));
-  } else if (active.length === 2) {
-    active.forEach(circle => circle.classList.add("orange"));
-  }
-}
-
-five.forEach(circle => {
-  circle.addEventListener("click", () => {
-    circle.classList.toggle("red");
-    updateFive();
-  });
-});
+setupGroup("#two .circle",   {2: "orange"});
+setupGroup("#three .circle", {2: "orange", 3: "yellow"});
+setupGroup("#four .circle",  {2: "orange", 3: "yellow", 4: "green"});
+setupGroup("#five .circle",  {2: "orange", 3: "yellow", 4: "green", 5: "blue"});
+setupGroup("#six .circle",   {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple"});
+setupGroup("#seven .circle", {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown"});
+setupGroup("#eight .circle", {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink"});
+setupGroup("#nine .circle",  {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink", 9: "sky"});
+setupGroup("#ten .circle",   {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink", 9: "sky", 10: "red-final"});
 </script>
 
 </body>

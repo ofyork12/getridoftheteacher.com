@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Get Rid of the Teacher</title>
+  <title>Dot Groups</title>
   <style>
     body {
       margin: 0;
@@ -13,49 +13,107 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 120px; /* space between number 1 and number 2 */
+      gap: 120px;
     }
     .circle {
       width: 240px;
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 12px solid #fff; /* white outline always */
+      border: 12px solid #fff;
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
-    .circle.red {
-      background: #ff0000;
-      box-shadow: 0 0 110px #ff0000;
-    }
-    .circle.orange {
-      background: #ff6200;
-      box-shadow: 0 0 110px #ff6200;
-    }
-    .pair {
+    .red { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
+    .orange { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
+    .yellow { background: #ffee00; box-shadow: 0 0 110px #ffee00; }
+
+    .pair, .triple {
       display: flex;
-      gap: -72px; /* makes the two bottom circles touch perfectly */
+      gap: -72px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Number 1: independent top circle -->
+  <!-- One dot -->
   <div class="circle" id="num1"></div>
 
-  <!-- Number 2: bottom two touching circles -->
+  <!-- Two dots -->
   <div class="pair">
     <div class="circle" id="num2a"></div>
     <div class="circle" id="num2b"></div>
   </div>
 
+  <!-- Three dots -->
+  <div class="triple">
+    <div class="circle" id="t1"></div>
+    <div class="circle" id="t2"></div>
+    <div class="circle" id="t3"></div>
+  </div>
+
   <script>
-    // Number 1: simple independent toggle
+    // --- ONE DOT ---
     const num1 = document.getElementById('num1');
     num1.addEventListener('click', () => {
       num1.classList.toggle('red');
     });
 
-    // Number 2: bottom pair, independent from top
-    const num2a = document.getElementBy
+    // --- TWO DOTS ---
+    const num2a = document.getElementById('num2a');
+    const num2b = document.getElementById('num2b');
+
+    function updateNumber2() {
+      num2a.classList.remove('orange');
+      num2b.classList.remove('orange');
+      if (num2a.classList.contains('red') && num2b.classList.contains('red')) {
+        num2a.classList.add('orange');
+        num2b.classList.add('orange');
+      }
+    }
+
+    num2a.addEventListener('click', () => {
+      num2a.classList.toggle('red');
+      updateNumber2();
+    });
+
+    num2b.addEventListener('click', () => {
+      num2b.classList.toggle('red');
+      updateNumber2();
+    });
+
+    // --- THREE DOTS (your new rules) ---
+    const triple = [
+      document.getElementById('t1'),
+      document.getElementById('t2'),
+      document.getElementById('t3')
+    ];
+
+    function clearTriple() {
+      triple.forEach(c => c.classList.remove('red','orange','yellow'));
+    }
+
+    function updateTriple() {
+      const active = triple.filter(c => c.classList.contains('active'));
+      clearTriple();
+
+      if (active.length === 1) {
+        active[0].classList.add('red');
+      } else if (active.length === 2) {
+        active.forEach(c => c.classList.add('orange'));
+      } else if (active.length === 3) {
+        triple.forEach(c => c.classList.add('yellow'));
+      }
+    }
+
+    triple.forEach(circle => {
+      circle.addEventListener('click', () => {
+        circle.classList.toggle('active');
+        updateTriple();
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -14,13 +14,13 @@
     .circle.orange {background:#ff6200; box-shadow:0 0 110px #ff6200;}
     .pair{display:flex;gap:-72px;}
   </style>
-</body>
+</head>
 <body>
 
-  <!-- Top circle -->
+  <!-- Top circle (number 1) -->
   <div class="circle" id="c1"></div>
 
-  <!-- Bottom two touching circles -->
+  <!-- Bottom two touching circles (number 2) -->
   <div class="pair">
     <div class="circle" id="c2"></div>
     <div class="circle" id="c3"></div>
@@ -29,21 +29,23 @@
 <script>
   const circles = document.querySelectorAll(".circle");
 
+  function updateColors() {
+    const redCount = document.querySelectorAll(".circle.red").length;
+
+    // First remove orange from everyone
+    circles.forEach(c => c.classList.remove("orange"));
+
+    // If exactly two are red → make them orange
+    if (redCount === 2) {
+      document.querySelectorAll(".circle.red").forEach(c => c.classList.add("orange"));
+    }
+  }
+
   circles.forEach(circle => {
-    circle.onclick = () => {
-      circle.classList.toggle("red");   // every circle toggles red/black like the top one
-
-      // Check how many are red
-      const redCount = document.querySelectorAll(".circle.red").length;
-
-      // Remove orange from all first
-      circles.forEach(c => c.classList.remove("orange"));
-
-      // If exactly two are red → make both orange
-      if (redCount === 2) {
-        document.querySelectorAll(".circle.red").forEach(c => c.classList.add("orange"));
-      }
-    };
+    circle.addEventListener("click", () => {
+      circle.classList.toggle("red");   // every circle toggles red/black
+      updateColors();
+    });
   });
 </script>
 

@@ -67,4 +67,22 @@
       num2b.classList.remove('orange');
 
       // If both are red, make both orange
-      if (num2
+      if (num2a.classList.contains('red') && num2b.classList.contains('red')) {
+        num2a.classList.add('orange');
+        num2b.classList.add('orange');
+      }
+    }
+
+    num2a.addEventListener('click', () => {
+      num2a.classList.toggle('red');
+      updateNumber2();
+    });
+
+    num2b.addEventListener('click', () => {
+      num2b.classList.toggle('red');
+      updateNumber2();
+    });
+  </script>
+
+</body>
+</html>

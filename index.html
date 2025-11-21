@@ -13,14 +13,14 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 80px; /* perfect spacing between rows */
+      gap: 100px;
     }
     .circle {
       width: 240px;
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 12px solid #fff;
+      border: 12px solid #fff solid;
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
@@ -29,5 +29,39 @@
     .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
 
-    /* Makes circles touch perfectly */
-    .row2 { display: flex; gap:
+    .row { display: flex; gap: -72px; }
+    .triangle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: -72px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NUMBER 1 - single dot at the very top (red ↔ black forever) -->
+  <div class="circle" id="num1"></div>
+
+  <!-- NUMBER 2 - two touching dots -->
+  <div class="row">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
+  </div>
+
+  <!-- NUMBER 3 - perfect triangle: one on top, two on bottom, all touching -->
+  <div class="triangle">
+    <div class="circle" id="num3-top"></div>
+    <div class="row">
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
+    </div>
+  </div>
+
+<script>
+// NUMBER 1 - perfect simple toggle
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
+// NUMBER 2 - perfect as

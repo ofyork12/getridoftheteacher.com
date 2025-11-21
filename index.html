@@ -13,7 +13,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 100px;
+      gap: 80px; /* perfect spacing between rows */
     }
     .circle {
       width: 240px;
@@ -29,20 +29,5 @@
     .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
 
-    .row { display: flex; gap: -72px; justify-content: center; }
-    .triangle { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      gap: -72px; 
-    }
-  </style>
-</head>
-<body>
-
-  <!-- NUMBER 1 (the beautiful one you already love) -->
-  <div class="circle" id="num1"></div>
-
-  <!-- NUMBER 2 (the beautiful two dots you already love) -->
-  <div class="row">
-    <div class="circle
+    /* Makes circles touch perfectly */
+    .row2 { display: flex; gap:

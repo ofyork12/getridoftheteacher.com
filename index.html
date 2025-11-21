@@ -28,99 +28,77 @@
     .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
     .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
-
-    .row { display: flex; gap: -72px; justify-content: center; }
-    .triangle { 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      gap: -72px; 
-    }
+    .pair { display: flex; gap: -72px; }
+    .triple { display: flex; gap: -72px; }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 (the beautiful one you already love) -->
+  <!-- NUMBER 1 – single circle, red/black only -->
   <div class="circle" id="num1"></div>
 
-  <!-- NUMBER 2 (the beautiful two dots you already love) -->
-  <div class="row">
+  <!-- NUMBER 2 – two touching circles -->
+  <div class="pair">
     <div class="circle" id="num2a"></div>
     <div class="circle" id="num2b"></div>
   </div>
 
-  <!-- NUMBER 3 – perfect triangle (top dot touching both bottom ones) -->
-  <div class="triangle">
-    <div class="circle" id="num3-top"></div>
-    <div class="row">
-      <div class="circle" id="num3-left"></div>
-      <div class="circle" id="num3-right"></div>
-    </div>
+  <!-- NUMBER 3 – three touching circles -->
+  <div class="triple">
+    <div class="circle" id="num3a"></div>
+    <div class="circle" id="num3b"></div>
+    <div class="circle" id="num3c"></div>
   </div>
 
 <script>
-// NUMBER 1 – exactly the beautiful simple toggle you love
-document.getElementById("num1").addEventListener("click", function() {
-  this.classList.toggle("red");
-});
+// Helper function to handle any group
+function createGroup(circles, maxCount) {
+  circles.forEach(circle => {
+    circle.dataset.active = "false";
+    circle.addEventListener("click", () => {
+      circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
+      updateGroup(circles, maxCount);
+    });
+  });
 
-// NUMBER 2 – exactly the beautiful version you already said was perfect
-const a = document.getElementById("num2a");
-const b = document.getElementById("num2b");
+  function updateGroup(circles, maxCount) {
+    // Count active
+    const activeCircles = circles.filter(c => c.dataset.active === "true");
+    const count = activeCircles.length;
 
-function update2() {
-  a.classList.remove("orange");
-  b.classList.remove("orange");
-  if (a.classList.contains("red") && b.classList.contains("red")) {
-    a.classList.add("orange");
-    b.classList.add("orange");
+    // Remove all color classes from the group
+    circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
+
+    // Apply the correct color to active circles
+    let color = "";
+    if (count === 1) color = "red";
+    else if (count === 2) color = "orange";
+    else if (count === 3 && maxCount === 3) color = "yellow";
+
+    activeCircles.forEach(c => {
+      if (color) c.classList.add(color);
+    });
   }
+
+  return updateGroup;
 }
 
-a.addEventListener("click", () => {
-  a.classList.toggle("red");
-  update2();
-});
+// Group 1 (max 1 → only red possible)
+createGroup([document.getElementById("num1")], 1);
 
-b.addEventListener("click", () => {
-  b.classList.toggle("red");
-  update2();
-});
+// Group 2 (max 2 → red or orange)
+createGroup([
+  document.getElementById("num2a"),
+  document.getElementById("num2b")
+], 2);
 
-// NUMBER 3 – new triangle, exact same pattern but with yellow for 3
-const t = document.getElementById("num3-top");
-const l = document.getElementById("num3-left");
-const r = document.getElementById("num3-right");
+// Group 3 (max 3 → red, orange, or yellow)
+createGroup([
+  document.getElementById("num3a"),
+  document.getElementById("num3b"),
+  document.getElementById("num3c")
+], 3);
 
-function update3() {
-  // count active
-  const active = [
-    t.classList.contains("red"),
-    l.classList.contains("red"),
-    r.classList.contains("red")
-  ].filter(Boolean).length;
-
-  // remove all colors
-  t.classList.remove("red", "orange", "yellow");
-  l.classList.remove("red", "orange", "yellow");
-  r.classList.remove("red", "orange", "yellow");
-
-  // apply correct color to the ones that are active
-  let color = "";
-  if (active === 1) color = "red";
-  else if (active === 2) color = "orange";
-  else if (active === 3) color = "yellow";
-
-  if (color) {
-    if (t.classList.contains("red")) t.classList.add(color);
-    if (l.classList.contains("red")) l.classList.add(color);
-    if (r.classList.contains("red")) r.classList.add(color);
-  }
-}
-
-t.addEventListener("click", () => { t.classList.toggle("red"); update3(); });
-l.addEventListener("click", () => { l.classList.toggle("red"); update3(); });
-r.addEventListener("click", () => { r.classList.toggle("red"); update3(); });
 </script>
 
 </body>

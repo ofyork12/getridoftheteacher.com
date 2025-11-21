@@ -64,4 +64,52 @@ document.getElementById("num1").addEventListener("click", function() {
   this.classList.toggle("red");
 });
 
-// NUMBER 2 - perfect as
+// NUMBER 2 - perfect as you love it
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
+
+function update2() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+
+a.addEventListener("click", () => { a.classList.toggle("red"); update2(); });
+b.addEventListener("click", () => { b.classList.toggle("red"); update2(); });
+
+// NUMBER 3 - perfect triangle logic (red/orange/yellow)
+const top = document.getElementById("num3-top");
+const left = document.getElementById("num3-left");
+const right = document.getElementById("num3-right");
+
+function update3() {
+  const count = (top.classList.contains("red") ? 1 : 0) +
+                (left.classList.contains("red") ? 1 : 0) +
+                (right.classList.contains("red") ? 1 : 0);
+
+  top.classList.remove("red", "orange", "yellow");
+  left.classList.remove("red", "orange", "yellow");
+  right.classList.remove("red", "orange", "yellow");
+
+  let color = "";
+  if (count === 1) color = "red";
+  else if (count === 2) color = "orange";
+  else if (count === 3) color = "yellow";
+
+  if (color) {
+    if (top.classList.contains("red")) top.classList.add(color);
+    if (left.classList.contains("red")) left.classList.add(color);
+    if (right.classList.contains("red")) right.classList.add(color);
+  }
+}
+
+top.addEventListener("click", () => { top.classList.toggle("red"); update3(); });
+left.addEventListener("click", () => { left.classList.toggle("red"); update3(); });
+right.addEventListener("click", () => { right.classList.toggle("red"); update3(); });
+</script>
+
+</body>
+</html>

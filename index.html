@@ -13,25 +13,28 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 120px; /* space between number 1 and number 2 */
+      gap: 120px;
     }
     .circle {
       width: 240px;
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 12px solid #fff; /* white outline always */
+      border: 12px solid #fff;
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
-    .circle.red {
-      background: #ff0000;
-      box-shadow: 0 0 110px #ff0000;
+    .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
+    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
+    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
+
+    .pair { display: flex; gap: -72px; }
+    .triangle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: -72px;
     }
-    .circle.orange {
-      background: #ff6200;
-      box-shadow: 0 0 110px #ff6200;
-    }
-    .pair {
-      display:
+  </style>
+</head

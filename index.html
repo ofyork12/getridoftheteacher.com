@@ -54,4 +54,77 @@
 </head>
 <body>
 
-  <!-- BIG VERSION NUMBER –
+  <!-- BIG VERSION NUMBER – YOU WILL SEE THIS HUGE 7 IMMEDIATELY -->
+  <div class="version">7</div>
+
+  <!-- NUMBER 1 – single top circle -->
+  <div class="circle" id="num1"></div>
+
+  <!-- NUMBER 2 – two touching circles -->
+  <div class="row">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
+  </div>
+
+  <!-- NUMBER 3 – perfect touching triangle -->
+  <div class="triangle">
+    <div class="circle" id="num3-top"></div>
+    <div class="row">
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
+    </div>
+  </div>
+
+<script>
+// NUMBER 1 – perfect red/black toggle
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
+// NUMBER 2 – perfect red/orange
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
+
+function update2() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+a.addEventListener("click", () => { a.classList.toggle("red"); update2(); });
+b.addEventListener("click", () => { b.classList.toggle("red"); update2(); });
+
+// NUMBER 3 – perfect red/orange/yellow
+const top = document.getElementById("num3-top");
+const left = document.getElementById("num3-left");
+const right = document.getElementById("num3-right");
+
+function update3() {
+  const wasTop = top.classList.contains("red");
+  const wasLeft = left.classList.contains("red");
+  const wasRight = right.classList.contains("red");
+  const count = (wasTop ? 1 : 0) + (wasLeft ? 1 : 0) + (wasRight ? 1 : 0);
+
+  top.classList.remove("red", "orange", "yellow");
+  left.classList.remove("red", "orange", "yellow");
+  right.classList.remove("red", "orange", "yellow");
+
+  let color = "";
+  if (count === 1) color = "red";
+  else if (count === 2) color = "orange";
+  else if (count === 3) color = "yellow";
+
+  if (wasTop) top.classList.add(color);
+  if (wasLeft) left.classList.add(color);
+  if (wasRight) right.classList.add(color);
+}
+
+top.addEventListener("click", () => { top.classList.toggle("red"); update3(); });
+left.addEventListener("click", () => { left.classList.toggle("red"); update3(); });
+right.addEventListener("click", () => { right.classList.toggle("red"); update3(); });
+</script>
+
+</body>
+</html>

@@ -11,17 +11,16 @@
   <style>
     body {
       margin: 0;
-      height: 100vh;
       background: #000;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 100px;
+      padding: 100px 0;            /* big top/bottom padding so you can scroll to see everything */
+      gap: 200px;                  /* big space between groups so they don't squeeze */
     }
     .circle {
-      width: 220px;
-      height: 220px;
+      width: 240px;
+      height: 240px;
       border-radius: 50%;
       background: #111;
       border: 14px solid #fff;
@@ -33,86 +32,41 @@
     .circle.orange  { background: #ff6200; box-shadow: 0 0 130px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 130px #ffff00; }
 
-    .row { display: flex; gap: -66px; }
+    .row { display: flex; gap: -72px; }          /* two dots touch */
     .triangle {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: -66px;               /* pulls the top dot down so it touches both bottom ones */
+      gap: -72px;                                 /* top dot touches both bottom ones */
     }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 – single top circle (red/black) -->
-  <div class="circle" id="one"></div>
+  <!-- NUMBER 1 – single top circle -->
+  <div class="circle" id="num1"></div>
 
-  <!-- NUMBER 2 – two touching circles (red/orange) -->
+  <!-- NUMBER 2 – two touching circles -->
   <div class="row">
-    <div class="circle" id="twoA"></div>
-    <div class="circle" id="twoB"></div>
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
   </div>
 
-  <!-- NUMBER 3 – perfect triangle (one on top, two on bottom, all touching tangentially) -->
+  <!-- NUMBER 3 – perfect triangle (one on top touching both bottom ones) -->
   <div class="triangle">
-    <div class="circle" id="threeTop"></div>
+    <div class="circle" id="num3-top"></div>
     <div class="row">
-      <div class="circle" id="threeLeft"></div>
-      <div class="circle" id="threeRight"></div>
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
     </div>
   </div>
 
 <script>
-// NUMBER 1 – perfect red/black toggle
-document.getElementById("one").addEventListener("click", function() {
+// NUMBER 1 – red/black toggle
+document.getElementById("num1").addEventListener("click", function() {
   this.classList.toggle("red");
 });
 
-// NUMBER 2 – perfect red/orange
-const twoA = document.getElementById("twoA");
-const twoB = document.getElementById("twoB");
-
-function updateTwo() {
-  twoA.classList.remove("orange");
-  twoB.classList.remove("orange");
-  if (twoA.classList.contains("red") && twoB.classList.contains("red")) {
-    twoA.classList.add("orange");
-    twoB.classList.add("orange");
-  }
-}
-twoA.addEventListener("click", () => { twoA.classList.toggle("red"); updateTwo(); });
-twoB.addEventListener("click", () => { twoB.classList.toggle("red"); updateTwo(); });
-
-// NUMBER 3 – perfect triangle: red/orange/yellow (click any to turn off correctly)
-const top = document.getElementById("threeTop");
-const left = document.getElementById("threeLeft");
-const right = document.getElementById("threeRight");
-
-function updateThree() {
-  const count = (top.classList.contains("red") ? 1 : 0) +
-                (left.classList.contains("red") ? 1 : 0) +
-                (right.classList.contains("red") ? 1 : 0);
-
-  top.classList.remove("red", "orange", "yellow");
-  left.classList.remove("red", "orange", "yellow");
-  right.classList.remove("red", "orange", "yellow");
-
-  let color = "";
-  if (count === 1) color = "red";
-  else if (count === 2) color = "orange";
-  else if (count === 3) color = "yellow";
-
-  if (color) {
-    if (top.classList.contains("red")) top.classList.add(color);
-    if (left.classList.contains("red")) left.classList.add(color);
-    if (right.classList.contains("red")) right.classList.add(color);
-  }
-}
-
-top.addEventListener("click", () => { top.classList.toggle("red"); updateThree(); });
-left.addEventListener("click", () => { left.classList.toggle("red"); updateThree(); });
-right.addEventListener("click", () => { right.classList.toggle("red"); updateThree(); });
-</script>
-
-</body>
-</html>
+// NUMBER 2 – red/orange
+const a = document.getElementById("num2a");
+const b = document.getElementById("num

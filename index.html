@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Get Rid of the Teacher</title>
   <style>
     body {
@@ -14,8 +10,7 @@
       height: 100vh;
       background: #000;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      flex-direction: center; 
       align-items: center;
       gap: 80px;
     }
@@ -30,15 +25,15 @@
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
     .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
-    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
-    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
+    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200 }
+    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00 }
     
     /* Layout - perfect pyramid */
     .pyramid {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: -60px;
+      gap: -60px; /* pulls rows together so they touch vertically */
     }
     .row1 { display: flex; justify-content: center; }
     .row2 { display: flex; gap: -60px; justify-content: center; }
@@ -46,7 +41,7 @@
       display: flex; 
       gap: -60px; 
       justify-content: center; 
-      margin-top: 60px;
+      margin-top: 60px; /* fine-tune the triangle look */
     }
   </style>
 </head>
@@ -81,9 +76,9 @@
 <script>
 // Universal system - works for any group size, completely independent
 const groups = {
-  1: document.querySelectorAll('[data-group="1"]'),
-  2: document.querySelectorAll('[data-group="2"]'),
-  3: document.querySelectorAll('[data-group="3"]')
+  1: [document.querySelectorAll('[data-group="1"]'),
+  2:document.querySelectorAll('[data-group="2"]'),
+  3:document.querySelectorAll('[data-group="3"]')
 };
 
 Object.keys(groups).forEach(groupNum => {
@@ -93,6 +88,7 @@ Object.keys(groups).forEach(groupNum => {
   circles.forEach(circle => {
     circle.dataset.active = "false";
     circle.addEventListener("click", () => {
+      // toggle this circle
       circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
       updateGroup(circles, max);
     });
@@ -102,9 +98,16 @@ Object.keys(groups).forEach(groupNum => {
     const active = Array.from(circles).filter(c => c.dataset.active === "true");
     const count = active.length;
 
+    // clear colors
     circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
 
+    // apply color to active ones only
     if (count === 1) active.forEach(c => c.classList.add("red"));
     else if (count === 2) active.forEach(c => c.classList.add("orange"));
     else if (count === 3 && max === 3) active.forEach(c => c.classList.add("yellow"));
   }
+});
+</script>
+
+</body>
+</html>

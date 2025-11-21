@@ -37,4 +37,79 @@
       gap: -72px;
     }
   </style>
-</head
+</head>
+<body>
+
+  <!-- NUMBER 1 – completely independent (red/black only) -->
+  <div class="circle" id="num1"></div>
+
+  <!-- NUMBER 2 – only these two affect each other -->
+  <div class="pair">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
+  </div>
+
+  <!-- NUMBER 3 – perfect pyramid triangle (one on top, two below, all touching) -->
+  <div class="triangle">
+    <div class="circle" id="num3-top"></div>
+    <div class="pair">
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
+    </div>
+  </div>
+
+<script>
+// NUMBER 1 – exactly the perfect simple toggle you love
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
+// NUMBER 2 – exactly the beautiful version you already said was perfect
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
+
+function update2() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+
+a.addEventListener("click", () => { a.classList.toggle("red"); update2(); });
+b.addEventListener("click", () => { b.classList.toggle("red"); update2(); });
+
+// NUMBER 3 – exact same pattern, but with yellow for 3
+const top3 = document.getElementById("num3-top");
+const left3 = document.getElementById("num3-left");
+const right3 = document.getElementById("num3-right");
+
+function update3() {
+  const count = (top3.classList.contains("red") ? 1 : 0) +
+                (left3.classList.contains("red") ? 1 : 0) +
+                (right3.classList.contains("red") ? 1 : 0);
+
+  top3.classList.remove("red", "orange", "yellow");
+  left3.classList.remove("red", "orange", "yellow");
+  right3.classList.remove("red", "orange", "yellow");
+
+  let color = "";
+  if (count === 1) color = "red";
+  else if (count === 2) color = "orange";
+  else if (count === 3) color = "yellow";
+
+  if (color) {
+    if (top3.classList.contains("red")) top3.classList.add(color);
+    if (left3.classList.contains("red")) left3.classList.add(color);
+    if (right3.classList.contains("red")) right3.classList.add(color);
+  }
+}
+
+top3.addEventListener("click", () => { top3.classList.toggle("red"); update3(); });
+left3.addEventListener("click", () => { left3.classList.toggle("red"); update3(); });
+right3.addEventListener("click", () => { right3.classList.toggle("red"); update3(); });
+</script>
+
+</body>
+</html>

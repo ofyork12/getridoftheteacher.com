@@ -9,45 +9,142 @@
   <meta http-equiv="Expires" content="0">
   <title>Get Rid of the Teacher</title>
   <style>
+    :root {
+      --circle-size: 220px;            /* inside color */
+      --circle-border: 14px;
+      --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
+      --circle-radius: calc(var(--circle-total) / 2);
+      --triangle-rise: calc(var(--circle-total) * 0.8660254);
+    }
     body {
       margin: 0;
-      height: 100vh;
+      min-height: 100vh;
       background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      gap: 100px;               /* space between top circle and the pair */
+      gap: 120px;
+      padding: 60px 20px 160px;
+      overflow-y: auto;
+    }
+    .set {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+    .set h2 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
     .circle {
-      width: 220px;             /* smaller, perfect for kids */
-      height: 220px;
+      width: var(--circle-size);
+      height: var(--circle-size);
       border-radius: 50%;
-      background: #111;
-      border: 14px solid #fff;
+      background: #222;
+      border: var(--circle-border) solid #fff;
       cursor: pointer;
-      transition: all 0.5s ease;
-      box-shadow: 0 0 70px rgba(255,255,255,0.3);
+      transition: background 0.25s ease;
     }
-    .circle.red    { background: #ff0000; box-shadow: 0 0 130px #ff0000; }
-    .circle.orange { background: #ff6200; box-shadow: 0 0 130px #ff6200; }
+    .circle.red    { background: #ff0000; }
+    .circle.orange { background: #ff6200; }
+    .circle.yellow { background: #ffe600; }
+    .circle.green  { background: #00c04b; }
 
     .pair {
       display: flex;
-      gap: -66px;               /* makes the two circles touch perfectly */
+      align-items: center;
+      gap: 0;
+    }
+    .pair .circle + .circle {
+      margin-left: 0;           /* no overlap – just touching */
+    }
+
+    .stack-three {
+      position: relative;
+      width: calc(var(--circle-total) * 2);
+      height: calc(var(--triangle-rise) + var(--circle-total));
+    }
+    .stack-three .circle {
+      position: absolute;
+    }
+    .stack-three .bottom-left {
+      left: 0;
+      bottom: 0;
+    }
+    .stack-three .bottom-right {
+      left: var(--circle-total);
+      bottom: 0;
+    }
+    .stack-three .top {
+      left: var(--circle-total);
+      bottom: var(--triangle-rise);
+      transform: translateX(-50%);
+    }
+
+    .stack-four {
+      position: relative;
+      width: calc(var(--circle-total) * 2);
+      height: calc(var(--circle-total) * 2);
+    }
+    .stack-four .circle {
+      position: absolute;
+    }
+    .stack-four .top-left {
+      top: 0;
+      left: 0;
+    }
+    .stack-four .top-right {
+      top: 0;
+      left: var(--circle-total);
+    }
+    .stack-four .bottom-left {
+      top: var(--circle-total);
+      left: 0;
+    }
+    .stack-four .bottom-right {
+      top: var(--circle-total);
+      left: var(--circle-total);
     }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 – your original single circle (unchanged) -->
-  <div class="circle" id="one"></div>
+  <section class="set">
+    <h2>Number 1</h2>
+    <div class="circle" id="one"></div>
+  </section>
 
-  <!-- NUMBER 2 – two smaller touching circles below -->
-  <div class="pair">
-    <div class="circle" id="twoA"></div>
-    <div class="circle" id="twoB"></div>
-  </div>
+  <section class="set">
+    <h2>Number 2</h2>
+    <div class="pair">
+      <div class="circle" id="twoA"></div>
+      <div class="circle" id="twoB"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 3</h2>
+    <div class="stack-three" id="three">
+      <div class="circle top"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 4</h2>
+    <div class="stack-four" id="four">
+      <div class="circle top-left"></div>
+      <div class="circle top-right"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
 
 <script>
 // NUMBER 1 – perfect red/black toggle
@@ -70,6 +167,52 @@ function updatePair() {
 
 a.addEventListener("click", () => { a.classList.toggle("red"); updatePair(); });
 b.addEventListener("click", () => { b.classList.toggle("red"); updatePair(); });
+
+// NUMBER 3 – two-on-bottom, one-on-top triangle with yellow finish
+const trio = Array.from(document.querySelectorAll("#three .circle"));
+
+function updateTrio() {
+  trio.forEach(circle => circle.classList.remove("orange", "yellow"));
+
+  const active = trio.filter(circle => circle.classList.contains("red"));
+
+  if (active.length === 3) {
+    active.forEach(circle => circle.classList.add("yellow"));
+  } else if (active.length === 2) {
+    active.forEach(circle => circle.classList.add("orange"));
+  }
+}
+
+trio.forEach(circle => {
+  circle.addEventListener("click", () => {
+    circle.classList.toggle("red");
+    updateTrio();
+  });
+});
+
+// NUMBER 4 – two-by-two square with final green highlight
+const quad = Array.from(document.querySelectorAll("#four .circle"));
+
+function updateQuad() {
+  quad.forEach(circle => circle.classList.remove("orange", "yellow", "green"));
+
+  const active = quad.filter(circle => circle.classList.contains("red"));
+
+  if (active.length === 4) {
+    active.forEach(circle => circle.classList.add("green"));
+  } else if (active.length === 3) {
+    active.forEach(circle => circle.classList.add("yellow"));
+  } else if (active.length === 2) {
+    active.forEach(circle => circle.classList.add("orange"));
+  }
+}
+
+quad.forEach(circle => {
+  circle.addEventListener("click", () => {
+    circle.classList.toggle("red");
+    updateQuad();
+  });
+});
 </script>
 
 </body>

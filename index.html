@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get Rid of the Teacher</title>
@@ -11,13 +10,14 @@
       height: 100vh;
       background: #000;
       display: flex;
-      flex-direction: center;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: 80px;
+      gap: 120px;
     }
     .circle {
-      width: 220px;
-      height: 220px;
+      width: 240px;
+      height: 240px;
       border-radius: 50%;
       background: #111;
       border: 12px solid #fff;
@@ -25,88 +25,62 @@
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
-    .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
-    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200 }
-    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00 }
-    
-    /* Layout - perfect pyramid */
-    .pyramid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: -60px; /* pulls rows together so they touch vertically */
+    .circle.red {
+      background: #ff0000;
+      box-shadow: 0 0 110px #ff0000;
     }
-    .row1 { display: flex; justify-content: center; }
-    .row2 { display: flex; gap: -60px; justify-content: center; }
-    .row3 { 
-      display: flex; 
-      gap: -60px; 
-      justify-content: center; 
-      margin-top: 60px; /* fine-tune the triangle look */
+    .circle.orange {
+      background: #ff6200;
+      box-shadow: 0 0 110px #ff6200;
+    }
+    .pair {
+      display: flex;
+      gap: -72px; /* perfect touch */
     }
   </style>
 </head>
 <body>
 
-  <div class="pyramid">
+  <!-- NUMBER 1 – completely independent -->
+  <div class="circle" id="num1"></div>
 
-    <!-- NUMBER 1 -->
-    <div class="row1">
-      <div class="circle" data-group="1" id="g1-1"></div>
-    </div>
-
-    <!-- NUMBER 2 -->
-    <div class="row2">
-      <div class="circle" data-group="2" id="g2-1"></div>
-      <div class="circle" data-group="2" id="g2-2"></div>
-    </div>
-
-    <!-- NUMBER 3 - perfect triangle -->
-    <div class="row3">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:-60px;">
-        <div class="circle" data-group="3" id="g3-top"></div>
-        <div style="display:flex;gap:-60px;">
-          <div class="circle" data-group="3" id="g3-left"></div>
-          <div class="circle" data-group="3" id="g3-right"></div>
-        </div>
-      </div>
-    </div>
-
+  <!-- NUMBER 2 – only these two affect each other -->
+  <div class="pair">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
   </div>
 
 <script>
-// Universal system - works for any group size, completely independent
-const groups = {
-  1: [document.querySelectorAll('[data-group="1"]'),
-  2:document.querySelectorAll('[data-group="2"]'),
-  3:document.querySelectorAll('[data-group="3"]')
-};
+// NUMBER 1 – works perfectly (red ↔ black forever, nothing else touches it)
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
 
-Object.keys(groups).forEach(groupNum => {
-  const circles = groups[groupNum];
-  const max = parseInt(groupNum);
+// NUMBER 2 – perfect behavior, completely separate from number 1
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
 
-  circles.forEach(circle => {
-    circle.dataset.active = "false";
-    circle.addEventListener("click", () => {
-      // toggle this circle
-      circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
-      updateGroup(circles, max);
-    });
-  });
+function update2() {
+  const aRed = a.classList.contains("red");
+  const bRed = b.classList.contains("red");
 
-  function updateGroup(circles, max) {
-    const active = Array.from(circles).filter(c => c.dataset.active === "true");
-    const count = active.length;
+  a.classList.remove("orange");
+  b.classList.remove("orange");
 
-    // clear colors
-    circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
-
-    // apply color to active ones only
-    if (count === 1) active.forEach(c => c.classList.add("red"));
-    else if (count === 2) active.forEach(c => c.classList.add("orange"));
-    else if (count === 3 && max === 3) active.forEach(c => c.classList.add("yellow"));
+  if (aRed && bRed) {
+    a.classList.add("orange");
+    b.classList.add("orange");
   }
+}
+
+a.addEventListener("click", function() {
+  this.classList.toggle("red");
+  update2();
+});
+
+b.addEventListener("click", function() {
+  this.classList.toggle("red");
+  update2();
 });
 </script>
 

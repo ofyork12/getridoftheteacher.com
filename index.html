@@ -37,11 +37,25 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: -108px;   /* <-- Top dot now touches both bottom ones perfectly – no floating */
+      gap: -112px;   /* <-- PERFECT touching – top dot sits right on the two bottom ones */
+    }
+    .version {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0f0;
+      font-size: 120px;
+      font-weight: bold;
+      text-shadow: 0 0 40px #0f0;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
+
+  <!-- VERSION 6 – BIG GREEN 6 SO YOU KNOW IT'S NEW -->
+  <div class="version">6</div>
 
   <!-- NUMBER 1 – single top circle -->
   <div class="circle" id="num1"></div>
@@ -95,22 +109,4 @@ function update3() {
 
   top.classList.remove("red", "orange", "yellow");
   left.classList.remove("red", "orange", "yellow");
-  right.classList.remove("red", "orange", "yellow");
-
-  let color = "";
-  if (count === 1) color = "red";
-  else if (count === 2) color = "orange";
-  else if (count === 3) color = "yellow";
-
-  if (wasTop) top.classList.add(color);
-  if (wasLeft) left.classList.add(color);
-  if (wasRight) right.classList.add(color);
-}
-
-top.addEventListener("click", () => { top.classList.toggle("red"); update3(); });
-left.addEventListener("click", () => { left.classList.toggle("red"); update3(); });
-right.addEventListener("click", () => { right.classList.toggle("red"); update3(); });
-</script>
-
-</body>
-</html>
+  right.classList.remove("red", "orange

@@ -80,6 +80,7 @@
       font-size: 13px;
       padding: 6px 14px;
       opacity: 0.85;
+      border-style: dashed;
     }
 
     .circle {
@@ -480,7 +481,7 @@ const LANGUAGE_HINTS = {
 let currentLang = "en";
 let preferredVoice = null;
 let englishVoice = null;
-const dualStates = {};
+const dualLang = new Set();
 let lastSpokenCount = 0;
 
 function pickVoice(langCode) {
@@ -528,7 +529,7 @@ function speakNumber(count) {
   if (preferredVoice) utterance.voice = preferredVoice;
   requestAnimationFrame(() => {
     window.speechSynthesis.speak(utterance);
-    if (dualStates[currentLang] && currentLang !== "en" && englishVoice) {
+    if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
       const englishWord = NUMBER_WORDS.en[count];
       const follow = new SpeechSynthesisUtterance(englishWord);
       follow.rate = 1.15;
@@ -573,22 +574,43 @@ single.addEventListener("click", function() {
 const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));
 const dualButtons = Array.from(document.querySelectorAll(".controls button[data-dual]"));
 
+function selectLanguage(lang, useDual, silent = false) {
+  const isNewSelection = currentLang !== lang || useDual !== dualLang.has(lang);
+  currentLang = lang;
+  initVoices(lang);
+  dualLang.clear();
+  if (useDual && lang !== "en") {
+    dualLang.add(lang);
+  }
+
+  buttons.forEach(btn => {
+    const active = btn.dataset.lang === lang && !useDual;
+    btn.classList.toggle("active", active);
+  });
+
+  dualButtons.forEach(btn => {
+    const active = btn.dataset.dual === lang && useDual;
+    btn.classList.toggle("active", active);
+  });
+
+  if (!silent && isNewSelection) {
+    speakNumber(lastSpokenCount);
+  }
+}
+
 buttons.forEach(btn => {
   btn.addEventListener("click", () => {
-    const lang = btn.dataset.lang;
-    if (lang === currentLang) return;
-    buttons.forEach(b => b.classList.toggle("active", b === btn));
-    currentLang = lang;
-    initVoices(lang);
-    speakNumber(lastSpokenCount);
+    selectLanguage(btn.dataset.lang, false);
   });
 });
 
-echoButton.addEventListener("click", () => {
-  echoEnglish = !echoEnglish;
-  echoButton.classList.toggle("active", echoEnglish);
-  speakNumber(lastSpokenCount);
+dualButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectLanguage(btn.dataset.dual, true);
+  });
 });
+
+selectLanguage("en", false, true);
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});
@@ -602,4 +624,4 @@ setupGroup("#ten .circle",   {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6
 </script>
 
 </body>
-</html>
+</html> I

@@ -49,6 +49,28 @@
       letter-spacing: 2px;
       text-transform: uppercase;
     }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .controls button {
+      padding: 10px 20px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      background: transparent;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .controls button.active {
+      background: #fff;
+      color: #000;
+    }
+
     .circle {
       width: var(--circle-total);
       height: var(--circle-total);
@@ -280,6 +302,17 @@
 </head>
 <body>
 
+  <div class="controls" role="group" aria-label="Language selector">
+    <button data-lang="en" class="active">English</button>
+    <button data-lang="zh">中文</button>
+    <button data-lang="es">Español</button>
+    <button data-lang="fr">Français</button>
+    <button data-lang="hi">हिन्दी</button>
+    <button data-lang="ko">한국어</button>
+    <button data-lang="vi">Tiếng Việt</button>
+    <button data-echo="en">Add English</button>
+  </div>
+
   <section class="set">
     <h2>Number 1</h2>
     <div class="circle" id="one"></div>
@@ -396,30 +429,55 @@
 
 <script>
 const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];
-const NUMBER_WORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+const NUMBER_WORDS = {
+  en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten"],
+  zh: ["零","一","二","三","四","五","六","七","八","九","十"],
+  es: ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"],
+  fr: ["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix"],
+  hi: ["शून्य","एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस"],
+  ko: ["영","일","이","삼","사","오","육","칠","팔","구","십"],
+  vi: ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín","mười"],
+};
+const LANGUAGE_HINTS = {
+  en: "English",
+  zh: "zh-CN",
+  es: "es",
+  fr: "fr",
+  hi: "hi",
+  ko: "ko-KR",
+  vi: "vi-VN"
+};
+let currentLang = "en";
 let preferredVoice = null;
+let englishVoice = null;
+let echoEnglish = false;
+let lastSpokenCount = 0;
 
-function pickVoice() {
+function pickVoice(langCode) {
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const targetNames = [
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
+  if (langGroup.length) return langGroup[0];
+
+  const fallbacks = [
     "Microsoft Aria Online (Natural) - English (United States)",
     "Google US English",
     "Google UK English Female",
     "Microsoft Zira Desktop - English (United States)"
   ];
 
-  for (const name of targetNames) {
+  for (const name of fallbacks) {
     const voice = voices.find(v => v.name === name);
     if (voice) return voice;
   }
   return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
 }
 
-function initVoices() {
-  preferredVoice = pickVoice();
+function initVoices(lang = currentLang) {
+  preferredVoice = pickVoice(lang);
+  englishVoice = pickVoice("en");
 }
 
 if ("speechSynthesis" in window) {
@@ -428,14 +486,27 @@ if ("speechSynthesis" in window) {
 }
 
 function speakNumber(count) {
-  if (count < 0 || count >= NUMBER_WORDS.length) return;
+  const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
+  if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
+  lastSpokenCount = count;
   window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(NUMBER_WORDS[count]);
-  utterance.rate = 0.9;
+  window.speechSynthesis.resume();
+  const utterance = new SpeechSynthesisUtterance(words[count]);
+  utterance.rate = 1.15;
   utterance.pitch = 1;
   if (preferredVoice) utterance.voice = preferredVoice;
-  window.speechSynthesis.speak(utterance);
+  requestAnimationFrame(() => {
+    window.speechSynthesis.speak(utterance);
+    if (echoEnglish && currentLang !== "en" && englishVoice) {
+      const englishWord = NUMBER_WORDS.en[count];
+      const follow = new SpeechSynthesisUtterance(englishWord);
+      follow.rate = 1.15;
+      follow.pitch = 1;
+      follow.voice = englishVoice;
+      window.speechSynthesis.speak(follow);
+    }
+  });
 }
 
 function setupGroup(selector, palette) {
@@ -466,6 +537,27 @@ const single = document.getElementById("one");
 single.addEventListener("click", function() {
   this.classList.toggle("red");
   speakNumber(this.classList.contains("red") ? 1 : 0);
+});
+
+// Language switching
+const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));
+const echoButton = document.querySelector(".controls button[data-echo]");
+
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const lang = btn.dataset.lang;
+    if (lang === currentLang) return;
+    buttons.forEach(b => b.classList.toggle("active", b === btn));
+    currentLang = lang;
+    initVoices(lang);
+    speakNumber(lastSpokenCount);
+  });
+});
+
+echoButton.addEventListener("click", () => {
+  echoEnglish = !echoEnglish;
+  echoButton.classList.toggle("active", echoEnglish);
+  speakNumber(lastSpokenCount);
 });
 
 setupGroup("#two .circle",   {2: "orange"});

@@ -28,78 +28,21 @@
     .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
     .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
     .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
-    .pair { display: flex; gap: -72px; }
-    .triple { display: flex; gap: -72px; }
+
+    .row { display: flex; gap: -72px; justify-content: center; }
+    .triangle { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: -72px; 
+    }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 – single circle, red/black only -->
+  <!-- NUMBER 1 (the beautiful one you already love) -->
   <div class="circle" id="num1"></div>
 
-  <!-- NUMBER 2 – two touching circles -->
-  <div class="pair">
-    <div class="circle" id="num2a"></div>
-    <div class="circle" id="num2b"></div>
-  </div>
-
-  <!-- NUMBER 3 – three touching circles -->
-  <div class="triple">
-    <div class="circle" id="num3a"></div>
-    <div class="circle" id="num3b"></div>
-    <div class="circle" id="num3c"></div>
-  </div>
-
-<script>
-// Helper function to handle any group
-function createGroup(circles, maxCount) {
-  circles.forEach(circle => {
-    circle.dataset.active = "false";
-    circle.addEventListener("click", () => {
-      circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
-      updateGroup(circles, maxCount);
-    });
-  });
-
-  function updateGroup(circles, maxCount) {
-    // Count active
-    const activeCircles = circles.filter(c => c.dataset.active === "true");
-    const count = activeCircles.length;
-
-    // Remove all color classes from the group
-    circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
-
-    // Apply the correct color to active circles
-    let color = "";
-    if (count === 1) color = "red";
-    else if (count === 2) color = "orange";
-    else if (count === 3 && maxCount === 3) color = "yellow";
-
-    activeCircles.forEach(c => {
-      if (color) c.classList.add(color);
-    });
-  }
-
-  return updateGroup;
-}
-
-// Group 1 (max 1 → only red possible)
-createGroup([document.getElementById("num1")], 1);
-
-// Group 2 (max 2 → red or orange)
-createGroup([
-  document.getElementById("num2a"),
-  document.getElementById("num2b")
-], 2);
-
-// Group 3 (max 3 → red, orange, or yellow)
-createGroup([
-  document.getElementById("num3a"),
-  document.getElementById("num3b"),
-  document.getElementById("num3c")
-], 3);
-
-</script>
-
-</body>
-</html>
+  <!-- NUMBER 2 (the beautiful two dots you already love) -->
+  <div class="row">
+    <div class="circle

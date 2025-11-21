@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- These lines kill ALL caching forever – you will always see the latest version -->
+  <!-- These 3 lines KILL ALL CACHING forever -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -17,38 +17,103 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 120px;
+      gap: 100px;
     }
     .circle {
       width: 240px;
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 14px solid #fff;
+      border: 12px solid #fff;
       cursor: pointer;
       transition: all 0.5s ease;
-      box-shadow: 0 0 70px rgba(255,255,255,0.3);
+      box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
-    .circle.red     { background: #ff0000; box-shadow: 0 0 130px #ff0000; }
-    .circle.orange  { background: #ff6200; box-shadow: 0 0 130px #ff6200; }
+    .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
+    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
+    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
 
-    .pair {
+    .row { display: flex; gap: -72px; }
+    .triangle {
       display: flex;
-      gap: -72px;   /* makes the two circles touch perfectly */
+      flex-direction: column;
+      align-items: center;
+      gap: -72px;
     }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 – single top circle (red ↔ black forever) -->
-  <div class="circle" id="one"></div>
+  <!-- NUMBER 1 -->
+  <div class="circle" id="num1"></div>
 
-  <!-- NUMBER 2 – two touching circles below (red/orange) -->
-  <div class="pair">
-    <div class="circle" id="twoA"></div>
-    <div class="circle" id="twoB"></div>
+  <!-- NUMBER 2 -->
+  <div class="row">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
+  </div>
+
+  <!-- NUMBER 3 – perfect triangle -->
+  <div class="triangle">
+    <div class="circle" id="num3-top"></div>
+    <div class="row">
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
+    </div>
   </div>
 
 <script>
-// NUMBER 1 – perfect red/black toggle
-document.getElementById("one").addEventListener("click",
+// NUMBER 1
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
+// NUMBER 2
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
+
+function update2() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+
+a.addEventListener("click", () => { a.classList.toggle("red"); update2(); });
+b.addEventListener("click", () => { b.classList.toggle("red"); update2(); });
+
+// NUMBER 3
+const top = document.getElementById("num3-top");
+const left = document.getElementById("num3-left");
+const right = document.getElementById("num3-right");
+
+function update3() {
+  const count = (top.classList.contains("red") ? 1 : 0) +
+                (left.classList.contains("red") ? 1 : 0) +
+                (right.classList.contains("red") ? 1 : 0);
+
+  top.classList.remove("red", "orange", "yellow");
+  left.classList.remove("red", "orange", "yellow");
+  right.classList.remove("red", "orange", "yellow");
+
+  let color = "";
+  if (count === 1) color = "red";
+  else if (count === 2) color = "orange";
+  else if (count === 3) color = "yellow";
+
+  if (color) {
+    if (top.classList.contains("red")) top.classList.add(color);
+    if (left.classList.contains("red")) left.classList.add(color);
+    if (right.classList.contains("red")) right.classList.add(color);
+  }
+}
+
+top.addEventListener("click", () => { top.classList.toggle("red"); update3(); });
+left.addEventListener("click", () => { left.classList.toggle("red"); update3(); });
+right.addEventListener("click", () => { right.classList.toggle("red"); update3(); });
+</script>
+
+</body>
+</html>

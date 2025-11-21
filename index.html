@@ -13,14 +13,14 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 120px;
+      gap: 120px; /* space between number 1 and number 2 */
     }
     .circle {
       width: 240px;
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 12px solid #fff;
+      border: 12px solid #fff; /* white outline always */
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
@@ -35,54 +35,54 @@
     }
     .pair {
       display: flex;
-      gap: -72px; /* perfect touch */
+      gap: -72px; /* makes the two bottom circles touch perfectly */
     }
   </style>
 </head>
 <body>
 
-  <!-- NUMBER 1 – completely independent -->
+  <!-- Number 1: independent top circle -->
   <div class="circle" id="num1"></div>
 
-  <!-- NUMBER 2 – only these two affect each other -->
+  <!-- Number 2: bottom two touching circles -->
   <div class="pair">
     <div class="circle" id="num2a"></div>
     <div class="circle" id="num2b"></div>
   </div>
 
-<script>
-// NUMBER 1 – works perfectly (red ↔ black forever, nothing else touches it)
-document.getElementById("num1").addEventListener("click", function() {
-  this.classList.toggle("red");
-});
+  <script>
+    // Number 1: simple independent toggle
+    const num1 = document.getElementById('num1');
+    num1.addEventListener('click', () => {
+      num1.classList.toggle('red');
+    });
 
-// NUMBER 2 – perfect behavior, completely separate from number 1
-const a = document.getElementById("num2a");
-const b = document.getElementById("num2b");
+    // Number 2: bottom pair, independent from top
+    const num2a = document.getElementById('num2a');
+    const num2b = document.getElementById('num2b');
 
-function update2() {
-  const aRed = a.classList.contains("red");
-  const bRed = b.classList.contains("red");
+    function updateNumber2() {
+      // Remove orange first
+      num2a.classList.remove('orange');
+      num2b.classList.remove('orange');
 
-  a.classList.remove("orange");
-  b.classList.remove("orange");
+      // If both are red, make both orange
+      if (num2a.classList.contains('red') && num2b.classList.contains('red')) {
+        num2a.classList.add('orange');
+        num2b.classList.add('orange');
+      }
+    }
 
-  if (aRed && bRed) {
-    a.classList.add("orange");
-    b.classList.add("orange");
-  }
-}
+    num2a.addEventListener('click', () => {
+      num2a.classList.toggle('red');
+      updateNumber2();
+    });
 
-a.addEventListener("click", function() {
-  this.classList.toggle("red");
-  update2();
-});
-
-b.addEventListener("click", function() {
-  this.classList.toggle("red");
-  update2();
-});
-</script>
+    num2b.addEventListener('click', () => {
+      num2b.classList.toggle('red');
+      updateNumber2();
+    });
+  </script>
 
 </body>
 </html>

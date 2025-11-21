@@ -20,69 +20,75 @@
       height: 240px;
       border-radius: 50%;
       background: #111;
-      border: 12px solid #fff;          /* always white outline */
+      border: 12px solid #fff;
       cursor: pointer;
       transition: all 0.5s ease;
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
     .circle.red    { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
     .circle.orange { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
-
-    .pair {
-      display: flex;
-      gap: -72px;                       /* makes the two bottom circles touch perfectly */
-    }
+    .pair { display: flex; gap: -72px; }
   </style>
 </head>
 <body>
 
-  <!-- Top circle (#1) — simple red/black toggle -->
+  <!-- Top circle (#1) -->
   <div class="circle" id="one"></div>
 
   <!-- Bottom two touching circles (#2) -->
   <div class="pair">
-    <div class="circle" id="twoA"></div>
-    <div class="circle" id="twoB"></div>
+    <div class="circle" id="a"></div>
+    <div class="circle" id="b"></div>
   </div>
 
 <script>
-  const one = document.getElementById("one");
-  one.addEventListener("click", () => one.classList.toggle("red"));
+  // Top circle — simple toggle
+  document.getElementById("one").addEventListener("click", function() {
+    this.classList.toggle("red");
+  });
 
-  const twoA = document.getElementById("twoA");
-  const twoB = document.getElementById("twoB");
+  // Bottom pair — correct forward + backward logic
+  const a = document.getElementById("a");
+  const b = document.getElementById("b");
 
-  function updateBottomPair() {
-    const aActive = twoA.classList.contains("red") || twoA.classList.contains("orange");
-    const bActive = twoB.classList.contains("red") || twoB.classList.contains("orange");
-    const activeCount = (aActive ? 1 : 0) + (bActive ? 1 : 0);
+  a.addEventListener("click", toggle);
+  b.addEventListener("click", toggle);
 
-    // Reset both
-    twoA.classList.remove("red", "orange");
-    twoB.classList.remove("red", "orange");
+  function toggle() {
+    // Count how many are currently active (red or orange)
+    const aActive = a.classList.contains("red") || a.classList.contains("orange");
+    const bActive = b.classList.contains("red") || b.classList.contains("orange");
+    const total = (aActive ? 1 : 0) + (bActive ? 1 : 0);
 
-    if (activeCount === 1) {
-      if (aActive) twoA.classList.add("red");
-      if (bActive) twoB.classList.add("red");
-    } else if (activeCount === 2) {
-      twoA.classList.add("orange");
-      twoB.classList.add("orange");
+    // Remove all colors from both
+    a.classList.remove("red", "orange");
+    b.classList.remove("red", "orange");
+
+    if (this === a) {
+      if (aActive && total === 1) {
+        // Clicking the only active one → turn it off (both black)
+        return;
+      }
+      if (total === 1 && bActive) {
+        // Clicking the inactive one when one is active → both orange
+        a.classList.add("orange");
+        b.classList.add("orange");
+      } else if (total === 2) {
+        // Clicking when both orange → turn this one off, leave the other red
+        a.classList.add("red");
+        if (this === a) b.classList.add("red");
+      } else {
+        // Was off → turn this one red
+        a.classList.add("red");
+      }
     }
-    // if activeCount === 0 → both stay black
-  }
 
-  twoA.addEventListener("click", () => {
-    twoA.classList.toggle("red");     // temporary toggle so we know its state
-    twoA.classList.toggle("orange");
-    updateBottomPair();
-  });
-
-  twoB.addEventListener("click", () => {
-    twoB.classList.toggle("red");
-    twoB.classList.toggle("orange");
-    updateBottomPair();
-  });
-</script>
-
-</body>
-</html>
+    if (this === b) {
+      if (bActive && total === 1) return;
+      if (total === 1 && aActive) {
+        a.classList.add("orange");
+        b.classList.add("orange");
+      } else if (total === 2) {
+        b.classList.add("red");
+        a.classList.add("red");
+     

@@ -10,13 +10,14 @@
       height: 100vh;
       background: #000;
       display: flex;
-      flex-direction: center;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: 80px;
+      gap: 100px;
     }
     .circle {
-      width: 220px;
-      height: 220px;
+      width: 240px;
+      height: 240px;
       border-radius: 50%;
       background: #111;
       border: 12px solid #fff;
@@ -25,88 +26,101 @@
       box-shadow: 0 0 60px rgba(255,255,255,0.25);
     }
     .circle.red     { background: #ff0000; box-shadow: 0 0 110px #ff0000; }
-    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200 }
-    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00 }
-    
-    /* Layout - perfect pyramid */
-    .pyramid {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: -60px; /* pulls rows together so they touch vertically */
-    }
-    .row1 { display: flex; justify-content: center; }
-    .row2 { display: flex; gap: -60px; justify-content: center; }
-    .row3 { 
+    .circle.orange  { background: #ff6200; box-shadow: 0 0 110px #ff6200; }
+    .circle.yellow  { background: #ffff00; box-shadow: 0 0 110px #ffff00; }
+
+    .row { display: flex; gap: -72px; justify-content: center; }
+    .triangle { 
       display: flex; 
-      gap: -60px; 
-      justify-content: center; 
-      margin-top: 60px; /* fine-tune the triangle look */
+      flex-direction: column; 
+      align-items: center; 
+      gap: -72px; 
     }
   </style>
 </head>
 <body>
 
-  <div class="pyramid">
+  <!-- NUMBER 1 (the beautiful one you already love) -->
+  <div class="circle" id="num1"></div>
 
-    <!-- NUMBER 1 -->
-    <div class="row1">
-      <div class="circle" data-group="1" id="g1-1"></div>
+  <!-- NUMBER 2 (the beautiful two dots you already love) -->
+  <div class="row">
+    <div class="circle" id="num2a"></div>
+    <div class="circle" id="num2b"></div>
+  </div>
+
+  <!-- NUMBER 3 – perfect triangle (top dot touching both bottom ones) -->
+  <div class="triangle">
+    <div class="circle" id="num3-top"></div>
+    <div class="row">
+      <div class="circle" id="num3-left"></div>
+      <div class="circle" id="num3-right"></div>
     </div>
-
-    <!-- NUMBER 2 -->
-    <div class="row2">
-      <div class="circle" data-group="2" id="g2-1"></div>
-      <div class="circle" data-group="2" id="g2-2"></div>
-    </div>
-
-    <!-- NUMBER 3 - perfect triangle -->
-    <div class="row3">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:-60px;">
-        <div class="circle" data-group="3" id="g3-top"></div>
-        <div style="display:flex;gap:-60px;">
-          <div class="circle" data-group="3" id="g3-left"></div>
-          <div class="circle" data-group="3" id="g3-right"></div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
 <script>
-// Universal system - works for any group size, completely independent
-const groups = {
-  1: [document.querySelectorAll('[data-group="1"]'),
-  2:document.querySelectorAll('[data-group="2"]'),
-  3:document.querySelectorAll('[data-group="3"]')
-};
-
-Object.keys(groups).forEach(groupNum => {
-  const circles = groups[groupNum];
-  const max = parseInt(groupNum);
-
-  circles.forEach(circle => {
-    circle.dataset.active = "false";
-    circle.addEventListener("click", () => {
-      // toggle this circle
-      circle.dataset.active = circle.dataset.active === "true" ? "false" : "true";
-      updateGroup(circles, max);
-    });
-  });
-
-  function updateGroup(circles, max) {
-    const active = Array.from(circles).filter(c => c.dataset.active === "true");
-    const count = active.length;
-
-    // clear colors
-    circles.forEach(c => c.classList.remove("red", "orange", "yellow"));
-
-    // apply color to active ones only
-    if (count === 1) active.forEach(c => c.classList.add("red"));
-    else if (count === 2) active.forEach(c => c.classList.add("orange"));
-    else if (count === 3 && max === 3) active.forEach(c => c.classList.add("yellow"));
-  }
+// NUMBER 1 – exactly the beautiful simple toggle you love
+document.getElementById("num1").addEventListener("click", function() {
+  this.classList.toggle("red");
 });
+
+// NUMBER 2 – exactly the beautiful version you already said was perfect
+const a = document.getElementById("num2a");
+const b = document.getElementById("num2b");
+
+function update2() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+
+a.addEventListener("click", () => {
+  a.classList.toggle("red");
+  update2();
+});
+
+b.addEventListener("click", () => {
+  b.classList.toggle("red");
+  update2();
+});
+
+// NUMBER 3 – new triangle, exact same pattern but with yellow for 3
+const t = document.getElementById("num3-top");
+const l = document.getElementById("num3-left");
+const r = document.getElementById("num3-right");
+
+function update3() {
+  // count active
+  const active = [
+    t.classList.contains("red"),
+    l.classList.contains("red"),
+    r.classList.contains("red")
+  ].filter(Boolean).length;
+
+  // remove all colors
+  t.classList.remove("red", "orange", "yellow");
+  l.classList.remove("red", "orange", "yellow");
+  r.classList.remove("red", "orange", "yellow");
+
+  // apply correct color to the ones that are active
+  let color = "";
+  if (active === 1) color = "red";
+  else if (active === 2) color = "orange";
+  else if (active === 3) color = "yellow";
+
+  if (color) {
+    if (t.classList.contains("red")) t.classList.add(color);
+    if (l.classList.contains("red")) l.classList.add(color);
+    if (r.classList.contains("red")) r.classList.add(color);
+  }
+}
+
+t.addEventListener("click", () => { t.classList.toggle("red"); update3(); });
+l.addEventListener("click", () => { l.classList.toggle("red"); update3(); });
+r.addEventListener("click", () => { r.classList.toggle("red"); update3(); });
 </script>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- These 3 lines kill ALL caching forever – you will ALWAYS see the latest version -->
+  <!-- These lines kill ALL caching forever – you will always see the latest version -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -14,34 +14,69 @@
       height: 100vh;
       background: #000;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 100px;               /* space between top circle and the pair */
     }
     .circle {
-      width: 300px;           /* big and easy for kids to touch */
-      height: 300px;
+      width: 220px;             /* smaller circles – perfect for kids */
+      height: 220px;
       border-radius: 50%;
       background: #111;
-      border: 16px solid #fff;   /* thick white outline */
+      border: 14px solid #fff;  /* thick white outline */
       cursor: pointer;
       transition: all 0.5s ease;
-      box-shadow: 0 0 80px rgba(255,255,255,0.3);
+      box-shadow: 0 0 70px rgba(255,255,255,0.3);
     }
-    .circle.red {
-      background: #ff0000;
-      box-shadow: 0 0 150px #ff0000;
+    .circle.red    { background: #ff0000; box-shadow: 0 0 130px #ff0000; }
+    .circle.orange { background: #ff6200; box-shadow: 0 0 130px #ff6200; }
+
+    .pair {
+      display: flex;
+      gap: -66px;               /* makes the two circles touch perfectly */
     }
   </style>
 </head>
 <body>
 
-  <div class="circle" id="myCircle"></div>
+  <!-- NUMBER 1 – single top circle (red/black toggle) -->
+  <div class="circle" id="one"></div>
+
+  <!-- NUMBER 2 – two touching circles below -->
+  <div class="pair">
+    <div class="circle" id="twoA"></div>
+    <div class="circle" id="twoB"></div>
+  </div>
 
 <script>
-  const circle = document.getElementById("myCircle");
-  circle.addEventListener("click", () => {
-    circle.classList.toggle("red");
-  });
+// NUMBER 1 – simple red/black toggle
+document.getElementById("one").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
+// NUMBER 2 – red/orange logic
+const a = document.getElementById("twoA");
+const b = document.getElementById("twoB");
+
+function updatePair() {
+  a.classList.remove("orange");
+  b.classList.remove("orange");
+  if (a.classList.contains("red") && b.classList.contains("red")) {
+    a.classList.add("orange");
+    b.classList.add("orange");
+  }
+}
+
+a.addEventListener("click", () => {
+  a.classList.toggle("red");
+  updatePair();
+});
+
+b.addEventListener("click", () => {
+  b.classList.toggle("red");
+  updatePair();
+});
 </script>
 
 </body>

@@ -17,37 +17,19 @@
 </head>
 <body>
 
-  <!-- Top circle (number 1) -->
-  <div class="circle" id="c1"></div>
+  <!-- Number 1 — completely independent -->
+  <div class="circle" id="one"></div>
 
-  <!-- Bottom two touching circles (number 2) -->
+  <!-- Number 2 — completely independent group -->
   <div class="pair">
-    <div class="circle" id="c2"></div>
-    <div class="circle" id="c3"></div>
+    <div class="circle" id="twoA"></div>
+    <div class="circle" id="twoB"></div>
   </div>
 
 <script>
-  const circles = document.querySelectorAll(".circle");
-
-  function updateColors() {
-    const redCount = document.querySelectorAll(".circle.red").length;
-
-    // First remove orange from everyone
-    circles.forEach(c => c.classList.remove("orange"));
-
-    // If exactly two are red → make them orange
-    if (redCount === 2) {
-      document.querySelectorAll(".circle.red").forEach(c => c.classList.add("orange"));
-    }
-  }
-
-  circles.forEach(circle => {
-    circle.addEventListener("click", () => {
-      circle.classList.toggle("red");   // every circle toggles red/black
-      updateColors();
-    });
+  // Number 1 — simple red/black toggle
+  document.getElementById("one").addEventListener("click", function() {
+    this.classList.toggle("red");
   });
-</script>
 
-</body>
-</html>
+  // Number 2 — only these

@@ -1,0 +1,685 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- These kill ALL caching forever – latest version every refresh -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Get Rid of the Teacher</title>
+  <style>
+    :root {
+      --circle-size: clamp(90px, 18vw, 170px);   /* inside color */
+      --circle-border: clamp(8px, 1.4vw, 12px);
+      --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
+      --circle-radius: calc(var(--circle-total) / 2);
+      --triangle-rise: calc(var(--circle-total) * 0.8660254);
+      --section-gap: clamp(50px, 10vw, 90px);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--section-gap);
+      padding: 40px 12px 120px;
+      overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .set {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      text-align: center;
+    }
+    .set > :last-child {
+      margin: 0 auto;
+    }
+    .set h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+      justify-content: center;
+    }
+    .lang-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .controls button {
+      padding: 10px 20px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      background: transparent;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .controls button.active {
+      background: #fff;
+      color: #000;
+    }
+    .controls button.dual {
+      font-size: 13px;
+      padding: 6px 14px;
+      opacity: 0.85;
+      border-style: dashed;
+    }
+
+    .circle {
+      width: var(--circle-total);
+      height: var(--circle-total);
+      border-radius: 50%;
+      background: #222;
+      border: var(--circle-border) solid #fff;
+      cursor: pointer;
+      transition: background 0.25s ease;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .circle:focus-visible,
+    .circle:focus,
+    .circle:active {
+      outline: none;
+    }
+    .circle.red        { background: #ff0000; }
+    .circle.orange     { background: #ff6200; }
+    .circle.yellow     { background: #ffe600; }
+    .circle.green      { background: #00a12c; }
+    .circle.blue       { background: #0030ff; }
+    .circle.purple     { background: #8b3dff; }
+    .circle.brown      { background: #7a3b00; }
+    .circle.pink       { background: #ff3fa6; }
+    .circle.sky        { background: #38c7ff; }
+    .circle.red-final  { background: #ff0000; }
+
+    .pair {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .pair .circle + .circle {
+      margin-left: 0;           /* no overlap – just touching */
+    }
+
+    .stack-three {
+      position: relative;
+      width: calc(var(--circle-total) * 2);
+      height: calc(var(--triangle-rise) + var(--circle-total));
+    }
+    .stack-three .circle {
+      position: absolute;
+    }
+    .stack-three .bottom-left {
+      left: 0;
+      bottom: 0;
+    }
+    .stack-three .bottom-right {
+      left: var(--circle-total);
+      bottom: 0;
+    }
+    .stack-three .top {
+      left: var(--circle-total);
+      bottom: var(--triangle-rise);
+      transform: translateX(-50%);
+    }
+
+    .stack-four {
+      position: relative;
+      width: calc(var(--circle-total) * 2);
+      height: calc(var(--circle-total) * 2);
+    }
+    .stack-four .circle {
+      position: absolute;
+    }
+    .stack-four .top-left {
+      top: 0;
+      left: 0;
+    }
+    .stack-four .top-right {
+      top: 0;
+      left: var(--circle-total);
+    }
+    .stack-four .bottom-left {
+      top: var(--circle-total);
+      left: 0;
+    }
+    .stack-four .bottom-right {
+      top: var(--circle-total);
+      left: var(--circle-total);
+    }
+
+    .stack-five {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) + var(--circle-total));
+    }
+    .stack-five .circle {
+      position: absolute;
+    }
+    .stack-five .row2-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: var(--triangle-rise);
+    }
+    .stack-five .row2-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: var(--triangle-rise);
+    }
+    .stack-five .row1-left {
+      left: 0;
+      bottom: 0;
+    }
+    .stack-five .row1-center {
+      left: var(--circle-total);
+      bottom: 0;
+    }
+    .stack-five .row1-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: 0;
+    }
+
+    .stack-six {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+    }
+    .stack-six .circle { position: absolute; }
+    .stack-six .row1-left   { left: 0; bottom: 0; }
+    .stack-six .row1-center { left: var(--circle-total); bottom: 0; }
+    .stack-six .row1-right  { left: calc(var(--circle-total) * 2); bottom: 0; }
+    .stack-six .row2-left   { left: calc(var(--circle-total) / 2); bottom: var(--triangle-rise); }
+    .stack-six .row2-right  { left: calc(var(--circle-total) * 1.5); bottom: var(--triangle-rise); }
+    .stack-six .row3 {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: calc(var(--triangle-rise) * 2);
+      transform: translateX(-50%);
+    }
+
+    .stack-seven {
+      position: relative;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--triangle-rise) * 2 + var(--circle-total));
+    }
+    .stack-seven .circle { position: absolute; }
+    .stack-seven .top-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-seven .top-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-seven .mid-left {
+      left: 0;
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .mid-center {
+      left: var(--circle-total);
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .mid-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: var(--triangle-rise);
+    }
+    .stack-seven .bottom-left {
+      left: calc(var(--circle-total) / 2);
+      bottom: 0;
+    }
+    .stack-seven .bottom-right {
+      left: calc(var(--circle-total) * 1.5);
+      bottom: 0;
+    }
+
+    .stack-eight {
+      display: grid;
+      grid-template-columns: repeat(3, var(--circle-total));
+      grid-auto-rows: var(--circle-total);
+      gap: 0;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--circle-total) * 3);
+      justify-items: center;
+      align-items: center;
+    }
+    .stack-eight .circle,
+    .stack-eight .gap {
+      width: var(--circle-total);
+      height: var(--circle-total);
+    }
+    .stack-eight .circle {
+      position: static;
+    }
+    .stack-eight .gap {
+      pointer-events: none;
+    }
+
+    .stack-nine {
+      display: grid;
+      grid-template-columns: repeat(3, var(--circle-total));
+      grid-auto-rows: var(--circle-total);
+      gap: 0;
+      width: calc(var(--circle-total) * 3);
+      height: calc(var(--circle-total) * 3);
+      justify-items: center;
+      align-items: center;
+    }
+    .stack-nine .circle {
+      position: static;
+    }
+
+    .stack-ten {
+      position: relative;
+      width: calc(var(--circle-total) * 4);
+      height: calc(var(--triangle-rise) * 3 + var(--circle-total));
+    }
+    .stack-ten .circle { position: absolute; }
+    .stack-ten .row1-1 { left: 0; bottom: 0; }
+    .stack-ten .row1-2 { left: var(--circle-total); bottom: 0; }
+    .stack-ten .row1-3 { left: calc(var(--circle-total) * 2); bottom: 0; }
+    .stack-ten .row1-4 { left: calc(var(--circle-total) * 3); bottom: 0; }
+    .stack-ten .row2-1 { left: calc(var(--circle-total) / 2); bottom: var(--triangle-rise); }
+    .stack-ten .row2-2 { left: calc(var(--circle-total) * 1.5); bottom: var(--triangle-rise); }
+    .stack-ten .row2-3 { left: calc(var(--circle-total) * 2.5); bottom: var(--triangle-rise); }
+    .stack-ten .row3-left {
+      left: calc(var(--circle-total));
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-ten .row3-right {
+      left: calc(var(--circle-total) * 2);
+      bottom: calc(var(--triangle-rise) * 2);
+    }
+    .stack-ten .row4 {
+      left: calc(var(--circle-total) * 2);
+      bottom: calc(var(--triangle-rise) * 3);
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="controls" role="group" aria-label="Language selector">
+    <div class="lang-group">
+      <button data-lang="en" class="active">English</button>
+      <button class="dual" data-mode="sound">Sound</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="vi">Tiếng Việt</button>
+      <button class="dual" data-dual="vi">Tiếng Việt + English</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="zh">中文</button>
+      <button class="dual" data-dual="zh">中文 + English</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="ko">한국어</button>
+      <button class="dual" data-dual="ko">한국어 + English</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="es">Español</button>
+      <button class="dual" data-dual="es">Español + English</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="fr">Français</button>
+      <button class="dual" data-dual="fr">Français + English</button>
+    </div>
+    <div class="lang-group">
+      <button data-lang="hi">हिन्दी</button>
+      <button class="dual" data-dual="hi">हिन्दी + English</button>
+    </div>
+  </div>
+
+  <section class="set">
+    <h2>Number 1</h2>
+    <div class="circle" id="one"></div>
+  </section>
+
+  <section class="set">
+    <h2>Number 2</h2>
+    <div class="pair" id="two">
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 3</h2>
+    <div class="stack-three" id="three">
+      <div class="circle top"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 4</h2>
+    <div class="stack-four" id="four">
+      <div class="circle top-left"></div>
+      <div class="circle top-right"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 5</h2>
+    <div class="stack-five" id="five">
+      <div class="circle row2-left"></div>
+      <div class="circle row2-right"></div>
+      <div class="circle row1-left"></div>
+      <div class="circle row1-center"></div>
+      <div class="circle row1-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 6</h2>
+    <div class="stack-six" id="six">
+      <div class="circle row3"></div>
+      <div class="circle row2-left"></div>
+      <div class="circle row2-right"></div>
+      <div class="circle row1-left"></div>
+      <div class="circle row1-center"></div>
+      <div class="circle row1-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 7</h2>
+    <div class="stack-seven" id="seven">
+      <div class="circle top-left"></div>
+      <div class="circle top-right"></div>
+      <div class="circle mid-left"></div>
+      <div class="circle mid-center"></div>
+      <div class="circle mid-right"></div>
+      <div class="circle bottom-left"></div>
+      <div class="circle bottom-right"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 8</h2>
+    <div class="stack-eight" id="eight">
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="gap"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 9</h2>
+    <div class="stack-nine" id="nine">
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+    </div>
+  </section>
+
+  <section class="set">
+    <h2>Number 10</h2>
+    <div class="stack-ten" id="ten">
+      <div class="circle row4"></div>
+      <div class="circle row3-left"></div>
+      <div class="circle row3-right"></div>
+      <div class="circle row2-1"></div>
+      <div class="circle row2-2"></div>
+      <div class="circle row2-3"></div>
+      <div class="circle row1-1"></div>
+      <div class="circle row1-2"></div>
+      <div class="circle row1-3"></div>
+      <div class="circle row1-4"></div>
+    </div>
+  </section>
+
+<script>
+const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];
+const NUMBER_WORDS = {
+  en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten"],
+  zh: ["零","一","二","三","四","五","六","七","八","九","十"],
+  es: ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"],
+  fr: ["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix"],
+  hi: ["शून्य","एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस"],
+  ko: ["영","일","이","삼","사","오","육","칠","팔","구","십"],
+  vi: ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín","mười"],
+};
+const LANGUAGE_HINTS = {
+  en: "English",
+  zh: "zh-CN",
+  es: "es",
+  fr: "fr",
+  hi: "hi",
+  ko: "ko-KR",
+  vi: "vi-VN"
+};
+let currentLang = "en";
+let preferredVoice = null;
+let englishVoice = null;
+const dualLang = new Set();
+let lastSpokenCount = 0;
+const SOUND_MODE = {
+  OFF: "off",
+  SOUND_ONLY: "sound",
+  SOUND_WITH_VOICE: "voice+sound"
+};
+let soundMode = SOUND_MODE.OFF;
+
+const audioCtx = "AudioContext" in window ? new AudioContext() : ("webkitAudioContext" in window ? new webkitAudioContext() : null);
+
+function pickVoice(langCode) {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
+  if (langGroup.length) return langGroup[0];
+
+  const fallbacks = [
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
+  ];
+
+  for (const name of fallbacks) {
+    const voice = voices.find(v => v.name === name);
+    if (voice) return voice;
+  }
+  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
+}
+
+function initVoices(lang = currentLang) {
+  preferredVoice = pickVoice(lang);
+  englishVoice = pickVoice("en");
+}
+
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = initVoices;
+  initVoices();
+}
+
+function speakNumber(count) {
+  const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
+  if (count < 0 || count >= words.length) return;
+  if (!("speechSynthesis" in window)) return;
+  lastSpokenCount = count;
+  const shouldSpeakVoice = soundMode !== SOUND_MODE.SOUND_ONLY;
+  const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
+
+  if (shouldSpeakVoice) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.resume();
+    const utterance = new SpeechSynthesisUtterance(words[count]);
+    utterance.rate = 1.15;
+    utterance.pitch = 1;
+    if (preferredVoice) utterance.voice = preferredVoice;
+    requestAnimationFrame(() => {
+      window.speechSynthesis.speak(utterance);
+      if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
+        const englishWord = NUMBER_WORDS.en[count];
+        const follow = new SpeechSynthesisUtterance(englishWord);
+        follow.rate = 1.15;
+        follow.pitch = 1;
+        follow.voice = englishVoice;
+        window.speechSynthesis.speak(follow);
+      }
+      if (shouldPlayTone) {
+        playTone(count);
+      }
+    });
+  } else if (shouldPlayTone) {
+    playTone(count);
+  }
+}
+
+function setupGroup(selector, palette) {
+  const circles = Array.from(document.querySelectorAll(selector));
+
+  function refreshColors() {
+    circles.forEach(circle => circle.classList.remove(...COLOR_CLASSES));
+    const active = circles.filter(circle => circle.classList.contains("red"));
+    const color = palette[active.length];
+
+    if (color) {
+      active.forEach(circle => circle.classList.add(color));
+    }
+    return active.length;
+  }
+
+  circles.forEach(circle => {
+    circle.addEventListener("click", () => {
+      circle.classList.toggle("red");
+      const count = refreshColors();
+      speakNumber(count);
+    });
+  });
+}
+
+// NUMBER 1 – single circle with voice feedback
+const single = document.getElementById("one");
+single.addEventListener("click", function() {
+  this.classList.toggle("red");
+  speakNumber(this.classList.contains("red") ? 1 : 0);
+});
+
+// Language + sound controls
+const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));
+const dualButtons = Array.from(document.querySelectorAll(".controls button[data-dual]"));
+const soundToggle = document.querySelector('.controls button[data-mode="sound"]');
+
+const cycleSoundMode = () => {
+  if (soundMode === SOUND_MODE.OFF) {
+    soundMode = SOUND_MODE.SOUND_ONLY;
+    soundToggle.textContent = "Sound Only";
+  } else if (soundMode === SOUND_MODE.SOUND_ONLY) {
+    soundMode = SOUND_MODE.SOUND_WITH_VOICE;
+    soundToggle.textContent = "Sound + Voice";
+  } else {
+    soundMode = SOUND_MODE.OFF;
+    soundToggle.textContent = "Sound";
+  }
+  soundToggle.classList.toggle("active", soundMode !== SOUND_MODE.OFF);
+  if (soundMode !== SOUND_MODE.OFF && audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+};
+
+soundToggle.addEventListener("click", cycleSoundMode);
+
+function selectLanguage(lang, useDual, silent = false) {
+  const isNewSelection = currentLang !== lang || useDual !== dualLang.has(lang);
+  currentLang = lang;
+  initVoices(lang);
+  dualLang.clear();
+  if (useDual && lang !== "en") {
+    dualLang.add(lang);
+  }
+  buttons.forEach(btn => {
+    const active = btn.dataset.lang === lang && !useDual;
+    btn.classList.toggle("active", active);
+  });
+
+  dualButtons.forEach(btn => {
+    const active = btn.dataset.dual === lang && useDual;
+    btn.classList.toggle("active", active);
+  });
+
+  if (!silent && isNewSelection) {
+    speakNumber(lastSpokenCount);
+  }
+}
+
+const NOTE_FREQUENCIES = [0, 262, 294, 330, 349, 392, 440, 494, 523, 587, 659]; // C4..E5
+
+function playTone(count) {
+  if (!audioCtx || count <= 0 || count >= NOTE_FREQUENCIES.length) return;
+  const frequency = NOTE_FREQUENCIES[count];
+  const duration = 0.25;
+  const now = audioCtx.currentTime;
+  const oscillator = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.value = frequency;
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+  oscillator.connect(gain);
+  gain.connect(audioCtx.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration);
+}
+
+buttons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectLanguage(btn.dataset.lang, false);
+  });
+});
+
+dualButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectLanguage(btn.dataset.dual, true);
+  });
+});
+
+selectLanguage("en", false, true);
+
+setupGroup("#two .circle",   {2: "orange"});
+setupGroup("#three .circle", {2: "orange", 3: "yellow"});
+setupGroup("#four .circle",  {2: "orange", 3: "yellow", 4: "green"});
+setupGroup("#five .circle",  {2: "orange", 3: "yellow", 4: "green", 5: "blue"});
+setupGroup("#six .circle",   {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple"});
+setupGroup("#seven .circle", {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown"});
+setupGroup("#eight .circle", {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink"});
+setupGroup("#nine .circle",  {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink", 9: "sky"});
+setupGroup("#ten .circle",   {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink", 9: "sky", 10: "red-final"});
+</script>
+
+</body>
+</html>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,40 +49,6 @@
       letter-spacing: 2px;
       text-transform: uppercase;
     }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 30px;
-      justify-content: center;
-    }
-    .lang-group {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-    .controls button {
-      padding: 10px 20px;
-      border: 2px solid #fff;
-      border-radius: 999px;
-      background: transparent;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    .controls button.active {
-      background: #fff;
-      color: #000;
-    }
-    .controls button.dual {
-      font-size: 13px;
-      padding: 6px 14px;
-      opacity: 0.85;
-      border-style: dashed;
-    }
-
     .circle {
       width: var(--circle-total);
       height: var(--circle-total);
@@ -315,37 +280,6 @@
 </head>
 <body>
 
-  <div class="controls" role="group" aria-label="Language selector">
-    <div class="lang-group">
-      <button data-lang="en" class="active">English</button>
-      <button class="dual" data-mode="sound">Sound</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="vi">Tiếng Việt</button>
-      <button class="dual" data-dual="vi">Tiếng Việt + English</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="zh">中文</button>
-      <button class="dual" data-dual="zh">中文 + English</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="ko">한국어</button>
-      <button class="dual" data-dual="ko">한국어 + English</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="es">Español</button>
-      <button class="dual" data-dual="es">Español + English</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="fr">Français</button>
-      <button class="dual" data-dual="fr">Français + English</button>
-    </div>
-    <div class="lang-group">
-      <button data-lang="hi">हिन्दी</button>
-      <button class="dual" data-dual="hi">हिन्दी + English</button>
-    </div>
-  </div>
-
   <section class="set">
     <h2>Number 1</h2>
     <div class="circle" id="one"></div>
@@ -461,104 +395,12 @@
   </section>
 
 <script>
+// NUMBER 1 – perfect red/black toggle
+document.getElementById("one").addEventListener("click", function() {
+  this.classList.toggle("red");
+});
+
 const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];
-const NUMBER_WORDS = {
-  en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten"],
-  zh: ["零","一","二","三","四","五","六","七","八","九","十"],
-  es: ["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez"],
-  fr: ["zéro","un","deux","trois","quatre","cinq","six","sept","huit","neuf","dix"],
-  hi: ["शून्य","एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस"],
-  ko: ["영","일","이","삼","사","오","육","칠","팔","구","십"],
-  vi: ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín","mười"],
-};
-const LANGUAGE_HINTS = {
-  en: "English",
-  zh: "zh-CN",
-  es: "es",
-  fr: "fr",
-  hi: "hi",
-  ko: "ko-KR",
-  vi: "vi-VN"
-};
-let currentLang = "en";
-let preferredVoice = null;
-let englishVoice = null;
-const dualLang = new Set();
-let lastSpokenCount = 0;
-const SOUND_MODE = {
-  OFF: "off",
-  SOUND_ONLY: "sound",
-  SOUND_WITH_VOICE: "voice+sound"
-};
-let soundMode = SOUND_MODE.OFF;
-
-const audioCtx = "AudioContext" in window ? new AudioContext() : ("webkitAudioContext" in window ? new webkitAudioContext() : null);
-
-function pickVoice(langCode) {
-  if (!("speechSynthesis" in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-
-  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
-  if (langGroup.length) return langGroup[0];
-
-  const fallbacks = [
-    "Microsoft Aria Online (Natural) - English (United States)",
-    "Google US English",
-    "Google UK English Female",
-    "Microsoft Zira Desktop - English (United States)"
-  ];
-
-  for (const name of fallbacks) {
-    const voice = voices.find(v => v.name === name);
-    if (voice) return voice;
-  }
-  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
-}
-
-function initVoices(lang = currentLang) {
-  preferredVoice = pickVoice(lang);
-  englishVoice = pickVoice("en");
-}
-
-if ("speechSynthesis" in window) {
-  window.speechSynthesis.onvoiceschanged = initVoices;
-  initVoices();
-}
-
-function speakNumber(count) {
-  const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
-  if (count < 0 || count >= words.length) return;
-  if (!("speechSynthesis" in window)) return;
-  lastSpokenCount = count;
-  const shouldSpeakVoice = soundMode !== SOUND_MODE.SOUND_ONLY;
-  const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
-
-  if (shouldSpeakVoice) {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
-    const utterance = new SpeechSynthesisUtterance(words[count]);
-    utterance.rate = 1.15;
-    utterance.pitch = 1;
-    if (preferredVoice) utterance.voice = preferredVoice;
-    requestAnimationFrame(() => {
-      window.speechSynthesis.speak(utterance);
-      if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
-        const englishWord = NUMBER_WORDS.en[count];
-        const follow = new SpeechSynthesisUtterance(englishWord);
-        follow.rate = 1.15;
-        follow.pitch = 1;
-        follow.voice = englishVoice;
-        window.speechSynthesis.speak(follow);
-      }
-      if (shouldPlayTone) {
-        playTone(count);
-      }
-    });
-  } else if (shouldPlayTone) {
-    playTone(count);
-  }
-}
 
 function setupGroup(selector, palette) {
   const circles = Array.from(document.querySelectorAll(selector));
@@ -571,104 +413,15 @@ function setupGroup(selector, palette) {
     if (color) {
       active.forEach(circle => circle.classList.add(color));
     }
-    return active.length;
   }
 
   circles.forEach(circle => {
     circle.addEventListener("click", () => {
       circle.classList.toggle("red");
-      const count = refreshColors();
-      speakNumber(count);
+      refreshColors();
     });
   });
 }
-
-// NUMBER 1 – single circle with voice feedback
-const single = document.getElementById("one");
-single.addEventListener("click", function() {
-  this.classList.toggle("red");
-  speakNumber(this.classList.contains("red") ? 1 : 0);
-});
-
-// Language + sound controls
-const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));
-const dualButtons = Array.from(document.querySelectorAll(".controls button[data-dual]"));
-const soundToggle = document.querySelector('.controls button[data-mode="sound"]');
-
-const cycleSoundMode = () => {
-  if (soundMode === SOUND_MODE.OFF) {
-    soundMode = SOUND_MODE.SOUND_ONLY;
-    soundToggle.textContent = "Sound Only";
-  } else if (soundMode === SOUND_MODE.SOUND_ONLY) {
-    soundMode = SOUND_MODE.SOUND_WITH_VOICE;
-    soundToggle.textContent = "Sound + Voice";
-  } else {
-    soundMode = SOUND_MODE.OFF;
-    soundToggle.textContent = "Sound";
-  }
-  soundToggle.classList.toggle("active", soundMode !== SOUND_MODE.OFF);
-  if (soundMode !== SOUND_MODE.OFF && audioCtx && audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-};
-
-soundToggle.addEventListener("click", cycleSoundMode);
-
-function selectLanguage(lang, useDual, silent = false) {
-  const isNewSelection = currentLang !== lang || useDual !== dualLang.has(lang);
-  currentLang = lang;
-  initVoices(lang);
-  dualLang.clear();
-  if (useDual && lang !== "en") {
-    dualLang.add(lang);
-  }
-  buttons.forEach(btn => {
-    const active = btn.dataset.lang === lang && !useDual;
-    btn.classList.toggle("active", active);
-  });
-
-  dualButtons.forEach(btn => {
-    const active = btn.dataset.dual === lang && useDual;
-    btn.classList.toggle("active", active);
-  });
-
-  if (!silent && isNewSelection) {
-    speakNumber(lastSpokenCount);
-  }
-}
-
-const NOTE_FREQUENCIES = [0, 262, 294, 330, 349, 392, 440, 494, 523, 587, 659]; // C4..E5
-
-function playTone(count) {
-  if (!audioCtx || count <= 0 || count >= NOTE_FREQUENCIES.length) return;
-  const frequency = NOTE_FREQUENCIES[count];
-  const duration = 0.25;
-  const now = audioCtx.currentTime;
-  const oscillator = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  oscillator.type = "sine";
-  oscillator.frequency.value = frequency;
-  gain.gain.setValueAtTime(0.2, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-  oscillator.connect(gain);
-  gain.connect(audioCtx.destination);
-  oscillator.start(now);
-  oscillator.stop(now + duration);
-}
-
-buttons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    selectLanguage(btn.dataset.lang, false);
-  });
-});
-
-dualButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    selectLanguage(btn.dataset.dual, true);
-  });
-});
-
-selectLanguage("en", false, true);
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});

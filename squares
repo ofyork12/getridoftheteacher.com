@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -174,7 +174,7 @@
 <body>
 
   <div class="game-navigation">
-    <a href="index - Copy - Copy.html" class="game-nav-button">Bigger/Smaller</a>
+    <a href="bigger-smaller.html" class="game-nav-button">Bigger/Smaller</a>
     <a href="squares.html" class="game-nav-button active">Squares</a>
   </div>
 

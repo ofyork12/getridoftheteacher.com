@@ -256,19 +256,23 @@
     }
     .set h2 {
       margin: 0;
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      font-size: 300px; /* Fallback for browsers without clamp() support */
+      font-size: clamp(200px, 25vw, 400px);
+      font-weight: 900;
+      letter-spacing: 4px;
       text-transform: uppercase;
+      line-height: 1.2;
     }
     .set {
       margin-bottom: 40px;
     }
     .answer-display {
       margin-top: 40px;
-      font-size: 128px;
-      font-weight: bold;
-      min-height: 160px;
+      font-size: 450px; /* Fallback for browsers without clamp() support */
+      font-size: clamp(300px, 35vw, 600px);
+      font-weight: 900;
+      min-height: 500px; /* Fallback for browsers without clamp() support */
+      min-height: clamp(350px, 40vw, 700px);
       opacity: 0;
       transition: opacity 0.3s ease;
       line-height: 1.2;
@@ -584,7 +588,14 @@
         padding: 0 4px;
       }
       .set h2 {
-        font-size: clamp(14px, 4vw, 20px);
+        font-size: 180px; /* Fallback */
+        font-size: clamp(120px, 18vw, 250px);
+      }
+      .answer-display {
+        font-size: 280px; /* Fallback */
+        font-size: clamp(180px, 25vw, 400px);
+        min-height: 320px; /* Fallback */
+        min-height: clamp(200px, 30vw, 450px);
       }
     }
     
@@ -598,6 +609,16 @@
       :root {
         --circle-size: clamp(20px, 5vw, 50px);
         --section-gap: clamp(20px, 5vw, 50px);
+      }
+      .set h2 {
+        font-size: 150px; /* Fallback */
+        font-size: clamp(100px, 15vw, 200px);
+      }
+      .answer-display {
+        font-size: 220px; /* Fallback */
+        font-size: clamp(150px, 20vw, 300px);
+        min-height: 250px; /* Fallback */
+        min-height: clamp(170px, 25vw, 350px);
       }
     }
     
@@ -2029,7 +2050,7 @@ function generateSquare(n) {
           // Only include dots that aren't already filled from first click
           indicesToFill = blueDots.filter(i => !alreadyFilled.has(i));
         } else if (square === 900) {
-          // Special handling for 900 - fill all 900 dots with sky blue on first (and only) click
+        // Special handling for 900 - fill all 900 dots with sky blue on first (and only) click
           const allIndices = [];
           for (let row = 0; row < gridSize; row++) {
             for (let col = 0; col < gridSize; col++) {

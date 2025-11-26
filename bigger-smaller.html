@@ -57,10 +57,12 @@
     }
     .set h2 {
       margin: 0;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      font-size: 300px; /* Fallback for browsers without clamp() support */
+      font-size: clamp(200px, 25vw, 400px);
+      font-weight: 900;
+      letter-spacing: 4px;
       text-transform: uppercase;
+      line-height: 1.2;
     }
     .controls {
       display: flex;
@@ -1001,7 +1003,8 @@
         padding: 0 4px;
       }
       .set h2 {
-        font-size: clamp(18px, 4vw, 28px);
+        font-size: 180px; /* Fallback */
+        font-size: clamp(120px, 18vw, 250px);
       }
     }
     
@@ -1015,6 +1018,10 @@
       :root {
         --circle-size: clamp(60px, 12vw, 150px);
         --section-gap: clamp(30px, 6vw, 70px);
+      }
+      .set h2 {
+        font-size: 150px; /* Fallback */
+        font-size: clamp(100px, 15vw, 200px);
       }
     }
     

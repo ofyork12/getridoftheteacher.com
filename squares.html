@@ -36,12 +36,12 @@
       flex-wrap: wrap;
     }
     .game-nav-button {
-      padding: 30px 60px;
-      font-size: 36px;
+      padding: 36px 72px;
+      font-size: 46.08px;
       font-weight: bold;
       background: transparent;
       color: #fff;
-      border: 5px solid #fff;
+      border: 5.76px solid #fff;
       border-radius: 999px;
       cursor: pointer;
       transition: all 0.3s ease;
@@ -102,12 +102,12 @@
       gap: 12px;
     }
     .controls button {
-      padding: 25px 50px;
-      border: 4px solid #fff;
+      padding: 45px 90px;
+      border: 7.2px solid #fff;
       border-radius: 999px;
       background: transparent;
       color: #fff;
-      font-size: 32px;
+      font-size: 57.6px;
       cursor: pointer;
       transition: background 0.3s ease, color 0.3s ease;
     }
@@ -116,8 +116,8 @@
       color: #000;
     }
     .controls button.dual {
-      font-size: 26px;
-      padding: 20px 40px;
+      font-size: 46.8px;
+      padding: 36px 72px;
       opacity: 0.85;
       border-style: dashed;
     }
@@ -286,8 +286,21 @@
       position: relative;
     }
     /* Circle sizes for grids 34×34 through 50×50 */
-    /* 1156, 1225, and squares 36×36 through 50×50 use regular size like square 33 (1089) */
-    .circle-1156, .circle-1225, .circle-1296, .circle-1369, .circle-1444, .circle-1521, .circle-1600,
+    /* 1156, 1225 use regular size like square 33 (1089) */
+    /* 1296 (36×36) uses larger size for readability */
+    .circle-1156, .circle-1225 {
+      width: var(--circle-total) !important;
+      height: var(--circle-total) !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .circle-1296 {
+      width: var(--circle-total) !important;
+      height: var(--circle-total) !important;
+    }
+    .circle-1369, .circle-1444, .circle-1521, .circle-1600,
     .circle-1681, .circle-1764, .circle-1849, .circle-1936, .circle-2025, .circle-2116, .circle-2209,
     .circle-2304, .circle-2401, .circle-2500 {
       width: var(--circle-total) !important;
@@ -307,6 +320,24 @@
       user-select: none;
       z-index: 1;
       line-height: 1;
+    }
+    /* Larger numbers for squares 37×37 and above */
+    .circle-1369 .circle-number,
+    .circle-1444 .circle-number,
+    .circle-1521 .circle-number,
+    .circle-1600 .circle-number,
+    .circle-1681 .circle-number,
+    .circle-1764 .circle-number,
+    .circle-1849 .circle-number,
+    .circle-1936 .circle-number,
+    .circle-2025 .circle-number,
+    .circle-2116 .circle-number,
+    .circle-2209 .circle-number,
+    .circle-2304 .circle-number,
+    .circle-2401 .circle-number,
+    .circle-2500 .circle-number {
+      font-size: clamp(16px, 3vw, 32px);
+      font-weight: bold;
     }
     .circle.red .circle-number,
     .circle.orange .circle-number,
@@ -721,16 +752,20 @@ if ("speechSynthesis" in window) {
   initVoices();
 }
 
+// Sound toggle state
+let soundEnabled = true;
+
 function speakNumber(count) {
+  // Don't speak if sound is disabled
+  if (!soundEnabled) return;
+  
   const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
   if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
   lastSpokenCount = count;
   
-  // Ensure voice is initialized and consistent
-  if (!preferredVoice) {
-    preferredVoice = pickVoice(currentLang);
-  }
+  // Re-initialize voice for current language to ensure it's correct
+  preferredVoice = pickVoice(currentLang);
   
   window.speechSynthesis.cancel();
   window.speechSynthesis.resume();
@@ -739,7 +774,12 @@ function speakNumber(count) {
   utterance.pitch = 1;
   utterance.volume = 0.5; // 50% volume
   utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
-  if (preferredVoice) utterance.voice = preferredVoice;
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  } else {
+    // If no voice found, at least set the language hint
+    utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
+  }
   
   const isDual = dualLang.has(currentLang);
   const isEnglish = currentLang === 'en';
@@ -842,6 +882,28 @@ function selectLanguage(lang, useDual, silent = false) {
   if (useDual && lang !== "en") {
     dualLang.add(lang);
   }
+  
+  // Turn off sound button when selecting a language
+  const soundToggle = document.querySelector('.controls button[data-mode="sound"]');
+  if (soundToggle) {
+    soundToggle.classList.remove("active");
+    // If sound was disabled, re-enable it when selecting a language
+    if (!soundEnabled) {
+      soundEnabled = true;
+      soundToggle.textContent = "Sound";
+      soundToggle.classList.add("dual");
+    }
+  }
+  
+  // Turn off all language buttons first
+  buttons.forEach(btn => {
+    btn.classList.remove("active");
+  });
+  dualButtons.forEach(btn => {
+    btn.classList.remove("active");
+  });
+  
+  // Then turn on only the selected language button
   buttons.forEach(btn => {
     const active = btn.dataset.lang === lang && !useDual;
     btn.classList.toggle("active", active);
@@ -871,8 +933,116 @@ dualButtons.forEach(btn => {
 
 selectLanguage("en", false, true);
 
-setupGroup("#four .circle", {2: "orange", 3: "yellow", 4: "green"});
-setupGroup("#nine .circle", {2: "orange", 3: "yellow", 4: "green", 5: "blue", 6: "purple", 7: "brown", 8: "pink", 9: "sky"});
+// Sound toggle button
+const soundToggle = document.querySelector('.controls button[data-mode="sound"]');
+if (soundToggle) {
+  soundToggle.addEventListener("click", () => {
+    if (soundEnabled) {
+      // Disable sound and say "no sound"
+      soundEnabled = false;
+      soundToggle.textContent = "No Sound";
+      soundToggle.classList.add("active");
+      soundToggle.classList.remove("dual"); // Remove dual class to match font size
+      
+      // Turn off ALL language buttons
+      buttons.forEach(btn => {
+        btn.classList.remove("active");
+      });
+      dualButtons.forEach(btn => {
+        btn.classList.remove("active");
+      });
+      
+      // Say "no sound" or "no voice" before disabling
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("no sound");
+        utterance.rate = 1.15;
+        utterance.pitch = 1;
+        utterance.volume = 0.5;
+        if (preferredVoice) utterance.voice = preferredVoice;
+        window.speechSynthesis.speak(utterance);
+      }
+    } else {
+      // Enable sound
+      soundEnabled = true;
+      soundToggle.textContent = "Sound";
+      soundToggle.classList.remove("active");
+      soundToggle.classList.add("dual"); // Restore dual class
+      
+      // Turn on English button (default)
+      const englishButton = document.querySelector('.controls button[data-lang="en"]');
+      if (englishButton) {
+        englishButton.classList.add("active");
+      }
+    }
+  });
+}
+
+// Square 4 (2²): One click fills all 4 dots green
+const fourGrid = document.getElementById("four");
+const fourCircles = Array.from(document.querySelectorAll("#four .circle"));
+const section4 = fourCircles[0].closest('.set');
+const answerDisplay4 = section4.querySelector('.answer-display');
+let fourClickCount = 0;
+fourGrid.addEventListener("click", () => {
+  if (fourClickCount === 0) {
+    // First click: fill all 4 dots green
+    fourCircles.forEach(c => {
+      c.classList.remove(...COLOR_CLASSES);
+      c.classList.add("green");
+    });
+    fourClickCount = 1;
+    speakNumber(4);
+    if (answerDisplay4) {
+      answerDisplay4.textContent = '4';
+      answerDisplay4.classList.add('show');
+    }
+  } else {
+    // Reset
+    fourCircles.forEach(c => {
+      c.classList.remove("green", ...COLOR_CLASSES);
+    });
+    fourClickCount = 0;
+    if (answerDisplay4) {
+      answerDisplay4.textContent = '';
+      answerDisplay4.classList.remove('show');
+    }
+    speakNumber(0);
+  }
+});
+
+// Square 9 (3²): One click fills all 9 dots sky blue
+const nineGrid = document.getElementById("nine");
+const nineCircles = Array.from(document.querySelectorAll("#nine .circle"));
+const section9 = nineCircles[0].closest('.set');
+const answerDisplay9 = section9.querySelector('.answer-display');
+let nineClickCount = 0;
+nineGrid.addEventListener("click", () => {
+  if (nineClickCount === 0) {
+    // First click: fill all 9 dots sky blue
+    nineCircles.forEach(c => {
+      c.classList.remove(...COLOR_CLASSES);
+      c.classList.add("sky");
+    });
+    nineClickCount = 1;
+    speakNumber(9);
+    if (answerDisplay9) {
+      answerDisplay9.textContent = '9';
+      answerDisplay9.classList.add('show');
+    }
+  } else {
+    // Reset
+    nineCircles.forEach(c => {
+      c.classList.remove("sky", ...COLOR_CLASSES);
+    });
+    nineClickCount = 0;
+    if (answerDisplay9) {
+      answerDisplay9.textContent = '';
+      answerDisplay9.classList.remove('show');
+    }
+    speakNumber(0);
+  }
+});
 
 // Helper function to get top right corner indices for a grid
 function getTopRightCornerIndices(gridSize, count) {
@@ -961,7 +1131,7 @@ function get5DiagonalPatternIndices(gridSize) {
   return indices;
 }
 
-// Helper function to get dot number from index for square 1225 and squares 36×36 through 50×50
+// Helper function to get dot number from index for square 1225
 // Pattern: Row 0 goes right to left, Row 1+ goes left to right
 function getDotNumberFromIndex1225(idx, gridSize) {
   const row = Math.floor(idx / gridSize);
@@ -975,9 +1145,13 @@ function getDotNumberFromIndex1225(idx, gridSize) {
   }
 }
 
-// Generic helper function for squares 36×36 through 50×50 (same pattern as 1225)
+// Generic helper function for squares 36×36 through 50×50
+// Pattern: Every row goes right to left (zigzag pattern)
 function getDotNumberFromIndex36to50(idx, gridSize) {
-  return getDotNumberFromIndex1225(idx, gridSize);
+  const row = Math.floor(idx / gridSize);
+  const col = idx % gridSize;
+  // Every row goes right to left
+  return row * gridSize + (gridSize - col);
 }
 
 // Helper function to break down a number into components
@@ -1187,9 +1361,10 @@ function generateSquare(n) {
       // Store dot number in data attribute (no visible number displayed)
       circle.dataset.dotNumber = dotNumber.toString();
     } else if (square > 1225 && square <= 2500) {
-      // For squares 36×36 (1296) through 50×50 (2500), number from top-right corner going left, then down left-to-right
-      // Same pattern as square 1225: Row 0 goes right to left, Row 1+ goes left to right
-      // Add circle class for sizing (same size as square 33)
+      // For squares 36×36 (1296) through 50×50 (2500), number from top-right corner going left
+      // Row 0: right to left (col gridSize-1 = 1, col gridSize-2 = 2, ..., col 0 = gridSize)
+      // Row 1+: also right to left (zigzag pattern - every row goes right to left)
+      // Add circle class for sizing
       circle.classList.add(`circle-${square}`);
       
       // Calculate row and column for this circle
@@ -1197,17 +1372,13 @@ function generateSquare(n) {
       const col = i % gridSize;
       
       let dotNumber;
-      if (row === 0) {
-        // First row: number from right to left (col gridSize-1 = 1, col gridSize-2 = 2, ..., col 0 = gridSize)
-        dotNumber = gridSize - col;
-      } else {
-        // Subsequent rows: number left to right
-        // Row 1 starts at gridSize + 1 (after row 0's gridSize dots)
-        // Row r starts at: gridSize + (r - 1) * gridSize + 1 + col
-        dotNumber = gridSize + (row - 1) * gridSize + col + 1;
-      }
+      // Every row goes right to left
+      // Row 0: col gridSize-1 = 1, col gridSize-2 = 2, ..., col 0 = gridSize
+      // Row 1: col gridSize-1 = gridSize+1, col gridSize-2 = gridSize+2, ..., col 0 = gridSize*2
+      // Row r: starts at r * gridSize + 1, goes right to left
+      dotNumber = row * gridSize + (gridSize - col);
       
-      // Store dot number in data attribute (no visible number displayed)
+      // Store dot number in data attribute (not displayed)
       circle.dataset.dotNumber = dotNumber.toString();
     }
     grid.appendChild(circle);
@@ -1234,6 +1405,10 @@ function generateSquare(n) {
   // Special: 1225 - 1000 red, then 200 orange, then 20 orange, then 5 blue
   if (square === 1225) {
     components = [1000, 200, 20, 5];
+  }
+  // Special: 1296 - 1000 red (first click), nothing (second click), 90 sky blue (third click), 6 purple (fourth click)
+  if (square === 1296) {
+    components = [1000, 0, 90, 6];
   }
   // For squares 31×31 to 50×50, map to corresponding smaller square patterns
   // Pattern: n×n maps to (60-n)×(60-n) for the last 2 digits
@@ -1492,12 +1667,47 @@ function generateSquare(n) {
         const isHundredsPlace = (clickCount === 0 && components.length >= 3);
         const isTensPlace = (clickCount === 1 && components.length >= 3) || (clickCount === 0 && components.length === 2);
         
+        // Initialize indicesToFill early so it can be set by special handlers
+        let indicesToFill = [];
+        let is1296SpecialClick = false;
+        
+        // Track already filled indices (check for any color class) - needed by handlers
+        const alreadyFilled = new Set();
+        circles.forEach((c, i) => {
+          if (c.classList.contains("red") || c.classList.contains("orange") || 
+              c.classList.contains("yellow") || c.classList.contains("green") ||
+              c.classList.contains("blue") || c.classList.contains("purple") ||
+              c.classList.contains("brown") || c.classList.contains("pink") ||
+              c.classList.contains("sky") || c.classList.contains("red-final")) {
+            alreadyFilled.add(i);
+          }
+        });
+        
         // If component value is 0, skip filling but still increment clickCount
         // Exception: square 1225 second click has 200 dots, not 0
-        if (componentValue === 0 && !(square === 1225 && clickCount === 1)) {
+        // Exception: square 1296 second click should fill remaining black dots orange
+        if (componentValue === 0 && !(square === 1225 && clickCount === 1) && !(square === 1296 && clickCount === 1)) {
           clickCount++;
-          const currentTotal = components.slice(0, clickCount).reduce((a, b) => a + b, 0);
-          speakNumber(currentTotal);
+          if (square === 1296) {
+            // For 1296, speak cumulative totals: "1000", "1200", "1290", "1296"
+            // Components are [1000, 0, 90, 6], but we treat the second as 200 for cumulative
+            let cumulativeTotal;
+            if (clickCount === 1) {
+              cumulativeTotal = 1000;
+            } else if (clickCount === 2) {
+              cumulativeTotal = 1200; // 1000 + 200
+            } else if (clickCount === 3) {
+              cumulativeTotal = 1290; // 1000 + 200 + 90
+            } else if (clickCount === 4) {
+              cumulativeTotal = 1296; // 1000 + 200 + 90 + 6
+            } else {
+              cumulativeTotal = components.slice(0, clickCount).reduce((a, b) => a + b, 0);
+            }
+            speakNumber(cumulativeTotal);
+          } else {
+            const currentTotal = components.slice(0, clickCount).reduce((a, b) => a + b, 0);
+            speakNumber(currentTotal);
+          }
           
           // Show answer when all components are processed
           // For numbers like 100 where components are [100, 0, 0], show answer after processing non-zero components
@@ -1508,6 +1718,116 @@ function generateSquare(n) {
             answerDisplay.classList.add('show');
           }
           return; // Exit early, don't try to fill 0 dots
+        }
+        
+        // For 1296 second click, fill remaining black dots orange
+        if (square === 1296 && clickCount === 1 && componentValue === 0) {
+          // Second click: Fill all remaining black dots (that will still be black after 4th click) with orange
+          // Red dots (first click): 281-288, 297-324, 333-360, 361-1296
+          const redDotNumbers = new Set();
+          for (let dot = 281; dot <= 288; dot++) redDotNumbers.add(dot);
+          for (let dot = 297; dot <= 324; dot++) redDotNumbers.add(dot);
+          for (let dot = 333; dot <= 360; dot++) redDotNumbers.add(dot);
+          for (let dot = 361; dot <= 1296; dot++) redDotNumbers.add(dot);
+          
+          // Sky blue dots (third click): 4-10, 39-46, 74-82, 109-118, 145-154, 181-190, 217-226, 253-262, 289-297, 325-332, 360-367
+          const skyBlueDotNumbers = new Set();
+          for (let dot = 4; dot <= 10; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 39; dot <= 46; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 74; dot <= 82; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 109; dot <= 118; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 145; dot <= 154; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 181; dot <= 190; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 217; dot <= 226; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 253; dot <= 262; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 289; dot <= 297; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 325; dot <= 332; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 360; dot <= 367; dot++) skyBlueDotNumbers.add(dot);
+          
+          // Purple dots (fourth click): triangle pattern (6 dots at top-right)
+          const topRightIndices1296 = getTrianglePatternIndices(gridSize);
+          const purpleDotNumbers = new Set();
+          topRightIndices1296.forEach(idx => {
+            const circle = circles[idx];
+            let dotNumber;
+            if (circle && circle.dataset.dotNumber) {
+              dotNumber = parseInt(circle.dataset.dotNumber, 10);
+            } else if (circle) {
+              const row = Math.floor(idx / gridSize);
+              const col = idx % gridSize;
+              dotNumber = row * gridSize + (gridSize - col);
+            }
+            if (dotNumber) purpleDotNumbers.add(dotNumber);
+          });
+          
+          // Find all dots that are NOT red, sky blue, or purple (these will be black after 4th click)
+          const orangeDotNumbers = [];
+          for (let dot = 1; dot <= 1296; dot++) {
+            if (!redDotNumbers.has(dot) && !skyBlueDotNumbers.has(dot) && !purpleDotNumbers.has(dot)) {
+              orangeDotNumbers.push(dot);
+            }
+          }
+          
+          // Find circles by their dot numbers and fill with orange
+          const allIndices = [];
+          circles.forEach((circle, idx) => {
+            let dotNumber;
+            if (circle.dataset.dotNumber) {
+              dotNumber = parseInt(circle.dataset.dotNumber, 10);
+            } else {
+              const row = Math.floor(idx / gridSize);
+              const col = idx % gridSize;
+              dotNumber = row * gridSize + (gridSize - col);
+            }
+            
+            if (dotNumber && orangeDotNumbers.includes(dotNumber) && !alreadyFilled.has(idx)) {
+              allIndices.push(idx);
+            }
+          });
+          
+          indicesToFill = allIndices;
+          is1296SpecialClick = true;
+          // Note: clickCount will be incremented after filling, and voice feedback will happen then
+        } else if (square === 1296 && clickCount === 2) {
+          // Third click: Fill specific dot numbers with sky blue
+          // Dot numbers: 4-10, 39-46, 74-82, 109-118, 145-154, 181-190, 217-226, 253-262, 289-297, 325-332, 360-367
+          is1296SpecialClick = true;
+          // Ensure we don't return early - continue to filling
+          const skyBlueDotNumbers = new Set();
+          for (let dot = 4; dot <= 10; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 39; dot <= 46; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 74; dot <= 82; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 109; dot <= 118; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 145; dot <= 154; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 181; dot <= 190; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 217; dot <= 226; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 253; dot <= 262; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 289; dot <= 297; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 325; dot <= 332; dot++) skyBlueDotNumbers.add(dot);
+          for (let dot = 360; dot <= 367; dot++) skyBlueDotNumbers.add(dot);
+          
+          // Find circles by their dot numbers
+          const allIndices = [];
+          circles.forEach((circle, idx) => {
+            let dotNumber;
+            if (circle.dataset.dotNumber) {
+              dotNumber = parseInt(circle.dataset.dotNumber, 10);
+            } else {
+              const row = Math.floor(idx / gridSize);
+              const col = idx % gridSize;
+              dotNumber = row * gridSize + (gridSize - col);
+            }
+            if (dotNumber && skyBlueDotNumbers.has(dotNumber)) {
+              // Include even if already filled - we'll change them to sky blue
+              allIndices.push(idx);
+            }
+          });
+          indicesToFill = allIndices;
+        } else if (square === 1296 && clickCount === 3) {
+          // Fourth click: Fill 6 purple dots (the top-right corner pattern)
+          is1296SpecialClick = true;
+          const topRightIndices1296 = getTrianglePatternIndices(gridSize);
+          indicesToFill = topRightIndices1296.filter(i => !alreadyFilled.has(i));
         }
         
         // For 1156: second click fills remaining black dots red and moves them up
@@ -1656,11 +1976,24 @@ function generateSquare(n) {
               }
             }
           } else if (sourceSquare === 196) {
-            // 36×36 (1296) maps to 14×14 (196): 1200 (hundreds), 90 purple (tens), 6 purple (ones)
-            if (isHundredsPlace) {
-              color = COLOR_MAP[1] || "red"; // 1200 starts with 1
-            } else if (isTensPlace || isOnesPlace) {
-              color = "purple"; // 90 purple and 6 purple
+            // 36×36 (1296): 1000 red (first click), orange (second click), 90 sky blue (third click), 6 purple (fourth click)
+            if (square === 1296) {
+              if (clickCount === 0) {
+                color = "red"; // 1000 red dots
+              } else if (clickCount === 1) {
+                color = "orange"; // Remaining black dots turn orange
+              } else if (clickCount === 2) {
+                color = "sky"; // 90 sky blue dots
+              } else if (clickCount === 3) {
+                color = "purple"; // 6 purple dots
+              }
+            } else {
+              // Other squares mapping to 196: 1200 (hundreds), 90 purple (tens), 6 purple (ones)
+              if (isHundredsPlace) {
+                color = COLOR_MAP[1] || "red"; // 1200 starts with 1
+              } else if (isTensPlace || isOnesPlace) {
+                color = "purple"; // 90 purple and 6 purple
+              }
             }
           } else if (sourceSquare === 169) {
             // 37×37 (1369) maps to 13×13 (169): 1300 (hundreds), 60 purple (tens), 9 sky blue (ones)
@@ -1781,19 +2114,8 @@ function generateSquare(n) {
           // We'll handle the voice separately, but need to ensure correct totals
         }
         
-        // Track already filled indices (check for any color class)
-        const alreadyFilled = new Set();
-        circles.forEach((c, i) => {
-          if (c.classList.contains("red") || c.classList.contains("orange") || 
-              c.classList.contains("yellow") || c.classList.contains("green") ||
-              c.classList.contains("blue") || c.classList.contains("purple") ||
-              c.classList.contains("brown") || c.classList.contains("pink") ||
-              c.classList.contains("sky") || c.classList.contains("red-final")) {
-            alreadyFilled.add(i);
-          }
-        });
-        
-        let indicesToFill = [];
+        // alreadyFilled already calculated above for 1296 handlers
+        // indicesToFill already declared above for 1296 special handling
         
         // Special handling for 1156 - third click fills specific dots blue
         if (square === 1156 && clickCount === 2) {
@@ -2200,6 +2522,8 @@ function generateSquare(n) {
             }
           });
           indicesToFill = allIndices;
+        } else if (is1296SpecialClick) {
+          // 1296 third/fourth clicks already handled above - skip other handlers
         } else if (isHundredsPlace) {
           // Hundreds place: start from bottom left, fill all the way to top
           if (square === 144) {
@@ -3075,13 +3399,105 @@ function generateSquare(n) {
                   .slice(0, componentValue);
               }
             } else if (sourceSquare === 196) {
-              // 36×36 (1296) maps to 14×14 (196) - pattern for 96 (90 purple + 6 purple)
-              // Actually, 196 breaks down as 100 + 90 + 6, but we're mapping the last 2 digits (96)
-              // For now, use default pattern
-              const allIndices = getBottomLeftIndices(gridSize, componentValue + onesValue);
-              indicesToFill = allIndices
-                .filter(i => !alreadyFilled.has(i) && !topRightIndices.includes(i))
-                .slice(0, componentValue);
+              // 36×36 (1296): 1000 red (first click), nothing (second click), 90 sky blue (third click), 6 purple (fourth click)
+              // Skip this handler if we already handled 1296 third/fourth clicks above
+              if (square === 1296 && !is1296SpecialClick) {
+                if (clickCount === 2) {
+                  // Third click: Fill specific dot numbers with sky blue
+                  // Dot numbers: 4-10, 39-46, 74-82, 109-118, 145-154, 181-190, 217-226, 253-262, 289-297, 325-333, 360-367
+                  const skyBlueDotNumbers = new Set();
+                  // 4 through 10
+                  for (let dot = 4; dot <= 10; dot++) skyBlueDotNumbers.add(dot);
+                  // 39 through 46
+                  for (let dot = 39; dot <= 46; dot++) skyBlueDotNumbers.add(dot);
+                  // 74 through 82
+                  for (let dot = 74; dot <= 82; dot++) skyBlueDotNumbers.add(dot);
+                  // 109 through 118 (assuming "1 through 118" was a typo)
+                  for (let dot = 109; dot <= 118; dot++) skyBlueDotNumbers.add(dot);
+                  // 145 through 154
+                  for (let dot = 145; dot <= 154; dot++) skyBlueDotNumbers.add(dot);
+                  // 181 through 190
+                  for (let dot = 181; dot <= 190; dot++) skyBlueDotNumbers.add(dot);
+                  // 217 through 226
+                  for (let dot = 217; dot <= 226; dot++) skyBlueDotNumbers.add(dot);
+                  // 253 through 262
+                  for (let dot = 253; dot <= 262; dot++) skyBlueDotNumbers.add(dot);
+                  // 289 through 297
+                  for (let dot = 289; dot <= 297; dot++) skyBlueDotNumbers.add(dot);
+                  // 325 through 333
+                  for (let dot = 325; dot <= 333; dot++) skyBlueDotNumbers.add(dot);
+                  // 360 through 367
+                  for (let dot = 360; dot <= 367; dot++) skyBlueDotNumbers.add(dot);
+                  
+                  // Find circles by their dot numbers
+                  const allIndices = [];
+                  circles.forEach((circle, idx) => {
+                    const numberSpan = circle.querySelector('.circle-number');
+                    if (numberSpan) {
+                      const dotNumber = parseInt(numberSpan.textContent, 10);
+                      if (dotNumber && skyBlueDotNumbers.has(dotNumber) && !alreadyFilled.has(idx)) {
+                        allIndices.push(idx);
+                      }
+                    } else if (circle.dataset.dotNumber) {
+                      // Fallback to data attribute if number span doesn't exist
+                      const dotNumber = parseInt(circle.dataset.dotNumber, 10);
+                      if (dotNumber && skyBlueDotNumbers.has(dotNumber) && !alreadyFilled.has(idx)) {
+                        allIndices.push(idx);
+                      }
+                    }
+                  });
+                  indicesToFill = allIndices;
+                } else if (clickCount === 3) {
+                  // Fourth click: Fill 6 purple dots (the top-right corner pattern)
+                  indicesToFill = topRightIndices.filter(i => !alreadyFilled.has(i));
+                } else if (clickCount === 0) {
+                  // First click: Fill specific dot numbers with red
+                  // Dot numbers: 281-288, 297-324, 333-360, 361-1296
+                  const redDotNumbers = new Set();
+                  // 281 to 288
+                  for (let dot = 281; dot <= 288; dot++) redDotNumbers.add(dot);
+                  // 297 to 324
+                  for (let dot = 297; dot <= 324; dot++) redDotNumbers.add(dot);
+                  // 333 to 360
+                  for (let dot = 333; dot <= 360; dot++) redDotNumbers.add(dot);
+                  // 361 to 1296
+                  for (let dot = 361; dot <= 1296; dot++) redDotNumbers.add(dot);
+                  
+                  // Find circles by their dot numbers
+                  const allIndices = [];
+                  circles.forEach((circle, idx) => {
+                    // Get dot number from data attribute or calculate
+                    let dotNumber;
+                    if (circle.dataset.dotNumber) {
+                      dotNumber = parseInt(circle.dataset.dotNumber, 10);
+                    } else {
+                      const row = Math.floor(idx / gridSize);
+                      const col = idx % gridSize;
+                      dotNumber = row * gridSize + (gridSize - col);
+                    }
+                    
+                    if (dotNumber && redDotNumbers.has(dotNumber) && !topRightIndices.includes(idx)) {
+                      allIndices.push(idx);
+                    }
+                  });
+                  
+                  indicesToFill = allIndices
+                    .filter(i => !alreadyFilled.has(i))
+                    .slice(0, componentValue);
+                } else {
+                  // Other clicks: handled by default pattern
+                  const allIndices = getBottomLeftIndices(gridSize, componentValue + onesValue);
+                  indicesToFill = allIndices
+                    .filter(i => !alreadyFilled.has(i) && !topRightIndices.includes(i))
+                    .slice(0, componentValue);
+                }
+              } else {
+                // Other squares mapping to 196: use default pattern
+                const allIndices = getBottomLeftIndices(gridSize, componentValue + onesValue);
+                indicesToFill = allIndices
+                  .filter(i => !alreadyFilled.has(i) && !topRightIndices.includes(i))
+                  .slice(0, componentValue);
+              }
             } else if (sourceSquare === 169) {
               // 37×37 (1369) maps to 13×13 (169) - pattern for 69 (60 purple + 9 sky blue)
               // First click: 1300 dots (leaving 69 black dots matching 169 pattern)
@@ -3988,9 +4404,12 @@ function generateSquare(n) {
           }
         } else {
           // Fallback: fill remaining empty spaces
-          for (let i = 0; i < circles.length && indicesToFill.length < componentValue; i++) {
-            if (!alreadyFilled.has(i) && !topRightIndices.includes(i)) {
-              indicesToFill.push(i);
+          // Skip this for 1296 third and fourth clicks - we already set indicesToFill
+          if (!is1296SpecialClick) {
+            for (let i = 0; i < circles.length && indicesToFill.length < componentValue; i++) {
+              if (!alreadyFilled.has(i) && !topRightIndices.includes(i)) {
+                indicesToFill.push(i);
+              }
             }
           }
         }
@@ -4006,7 +4425,8 @@ function generateSquare(n) {
         // For 1225, allow third click (clickCount === 2) to proceed and move dots up
         const indicesToProcess = (square === 1156 && clickCount === 1) ? indicesToFill : 
                                   ((square === 441 && isTensPlace) ? indicesToFill : 
-                                  ((square === 1225 && clickCount === 2) ? indicesToFill : indicesToFill.slice(0, componentValue)));
+                                  ((square === 1225 && clickCount === 2) ? indicesToFill : 
+                                  (is1296SpecialClick ? indicesToFill : (indicesToFill || []).slice(0, componentValue))));
         indicesToProcess.forEach(i => {
           const c = circles[i];
           // Only fill if not already filled
@@ -4171,12 +4591,11 @@ function generateSquare(n) {
                 
                 if (existingSeparated) {
                   // Update the existing black separated circle to red
+                  // Keep it in the same position as the second click (don't move it again)
                   existingSeparated.classList.remove(...COLOR_CLASSES);
                   existingSeparated.classList.add(color); // Add red color
                   existingSeparated.style.zIndex = '10'; // Higher z-index for red dot
-                  // Move it just a little bit more (smaller offset) so it's slightly separated
-                  existingSeparated.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total) + 0.3 * var(--circle-total))`;
-                  existingSeparated.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total) - 0.3 * var(--circle-total))`;
+                  // Don't change the position - it stays where it was moved to on the second click
                 } else {
                   // Create a new circle positioned offset (right and up from top-right corner)
                   const separatedCircle = document.createElement('div');
@@ -4225,39 +4644,8 @@ function generateSquare(n) {
             
             // For 256, separate the 6 purple dots from the main grid
             // For 1156, keep purple dots in place (don't separate them)
-            if (square === 256 && isOnesPlace && color === 'purple') {
-              // Hide the original circle in the grid (remove it from the visual grid)
-              c.style.visibility = 'hidden';
-              
-              // Check if we've already created a separated circle for this index
-              const existingSeparated = separatedCircles.find(sc => {
-                const scRow = parseInt(sc.dataset.originalRow);
-                const scCol = parseInt(sc.dataset.originalCol);
-                return scRow === Math.floor(i / gridSize) && scCol === (i % gridSize);
-              });
-              
-              if (!existingSeparated) {
-                // Create a new circle positioned to the right and up, separated from the main grid
-                const separatedCircle = document.createElement('div');
-                separatedCircle.className = 'circle purple';
-                separatedCircle.style.position = 'absolute';
-                separatedCircle.style.zIndex = '10';
-                const row = Math.floor(i / gridSize);
-                const col = i % gridSize;
-                separatedCircle.dataset.originalRow = row;
-                separatedCircle.dataset.originalCol = col;
-                // Position to the right and up from where the original circle was in the top-right corner
-                // Move right: original column position + small gap (1.2 circle widths) for subtle separation
-                // Move up: original row position - small offset (0.3 circle height) for subtle separation
-                separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
-                separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.3 * var(--circle-total))`;
-                separatedCircle.style.display = 'block';
-                separatedCircle.style.visibility = 'visible';
-                separatedCircle.style.opacity = '1';
-                grid.appendChild(separatedCircle);
-                separatedCircles.push(separatedCircle);
-              }
-            }
+            // For 256 third click: purple dots just change color, don't move
+            // (No special handling needed - dots will fill normally in place)
             
             // For 225, separate the entire 5×5 rectangle (20 orange + 5 black) from the main grid
             // On second click: 20 orange dots (cols 10-13, rows 0-4) are separated and filled
@@ -4526,8 +4914,23 @@ function generateSquare(n) {
         
         clickCount++;
         // Special: For square 1225, second click should say "1200", third click should say "1220", and fourth click should say "1225"
+        // Special: For square 1296, speak cumulative totals: "1000", "1200", "1290", "1296"
         let numberToSpeak;
-        if (square === 1225 && clickCount === 2) {
+        if (square === 1296) {
+          // For 1296, speak cumulative totals
+          if (clickCount === 1) {
+            numberToSpeak = 1000;
+          } else if (clickCount === 2) {
+            numberToSpeak = 1200; // 1000 + 200
+          } else if (clickCount === 3) {
+            numberToSpeak = 1290; // 1000 + 200 + 90
+          } else if (clickCount === 4) {
+            numberToSpeak = 1296; // 1000 + 200 + 90 + 6
+          } else {
+            const currentTotal = components.slice(0, clickCount).reduce((a, b) => a + b, 0);
+            numberToSpeak = currentTotal;
+          }
+        } else if (square === 1225 && clickCount === 2) {
           numberToSpeak = 1200;
         } else if (square === 1225 && clickCount === 3) {
           numberToSpeak = 1220;
@@ -4545,7 +4948,7 @@ function generateSquare(n) {
         const processedNonZero = components.slice(0, clickCount).filter(c => c > 0).length;
         const allDotsFilled = filledCount.count >= square;
         
-        if ((clickCount >= totalClicks || processedNonZero >= nonZeroComponents.length || allDotsFilled) && answerDisplay) {
+        if ((clickCount >= totalClicks || processedNonZeroFinal >= nonZeroComponentsFinal.length || allDotsFilled) && answerDisplay) {
           answerDisplay.textContent = square;
           answerDisplay.classList.add('show');
         }

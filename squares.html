@@ -2,17 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Squares Game</title>
   <style>
     :root {
-      --circle-size: clamp(30px, 6vw, 60px); /* Smaller for up to 625 dots */
-      --circle-border: clamp(3px, 0.6vw, 6px);
+      --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
+      --circle-border: clamp(1px, 0.6vw, 6px);
       --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
-      --section-gap: clamp(30px, 6vw, 60px);
+      --section-gap: clamp(10px, 6vw, 60px);
     }
     body {
       margin: 0;
@@ -151,7 +151,7 @@
     
     /* 26×26 through 30×30 grids with numbers - larger circles */
     .grid-676, .grid-729, .grid-784, .grid-841, .grid-900 {
-      --circle-size-large: clamp(40px, 8vw, 80px);
+      --circle-size-large: clamp(15px, 8vw, 80px); /* Allow much smaller when zoomed out */
       --circle-total-large: calc(var(--circle-size-large) + var(--circle-border) * 2);
     }
     .grid-676 {
@@ -188,7 +188,7 @@
     .grid-1156, .grid-1225, .grid-1296, .grid-1369, .grid-1444, .grid-1521, .grid-1600,
     .grid-1681, .grid-1764, .grid-1849, .grid-1936, .grid-2025, .grid-2116, .grid-2209,
     .grid-2304, .grid-2401, .grid-2500 {
-      --circle-size-large: clamp(35px, 7vw, 70px);
+      --circle-size-large: clamp(12px, 7vw, 70px); /* Allow much smaller when zoomed out */
       --circle-total-large: calc(var(--circle-size-large) + var(--circle-border) * 2);
     }
     /* 1156, 1225, and squares 36×36 through 50×50 use regular size like square 33 (1089) */
@@ -312,7 +312,7 @@
     }
     /* Number styling for 26×26 through 30×30 grids */
     .circle-number {
-      font-size: clamp(10px, 2vw, 20px);
+      font-size: clamp(6px, 2vw, 20px); /* Allow smaller when zoomed out */
       font-weight: bold;
       color: #fff;
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8);
@@ -336,7 +336,7 @@
     .circle-2304 .circle-number,
     .circle-2401 .circle-number,
     .circle-2500 .circle-number {
-      font-size: clamp(16px, 3vw, 32px);
+      font-size: clamp(10px, 3vw, 32px); /* Allow smaller when zoomed out */
       font-weight: bold;
     }
     .circle.red .circle-number,

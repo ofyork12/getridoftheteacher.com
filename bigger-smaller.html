@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, minimum-scale=0.1, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- These kill ALL caching forever – latest version every refresh -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -27,19 +27,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--section-gap);
+      gap: var(--sectIion-gap);
       padding: 40px 12px 120px;
-      overflow-x: hidden;
       overflow-y: auto;
       -webkit-tap-highlight-color: transparent;
-      -webkit-overflow-scrolling: touch;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    html {
-      overflow-x: hidden;
-      width: 100%;
-      position: relative;
     }
     .set {
       display: flex;
@@ -47,22 +38,17 @@
       align-items: center;
       gap: 12px;
       width: 100%;
-      max-width: 100%;
       text-align: center;
-      box-sizing: border-box;
-      padding: 0 8px;
     }
     .set > :last-child {
       margin: 0 auto;
     }
     .set h2 {
       margin: 0;
-      font-size: 225px; /* Fallback for browsers without clamp() support - reduced by 25% */
-      font-size: clamp(150px, 18.75vw, 300px); /* Reduced by 25% */
-      font-weight: 900;
-      letter-spacing: 4px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      line-height: 1.2;
     }
     .controls {
       display: flex;
@@ -803,14 +789,13 @@
       width: calc(var(--game-circle-total) * 4);
       height: calc(var(--game-triangle-rise) * 3 + var(--game-circle-total));
     }
-    /* Triangle outline using SVG for precise positioning - scales with circle size */
+    /* Triangle outline using SVG for precise positioning */
     .game-option.stack-ten .triangle-svg {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: calc(var(--game-circle-total) * 3);
-      height: calc(var(--game-triangle-rise) * 2.5);
-      transform: translate(-50%, -50%);
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
       pointer-events: none;
       z-index: 2;
       overflow: visible;
@@ -820,7 +805,7 @@
     }
     .game-option.stack-ten .triangle-svg line {
       stroke: #fff;
-      stroke-width: calc(var(--game-circle-total) * 0.05);
+      stroke-width: 4;
       stroke-linecap: round;
     }
     .game-option.stack-ten .circle {
@@ -993,50 +978,6 @@
     .practice-mode.hide {
       display: none;
     }
-    
-    /* Mobile and tablet responsiveness */
-    @media screen and (max-width: 768px) {
-      body {
-        padding: 20px 8px 100px;
-      }
-      .set {
-        padding: 0 4px;
-      }
-      .set h2 {
-        font-size: 135px; /* Fallback - reduced by 25% */
-        font-size: clamp(90px, 13.5vw, 187px); /* Reduced by 25% */
-      }
-    }
-    
-    @media screen and (max-width: 480px) {
-      body {
-        padding: 15px 4px 90px;
-      }
-      .set {
-        padding: 0 2px;
-      }
-      :root {
-        --circle-size: clamp(60px, 12vw, 150px);
-        --section-gap: clamp(30px, 6vw, 70px);
-      }
-      .set h2 {
-        font-size: 112px; /* Fallback - reduced by 25% */
-        font-size: clamp(75px, 11.25vw, 150px); /* Reduced by 25% */
-      }
-    }
-    
-    /* Prevent text selection issues on mobile */
-    * {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    
-    /* Allow text selection for numbers and text content */
-    .circle-number, h2, .answer-display {
-      -webkit-user-select: text;
-      user-select: text;
-    }
   </style>
 </head>
 <body>
@@ -1111,32 +1052,28 @@
       <button class="dual" data-mode="sound">Sound</button>
     </div>
     <div class="lang-group">
-      <button data-english-voice="male" class="active">English Male</button>
-      <button data-english-voice="female">English Female</button>
-    </div>
-    <div class="lang-group">
       <button data-lang="vi">Tiếng Việt</button>
-      <button class="dual" data-dual="vi">Tiếng Việt English</button>
+      <button class="dual" data-dual="vi">Tiếng Việt + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="zh">中文</button>
-      <button class="dual" data-dual="zh">中文 English</button>
+      <button class="dual" data-dual="zh">中文 + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="ko">한국어</button>
-      <button class="dual" data-dual="ko">한국어 English</button>
+      <button class="dual" data-dual="ko">한국어 + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="es">Español</button>
-      <button class="dual" data-dual="es">Español English</button>
+      <button class="dual" data-dual="es">Español + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="fr">Français</button>
-      <button class="dual" data-dual="fr">Français English</button>
+      <button class="dual" data-dual="fr">Français + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="hi">हिन्दी</button>
-      <button class="dual" data-dual="hi">हिन्दी English</button>
+      <button class="dual" data-dual="hi">हिन्दी + English</button>
     </div>
   </div>
 
@@ -1278,7 +1215,6 @@ const LANGUAGE_HINTS = {
 let currentLang = "en";
 let preferredVoice = null;
 let englishVoice = null;
-let englishVoiceGender = "male"; // "male" or "female"
 const dualLang = new Set();
 let lastSpokenCount = 0;
 const SOUND_MODE = {
@@ -1296,110 +1232,6 @@ function pickVoice(langCode) {
   if (!voices.length) return null;
 
   const langHint = LANGUAGE_HINTS[langCode] || langCode;
-  
-  // For English, prioritize based on selected gender preference
-  if (langCode === "en") {
-    const englishVoices = voices.filter(v => 
-      v.lang && (v.lang.startsWith("en") || v.lang.includes("English"))
-    );
-    
-    if (englishVoices.length > 0) {
-      const preferFemale = englishVoiceGender === "female";
-      
-      // Helper function to check if voice is female
-      const isFemaleVoice = (v) => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") ||
-               name.includes("zira") ||
-               name.includes("samantha") ||
-               name.includes("karen") ||
-               name.includes("victoria") ||
-               name.includes("susan") ||
-               name.includes("hazel") ||
-               name.includes("linda") ||
-               name.includes("aria") ||
-               name.includes("jenny") ||
-               name.includes("eva") ||
-               name.includes("katy");
-      };
-      
-      // Helper function to check if voice is male
-      const isMaleVoice = (v) => {
-        const name = v.name.toLowerCase();
-        return name.includes("male") ||
-               name.includes("david") ||
-               name.includes("mark") ||
-               name.includes("richard") ||
-               name.includes("james") ||
-               name.includes("guy") ||
-               name.includes("daniel") ||
-               name.includes("thomas");
-      };
-      
-      // Separate voices by gender
-      const femaleVoices = englishVoices.filter(isFemaleVoice);
-      const maleVoices = englishVoices.filter(isMaleVoice);
-      const neutralVoices = englishVoices.filter(v => !isFemaleVoice(v) && !isMaleVoice(v));
-      
-      // Get voices for preferred gender
-      const preferredGenderVoices = preferFemale ? femaleVoices : maleVoices;
-      const otherGenderVoices = preferFemale ? maleVoices : femaleVoices;
-      
-      // Priority 1: Neural/Natural/Premium voices of preferred gender
-      const neuralPreferred = preferredGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("neural") || 
-        v.name.toLowerCase().includes("natural") ||
-        v.name.toLowerCase().includes("premium")
-      );
-      if (neuralPreferred.length > 0) {
-        // Prefer online/cloud voices
-        const onlineNeural = neuralPreferred.find(v => 
-          v.name.toLowerCase().includes("online") ||
-          v.name.toLowerCase().includes("cloud")
-        );
-        if (onlineNeural) return onlineNeural;
-        return neuralPreferred[0];
-      }
-      
-      // Priority 2: Online/Cloud voices of preferred gender
-      const onlinePreferred = preferredGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("online") ||
-        v.name.toLowerCase().includes("cloud") ||
-        v.name.toLowerCase().includes("google")
-      );
-      if (onlinePreferred.length > 0) {
-        return onlinePreferred[0];
-      }
-      
-      // Priority 3: Any voice of preferred gender
-      if (preferredGenderVoices.length > 0) {
-        return preferredGenderVoices[0];
-      }
-      
-      // Priority 4: Neural/Natural voices of other gender (if preferred not available)
-      const neuralOther = otherGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("neural") || 
-        v.name.toLowerCase().includes("natural") ||
-        v.name.toLowerCase().includes("premium")
-      );
-      if (neuralOther.length > 0) {
-        return neuralOther[0];
-      }
-      
-      // Priority 5: Any voice of other gender
-      if (otherGenderVoices.length > 0) {
-        return otherGenderVoices[0];
-      }
-      
-      // Priority 6: Neutral voices
-      if (neutralVoices.length > 0) {
-        return neutralVoices[0];
-      }
-      
-      // Fallback: any English voice
-      return englishVoices[0];
-    }
-  }
   
   // For Chinese, try to find a good Chinese voice
   if (langCode === "zh") {
@@ -1431,6 +1263,17 @@ function pickVoice(langCode) {
   const langGroup = voices.filter(v => v.lang && v.lang.startsWith(langHint));
   if (langGroup.length) return langGroup[0];
 
+  const fallbacks = [
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
+  ];
+
+  for (const name of fallbacks) {
+    const voice = voices.find(v => v.name === name);
+    if (voice) return voice;
+  }
   return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
 }
 
@@ -1455,51 +1298,35 @@ function speakNumber(count) {
   if (shouldSpeakVoice) {
     window.speechSynthesis.cancel();
     window.speechSynthesis.resume();
-    
+    const utterance = new SpeechSynthesisUtterance(words[count]);
+    utterance.rate = 1.15;
+    utterance.pitch = 1;
+    utterance.volume = 0.7; // 70% volume
+    // Set the language code explicitly for better pronunciation
+    utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
+    if (preferredVoice) utterance.voice = preferredVoice;
     requestAnimationFrame(() => {
       const isDual = dualLang.has(currentLang);
       const isEnglish = currentLang === 'en';
       
       if (isEnglish) {
         // English only - say it once
-        const utterance = new SpeechSynthesisUtterance(words[count]);
-        utterance.rate = 1.15;
-        utterance.pitch = 1;
-        utterance.volume = 0.35; // 35% volume
-        utterance.lang = LANGUAGE_HINTS.en || "en";
-        if (englishVoice) utterance.voice = englishVoice;
         window.speechSynthesis.speak(utterance);
       } else if (isDual) {
         // Dual mode: native first, then English
-        // First, speak the native language word
-        const nativeWord = words[count];
-        const nativeUtterance = new SpeechSynthesisUtterance(nativeWord);
-        nativeUtterance.rate = 1.15;
-        nativeUtterance.pitch = 1;
-        nativeUtterance.volume = 0.35; // 35% volume
-        nativeUtterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
-        if (preferredVoice) nativeUtterance.voice = preferredVoice;
-        
-        // Then, speak English after native finishes
-        nativeUtterance.onend = () => {
+        utterance.onend = () => {
           const englishWord = NUMBER_WORDS.en[count];
-          const englishUtterance = new SpeechSynthesisUtterance(englishWord);
-          englishUtterance.rate = 1.15;
-          englishUtterance.pitch = 1;
-          englishUtterance.volume = 0.35; // 35% volume
-          englishUtterance.lang = LANGUAGE_HINTS.en || "en";
-          if (englishVoice) englishUtterance.voice = englishVoice;
-          window.speechSynthesis.speak(englishUtterance);
+          const follow = new SpeechSynthesisUtterance(englishWord);
+          follow.rate = 1.15;
+          follow.pitch = 1;
+          follow.volume = 0.7; // 70% volume
+          follow.lang = LANGUAGE_HINTS.en || "en";
+          if (englishVoice) follow.voice = englishVoice;
+          window.speechSynthesis.speak(follow);
         };
-        window.speechSynthesis.speak(nativeUtterance);
+        window.speechSynthesis.speak(utterance);
       } else {
         // Native only
-        const utterance = new SpeechSynthesisUtterance(words[count]);
-        utterance.rate = 1.15;
-        utterance.pitch = 1;
-        utterance.volume = 0.35; // 35% volume
-        utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
-        if (preferredVoice) utterance.voice = preferredVoice;
         window.speechSynthesis.speak(utterance);
       }
       if (shouldPlayTone) {
@@ -1565,30 +1392,6 @@ const cycleSoundMode = () => {
 
 soundToggle.addEventListener("click", cycleSoundMode);
 
-function selectEnglishVoiceGender(gender) {
-  englishVoiceGender = gender;
-  // Reinitialize English voice with new gender preference
-  englishVoice = pickVoice("en");
-  
-  // Update button states
-  const englishVoiceButtons = Array.from(document.querySelectorAll(".controls button[data-english-voice]"));
-  englishVoiceButtons.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.englishVoice === gender);
-  });
-  
-  // Save to localStorage
-  try {
-    localStorage.setItem('englishVoiceGender', gender);
-  } catch (e) {
-    // localStorage not available, ignore
-  }
-  
-  // If currently speaking English or in dual mode, re-speak the last number
-  if (currentLang === "en" || dualLang.has(currentLang)) {
-    speakNumber(lastSpokenCount);
-  }
-}
-
 function selectLanguage(lang, useDual, silent = false) {
   const isNewSelection = currentLang !== lang || useDual !== dualLang.has(lang);
   currentLang = lang;
@@ -1606,14 +1409,6 @@ function selectLanguage(lang, useDual, silent = false) {
     const active = btn.dataset.dual === lang && useDual;
     btn.classList.toggle("active", active);
   });
-
-  // Save to localStorage for persistence across pages
-  try {
-    localStorage.setItem('selectedLanguage', lang);
-    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
-  } catch (e) {
-    // localStorage not available, ignore
-  }
 
   if (!silent && isNewSelection) {
     speakNumber(lastSpokenCount);
@@ -1665,42 +1460,7 @@ dualButtons.forEach(btn => {
   });
 });
 
-// English voice gender buttons
-const englishVoiceButtons = Array.from(document.querySelectorAll(".controls button[data-english-voice]"));
-englishVoiceButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    selectEnglishVoiceGender(btn.dataset.englishVoice);
-  });
-});
-
-// Load saved language preference from localStorage
-let savedLang = "en";
-let savedUseDual = false;
-let savedEnglishVoiceGender = "male";
-try {
-  const savedLangValue = localStorage.getItem('selectedLanguage');
-  const savedDualValue = localStorage.getItem('useDualLanguage');
-  const savedGenderValue = localStorage.getItem('englishVoiceGender');
-  if (savedLangValue) {
-    savedLang = savedLangValue;
-  }
-  if (savedDualValue === 'true') {
-    savedUseDual = true;
-  }
-  if (savedGenderValue === 'female' || savedGenderValue === 'male') {
-    savedEnglishVoiceGender = savedGenderValue;
-  }
-} catch (e) {
-  // localStorage not available, use defaults
-}
-
-// Set English voice gender preference first (before selecting language)
-selectEnglishVoiceGender(savedEnglishVoiceGender);
-selectLanguage(savedLang, savedUseDual, true);
-// Update instructions language after loading saved preference
-if (typeof updateInstructionsLanguage === 'function') {
-  updateInstructionsLanguage();
-}
+selectLanguage("en", false, true);
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});
@@ -1848,42 +1608,57 @@ function createNumberGroup(num) {
     // Container height is: triangle-rise * 3 + circle-total
     // Row 3 is approximately 2/3 down from top, which is about 33% from top
     // Center both triangle and circle on this exact point
-    // Triangle will scale with CSS variables - no fixed pixel sizes
     const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     triangle.className = 'triangle-svg';
-    // Position and size are handled by CSS - no inline styles needed
-    triangle.setAttribute('viewBox', '0 0 300 260');
+    triangle.style.position = 'absolute';
+    // Center horizontally and vertically on the violet dot (center of 10 dots)
+    triangle.style.left = '50%';
+    triangle.style.left = '50.5%'; // Moved left by half the previous adjustment
+    triangle.style.top = '41%'; // Moved down a touch more
+    triangle.style.transform = 'translate(-50%, -50%)';
+    triangle.style.width = '150px'; // A little smaller
+    triangle.style.height = '130px'; // Equilateral: height = width * sqrt(3)/2 ≈ 130
+    triangle.style.zIndex = '2'; // Above dots, below green circle
+    triangle.setAttribute('viewBox', '0 0 150 130');
     triangle.setAttribute('preserveAspectRatio', 'none');
     triangle.setAttribute('overflow', 'visible');
     
     // Create equilateral triangle using 3 line segments
-    // Using viewBox coordinates (0 0 300 260) so it scales properly
-    // Top point: (150, 0) - center top
-    // Bottom left: (0, 260) - bottom left
-    // Bottom right: (300, 260) - bottom right
+    // Top point: (75, 0) - center top
+    // Bottom left: (0, 130) - bottom left
+    // Bottom right: (150, 130) - bottom right
     
     // Line 1: Top to bottom left
     const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line1.setAttribute('x1', '150');
+    line1.setAttribute('x1', '75');
     line1.setAttribute('y1', '0');
     line1.setAttribute('x2', '0');
-    line1.setAttribute('y2', '260');
+    line1.setAttribute('y2', '130');
+    line1.setAttribute('stroke', '#fff');
+    line1.setAttribute('stroke-width', '3'); // Thinner lines
+    line1.setAttribute('stroke-linecap', 'round');
     triangle.appendChild(line1);
     
     // Line 2: Top to bottom right
     const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line2.setAttribute('x1', '150');
+    line2.setAttribute('x1', '75');
     line2.setAttribute('y1', '0');
-    line2.setAttribute('x2', '300');
-    line2.setAttribute('y2', '260');
+    line2.setAttribute('x2', '150');
+    line2.setAttribute('y2', '130');
+    line2.setAttribute('stroke', '#fff');
+    line2.setAttribute('stroke-width', '3'); // Thinner lines
+    line2.setAttribute('stroke-linecap', 'round');
     triangle.appendChild(line2);
     
     // Line 3: Bottom left to bottom right
     const line3 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line3.setAttribute('x1', '0');
-    line3.setAttribute('y1', '260');
-    line3.setAttribute('x2', '300');
-    line3.setAttribute('y2', '260');
+    line3.setAttribute('y1', '130');
+    line3.setAttribute('x2', '150');
+    line3.setAttribute('y2', '130');
+    line3.setAttribute('stroke', '#fff');
+    line3.setAttribute('stroke-width', '3'); // Thinner lines
+    line3.setAttribute('stroke-linecap', 'round');
     triangle.appendChild(line3);
     
     container.appendChild(triangle);
@@ -2131,8 +1906,16 @@ function handleAnswer(answer, question, rowIndex) {
           const enUtterance = new SpeechSynthesisUtterance(messages.native);
           enUtterance.rate = 0.9;
           enUtterance.pitch = 0.95;
-          enUtterance.volume = 0.35; // 35% volume
-          if (englishVoice) {
+          enUtterance.volume = 0.7; // 70% volume
+          const voices = window.speechSynthesis.getVoices();
+          const pleasantVoices = voices.filter(v => 
+            (v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Samantha') || 
+             v.name.includes('Karen') || v.name.includes('Victoria') || v.name.includes('Zira')) &&
+            v.lang.startsWith('en')
+          );
+          if (pleasantVoices.length > 0) {
+            enUtterance.voice = pleasantVoices[0];
+          } else if (englishVoice) {
             enUtterance.voice = englishVoice;
           }
           window.speechSynthesis.speak(enUtterance);
@@ -2141,7 +1924,7 @@ function handleAnswer(answer, question, rowIndex) {
           const nativeUtterance = new SpeechSynthesisUtterance(messages.native);
           nativeUtterance.rate = 0.9;
           nativeUtterance.pitch = 0.95;
-          nativeUtterance.volume = 0.35; // 35% volume
+          nativeUtterance.volume = 0.7; // 70% volume
           if (preferredVoice) {
             nativeUtterance.voice = preferredVoice;
           }
@@ -2150,8 +1933,16 @@ function handleAnswer(answer, question, rowIndex) {
             const enUtterance = new SpeechSynthesisUtterance(messages.english);
             enUtterance.rate = 0.9;
             enUtterance.pitch = 0.95;
-            enUtterance.volume = 0.35; // 35% volume
-            if (englishVoice) {
+            enUtterance.volume = 0.7; // 70% volume
+            const voices = window.speechSynthesis.getVoices();
+            const pleasantVoices = voices.filter(v => 
+              (v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Samantha') || 
+               v.name.includes('Karen') || v.name.includes('Victoria') || v.name.includes('Zira')) &&
+              v.lang.startsWith('en')
+            );
+            if (pleasantVoices.length > 0) {
+              enUtterance.voice = pleasantVoices[0];
+            } else if (englishVoice) {
               enUtterance.voice = englishVoice;
             }
             window.speechSynthesis.speak(enUtterance);
@@ -2163,7 +1954,7 @@ function handleAnswer(answer, question, rowIndex) {
           const nativeUtterance = new SpeechSynthesisUtterance(messages.native);
           nativeUtterance.rate = 0.9;
           nativeUtterance.pitch = 0.95;
-          nativeUtterance.volume = 0.35; // 35% volume
+          nativeUtterance.volume = 0.7; // 70% volume
           if (preferredVoice) {
             nativeUtterance.voice = preferredVoice;
           }
@@ -2256,9 +2047,17 @@ function handleAnswer(answer, question, rowIndex) {
         const utterance = new SpeechSynthesisUtterance("Try again");
         utterance.rate = 0.9;
         utterance.pitch = 0.95;
-        utterance.volume = 0.35; // 35% volume
-        if (englishVoice) {
-          utterance.voice = englishVoice;
+        utterance.volume = 0.7; // 70% volume
+        const voices = window.speechSynthesis.getVoices();
+        const pleasantVoices = voices.filter(v => 
+          (v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Samantha') || 
+           v.name.includes('Karen') || v.name.includes('Victoria') || v.name.includes('Zira')) &&
+          v.lang.startsWith('en')
+        );
+        if (pleasantVoices.length > 0) {
+          utterance.voice = pleasantVoices[0];
+        } else if (preferredVoice) {
+          utterance.voice = preferredVoice;
         }
         window.speechSynthesis.speak(utterance);
       }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, minimum-scale=0.1, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- These kill ALL caching forever – latest version every refresh -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -28,17 +28,8 @@
       align-items: center;
       gap: var(--section-gap);
       padding: 40px 12px 120px;
-      overflow-x: hidden;
       overflow-y: auto;
       -webkit-tap-highlight-color: transparent;
-      -webkit-overflow-scrolling: touch;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    html {
-      overflow-x: hidden;
-      width: 100%;
-      position: relative;
     }
     .set {
       display: flex;
@@ -46,22 +37,17 @@
       align-items: center;
       gap: 12px;
       width: 100%;
-      max-width: 100%;
       text-align: center;
-      box-sizing: border-box;
-      padding: 0 8px;
     }
     .set > :last-child {
       margin: 0 auto;
     }
     .set h2 {
       margin: 0;
-      font-size: 225px; /* Fallback for browsers without clamp() support - reduced by 25% */
-      font-size: clamp(150px, 18.75vw, 300px); /* Reduced by 25% */
-      font-weight: 900;
-      letter-spacing: 4px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      line-height: 1.2;
     }
     .controls {
       display: flex;
@@ -352,49 +338,6 @@
       background: #fff;
       color: #000;
     }
-    /* Mobile and tablet responsiveness */
-    @media screen and (max-width: 768px) {
-      body {
-        padding: 20px 8px 100px;
-      }
-      .set {
-        padding: 0 4px;
-      }
-      .set h2 {
-        font-size: 135px; /* Fallback - reduced by 25% */
-        font-size: clamp(90px, 13.5vw, 187px); /* Reduced by 25% */
-      }
-    }
-    
-    @media screen and (max-width: 480px) {
-      body {
-        padding: 15px 4px 90px;
-      }
-      .set {
-        padding: 0 2px;
-      }
-      :root {
-        --circle-size: clamp(60px, 12vw, 150px);
-        --section-gap: clamp(30px, 6vw, 70px);
-      }
-      .set h2 {
-        font-size: 112px; /* Fallback - reduced by 25% */
-        font-size: clamp(75px, 11.25vw, 150px); /* Reduced by 25% */
-      }
-    }
-    
-    /* Prevent text selection issues on mobile */
-    * {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    
-    /* Allow text selection for numbers and text content */
-    .circle-number, h2, .answer-display {
-      -webkit-user-select: text;
-      user-select: text;
-    }
   </style>
 </head>
 <body>
@@ -411,32 +354,28 @@
       <button class="dual" data-mode="sound">Sound</button>
     </div>
     <div class="lang-group">
-      <button data-english-voice="male" class="active">English Male</button>
-      <button data-english-voice="female">English Female</button>
-    </div>
-    <div class="lang-group">
       <button data-lang="vi">Tiếng Việt</button>
-      <button class="dual" data-dual="vi">Tiếng Việt English</button>
+      <button class="dual" data-dual="vi">Tiếng Việt + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="zh">中文</button>
-      <button class="dual" data-dual="zh">中文 English</button>
+      <button class="dual" data-dual="zh">中文 + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="ko">한국어</button>
-      <button class="dual" data-dual="ko">한국어 English</button>
+      <button class="dual" data-dual="ko">한국어 + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="es">Español</button>
-      <button class="dual" data-dual="es">Español English</button>
+      <button class="dual" data-dual="es">Español + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="fr">Français</button>
-      <button class="dual" data-dual="fr">Français English</button>
+      <button class="dual" data-dual="fr">Français + English</button>
     </div>
     <div class="lang-group">
       <button data-lang="hi">हिन्दी</button>
-      <button class="dual" data-dual="hi">हिन्दी English</button>
+      <button class="dual" data-dual="hi">हिन्दी + English</button>
     </div>
   </div>
 
@@ -577,7 +516,6 @@ const LANGUAGE_HINTS = {
 let currentLang = "en";
 let preferredVoice = null;
 let englishVoice = null;
-let englishVoiceGender = "male"; // "male" or "female"
 const dualLang = new Set();
 let lastSpokenCount = 0;
 const SOUND_MODE = {
@@ -594,115 +532,20 @@ function pickVoice(langCode) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const langHint = LANGUAGE_HINTS[langCode] || langCode;
-  
-  // For English, prioritize based on selected gender preference
-  if (langCode === "en") {
-    const englishVoices = voices.filter(v => 
-      v.lang && (v.lang.startsWith("en") || v.lang.includes("English"))
-    );
-    
-    if (englishVoices.length > 0) {
-      const preferFemale = englishVoiceGender === "female";
-      
-      // Helper function to check if voice is female
-      const isFemaleVoice = (v) => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") ||
-               name.includes("zira") ||
-               name.includes("samantha") ||
-               name.includes("karen") ||
-               name.includes("victoria") ||
-               name.includes("susan") ||
-               name.includes("hazel") ||
-               name.includes("linda") ||
-               name.includes("aria") ||
-               name.includes("jenny") ||
-               name.includes("eva") ||
-               name.includes("katy");
-      };
-      
-      // Helper function to check if voice is male
-      const isMaleVoice = (v) => {
-        const name = v.name.toLowerCase();
-        return name.includes("male") ||
-               name.includes("david") ||
-               name.includes("mark") ||
-               name.includes("richard") ||
-               name.includes("james") ||
-               name.includes("guy") ||
-               name.includes("daniel") ||
-               name.includes("thomas");
-      };
-      
-      // Separate voices by gender
-      const femaleVoices = englishVoices.filter(isFemaleVoice);
-      const maleVoices = englishVoices.filter(isMaleVoice);
-      const neutralVoices = englishVoices.filter(v => !isFemaleVoice(v) && !isMaleVoice(v));
-      
-      // Get voices for preferred gender
-      const preferredGenderVoices = preferFemale ? femaleVoices : maleVoices;
-      const otherGenderVoices = preferFemale ? maleVoices : femaleVoices;
-      
-      // Priority 1: Neural/Natural/Premium voices of preferred gender
-      const neuralPreferred = preferredGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("neural") || 
-        v.name.toLowerCase().includes("natural") ||
-        v.name.toLowerCase().includes("premium")
-      );
-      if (neuralPreferred.length > 0) {
-        // Prefer online/cloud voices
-        const onlineNeural = neuralPreferred.find(v => 
-          v.name.toLowerCase().includes("online") ||
-          v.name.toLowerCase().includes("cloud")
-        );
-        if (onlineNeural) return onlineNeural;
-        return neuralPreferred[0];
-      }
-      
-      // Priority 2: Online/Cloud voices of preferred gender
-      const onlinePreferred = preferredGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("online") ||
-        v.name.toLowerCase().includes("cloud") ||
-        v.name.toLowerCase().includes("google")
-      );
-      if (onlinePreferred.length > 0) {
-        return onlinePreferred[0];
-      }
-      
-      // Priority 3: Any voice of preferred gender
-      if (preferredGenderVoices.length > 0) {
-        return preferredGenderVoices[0];
-      }
-      
-      // Priority 4: Neural/Natural voices of other gender (if preferred not available)
-      const neuralOther = otherGenderVoices.filter(v => 
-        v.name.toLowerCase().includes("neural") || 
-        v.name.toLowerCase().includes("natural") ||
-        v.name.toLowerCase().includes("premium")
-      );
-      if (neuralOther.length > 0) {
-        return neuralOther[0];
-      }
-      
-      // Priority 5: Any voice of other gender
-      if (otherGenderVoices.length > 0) {
-        return otherGenderVoices[0];
-      }
-      
-      // Priority 6: Neutral voices
-      if (neutralVoices.length > 0) {
-        return neutralVoices[0];
-      }
-      
-      // Fallback: any English voice
-      return englishVoices[0];
-    }
-  }
-  
-  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(langHint));
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
   if (langGroup.length) return langGroup[0];
 
+  const fallbacks = [
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
+  ];
+
+  for (const name of fallbacks) {
+    const voice = voices.find(v => v.name === name);
+    if (voice) return voice;
+  }
   return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
 }
 
@@ -730,7 +573,6 @@ function speakNumber(count) {
     const utterance = new SpeechSynthesisUtterance(words[count]);
     utterance.rate = 1.15;
     utterance.pitch = 1;
-    utterance.volume = 0.35; // 35% volume
     if (preferredVoice) utterance.voice = preferredVoice;
     requestAnimationFrame(() => {
       window.speechSynthesis.speak(utterance);
@@ -739,7 +581,6 @@ function speakNumber(count) {
         const follow = new SpeechSynthesisUtterance(englishWord);
         follow.rate = 1.15;
         follow.pitch = 1;
-        follow.volume = 0.35; // 35% volume
         follow.voice = englishVoice;
         window.speechSynthesis.speak(follow);
       }
@@ -806,30 +647,6 @@ const cycleSoundMode = () => {
 
 soundToggle.addEventListener("click", cycleSoundMode);
 
-function selectEnglishVoiceGender(gender) {
-  englishVoiceGender = gender;
-  // Reinitialize English voice with new gender preference
-  englishVoice = pickVoice("en");
-  
-  // Update button states
-  const englishVoiceButtons = Array.from(document.querySelectorAll(".controls button[data-english-voice]"));
-  englishVoiceButtons.forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.englishVoice === gender);
-  });
-  
-  // Save to localStorage
-  try {
-    localStorage.setItem('englishVoiceGender', gender);
-  } catch (e) {
-    // localStorage not available, ignore
-  }
-  
-  // If currently speaking English or in dual mode, re-speak the last number
-  if (currentLang === "en" || dualLang.has(currentLang)) {
-    speakNumber(lastSpokenCount);
-  }
-}
-
 function selectLanguage(lang, useDual, silent = false) {
   const isNewSelection = currentLang !== lang || useDual !== dualLang.has(lang);
   currentLang = lang;
@@ -847,14 +664,6 @@ function selectLanguage(lang, useDual, silent = false) {
     const active = btn.dataset.dual === lang && useDual;
     btn.classList.toggle("active", active);
   });
-
-  // Save to localStorage for persistence across pages
-  try {
-    localStorage.setItem('selectedLanguage', lang);
-    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
-  } catch (e) {
-    // localStorage not available, ignore
-  }
 
   if (!silent && isNewSelection) {
     speakNumber(lastSpokenCount);
@@ -892,38 +701,7 @@ dualButtons.forEach(btn => {
   });
 });
 
-// English voice gender buttons
-const englishVoiceButtons = Array.from(document.querySelectorAll(".controls button[data-english-voice]"));
-englishVoiceButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    selectEnglishVoiceGender(btn.dataset.englishVoice);
-  });
-});
-
-// Load saved language preference from localStorage
-let savedLang = "en";
-let savedUseDual = false;
-let savedEnglishVoiceGender = "male";
-try {
-  const savedLangValue = localStorage.getItem('selectedLanguage');
-  const savedDualValue = localStorage.getItem('useDualLanguage');
-  const savedGenderValue = localStorage.getItem('englishVoiceGender');
-  if (savedLangValue) {
-    savedLang = savedLangValue;
-  }
-  if (savedDualValue === 'true') {
-    savedUseDual = true;
-  }
-  if (savedGenderValue === 'female' || savedGenderValue === 'male') {
-    savedEnglishVoiceGender = savedGenderValue;
-  }
-} catch (e) {
-  // localStorage not available, use defaults
-}
-
-// Set English voice gender preference first (before selecting language)
-selectEnglishVoiceGender(savedEnglishVoiceGender);
-selectLanguage(savedLang, savedUseDual, true);
+selectLanguage("en", false, true);
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});

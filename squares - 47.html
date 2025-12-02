@@ -5366,9 +5366,8 @@ function generateSquare(n, label = null) {
             // This includes row 0, col 20 which stays black but also offsets
             // For 1156 second click (clickCount === 1), move 100 red dots up 1 dot distance (vertically only)
             // For 1225 third click (clickCount === 2), move 20 orange dots up 1 dot distance (vertically only)
-            // For 2209 second click (clickCount === 1), move 200 orange dots up 1.5 dot distance (vertically only)
             // For 841, don't offset - just change colors in place
-            if ((square === 441 && isTensPlace) || (square === 1156 && clickCount === 1) || (square === 1225 && clickCount === 2) || (square === 2209 && clickCount === 1)) {
+            if ((square === 441 && isTensPlace) || (square === 1156 && clickCount === 1) || (square === 1225 && clickCount === 2)) {
               const row = Math.floor(i / gridSize);
               const col = i % gridSize;
               
@@ -5377,16 +5376,14 @@ function generateSquare(n, label = null) {
               //          Diagonal dot (row 5, col 12)
               // For 1156: all 100 red dots on second click move up 1 dot distance (straight up)
               // For 1225: all 20 orange dots + 5 black dots (that will turn blue) on third click move up 1 dot distance (straight up)
-              // For 2209: all 200 orange dots on second click move up 1.5 dot distance (straight up)
               const isInRectangle = (square === 441 && row >= 0 && row < 5 && col >= 13 && col < 21);
               const isDiagonalDot = (square === 441 && row === 5 && col === 12);
               const is1156SecondClick = (square === 1156 && clickCount === 1);
               const is1225ThirdClick = (square === 1225 && clickCount === 2);
-              const is2209SecondClick = (square === 2209 && clickCount === 1);
               // For 1225 third click: also include the 5 blue dots (column 34, rows 0-4) in movement
               const is1225BlueDot = (square === 1225 && clickCount === 2 && col === gridSize - 1 && row < 5);
               
-              if (isInRectangle || isDiagonalDot || is1156SecondClick || is1225ThirdClick || is1225BlueDot || is2209SecondClick) {
+              if (isInRectangle || isDiagonalDot || is1156SecondClick || is1225ThirdClick || is1225BlueDot) {
                 // Hide the original circle in the grid
                 c.style.visibility = 'hidden';
                 
@@ -5438,12 +5435,11 @@ function generateSquare(n, label = null) {
                       }
                     });
                     separatedCircle.style.zIndex = '6'; // Slightly higher than rectangle dots to ensure visibility
-                  } else if (is1156SecondClick || is1225ThirdClick || is1225BlueDot || is2209SecondClick) {
+                  } else if (is1156SecondClick || is1225ThirdClick || is1225BlueDot) {
                     // For 1156 second click: move all 100 red dots UP 1 dot distance (straight up, no left movement)
                     // For 1225 third click: move all 20 orange dots + 5 black dots UP 1 dot distance (straight up, no left movement)
-                    // For 2209 second click: move all 200 orange dots UP 1.5 dot distance (straight up, no left movement)
                     // All dots maintain their exact grid spacing relative to each other - they move as a connected unit
-                    // UP: negative top value = row - 1 (move up by exactly 1 dot distance) or row - 1.5 (for 2209)
+                    // UP: negative top value = row - 1 (move up by exactly 1 dot distance)
                     // Keep same horizontal position (no left offset) - use --circle-total (regular size)
                     // Set className first, then add size classes to maintain exact spacing
                     // For blue dots (is1225BlueDot), keep them black (no color class)
@@ -5460,10 +5456,8 @@ function generateSquare(n, label = null) {
                     });
                     // Use --circle-total (regular size) to maintain exact grid spacing
                     // All dots use the same calculation, so they stay connected tangentially
-                    // For 2209, move up by 1.5 dots; for others, move up by 1 dot
-                    const moveUpDistance = is2209SecondClick ? 1.5 : 1;
                     separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
-                    separatedCircle.style.top = `calc(var(--circle-total) * ${row} - ${moveUpDistance} * var(--circle-total))`;
+                    separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1 * var(--circle-total))`;
                     // Ensure no transform or other positioning that could cause separation
                     separatedCircle.style.transform = 'none';
                     separatedCircle.style.margin = '0';
@@ -5716,6 +5710,56 @@ function generateSquare(n, label = null) {
                 }
               }
             }
+            
+            // For 2209, separate the entire 20×10 rectangle (200 orange) from the main grid
+            // On second click: 200 orange dots are separated and moved up by 1.5 dots
+            if (square === 2209 && clickCount === 1 && color === 'orange') {
+              const row = Math.floor(i / gridSize);
+              const col = i % gridSize;
+              
+              // Only process dots that are in the 20×10 rectangle (rows 0-19, cols 34-43)
+              if (row >= 0 && row < 20 && col >= 34 && col <= 43) {
+                // Hide the original circle in the grid (remove it from the visual grid)
+                c.style.visibility = 'hidden';
+                
+                // Check if we've already created a separated circle for this index
+                const existingSeparated = separatedCircles.find(sc => {
+                  const scRow = parseInt(sc.dataset.originalRow);
+                  const scCol = parseInt(sc.dataset.originalCol);
+                  return scRow === row && scCol === col;
+                });
+                
+                if (!existingSeparated) {
+                  // Create a new circle positioned up by 1.5 dots (straight up, no horizontal movement)
+                  const separatedCircle = document.createElement('div');
+                  separatedCircle.className = 'circle orange';
+                  separatedCircle.style.position = 'absolute';
+                  separatedCircle.style.zIndex = '5';
+                  separatedCircle.dataset.originalRow = row;
+                  separatedCircle.dataset.originalCol = col;
+                  // Move UP by 1.5 dots: negative top value = row - 1.5
+                  // Keep same horizontal position (no left offset)
+                  separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
+                  separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.5 * var(--circle-total))`;
+                  separatedCircle.style.display = 'block';
+                  separatedCircle.style.visibility = 'visible';
+                  separatedCircle.style.opacity = '1';
+                  separatedCircle.style.transform = 'none';
+                  separatedCircle.style.margin = '0';
+                  separatedCircle.style.padding = '0';
+                  
+                  // Copy size classes from original circle
+                  c.classList.forEach(cls => {
+                    if (cls.startsWith('circle-')) {
+                      separatedCircle.classList.add(cls);
+                    }
+                  });
+                  
+                  grid.appendChild(separatedCircle);
+                  separatedCircles.push(separatedCircle);
+                }
+              }
+            }
           }
         });
         
@@ -5886,8 +5930,8 @@ function generateSquare(n, label = null) {
               existingSeparated.classList.add('purple');
               existingSeparated.style.zIndex = '10'; // Higher z-index for purple dots
             }
+            }
           }
-        }
         
         // For 1225 fourth click: color the 5 separated black dots blue
         if (square === 1225 && clickCount === 3) {

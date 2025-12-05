@@ -40,15 +40,21 @@
     body {
       margin: 0;
       min-height: 100vh;
+      height: 100vh;
+      max-height: 100vh;
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: 20px;
       overflow-y: auto;
+      overflow-x: hidden;
+      position: fixed;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
     }
     .game-container {
       width: 100%;
@@ -57,6 +63,8 @@
       flex-direction: column;
       align-items: center;
       gap: 30px;
+      position: relative;
+      flex-shrink: 0;
     }
     .game-navigation {
       display: flex;
@@ -113,6 +121,9 @@
       display: flex;
       justify-content: center;
       margin-bottom: 30px;
+      position: relative;
+      flex-shrink: 0;
+      will-change: auto;
     }
     .grid {
       display: grid;
@@ -152,6 +163,12 @@
       align-items: center;
       gap: 20px;
       margin-bottom: 30px;
+      position: sticky;
+      bottom: 0;
+      background: #000;
+      padding: 10px 0;
+      z-index: 100;
+      flex-shrink: 0;
     }
     .answer-input {
       font-size: 48px;
@@ -169,6 +186,8 @@
       outline: none;
       border-color: #00ff00;
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      /* Prevent scrolling when focused */
+      scroll-margin: 0;
     }
     .feedback {
       font-size: 36px;
@@ -236,6 +255,18 @@
       max-width: 600px;
     }
     /* Number pad removed - mobile phones use their native keyboard */
+    /* Ensure no number pad can appear - hide it completely */
+    .number-pad,
+    #numberPad,
+    [id*="numberPad"],
+    [class*="number-pad"] {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+    }
+    
     /* Timer display */
     .timer-container {
       display: flex;
@@ -433,6 +464,8 @@
     let currentTime = 0;
     let answerTimes = [];
     let timeLimit = null; // null = no limit, or seconds for timed mode
+    let pausedTime = 0; // Time when tab was hidden
+    let isTabVisible = true; // Track if tab is visible
 
     // Initialize level selector
     function initLevelSelector() {
@@ -505,18 +538,28 @@
     }
 
     function startTimer() {
-      questionStartTime = Date.now();
-      currentTime = 0;
+      // Adjust start time if we were paused
+      if (pausedTime > 0) {
+        const pauseDuration = Date.now() - pausedTime;
+        questionStartTime += pauseDuration;
+        pausedTime = 0;
+      } else {
+        questionStartTime = Date.now();
+        currentTime = 0;
+      }
       
       if (timerInterval) clearInterval(timerInterval);
       
       timerInterval = setInterval(() => {
-        currentTime = (Date.now() - questionStartTime) / 1000;
-        updateTimerDisplay();
-        
-        // Check time limit for hard/expert modes
-        if (timeLimit && currentTime >= timeLimit) {
-          handleTimeout();
+        // Only update timer if tab is visible
+        if (isTabVisible) {
+          currentTime = (Date.now() - questionStartTime) / 1000;
+          updateTimerDisplay();
+          
+          // Check time limit for hard/expert modes
+          if (timeLimit && currentTime >= timeLimit) {
+            handleTimeout();
+          }
         }
       }, 100);
     }
@@ -608,7 +651,16 @@
       // Clear and focus input
       const input = document.getElementById('answerInput');
       input.value = '';
-      input.focus();
+      
+      // Prevent scrolling when focusing input
+      // Use setTimeout to prevent immediate scroll
+      setTimeout(() => {
+        input.focus();
+        // Prevent scroll into view
+        if (input.scrollIntoView) {
+          input.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
+        }
+      }, 100);
       
       // Start timer
       startTimer();
@@ -752,6 +804,113 @@
       });
     }
 
+    // Page Visibility API - Pause game when tab is hidden
+    let wasTimerRunning = false;
+    
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        // Tab is now hidden - pause the game
+        wasTimerRunning = (timerInterval !== null);
+        if (wasTimerRunning) {
+          pausedTime = Date.now();
+          stopTimer();
+        }
+        isTabVisible = false;
+      } else {
+        // Tab is now visible - resume the game
+        isTabVisible = true;
+        if (wasTimerRunning) {
+          // Resume timer from where it left off
+          startTimer();
+          wasTimerRunning = false;
+        }
+      }
+    });
+    
+    // Also handle window blur/focus for older browsers
+    window.addEventListener('blur', function() {
+      wasTimerRunning = (timerInterval !== null);
+      if (wasTimerRunning) {
+        pausedTime = Date.now();
+        stopTimer();
+      }
+      isTabVisible = false;
+    });
+    
+    window.addEventListener('focus', function() {
+      isTabVisible = true;
+      if (wasTimerRunning) {
+        startTimer();
+        wasTimerRunning = false;
+      }
+    });
+
+    // Prevent layout shifts when keyboard appears
+    let scrollPosition = 0;
+    
+    // Lock scroll position when input is focused
+    const answerInputMobile = document.getElementById('answerInput');
+    if (answerInputMobile) {
+      answerInputMobile.addEventListener('focus', function(e) {
+        // Save current scroll position
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Prevent scrolling by locking body position
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollPosition}px`;
+        document.body.style.width = '100%';
+        
+        // Prevent input from scrolling into view
+        e.preventDefault();
+      });
+      
+      answerInputMobile.addEventListener('blur', function(e) {
+        // Restore scroll position
+        const scrollTop = scrollPosition;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        
+        // Restore scroll position smoothly
+        setTimeout(() => {
+          window.scrollTo({ top: scrollTop, behavior: 'instant' });
+        }, 0);
+      });
+      
+      // Prevent input from causing scroll during typing
+      answerInputMobile.addEventListener('input', function(e) {
+        // Keep scroll position locked while typing
+        if (document.body.style.position === 'fixed') {
+          window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+        }
+      });
+    }
+    
+    // Prevent viewport resize from keyboard causing layout shifts
+    let viewportHeight = window.innerHeight;
+    window.addEventListener('resize', function() {
+      // Only update if significant change (keyboard appearing/disappearing)
+      const newHeight = window.innerHeight;
+      if (Math.abs(newHeight - viewportHeight) > 150) {
+        viewportHeight = newHeight;
+        // Use CSS variable to maintain consistent height
+        document.documentElement.style.setProperty('--vh', `${newHeight * 0.01}px`);
+      }
+    });
+    
+    // Set initial viewport height
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    
+    // Prevent any auto-scrolling when input is focused
+    window.addEventListener('scroll', function(e) {
+      if (answerInputMobile && document.activeElement === answerInputMobile) {
+        // If input is focused, prevent scrolling
+        window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+      }
+    }, { passive: false });
+    
     // Initialize game
     initLevelSelector();
     initDifficultySelector();

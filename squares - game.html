@@ -9,6 +9,13 @@
   <meta http-equiv="Expires" content="0">
   <title>Squares Game - Practice Mode</title>
   <style>
+    /* Hide number pad on mobile by default - will be shown via JavaScript if desktop/tablet */
+    @media (max-width: 768px) {
+      #numberPad {
+        display: none !important;
+      }
+    }
+    
     :root {
       --circle-size: clamp(8px, 5vw, 50px);
       --circle-border: clamp(1px, 0.5vw, 5px);
@@ -355,7 +362,19 @@
     
     /* Hide number pad on mobile phones (they have keyboards) */
     .mobile-phone .number-pad {
-      display: none;
+      display: none !important;
+    }
+    
+    /* Also hide via media query for small screens as backup */
+    @media (max-width: 768px) {
+      .number-pad {
+        display: none !important;
+      }
+      
+      /* Show it only if explicitly marked as desktop/tablet */
+      .desktop-or-tablet .number-pad {
+        display: grid !important;
+      }
     }
     /* Level completion modal */
     .level-complete-modal {
@@ -2944,57 +2963,71 @@
       }
     }, { passive: false });
     
-    // Detect mobile device and adjust behavior
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    // More specific detection: distinguish between phones and tablets/desktops
-    const isPhone = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(navigator.userAgent) || 
-                    (isMobile && window.innerWidth <= 768);
-    const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(navigator.userAgent) || 
-                     (isMobile && window.innerWidth > 768 && window.innerWidth <= 1024);
-    
-    if (isMobile || isTouchDevice) {
-      // Add mobile class to body for additional styling if needed
-      document.body.classList.add('mobile-device');
+    // Function to detect and hide/show number pad
+    function detectDeviceAndHideNumberPad() {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      // Disable hover effects on touch devices
-      document.body.classList.add('touch-device');
-    }
-    
-    // Hide number pad on phones (they have keyboards)
-    // Show number pad on tablets and desktops (they may not have keyboards)
-    if (isPhone) {
-      document.body.classList.add('mobile-phone');
+      // More specific detection: distinguish between phones and tablets/desktops
+      // Check user agent first, then screen width
+      const userAgent = navigator.userAgent;
+      const isPhoneUA = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(userAgent);
+      const isTabletUA = /iPad|Android(?!.*Mobile)|Tablet/i.test(userAgent);
+      const screenWidth = window.innerWidth;
+      
+      // Determine if it's a phone: user agent says phone OR (mobile device AND small screen)
+      // Be more aggressive - if screen width is small, assume it's a phone
+      const isPhone = isPhoneUA || (isMobile && !isTabletUA && screenWidth <= 768) || screenWidth <= 480;
+      
+      if (isMobile || isTouchDevice) {
+        // Add mobile class to body for additional styling if needed
+        document.body.classList.add('mobile-device');
+        
+        // Disable hover effects on touch devices
+        document.body.classList.add('touch-device');
+      }
+      
+      // Hide number pad on phones (they have keyboards)
+      // Show number pad on tablets and desktops (they may not have keyboards)
       const numberPad = document.getElementById('numberPad');
       if (numberPad) {
-        numberPad.style.display = 'none';
+        if (isPhone || screenWidth <= 768) {
+          // Definitely a phone - hide number pad
+          document.body.classList.add('mobile-phone');
+          document.body.classList.remove('desktop-or-tablet');
+          numberPad.style.display = 'none';
+          numberPad.style.visibility = 'hidden';
+          numberPad.style.height = '0';
+          numberPad.style.overflow = 'hidden';
+        } else {
+          // Desktop or tablet - show the number pad
+          document.body.classList.remove('mobile-phone');
+          document.body.classList.add('desktop-or-tablet');
+          numberPad.style.display = 'grid';
+          numberPad.style.visibility = 'visible';
+          numberPad.style.height = 'auto';
+          numberPad.style.overflow = 'visible';
+        }
       }
-    } else {
-      // Desktop or tablet - show the number pad
-      document.body.classList.add('desktop-or-tablet');
     }
+    
+    // Run detection immediately when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', detectDeviceAndHideNumberPad);
+    } else {
+      // DOM is already ready
+      detectDeviceAndHideNumberPad();
+    }
+    
+    // Also run it after a short delay to ensure everything is loaded
+    setTimeout(detectDeviceAndHideNumberPad, 100);
     
     // Also check on resize to handle orientation changes
     let resizeTimer;
     window.addEventListener('resize', function() {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function() {
-        const currentIsPhone = window.innerWidth <= 768 && 
-                               (/iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(navigator.userAgent) || 
-                                (isMobile && window.innerWidth <= 768));
-        const numberPad = document.getElementById('numberPad');
-        if (numberPad) {
-          if (currentIsPhone) {
-            document.body.classList.add('mobile-phone');
-            document.body.classList.remove('desktop-or-tablet');
-            numberPad.style.display = 'none';
-          } else {
-            document.body.classList.remove('mobile-phone');
-            document.body.classList.add('desktop-or-tablet');
-            numberPad.style.display = 'grid';
-          }
-        }
+        detectDeviceAndHideNumberPad();
       }, 250);
     });
     

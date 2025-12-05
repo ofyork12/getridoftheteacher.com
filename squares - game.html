@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<!-- Created by Hughesmath -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Squares Game - Practice Mode</title>
+  <style>
+    :root {
+      --circle-size: clamp(8px, 5vw, 50px);
+      --circle-border: clamp(1px, 0.5vw, 5px);
+      --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+    .game-navigation {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .game-nav-button {
+      padding: 15px 30px;
+      font-size: 20px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .game-nav-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .game-nav-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .level-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .level-title {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .level-range {
+      font-size: 24px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    .question-container {
+      text-align: center;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .question {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 0;
+      display: none; /* Hide the old question format */
+    }
+    .start-button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+      min-height: 80px;
+    }
+    .start-button {
+      padding: 20px 60px;
+      font-size: 32px;
+      font-weight: bold;
+      background: #00ff00;
+      color: #000;
+      border: 4px solid #00ff00;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    .start-button:hover {
+      background: #00cc00;
+      border-color: #00cc00;
+      transform: scale(1.05);
+    }
+    .start-button:active {
+      transform: scale(0.95);
+    }
+    .start-button.hidden {
+      display: none;
+    }
+    .question-display {
+      font-size: 48px;
+      font-weight: bold;
+      color: #fff;
+      text-align: center;
+      display: none;
+    }
+    .question-display.show {
+      display: block;
+    }
+    .grid-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0;
+    }
+    .input-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 0;
+      margin-top: 0;
+      flex-wrap: wrap;
+    }
+    .question-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 200px;
+    }
+    .question-label {
+      font-size: 48px;
+      font-weight: bold;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .answer-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      min-width: 200px;
+    }
+    .answer-input-wrapper {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 0;
+      position: relative;
+    }
+    .equation-label {
+      font-size: 48px;
+      font-weight: bold;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .grid {
+      display: grid;
+      gap: 0;
+      background: #111;
+      padding: 0;
+      border-radius: 0;
+      margin-bottom: 0;
+      margin-top: 0;
+    }
+    .circle {
+      width: var(--circle-total);
+      height: var(--circle-total);
+      border-radius: 50%;
+      background: #222;
+      border: var(--circle-border) solid #fff;
+      transition: background 0.2s ease;
+    }
+    /* Color classes for digits */
+    .circle.red { background: #ff0000; }
+    .circle.orange { background: #ff6200; }
+    .circle.yellow { background: #ffe600; }
+    .circle.green { background: #00a12c; }
+    .circle.blue { background: #0030ff; }
+    .circle.purple { background: #6a1b9a; }
+    .circle.brown { background: #7a3b00; }
+    .circle.pink { background: #ff3fa6; }
+    .circle.sky { background: #38c7ff; }
+    .circle.correct {
+      animation: correctPulse 0.5s ease;
+    }
+    .circle.incorrect {
+      background: #ff0000;
+      animation: incorrectShake 0.5s ease;
+    }
+    @keyframes correctPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes incorrectShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .input-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    .answer-input {
+      font-size: 48px;
+      padding: 20px 40px;
+      text-align: center;
+      background: #111;
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 10px;
+      width: 400px;
+      max-width: 90vw;
+      font-weight: bold;
+      /* Remove spinner arrows */
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .answer-input::-webkit-outer-spin-button,
+    .answer-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .answer-input:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    .feedback {
+      font-size: 36px;
+      font-weight: bold;
+      min-height: 0;
+      transition: opacity 0.3s ease;
+      margin-top: 5px;
+      margin-bottom: 0;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .feedback.correct {
+      color: #00ff00;
+    }
+    .feedback.incorrect {
+      color: #ff0000;
+    }
+    .stats {
+      display: flex;
+      gap: 30px;
+      font-size: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #00ff00;
+    }
+    .level-selector {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .level-button {
+      padding: 15px 25px;
+      font-size: 20px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .level-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .level-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .level-button.completed {
+      border-color: #00ff00;
+      color: #00ff00;
+    }
+    .instructions {
+      text-align: center;
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 20px;
+      max-width: 600px;
+    }
+    /* On-screen number pad */
+    .number-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      max-width: 500px;
+      margin: 0;
+    }
+    /* Level completion modal */
+    .level-complete-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      border: 4px solid #00ff00;
+      border-radius: 20px;
+      padding: 40px;
+      z-index: 1000;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(0, 255, 0, 0.5);
+      max-width: 500px;
+      width: 90%;
+    }
+    .level-complete-modal h2 {
+      color: #00ff00;
+      font-size: 36px;
+      margin: 0 0 20px 0;
+    }
+    .level-complete-modal p {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+    .level-complete-button {
+      margin-top: 30px;
+      padding: 15px 40px;
+      font-size: 24px;
+      font-weight: bold;
+      background: #00ff00;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .level-complete-button:hover {
+      background: #00cc00;
+      transform: scale(1.05);
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 999;
+    }
+    .number-pad-button {
+      padding: 25px 40px;
+      font-size: 32px;
+      font-weight: bold;
+      background: #222;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      min-width: 100px;
+    }
+    .number-pad-button:hover {
+      background: #444;
+      transform: scale(1.05);
+    }
+    .number-pad-button:active {
+      background: #666;
+      transform: scale(0.95);
+    }
+    .number-pad-button.clear {
+      grid-column: span 2;
+      background: #660000;
+    }
+    .number-pad-button.clear:hover {
+      background: #880000;
+    }
+    .number-pad-button.enter {
+      grid-column: span 2;
+      background: #006600;
+    }
+    .number-pad-button.enter:hover {
+      background: #008800;
+    }
+    /* Timer display */
+    .timer-container {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .timer-display {
+      font-size: 28px;
+      font-weight: bold;
+      color: #00ff00;
+    }
+    .timer-display.warning {
+      color: #ffaa00;
+    }
+    .timer-display.danger {
+      color: #ff0000;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .avg-time {
+      font-size: 20px;
+      color: #aaa;
+    }
+    .level-timer {
+      font-size: 20px;
+      color: #00ff00;
+      font-weight: bold;
+    }
+    .level-best-time {
+      font-size: 18px;
+      color: #888;
+      font-style: italic;
+    }
+    /* Difficulty selector */
+    .difficulty-selector {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .difficulty-button {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .difficulty-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .difficulty-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .difficulty-button.easy {
+      border-color: #00ff00;
+    }
+    .difficulty-button.medium {
+      border-color: #ffaa00;
+    }
+    .difficulty-button.hard {
+      border-color: #ff0000;
+    }
+    .difficulty-button.expert {
+      border-color: #ff00ff;
+    }
+    /* Sound toggle */
+    .sound-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #222;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .sound-toggle:hover {
+      background: #444;
+    }
+    .sound-toggle.active {
+      background: #00ff00;
+      color: #000;
+    }
+    
+    /* Mobile and Tablet Responsive Styles */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .game-container {
+        gap: 15px;
+      }
+      
+      .game-navigation {
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      
+      .game-nav-button {
+        padding: 12px 20px;
+        font-size: 16px;
+        border-width: 2px;
+      }
+      
+      .level-title {
+        font-size: 24px;
+      }
+      
+      .level-range {
+        font-size: 18px;
+      }
+      
+      .question-display {
+        font-size: 32px;
+      }
+      
+      .start-button {
+        padding: 15px 40px;
+        font-size: 24px;
+        border-width: 3px;
+      }
+      
+      .question-label,
+      .equation-label {
+        font-size: 32px;
+      }
+      
+      .answer-input {
+        font-size: 32px;
+        padding: 15px 25px;
+        width: 100%;
+        max-width: 100%;
+      }
+      
+      .input-container {
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+      }
+      
+      .question-side,
+      .answer-side {
+        width: 100%;
+        min-width: auto;
+      }
+      
+      .number-pad {
+        max-width: 100%;
+        width: 100%;
+        gap: 10px;
+      }
+      
+      .number-pad-button {
+        padding: 20px 15px;
+        font-size: 24px;
+        min-width: auto;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      .stats {
+        gap: 15px;
+        font-size: 18px;
+      }
+      
+      .stat-value {
+        font-size: 28px;
+      }
+      
+      .level-selector {
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      
+      .level-button {
+        padding: 10px 15px;
+        font-size: 16px;
+        border-width: 2px;
+        touch-action: manipulation;
+      }
+      
+      .difficulty-selector {
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+      
+      .difficulty-button {
+        padding: 10px 16px;
+        font-size: 16px;
+        touch-action: manipulation;
+      }
+      
+      .timer-container {
+        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .timer-display {
+        font-size: 22px;
+      }
+      
+      .avg-time,
+      .level-timer,
+      .level-best-time {
+        font-size: 16px;
+      }
+      
+      .feedback {
+        font-size: 24px;
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin-top: 10px;
+      }
+      
+      .sound-toggle {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 10px;
+        padding: 8px 16px;
+        font-size: 14px;
+        touch-action: manipulation;
+      }
+      
+      .level-complete-modal {
+        padding: 30px 20px;
+        max-width: 95%;
+      }
+      
+      .level-complete-modal h2 {
+        font-size: 28px;
+      }
+      
+      .level-complete-modal p {
+        font-size: 18px;
+      }
+      
+      .level-complete-button {
+        padding: 12px 30px;
+        font-size: 20px;
+        touch-action: manipulation;
+      }
+      
+      .instructions {
+        font-size: 16px;
+        padding: 0 10px;
+      }
+      
+      /* Prevent zoom on input focus on iOS */
+      input,
+      textarea,
+      select {
+        font-size: 16px !important;
+      }
+      
+      /* Grid container adjustments */
+      .grid-container {
+        overflow-x: auto;
+        width: 100%;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .grid {
+        min-width: fit-content;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      :root {
+        --circle-size: clamp(6px, 4vw, 40px);
+        --circle-border: clamp(1px, 0.4vw, 4px);
+      }
+      
+      .game-nav-button {
+        padding: 10px 15px;
+        font-size: 14px;
+      }
+      
+      .level-title {
+        font-size: 20px;
+      }
+      
+      .level-range {
+        font-size: 16px;
+      }
+      
+      .question-display {
+        font-size: 28px;
+      }
+      
+      .start-button {
+        padding: 12px 30px;
+        font-size: 20px;
+      }
+      
+      .question-label,
+      .equation-label {
+        font-size: 28px;
+      }
+      
+      .answer-input {
+        font-size: 28px;
+        padding: 12px 20px;
+      }
+      
+      .number-pad-button {
+        padding: 18px 12px;
+        font-size: 20px;
+      }
+      
+      .stats {
+        font-size: 16px;
+        gap: 10px;
+      }
+      
+      .stat-value {
+        font-size: 24px;
+      }
+      
+      .level-button {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .difficulty-button {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .timer-display {
+        font-size: 20px;
+      }
+      
+      .avg-time,
+      .level-timer,
+      .level-best-time {
+        font-size: 14px;
+      }
+      
+      .feedback {
+        font-size: 20px;
+      }
+      
+      .level-complete-modal h2 {
+        font-size: 24px;
+      }
+      
+      .level-complete-modal p {
+        font-size: 16px;
+      }
+      
+      .level-complete-button {
+        padding: 10px 25px;
+        font-size: 18px;
+      }
+    }
+    
+    @media (min-width: 769px) and (max-width: 1024px) {
+      /* Tablet styles */
+      .game-container {
+        max-width: 100%;
+        padding: 0 20px;
+      }
+      
+      .number-pad {
+        max-width: 450px;
+      }
+      
+      .number-pad-button {
+        padding: 22px 35px;
+        font-size: 28px;
+      }
+    }
+    
+    /* Touch device optimizations */
+    @media (hover: none) and (pointer: coarse) {
+      /* Touch devices */
+      .game-nav-button:hover,
+      .level-button:hover,
+      .difficulty-button:hover,
+      .number-pad-button:hover,
+      .start-button:hover,
+      .level-complete-button:hover {
+        transform: none;
+      }
+      
+      .game-nav-button:active,
+      .level-button:active,
+      .difficulty-button:active,
+      .number-pad-button:active,
+      .start-button:active,
+      .level-complete-button:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+      
+      /* Larger touch targets */
+      .game-nav-button,
+      .level-button,
+      .difficulty-button,
+      .number-pad-button {
+        min-height: 44px;
+        min-width: 44px;
+      }
+    }
+    
+    /* Landscape mobile orientation */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .game-container {
+        gap: 10px;
+      }
+      
+      .level-title {
+        font-size: 20px;
+        margin-bottom: 5px;
+      }
+      
+      .level-range {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+      
+      .stats {
+        gap: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+      
+      .stat-value {
+        font-size: 24px;
+      }
+      
+      .timer-container {
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      
+      .timer-display {
+        font-size: 18px;
+      }
+      
+      .question-display {
+        font-size: 24px;
+      }
+      
+      .question-label,
+      .equation-label {
+        font-size: 24px;
+      }
+      
+      .answer-input {
+        font-size: 24px;
+        padding: 10px 15px;
+      }
+      
+      .number-pad-button {
+        padding: 15px 10px;
+        font-size: 20px;
+      }
+    }
+    
+    /* Prevent text selection on buttons for better touch experience */
+    .game-nav-button,
+    .level-button,
+    .difficulty-button,
+    .number-pad-button,
+    .start-button,
+    .level-complete-button,
+    .sound-toggle {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    
+    /* Improve scrolling on mobile */
+    .grid-container {
+      -webkit-overflow-scrolling: touch;
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+    
+    /* Touch device specific styles */
+    .touch-device .game-nav-button:hover,
+    .touch-device .level-button:hover,
+    .touch-device .difficulty-button:hover,
+    .touch-device .number-pad-button:hover,
+    .touch-device .start-button:hover,
+    .touch-device .level-complete-button:hover,
+    .touch-device .sound-toggle:hover {
+      background: inherit;
+      color: inherit;
+      transform: none;
+    }
+    
+    /* Ensure proper viewport handling */
+    @supports (-webkit-touch-callout: none) {
+      /* iOS Safari specific */
+      body {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      
+      input,
+      textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+    }
+    
+    /* Fix for iOS Safari address bar */
+    @media screen and (max-width: 768px) {
+      body {
+        min-height: -webkit-fill-available;
+      }
+      
+      .game-container {
+        min-height: -webkit-fill-available;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-navigation">
+      <a href="index.html" class="game-nav-button">← Go Back</a>
+      <a href="squares.html" class="game-nav-button">Squares</a>
+      <a href="squares - game.html" class="game-nav-button active">Squares Game</a>
+      <a href="squares.html" class="game-nav-button">View All Squares</a>
+    </div>
+
+    <div class="level-info">
+      <div class="level-title">Squares Practice Game</div>
+      <div class="instructions">
+        Type the answer as fast as you can when you see the grid!
+      </div>
+    </div>
+
+    <button class="sound-toggle" id="soundToggle">🔊 Sound On</button>
+
+    <div class="difficulty-selector" id="difficultySelector">
+      <button class="difficulty-button easy active" data-difficulty="easy">Easy</button>
+      <button class="difficulty-button medium" data-difficulty="medium">Medium</button>
+      <button class="difficulty-button hard" data-difficulty="hard">Hard</button>
+      <button class="difficulty-button expert" data-difficulty="expert">Expert</button>
+    </div>
+
+    <div class="level-selector" id="levelSelector"></div>
+
+    <div class="level-info">
+      <div class="level-range" id="levelRange">Level 1: Squares 1 through 15</div>
+    </div>
+
+    <div class="timer-container">
+      <div class="timer-display" id="timer">Time: 0.0s</div>
+      <div class="avg-time" id="avgTime">Avg: 0.0s</div>
+      <div class="level-timer" id="levelTimer">Level Time: 0.0s</div>
+      <div class="level-best-time" id="levelBestTime"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div>Score</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Correct</div>
+        <div class="stat-value" id="correct">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Wrong</div>
+        <div class="stat-value" id="wrong">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Streak</div>
+        <div class="stat-value" id="streak">0</div>
+      </div>
+    </div>
+
+    <div class="question-container">
+      <div class="question" id="question">What is 5²?</div>
+    </div>
+
+    <div class="start-button-container">
+      <button class="start-button" id="startButton">Start</button>
+      <div class="question-display" id="questionDisplay"></div>
+    </div>
+
+    <div class="grid-container">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="input-container">
+      <div class="question-side">
+        <span class="question-label" id="equationLabel">9² =</span>
+      </div>
+      
+      <div class="number-pad" id="numberPad">
+      <button class="number-pad-button" data-number="1">1</button>
+      <button class="number-pad-button" data-number="2">2</button>
+      <button class="number-pad-button" data-number="3">3</button>
+      <button class="number-pad-button" data-number="4">4</button>
+      <button class="number-pad-button" data-number="5">5</button>
+      <button class="number-pad-button" data-number="6">6</button>
+      <button class="number-pad-button" data-number="7">7</button>
+      <button class="number-pad-button" data-number="8">8</button>
+      <button class="number-pad-button" data-number="9">9</button>
+      <button class="number-pad-button clear" id="clearButton">Clear</button>
+      <button class="number-pad-button" data-number="0">0</button>
+      <button class="number-pad-button enter" id="enterButton">Enter</button>
+      </div>
+
+      <div class="answer-side">
+        <div class="answer-input-wrapper">
+          <input 
+            type="number" 
+            class="answer-input" 
+            id="answerInput" 
+            placeholder="Type answer..."
+            autocomplete="off"
+          />
+          <div class="feedback" id="feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game levels: [start, end] (inclusive)
+    // Each level includes the boundary number from previous level for review
+    const LEVELS = [
+      [1, 15],      // Level 1: Squares 1 through 15
+      [15, 25],     // Level 2: Squares 15 through 25 (includes 15 for review)
+      [25, 35],     // Level 3: Squares 25 through 35 (includes 25 for review)
+      [35, 45],     // Level 4: Squares 35 through 45 (includes 35 for review)
+      [45, 55],     // Level 5: Squares 45 through 55 (includes 45 for review)
+      [55, 65],     // Level 6: Squares 55 through 65 (includes 55 for review)
+      [65, 75],     // Level 7: Squares 65 through 75 (includes 65 for review)
+      [75, 85],     // Level 8: Squares 75 through 85 (includes 75 for review)
+      [85, 95],     // Level 9: Squares 85 through 95 (includes 85 for review)
+      [95, 100]     // Level 10: Squares 95 through 100 (includes 95 for review)
+    ];
+
+    // Color mapping for digits
+    const COLOR_MAP = {
+      1: "red", 2: "orange", 3: "yellow", 4: "green", 5: "blue",
+      6: "purple", 7: "brown", 8: "pink", 9: "sky", 0: "yellow"
+    };
+
+    // Break down number into components (same as squares.html)
+    function breakDownNumber(num) {
+      const str = num.toString();
+      const components = [];
+      
+      if (str.length === 2) {
+        // Two-digit: tens and ones
+        const tens = parseInt(str[0]) * 10;
+        const ones = parseInt(str[1]);
+        components.push(tens, ones);
+      } else if (str.length === 3) {
+        // Three-digit: hundreds, tens, ones
+        const hundreds = parseInt(str[0]) * 100;
+        const tens = parseInt(str[1]) * 10;
+        const ones = parseInt(str[2]);
+        components.push(hundreds, tens, ones);
+      } else if (str.length === 4) {
+        // Four-digit: thousands, hundreds, tens, ones
+        const thousands = parseInt(str[0]) * 1000;
+        const remainder = parseInt(str.substring(1));
+        if (remainder < 100) {
+          const tens = Math.floor(remainder / 10) * 10;
+          const ones = remainder % 10;
+          components.push(thousands, tens, ones);
+        } else {
+          const hundreds = Math.floor(remainder / 100) * 100;
+          const tens = Math.floor((remainder % 100) / 10) * 10;
+          const ones = remainder % 10;
+          components.push(thousands, hundreds, tens, ones);
+        }
+      } else if (str.length === 5) {
+        // Five-digit: ten-thousands, thousands, hundreds, tens, ones
+        const tenThousands = parseInt(str[0]) * 10000;
+        const remainder = parseInt(str.substring(1));
+        if (remainder < 1000) {
+          const hundreds = Math.floor(remainder / 100) * 100;
+          const tens = Math.floor((remainder % 100) / 10) * 10;
+          const ones = remainder % 10;
+          components.push(tenThousands, hundreds, tens, ones);
+        } else {
+          const thousands = Math.floor(remainder / 1000) * 1000;
+          const hundreds = Math.floor((remainder % 1000) / 100) * 100;
+          const tens = Math.floor((remainder % 100) / 10) * 10;
+          const ones = remainder % 10;
+          components.push(tenThousands, thousands, hundreds, tens, ones);
+        }
+      }
+      
+      return components;
+    }
+
+    // Helper to get triangle pattern (3, 2, 1) in top right corner for 6 dots
+    function getTrianglePatternIndices(gridSize) {
+      const indices = [];
+      // Row 0: 3 dots - cols gridSize-3, gridSize-2, gridSize-1
+      if (gridSize >= 3) {
+        indices.push(0 * gridSize + (gridSize - 3));
+        indices.push(0 * gridSize + (gridSize - 2));
+        indices.push(0 * gridSize + (gridSize - 1));
+      }
+      // Row 1: 2 dots - cols gridSize-2, gridSize-1
+      if (gridSize >= 2) {
+        indices.push(1 * gridSize + (gridSize - 2));
+        indices.push(1 * gridSize + (gridSize - 1));
+      }
+      // Row 2: 1 dot - col gridSize-1
+      indices.push(2 * gridSize + (gridSize - 1));
+      return indices;
+    }
+
+    // Helper to get 2x2 square in top right corner
+    function get2x2TopRightIndices(gridSize) {
+      // 2x2 square in top right: rows 0-1, cols gridSize-2 to gridSize-1
+      const indices = [];
+      for (let row = 0; row < 2 && row < gridSize; row++) {
+        for (let col = gridSize - 2; col < gridSize; col++) {
+          indices.push(row * gridSize + col);
+        }
+      }
+      return indices;
+    }
+
+    // Helper to get 3x3 square in top right corner
+    function get3x3TopRightIndices(gridSize) {
+      // 3x3 square in top right: rows 0-2, cols gridSize-3 to gridSize-1
+      const indices = [];
+      for (let row = 0; row < 3 && row < gridSize; row++) {
+        for (let col = gridSize - 3; col < gridSize; col++) {
+          indices.push(row * gridSize + col);
+        }
+      }
+      return indices;
+    }
+
+    // Helper to get 5 dots pattern (2 in top row, 3 in row below)
+    function get5DiagonalPatternIndices(gridSize) {
+      // 5 dots: 2 dots in top row, 3 dots in row below, all in top-right corner
+      const indices = [];
+      // Row 0 (top row): 2 dots - cols gridSize-2, gridSize-1
+      if (gridSize >= 2) {
+        indices.push(0 * gridSize + (gridSize - 2));
+        indices.push(0 * gridSize + (gridSize - 1));
+      }
+      // Row 1 (row below): 3 dots - cols gridSize-3, gridSize-2, gridSize-1
+      if (gridSize >= 3) {
+        indices.push(1 * gridSize + (gridSize - 3));
+        indices.push(1 * gridSize + (gridSize - 2));
+        indices.push(1 * gridSize + (gridSize - 1));
+      }
+      return indices;
+    }
+
+    // Helper to get top right corner indices
+    function getTopRightCornerIndices(gridSize, count) {
+      const indices = [];
+      for (let i = 0; i < count && i < gridSize; i++) {
+        indices.push(gridSize - 1 - i); // Top row, from right to left
+      }
+      return indices.sort((a, b) => a - b);
+    }
+
+    // Helper to get bottom left indices (excluding protected area)
+    function getBottomLeftIndices(gridSize, count, excludeIndices = []) {
+      const excludeSet = new Set(excludeIndices);
+      const indices = [];
+      // Start from bottom row, left side
+      for (let row = gridSize - 1; row >= 0 && indices.length < count; row--) {
+        for (let col = 0; col < gridSize && indices.length < count; col++) {
+          const idx = row * gridSize + col;
+          if (!excludeSet.has(idx)) {
+            indices.push(idx);
+          }
+        }
+      }
+      return indices.slice(0, count);
+    }
+
+    // Helper to get upper left indices (excluding protected area)
+    function getUpperLeftIndices(gridSize, count, excludeIndices = []) {
+      const excludeSet = new Set(excludeIndices);
+      const indices = [];
+      // Start from top row, left side
+      for (let row = 0; row < gridSize && indices.length < count; row++) {
+        for (let col = 0; col < gridSize && indices.length < count; col++) {
+          const idx = row * gridSize + col;
+          if (!excludeSet.has(idx)) {
+            indices.push(idx);
+          }
+        }
+      }
+      return indices.slice(0, count);
+    }
+
+    let currentLevel = 0;
+    let currentNumber = 0;
+    let currentAnswer = 0;
+    let score = 0;
+    let correct = 0;
+    let wrong = 0;
+    let streak = 0;
+    let completedLevels = new Set();
+    let levelCorrectCount = {}; // Track correct answers per level
+    let questionsPerLevel = 10; // Number of questions to complete a level
+    let levelStartTime = {}; // Track when level started
+    let levelTotalTime = {}; // Track total time spent on each level
+    let levelBestTime = {}; // Track best time for each level
+    let difficulty = 'easy';
+    let soundEnabled = true;
+    let questionStartTime = 0;
+    let timerInterval = null;
+    let currentTime = 0;
+    let answerTimes = [];
+    let timeLimit = null; // null = no limit, or seconds for timed mode
+    let gameStarted = false; // Track if game has started
+    let lastQuestionNumber = null; // Track last question to avoid repeats
+
+    // Initialize level selector
+    function initLevelSelector() {
+      const selector = document.getElementById('levelSelector');
+      LEVELS.forEach((level, index) => {
+        const button = document.createElement('button');
+        button.className = 'level-button';
+        button.textContent = `Level ${index + 1}`;
+        if (index === currentLevel) {
+          button.classList.add('active');
+        }
+        if (completedLevels.has(index)) {
+          button.classList.add('completed');
+        }
+        button.addEventListener('click', () => {
+          // Save current level time before switching
+          if (levelStartTime[currentLevel] && questionStartTime) {
+            const questionTime = (Date.now() - questionStartTime) / 1000;
+            if (!levelTotalTime[currentLevel]) levelTotalTime[currentLevel] = 0;
+            levelTotalTime[currentLevel] += questionTime;
+          }
+          
+          currentLevel = index;
+          updateLevelDisplay();
+          // Initialize level correct count if needed
+          if (!levelCorrectCount[currentLevel]) {
+            levelCorrectCount[currentLevel] = 0;
+          }
+          // Reset level timer when switching levels
+          levelStartTime[currentLevel] = Date.now();
+          if (!levelTotalTime[currentLevel]) levelTotalTime[currentLevel] = 0;
+          // Reset last question when switching levels
+          lastQuestionNumber = null;
+          generateNewQuestion();
+          document.querySelectorAll('.level-button').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+          });
+        });
+        selector.appendChild(button);
+      });
+    }
+
+    function updateLevelDisplay() {
+      const [start, end] = LEVELS[currentLevel];
+      document.getElementById('levelRange').textContent = `Level ${currentLevel + 1}: Squares ${start} through ${end}`;
+    }
+
+    // Sound effects
+    function playSound(type) {
+      if (!soundEnabled) return;
+      
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'correct') {
+        // Pleasant ascending tone
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(554, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.2);
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } else if (type === 'incorrect') {
+        // Low buzz
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.type = 'sawtooth';
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } else if (type === 'timeout') {
+        // Warning beep
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.type = 'square';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      }
+    }
+
+    function startTimer() {
+      if (!gameStarted) {
+        gameStarted = true;
+        // Hide start button and show question
+        const startButton = document.getElementById('startButton');
+        const questionDisplay = document.getElementById('questionDisplay');
+        if (startButton) {
+          startButton.classList.add('hidden');
+        }
+        if (questionDisplay && currentNumber > 0) {
+          questionDisplay.classList.add('show');
+          questionDisplay.textContent = `${currentNumber} squared`;
+        }
+        // Focus input
+        const input = document.getElementById('answerInput');
+        if (input) {
+          input.focus();
+        }
+      }
+      
+      questionStartTime = Date.now();
+      currentTime = 0;
+      
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
+        currentTime = (Date.now() - questionStartTime) / 1000;
+        updateTimerDisplay();
+        updateLevelTimer(); // Update level timer as well
+        
+        // Check time limit for hard/expert modes
+        if (timeLimit && currentTime >= timeLimit) {
+          handleTimeout();
+        }
+      }, 100);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const timerDisplay = document.getElementById('timer');
+      timerDisplay.textContent = `Time: ${currentTime.toFixed(1)}s`;
+      
+      // Color coding based on time
+      timerDisplay.className = 'timer-display';
+      if (timeLimit) {
+        const remaining = timeLimit - currentTime;
+        if (remaining < timeLimit * 0.3) {
+          timerDisplay.classList.add('danger');
+        } else if (remaining < timeLimit * 0.6) {
+          timerDisplay.classList.add('warning');
+        }
+      }
+    }
+
+    function updateLevelTimer() {
+      const levelTimerEl = document.getElementById('levelTimer');
+      const levelBestTimeEl = document.getElementById('levelBestTime');
+      
+      if (!levelStartTime[currentLevel]) {
+        levelStartTime[currentLevel] = Date.now();
+        levelTotalTime[currentLevel] = 0;
+      }
+      
+      // Calculate total time for this level (including time spent on previous questions)
+      const elapsed = (Date.now() - levelStartTime[currentLevel]) / 1000;
+      const totalTime = levelTotalTime[currentLevel] + elapsed;
+      
+      levelTimerEl.textContent = `Level Time: ${totalTime.toFixed(1)}s`;
+      
+      // Show best time if available
+      if (levelBestTime[currentLevel]) {
+        levelBestTimeEl.textContent = `Best: ${levelBestTime[currentLevel].toFixed(1)}s`;
+        if (totalTime < levelBestTime[currentLevel]) {
+          levelBestTimeEl.style.color = '#00ff00';
+        } else {
+          levelBestTimeEl.style.color = '#888';
+        }
+      } else {
+        levelBestTimeEl.textContent = '';
+      }
+    }
+
+    function handleTimeout() {
+      stopTimer();
+      playSound('timeout');
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = `⏱ Time's up! The answer is ${currentAnswer}`;
+      feedback.className = 'feedback incorrect';
+      
+      wrong++;
+      streak = 0;
+      updateStats();
+      
+      setTimeout(() => {
+        generateNewQuestion();
+      }, 2000);
+    }
+
+    function updateAverageTime() {
+      if (answerTimes.length > 0) {
+        const avg = answerTimes.reduce((a, b) => a + b, 0) / answerTimes.length;
+        document.getElementById('avgTime').textContent = `Avg: ${avg.toFixed(1)}s`;
+      }
+    }
+
+    function showLevelCompleteModal(autoAdvance = false) {
+      // Create modal overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      
+      const totalTime = levelTotalTime[currentLevel];
+      const bestTime = levelBestTime[currentLevel];
+      const isNewBest = !bestTime || totalTime < bestTime;
+      const nextLevel = currentLevel + 1;
+      const hasNextLevel = currentLevel < LEVELS.length - 1;
+      
+      // Create modal
+      const modal = document.createElement('div');
+      modal.className = 'level-complete-modal';
+      
+      let buttonText = 'Continue';
+      let buttonAction = `this.closest('.modal-overlay').remove(); updateStats(); generateNewQuestion();`;
+      
+      if (autoAdvance && hasNextLevel) {
+        buttonText = `Go to Level ${nextLevel + 1}`;
+        buttonAction = `
+          this.closest('.modal-overlay').remove();
+          currentLevel = ${nextLevel};
+          updateLevelDisplay();
+          levelCorrectCount[${nextLevel}] = 0;
+          levelStartTime[${nextLevel}] = Date.now();
+          levelTotalTime[${nextLevel}] = 0;
+          lastQuestionNumber = null;
+          document.querySelectorAll('.level-button').forEach((btn, i) => {
+            btn.classList.toggle('active', i === ${nextLevel});
+          });
+          updateStats();
+          generateNewQuestion();
+        `;
+      }
+      
+      modal.innerHTML = `
+        <h2>🎉 Level ${currentLevel + 1} Complete!</h2>
+        <p>You've mastered Level ${currentLevel + 1}!</p>
+        <p>You got ${levelCorrectCount[currentLevel]} correct answers!</p>
+        <p style="font-size: 28px; color: #00ff00; margin: 20px 0;">
+          Time: ${totalTime.toFixed(1)}s
+          ${isNewBest ? ' 🏆 NEW BEST!' : bestTime ? ` (Best: ${bestTime.toFixed(1)}s)` : ''}
+        </p>
+        ${hasNextLevel ? `<p style="font-size: 24px; color: #00aaff; margin: 15px 0;">➡️ Moving to Level ${nextLevel + 1}!</p>` : '<p style="font-size: 24px; color: #00ff00; margin: 15px 0;">🏆 All Levels Complete!</p>'}
+        <button class="level-complete-button" onclick="${buttonAction}">${buttonText}</button>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      // Auto-advance after 3 seconds if autoAdvance is true
+      if (autoAdvance && hasNextLevel) {
+        setTimeout(() => {
+          if (overlay.parentNode) {
+            overlay.remove();
+            currentLevel = nextLevel;
+            updateLevelDisplay();
+            if (!levelCorrectCount[nextLevel]) levelCorrectCount[nextLevel] = 0;
+            levelStartTime[nextLevel] = Date.now();
+            if (!levelTotalTime[nextLevel]) levelTotalTime[nextLevel] = 0;
+            // Reset last question when advancing to next level
+            lastQuestionNumber = null;
+            document.querySelectorAll('.level-button').forEach((btn, i) => {
+              btn.classList.toggle('active', i === nextLevel);
+            });
+            updateStats();
+            generateNewQuestion();
+          }
+        }, 3000);
+      } else {
+        // Auto-remove after 5 seconds if not clicked
+        setTimeout(() => {
+          if (overlay.parentNode) {
+            overlay.remove();
+            updateStats();
+            generateNewQuestion();
+          }
+        }, 5000);
+      }
+    }
+
+    function generateNewQuestion() {
+      stopTimer();
+      
+      const [start, end] = LEVELS[currentLevel];
+      
+      // Initialize level correct count if needed
+      if (!levelCorrectCount[currentLevel]) {
+        levelCorrectCount[currentLevel] = 0;
+      }
+      
+      // Initialize level timer if starting a new level
+      if (!levelStartTime[currentLevel]) {
+        levelStartTime[currentLevel] = Date.now();
+        levelTotalTime[currentLevel] = 0;
+      }
+      
+      // Update level timer display
+      updateLevelTimer();
+      
+      // Adjust range based on difficulty
+      let adjustedStart = start;
+      let adjustedEnd = end;
+      
+      if (difficulty === 'easy') {
+        // Easy: focus on lower numbers in range
+        adjustedEnd = Math.min(end, start + Math.floor((end - start) * 0.6));
+      } else if (difficulty === 'hard') {
+        // Hard: focus on higher numbers in range
+        adjustedStart = start + Math.floor((end - start) * 0.4);
+      } else if (difficulty === 'expert') {
+        // Expert: all numbers, but with time pressure
+        timeLimit = 5; // 5 seconds per question
+      } else {
+        // Medium: full range
+        timeLimit = null;
+      }
+      
+      // Generate random number in adjusted range, ensuring it's different from the last question
+      let attempts = 0;
+      let newNumber;
+      do {
+        newNumber = Math.floor(Math.random() * (adjustedEnd - adjustedStart + 1)) + adjustedStart;
+        attempts++;
+        // Safety check: if we've tried many times and only have one number in range, allow it
+        if (attempts > 100 || (adjustedEnd === adjustedStart && lastQuestionNumber === adjustedStart)) {
+          break;
+        }
+      } while (newNumber === lastQuestionNumber && (adjustedEnd - adjustedStart) > 0);
+      
+      currentNumber = newNumber;
+      currentAnswer = currentNumber * currentNumber;
+      lastQuestionNumber = currentNumber; // Remember this question
+      
+      // Reset typing state (handled by updateGridColors)
+      
+      // Update equation label (to the left of keyboard)
+      document.getElementById('equationLabel').textContent = `${currentNumber}² =`;
+      
+      // Update question display at the top (if game has started)
+      if (gameStarted) {
+        const questionDisplay = document.getElementById('questionDisplay');
+        if (questionDisplay) {
+          questionDisplay.textContent = `${currentNumber} squared`;
+          questionDisplay.classList.add('show');
+        }
+      }
+      
+      // Clear feedback
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = '';
+      feedback.className = 'feedback';
+      
+      // Generate grid
+      generateGrid(currentNumber);
+      
+      // Clear input
+      const input = document.getElementById('answerInput');
+      input.value = '';
+      
+      // Show start button if game hasn't started yet
+      if (!gameStarted) {
+        const startButton = document.getElementById('startButton');
+        const questionDisplay = document.getElementById('questionDisplay');
+        if (startButton) {
+          startButton.classList.remove('hidden');
+        }
+        if (questionDisplay) {
+          questionDisplay.classList.remove('show');
+        }
+        input.blur(); // Don't focus until start is clicked
+      } else {
+        input.focus();
+        // Start timer only if game has started
+        startTimer();
+      }
+    }
+
+    function generateGrid(n) {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${n}, var(--circle-total))`;
+      grid.style.gridTemplateRows = `repeat(${n}, var(--circle-total))`;
+      
+      // Make grid position relative for squares that have movement (like 441, 225, 841, 1156, 1225, 2209, 2116)
+      const square = n * n;
+      if (square === 256 || square === 225 || square === 441 || square === 841 || square === 1156 || square === 1225 || square === 2209 || square === 2116) {
+        grid.style.position = 'relative';
+      } else {
+        grid.style.position = '';
+      }
+      
+      const totalDots = n * n;
+      for (let i = 0; i < totalDots; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        circle.dataset.index = i;
+        grid.appendChild(circle);
+      }
+    }
+
+    // Fill dots based on typed value - using same patterns as squares.html
+    function updateGridColors(typedValue) {
+      const circles = document.querySelectorAll('.circle');
+      if (!typedValue || typedValue === '') {
+        // Clear all colors
+        circles.forEach(circle => {
+          circle.classList.remove('red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'pink', 'sky', 'correct', 'incorrect');
+          circle.style.background = '';
+        });
+        return;
+      }
+      
+      const typedNum = parseInt(typedValue);
+      if (isNaN(typedNum)) return;
+      
+      const gridSize = currentNumber;
+      const square = currentAnswer;
+      const answerStr = String(currentAnswer);
+      
+      // Handle partial input: if typing "4" for 49, show 40 green dots
+      // We need to determine what component the typed value represents
+      let components = [];
+      
+      if (typedValue.length === answerStr.length) {
+        // Full number typed - break it down normally
+        components = breakDownNumber(typedNum);
+      } else {
+        // Partial input - determine which component(s) to show
+        // For example, typing "4" for 49 should show 40 (tens component)
+        const expectedComponents = breakDownNumber(currentAnswer);
+        
+        if (typedValue.length === 1 && answerStr.length === 2) {
+          // Typing first digit of 2-digit number: show tens component
+          const tensDigit = parseInt(typedValue[0]);
+          components = [tensDigit * 10];
+        } else if (typedValue.length === 2 && answerStr.length === 2) {
+          // Typing both digits of 2-digit number: show both components
+          components = breakDownNumber(typedNum);
+        } else if (typedValue.length === 1 && answerStr.length === 3) {
+          // Typing first digit of 3-digit number: show hundreds component
+          const hundredsDigit = parseInt(typedValue[0]);
+          components = [hundredsDigit * 100];
+        } else if (typedValue.length === 2 && answerStr.length === 3) {
+          // Typing first two digits of 3-digit number: show hundreds + tens
+          const hundreds = parseInt(typedValue[0]) * 100;
+          const tens = parseInt(typedValue[1]) * 10;
+          components = [hundreds, tens];
+        } else if (typedValue.length === 3 && answerStr.length === 3) {
+          // Typing all three digits: show all components
+          components = breakDownNumber(typedNum);
+        } else if (typedValue.length === 1 && answerStr.length === 4) {
+          // Typing first digit of 4-digit number: show thousands component
+          const thousandsDigit = parseInt(typedValue[0]);
+          components = [thousandsDigit * 1000];
+        } else if (typedValue.length === 2 && answerStr.length === 4) {
+          // Typing first two digits: show thousands + hundreds
+          const thousands = parseInt(typedValue[0]) * 1000;
+          const hundreds = parseInt(typedValue[1]) * 100;
+          components = [thousands, hundreds];
+        } else if (typedValue.length === 3 && answerStr.length === 4) {
+          // Typing first three digits: show thousands + hundreds + tens
+          const thousands = parseInt(typedValue[0]) * 1000;
+          const hundreds = parseInt(typedValue[1]) * 100;
+          const tens = parseInt(typedValue[2]) * 10;
+          components = [thousands, hundreds, tens];
+        } else if (typedValue.length === 4 && answerStr.length === 4) {
+          // Typing all four digits: show all components
+          components = breakDownNumber(typedNum);
+        } else if (typedValue.length === 1 && answerStr.length === 5) {
+          // Typing first digit of 5-digit number (10000): show ten-thousands
+          const tenThousandsDigit = parseInt(typedValue[0]);
+          components = [tenThousandsDigit * 10000];
+        } else {
+          // Fallback: try to break down what was typed
+          components = breakDownNumber(typedNum);
+        }
+      }
+      
+      // Clear all colors first
+      circles.forEach(circle => {
+        circle.classList.remove('red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'pink', 'sky', 'correct', 'incorrect');
+        circle.style.background = '';
+        // Reset visibility for movement squares
+        if (circle.dataset.originalRow !== undefined) {
+          circle.style.visibility = '';
+          circle.style.position = '';
+          circle.style.left = '';
+          circle.style.top = '';
+          circle.style.zIndex = '';
+          delete circle.dataset.originalRow;
+          delete circle.dataset.originalCol;
+        } else {
+          circle.style.visibility = '';
+        }
+      });
+      
+      // Remove any separated circles from previous fills
+      const grid = document.getElementById('grid');
+      if (grid) {
+        const separatedCircles = grid.querySelectorAll('.circle[data-original-row]');
+        separatedCircles.forEach(sc => {
+          if (sc.parentNode === grid) {
+            grid.removeChild(sc);
+          }
+        });
+      }
+      
+      // Track which indices have been filled
+      const filledIndices = new Set();
+      
+      // Get expected components for the full answer to determine patterns
+      const expectedComponents = breakDownNumber(currentAnswer);
+      
+      // Fill each component in order
+      components.forEach((componentValue, componentIndex) => {
+        if (componentValue === 0) return; // Skip zero components
+        
+        let componentDigit = parseInt(String(componentValue)[0]);
+        let color = COLOR_MAP[componentDigit] || 'red';
+        
+        // Special color assignments (override default)
+        if (square === 841) {
+          if (componentIndex === 0 && componentValue === 800) {
+            color = 'pink'; // 841 first click: 800 pink
+          } else if (componentIndex === 1 && componentValue === 40) {
+            color = 'green'; // 841 second click: 40 green
+          } else if (componentIndex === expectedComponents.length - 1 && componentValue === 1) {
+            color = 'red'; // 841 third click: 1 red
+          }
+        }
+        
+        // Determine pattern based on square and component
+        // Use the expected component value from the full answer for pattern matching
+        const expectedComponentValue = expectedComponents[componentIndex] || componentValue;
+        let indicesToFill = [];
+        
+        // Determine pattern based on ones value (matching squares.html logic exactly)
+        const onesValue = expectedComponents[expectedComponents.length - 1];
+        let topRightIndices = [];
+        
+        // Special patterns for ones place - ALL ones place numbers go in top right corner
+        // 6 dots: purple triangle pattern in top-right corner (for 16, 36, 196, 256, 576)
+        // 9 dots: sky blue 3x3 square in top-right corner (for 49, 169, 289, 529)
+        if (onesValue === 6) {
+          // Triangle pattern for 6 (1, 2, 3 diagonal) - PURPLE
+          topRightIndices = getTrianglePatternIndices(gridSize);
+        } else if (onesValue === 4) {
+          // 2x2 square for 4 (including 324, 64)
+          topRightIndices = get2x2TopRightIndices(gridSize);
+        } else if (onesValue === 9) {
+          // 3x3 square for 9 - SKY BLUE (for 49, 169, 289, 529)
+          topRightIndices = get3x3TopRightIndices(gridSize);
+        } else if (onesValue === 5) {
+          // For 225: 5 blue dots in a vertical line in the rightmost column
+          // For 25: 5 blue dots in a vertical line in the rightmost column (col 4, rows 0-4)
+          // For 625: 5 blue dots are dots 25, 50, 75, 100, 125
+          // For other squares: 2x2 square + 1 diagonal for 5
+          if (square === 225 || square === 2025) {
+            // Vertical line: 5 dots in rightmost column
+            const rightmostCol = square === 225 ? 14 : (gridSize - 1);
+            for (let row = 0; row < 5 && row < gridSize; row++) {
+              topRightIndices.push(row * gridSize + rightmostCol);
+            }
+          } else if (square === 25) {
+            // Vertical line: 5 dots in column 4 (rightmost column), rows 0-4
+            for (let row = 0; row < 5 && row < gridSize; row++) {
+              topRightIndices.push(row * gridSize + 4);
+            }
+          } else if (square === 625) {
+            // Dots 25, 50, 75, 100, 125 are blue on 3rd click
+            for (let dot of [25, 50, 75, 100, 125]) {
+              topRightIndices.push(dot - 1); // Convert to index
+            }
+          } else {
+            topRightIndices = get5DiagonalPatternIndices(gridSize);
+          }
+        } else if (onesValue === 1 && square === 441) {
+          // For 441: 1 red dot at top right corner (row 0, col gridSize-1)
+          topRightIndices = [0 * gridSize + (gridSize - 1)];
+        } else if (onesValue === 1 && square === 841) {
+          // For 841: 1 red dot at top right corner (row 0, col 28)
+          topRightIndices = [0 * gridSize + 28];
+        } else if (onesValue === 1 && square === 1681) {
+          // For 1681: 1 red dot at top right corner (row 0, col 40)
+          topRightIndices = [0 * gridSize + (gridSize - 1)];
+        } else {
+          // Default: top row rightmost positions
+          topRightIndices = getTopRightCornerIndices(gridSize, onesValue);
+        }
+        
+        // Now determine which component we're filling
+        if (componentIndex === 0 && expectedComponents.length > 1) {
+          // First component (tens/hundreds/thousands): fill excluding ones place
+          // Special case: 16 fills from bottom-left, others fill from top-left
+          if (square === 16 && componentValue === 10) {
+            // 16: 10 red dots from bottom-left, excluding triangle
+            indicesToFill = getBottomLeftIndices(gridSize, componentValue, topRightIndices);
+          } else if (square === 361) {
+            // Special: 361 - 300 yellow, leave space for 60 purple + 1 red
+            // Fill from bottom, leaving specific areas empty
+            const allIndices = [];
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip row 0: cols 11-18 (7 purple + 1 red), but fill col 10 (yellow)
+                if (row === 0 && col >= 11 && col <= 18) {
+                  continue;
+                }
+                // Skip row 1: cols 11-18 (8 purple), but fill col 10 (yellow)
+                if (row === 1 && col >= 11 && col <= 18) {
+                  continue;
+                }
+                // Skip rows 2-5: cols 11-18 (8 purple each)
+                if (row >= 2 && row <= 5 && col >= 11 && col <= 18) {
+                  continue;
+                }
+                // Skip row 6: cols 12-18 (7 purple)
+                if (row === 6 && col >= 12 && col <= 18) {
+                  continue;
+                }
+                // Skip row 7: cols 13-18 (6 purple)
+                if (row === 7 && col >= 13 && col <= 18) {
+                  continue;
+                }
+                const idx = row * gridSize + col;
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 441) {
+            // Special: 441 - 400 green, need to leave space for 41 (8×5 rectangle + 1 diagonal dot)
+            // Row 0, col 12 (13th dot in top row) should be green on first click
+            // Row 0, col 20 (top-right corner) should remain BLACK until third click (when it becomes red)
+            // Row 5, col 12 (diagonal dot from bottom-left of rectangle) should remain black until second click
+            const allIndices = [];
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                const idx = row * gridSize + col;
+                // Skip the entire 8×5 rectangle area (rows 0-4, cols 13 to gridSize-1)
+                if (row >= 0 && row < 5 && col >= 13 && col < gridSize) {
+                  continue;
+                }
+                // Skip row 5, col 12 (diagonal dot that will be part of the 41 on second click)
+                if (row === 5 && col === 12) {
+                  continue;
+                }
+                // Include row 0, col 12 (13th dot in top row) - it should be green
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 225) {
+            // Special: 225 - 200 orange, leave exactly 25 black dots in a 5×5 rectangle (rows 0-4, cols 10-14)
+            const allIndices = [];
+            // Fill from bottom, leaving exactly the 5×5 rectangle (rows 0-4, cols 10-14) empty
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip the 5×5 rectangle area (rows 0-4, cols 10-14)
+                if (row < 5 && col >= 10 && col <= 14) {
+                  continue; // Skip this position - it's in the 5×5 area
+                }
+                const idx = row * gridSize + col;
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 289) {
+            // Special: 289 - 200 orange, leave clean top-right area for 80 pink + 9 sky blue (89 total)
+            // We need exactly 89 positions empty (289 - 200 = 89)
+            // Leave: rows 0-8, cols 8-16 (9 rows × 9 cols = 81) + row 9, cols 9-16 (1 row × 8 cols = 8) = 89 positions
+            const allIndices = [];
+            // Fill from bottom, leaving the top-right area empty
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip rows 0-8, cols 8-16 (9 rows × 9 cols = 81 positions)
+                if (row >= 0 && row <= 8 && col >= 8 && col <= 16) {
+                  continue;
+                }
+                // Skip row 9, cols 9-16 (1 row × 8 cols = 8 positions)
+                if (row === 9 && col >= 9 && col <= 16) {
+                  continue;
+                }
+                // Total skipped: 81 + 8 = 89 positions, leaving exactly 200 available for orange
+                const idx = row * gridSize + col;
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 324) {
+            // Special: 324 - 300 yellow, leave space for 20 orange + 4 green
+            // Pattern: 4 rows (rows 0-3) × 5 columns (cols 13-17) + 1 row (row 4) × 4 columns (cols 14-17)
+            // The 4 green are in a 2x2 square at rows 0-1, cols 16-17
+            const allIndices = [];
+            // Fill from bottom, leaving:
+            // - rows 0-3, cols 13-17 (for 16 orange + 4 green in top part)
+            // - row 4, cols 14-17 (for 4 orange in bottom row, moved 2 positions right)
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip rows 0-3, cols 13-17 (the top part for orange + green)
+                if (row >= 0 && row <= 3 && col >= 13 && col <= 17) {
+                  continue;
+                }
+                // Skip row 4, cols 14-17 (the bottom row for orange, moved 2 positions right)
+                if (row === 4 && col >= 14 && col <= 17) {
+                  continue;
+                }
+                const idx = row * gridSize + col;
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 256) {
+            // Special: 256 - 200 red, fill from bottom leaving space for 50 blue + 6 purple
+            // Need to leave 56 positions empty (50 + 6)
+            // The 6 purple are in triangle pattern at top-right (rows 0-2, rightmost columns)
+            // The 50 blue fill the area around the triangle
+            // Pattern: leave top-right area - approximately rows 0-6, cols 10-15 (7×6 = 42) + rows 0-2, cols 8-9 (3×2 = 6) + row 7, cols 13-15 (1×3 = 3) = 51, close to 50
+            // Actually, for 16×16, leave rows 0-6, cols 9-15 (7×7 = 49) + row 7, cols 13-15 (1×3 = 3) = 52, but triangle overlaps
+            // Better: leave rows 0-7, cols 9-15 (8×7 = 56) which matches exactly 50 + 6
+            const allIndices = [];
+            // Fill from bottom, leaving top-right area: rows 0-7, cols 9-15 (56 positions for 50 blue + 6 purple)
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip top-right area: rows 0-7, cols 9-15 (leaving space for 50 + 6)
+                if (row >= 0 && row <= 7 && col >= 9 && col <= 15) {
+                  continue;
+                }
+                const idx = row * gridSize + col;
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 841) {
+            // Special: 841 - 800 pink, leave space for 40 green + 1 red
+            // Pattern matches 21×21 (441) visually, mapped exactly:
+            // 21×21: 8×5 rectangle at rows 0-4, cols 13-20, diagonal at row 5, col 12, top-right at row 0, col 20
+            // 29×29: 8×5 rectangle at rows 0-4, cols 21-28 (shifted right by 8), diagonal at row 5, col 20, top-right at row 0, col 28
+            const blackDots = new Set();
+            // 8×5 rectangle: rows 0-4, cols 21-28
+            for (let row = 0; row < 5; row++) {
+              for (let col = 21; col < 29; col++) {
+                blackDots.add(row * gridSize + col);
+              }
+            }
+            // Diagonal dot: row 5, col 20
+            blackDots.add(5 * gridSize + 20);
+            
+            // Fill all dots except the black ones
+            const allIndices = [];
+            for (let row = 0; row < gridSize; row++) {
+              for (let col = 0; col < gridSize; col++) {
+                const idx = row * gridSize + col;
+                // Skip black dots (the 41 dots: 40 in 8×5 rectangle + 1 diagonal = 41)
+                if (blackDots.has(idx)) {
+                  continue;
+                }
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else {
+            // Other numbers: fill from top-left, excluding ones place
+            // For 49: 40 green dots fill from top-left, excluding the 3x3 top-right corner
+            indicesToFill = getUpperLeftIndices(gridSize, componentValue, topRightIndices);
+          }
+        } else if (componentIndex > 0 && componentIndex < expectedComponents.length - 1) {
+          // Middle component(s) for 3+ digit numbers (e.g., tens place in 361)
+          // Fill around the ones place area, excluding already filled and ones place
+          const excludeSet = new Set(topRightIndices);
+          // Add already filled indices to exclude set
+          filledIndices.forEach(idx => excludeSet.add(idx));
+          
+          // Special cases for tens place
+          if (square === 361 && componentValue === 60) {
+            // Special: 361 - 60 purple exactly as specified
+            const allIndices = [];
+            // Row 0: cols 11-17 (7 purple, excluding col 18 which is red)
+            for (let col = 11; col < 18 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 0 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            // Row 1: cols 11-18 (8 purple)
+            for (let col = 11; col < 19 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 1 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            // Rows 2-5: cols 11-18 (8 purple each)
+            for (let row = 2; row < 6 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 11; col < 19 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Row 6: cols 12-18 (7 purple)
+            for (let col = 12; col < 19 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 6 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            // Row 7: cols 13-18 (6 purple)
+            for (let col = 13; col < 19 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 7 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 289 && componentValue === 80) {
+            // Special: 289 - 80 pink, fill the top-right area we left empty, excluding the 9 sky blue (3×3)
+            const allIndices = [];
+            // Fill rows 0-8, cols 8-16 (excluding the 9 sky blue in rows 0-2, cols 14-16)
+            for (let row = 0; row < 9 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 8; col < 17 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Fill row 9, cols 9-16
+            for (let col = 9; col < 17 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 9 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 225 && componentValue === 20) {
+            // Special: 225 - 20 orange in a 5×5 rectangle
+            // Fill only the first 4 columns (cols 10-13) × 5 rows (rows 0-4) = 20 orange dots
+            const allIndices = [];
+            for (let row = 0; row < 5 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 10; col < 14 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 441 && componentValue === 40) {
+            // Special: 441 - 40 dots: 39 in 8×5 rectangle + 1 diagonal dot
+            // BUT: row 0, col 20 (top-right of rectangle) stays BLACK until third click
+            const allIndices = [];
+            // 8×5 rectangle: rows 0-4, cols 13 to gridSize-1 (40 positions total)
+            // Fill 39 positions in the rectangle (excluding row 0, col gridSize-1 which stays black)
+            for (let row = 0; row < 5 && row < gridSize; row++) {
+              for (let col = 13; col < gridSize; col++) {
+                const idx = row * gridSize + col;
+                // Exclude row 0, col gridSize-1 (top-right corner) - it stays black until third click
+                if (row === 0 && col === gridSize - 1) {
+                  continue;
+                }
+                if (!filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Add the diagonal dot (row 5, col 12)
+            const diagonalIdx = 5 * gridSize + 12;
+            if (!filledIndices.has(diagonalIdx) && !allIndices.includes(diagonalIdx)) {
+              allIndices.push(diagonalIdx);
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 324 && componentValue === 20) {
+            // Special: 324 - 20 orange in pattern: 4 rows × 5 cols (top) + 1 row × 4 cols (bottom)
+            // The 4 green are in a 2x2 square at rows 0-1, cols 16-17 (top-right corner)
+            // Top part: 4 rows (rows 0-3) × 5 columns (cols 13-17) = 20 positions, minus 4 green = 16 orange
+            // Bottom row: 1 row (row 4) × 4 columns (cols 14-17) = 4 orange (moved 2 positions to the right)
+            // Total = 20 orange
+            const allIndices = [];
+            // Fill top part: rows 0-3, cols 13-17 (excluding the 2x2 green)
+            for (let row = 0; row < 4 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 13; col < 18 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                // Exclude the 4 green dots (2x2 at rows 0-1, cols 16-17) and already filled dots
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Fill bottom row: row 4, cols 14-17 (moved 2 positions to the right)
+            for (let col = 14; col < 18 && col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = 4 * gridSize + col;
+              if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 256 && componentValue === 50) {
+            // Special: 256 - 50 blue, fill the area left empty by 200 red, excluding the 6 purple triangle
+            // The area left empty: rows 0-7, cols 8-15
+            // Fill 50 blue dots in this area, excluding the triangle pattern (6 purple)
+            const allIndices = [];
+            // Fill rows 0-7, cols 8-15, excluding the triangle pattern
+            for (let row = 0; row < 8 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 8; col < 16 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                // Exclude the triangle pattern (topRightIndices) and already filled dots
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 841 && componentValue === 40) {
+            // Special: 841 - 40 green dots on second click
+            // Pattern matches 21×21 (441): 8×5 rectangle + 1 diagonal dot, but top-right stays black
+            // 8×5 rectangle: rows 0-4, cols 21-28 (40 positions total)
+            // Fill 39 positions in the rectangle (excluding row 0, col 28 which stays black)
+            // Plus 1 diagonal dot (row 5, col 20)
+            const allIndices = [];
+            // 8×5 rectangle: rows 0-4, cols 21-28 (40 positions total)
+            // Fill 39 positions in the rectangle (excluding row 0, col 28 which stays black)
+            for (let row = 0; row < 5 && row < gridSize; row++) {
+              for (let col = 21; col < 29 && col < gridSize; col++) {
+                const idx = row * gridSize + col;
+                // Exclude row 0, col 28 - it stays black until third click
+                if (row === 0 && col === 28) {
+                  continue;
+                }
+                if (!filledIndices.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Add the diagonal dot (row 5, col 20)
+            const diagonalIdx = 5 * gridSize + 20;
+            if (!filledIndices.has(diagonalIdx) && !allIndices.includes(diagonalIdx)) {
+              allIndices.push(diagonalIdx);
+            }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else {
+            // Fill from top-left, working around the protected ones area
+            indicesToFill = [];
+            for (let row = 0; row < gridSize && indicesToFill.length < componentValue; row++) {
+              for (let col = 0; col < gridSize && indicesToFill.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                if (!excludeSet.has(idx) && !filledIndices.has(idx)) {
+                  indicesToFill.push(idx);
+                }
+              }
+            }
+            indicesToFill = indicesToFill.slice(0, componentValue);
+          }
+        } else {
+          // Last component (ones place): use the top-right pattern we determined above
+          indicesToFill = topRightIndices;
+        }
+        
+        // Special case: 100 - all dots red (single component)
+        if (square === 100 && expectedComponentValue === 100) {
+          for (let i = 0; i < circles.length; i++) {
+            indicesToFill.push(i);
+          }
+        }
+        
+        // Fill the dots with the appropriate color (excluding already filled)
+        const colorHex = {
+          'red': '#ff0000',
+          'orange': '#ff6200',
+          'yellow': '#ffe600',
+          'green': '#00a12c',
+          'blue': '#0030ff',
+          'purple': '#6a1b9a',
+          'brown': '#7a3b00',
+          'pink': '#ff3fa6',
+          'sky': '#38c7ff'
+        };
+        
+        indicesToFill.forEach(idx => {
+          if (idx < circles.length && !filledIndices.has(idx)) {
+            const circle = circles[idx];
+            circle.classList.add(color);
+            circle.style.background = colorHex[color] || '#ff0000';
+            filledIndices.add(idx);
+          }
+        });
+      });
+      
+      // Handle movement/offset for squares that need it (after all components are filled)
+      handleSquareMovement(square, gridSize, components, expectedComponents, filledIndices);
+    }
+    
+    // Handle movement/offset for squares that have animated movement
+    function handleSquareMovement(square, gridSize, components, expectedComponents, filledIndices) {
+      const grid = document.getElementById('grid');
+      if (!grid) return;
+      
+      const circles = Array.from(grid.querySelectorAll('.circle'));
+      if (!circles || circles.length === 0) return;
+      
+      // For 441: 40 green dots (tens place) move when second component (40) is shown
+      // Check if 40 green component is in the current components array
+      const has40Green = components.some((val, idx) => idx === 1 && val === 40 && expectedComponents[1] === 40);
+      if (square === 441 && has40Green) {
+        // Find all green circles in the 8×5 rectangle area (rows 0-4, cols 13-20) + diagonal (row 5, col 12)
+        // Exclude row 0, col 20 (top-right corner) - it doesn't move until third click
+        const moveIndices = [];
+        for (let row = 0; row < 5; row++) {
+          for (let col = 13; col < 21; col++) {
+            if (row === 0 && col === 20) continue; // Top-right corner stays in place
+            const idx = row * gridSize + col;
+            if (circles[idx] && circles[idx].classList.contains('green')) {
+              moveIndices.push(idx);
+            }
+          }
+        }
+        // Add diagonal dot (row 5, col 12)
+        const diagonalIdx = 5 * gridSize + 12;
+        if (circles[diagonalIdx] && circles[diagonalIdx].classList.contains('green')) {
+          moveIndices.push(diagonalIdx);
+        }
+        
+        // Move each green circle: hide original and create offset version
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return; // Already moved
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          // Hide original
+          circle.style.visibility = 'hidden';
+          
+          // Create offset circle
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: right 1.2, up 1.2 (diagonal movement)
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+        
+        // Also offset the top-right corner dot (row 0, col 20) even though it's still black
+        const topRightIdx = 0 * gridSize + 20;
+        const topRightCircle = circles[topRightIdx];
+        if (topRightCircle && !topRightCircle.dataset.originalRow) {
+          topRightCircle.style.visibility = 'hidden';
+          const offsetBlack = document.createElement('div');
+          offsetBlack.className = 'circle';
+          offsetBlack.style.position = 'absolute';
+          offsetBlack.style.zIndex = '5';
+          offsetBlack.dataset.originalRow = 0;
+          offsetBlack.dataset.originalCol = 20;
+          offsetBlack.style.left = `calc(var(--circle-total) * 20 + 1.2 * var(--circle-total))`;
+          offsetBlack.style.top = `calc(var(--circle-total) * 0 - 1.2 * var(--circle-total))`;
+          offsetBlack.style.display = 'block';
+          offsetBlack.style.visibility = 'visible';
+          grid.appendChild(offsetBlack);
+        }
+      }
+      
+      // For 225: 20 orange dots (tens place) move when second component (20) is shown
+      const has20Orange = components.length >= 2 && components[1] === 20 && expectedComponents.length >= 2 && expectedComponents[1] === 20;
+      if (square === 225 && has20Orange) {
+        // Find all orange circles in the 5×5 rectangle (rows 0-4, cols 10-13, excluding col 14)
+        const moveIndices = [];
+        for (let row = 0; row < 5; row++) {
+          for (let col = 10; col < 14; col++) {
+            const idx = row * gridSize + col;
+            if (circles[idx] && circles[idx].classList.contains('orange')) {
+              moveIndices.push(idx);
+            }
+          }
+        }
+        
+        // Move each orange circle
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return;
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          circle.style.visibility = 'hidden';
+          
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: right 0.5, up 0.5
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+        
+        // Also create 5 black dots in separated position (col 14, rows 0-4)
+        for (let row = 0; row < 5; row++) {
+          const idx = row * gridSize + 14;
+          const circle = circles[idx];
+          if (circle && !circle.dataset.originalRow) {
+            circle.style.visibility = 'hidden';
+            const offsetBlack = document.createElement('div');
+            offsetBlack.className = 'circle';
+            offsetBlack.style.position = 'absolute';
+            offsetBlack.style.zIndex = '5';
+            offsetBlack.dataset.originalRow = row;
+            offsetBlack.dataset.originalCol = 14;
+            offsetBlack.style.left = `calc(var(--circle-total) * 14 + 0.5 * var(--circle-total))`;
+            offsetBlack.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+            offsetBlack.style.display = 'block';
+            offsetBlack.style.visibility = 'visible';
+            grid.appendChild(offsetBlack);
+          }
+        }
+      }
+      
+      // For 225: 5 blue dots (ones place) replace the 5 black separated dots
+      const lastIdx = expectedComponents.length - 1;
+      const has5Blue = components.length >= 3 && components[lastIdx] === 5 && expectedComponents[lastIdx] === 5;
+      if (square === 225 && has5Blue) {
+        // Find the 5 separated black circles and turn them blue
+        const separatedCircles = grid.querySelectorAll('.circle[data-original-row][data-original-col="14"]');
+        separatedCircles.forEach(sc => {
+          // Check if it's a black circle (only has 'circle' class, no color class)
+          const hasColor = Array.from(sc.classList).some(cls => ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'pink', 'sky'].includes(cls));
+          if (!hasColor) {
+            sc.classList.add('blue');
+            sc.style.background = '#0030ff';
+            sc.style.zIndex = '20'; // Higher z-index
+          }
+        });
+      }
+      
+      // For 841: 40 green dots (tens place) move when second component (40) is shown - same pattern as 441
+      const has40Green841 = components.some((val, idx) => idx === 1 && val === 40 && expectedComponents[1] === 40);
+      if (square === 841 && has40Green841) {
+        // Find all green circles in the 8×5 rectangle area (rows 0-4, cols 21-28) + diagonal (row 5, col 20)
+        // Exclude row 0, col 28 (top-right corner) - it doesn't move until third click
+        const moveIndices = [];
+        for (let row = 0; row < 5; row++) {
+          for (let col = 21; col < 29; col++) {
+            if (row === 0 && col === 28) continue; // Top-right corner stays in place
+            const idx = row * gridSize + col;
+            if (circles[idx] && circles[idx].classList.contains('green')) {
+              moveIndices.push(idx);
+            }
+          }
+        }
+        // Add diagonal dot (row 5, col 20)
+        const diagonalIdx = 5 * gridSize + 20;
+        if (circles[diagonalIdx] && circles[diagonalIdx].classList.contains('green')) {
+          moveIndices.push(diagonalIdx);
+        }
+        
+        // Move each green circle: hide original and create offset version
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return; // Already moved
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          // Hide original
+          circle.style.visibility = 'hidden';
+          
+          // Create offset circle
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: right 1.2, up 1.2 (diagonal movement) - same as 441
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+        
+        // Also offset the top-right corner dot (row 0, col 28) even though it's still black
+        const topRightIdx = 0 * gridSize + 28;
+        const topRightCircle = circles[topRightIdx];
+        if (topRightCircle && !topRightCircle.dataset.originalRow) {
+          topRightCircle.style.visibility = 'hidden';
+          const offsetBlack = document.createElement('div');
+          offsetBlack.className = 'circle';
+          offsetBlack.style.position = 'absolute';
+          offsetBlack.style.zIndex = '5';
+          offsetBlack.dataset.originalRow = 0;
+          offsetBlack.dataset.originalCol = 28;
+          offsetBlack.style.left = `calc(var(--circle-total) * 28 + 1.2 * var(--circle-total))`;
+          offsetBlack.style.top = `calc(var(--circle-total) * 0 - 1.2 * var(--circle-total))`;
+          offsetBlack.style.display = 'block';
+          offsetBlack.style.visibility = 'visible';
+          grid.appendChild(offsetBlack);
+        }
+      }
+      
+      // For 1156: 100 red dots move up when second component (100) is shown
+      // Check if we're filling the second component (index 1) with value 100
+      const is1156SecondComponent = square === 1156 && components.length >= 2 && components[1] === 100 && expectedComponents.length >= 2 && expectedComponents[1] === 100;
+      if (is1156SecondComponent) {
+        // Find all red circles that were just filled for the second component
+        // These are the 100 red dots that appear on second click
+        // They are in specific positions - but since we're tracking filledIndices, we can use those
+        // Actually, we need to identify which dots are part of the second component
+        // For now, move all red dots that are not part of the first 1000 red dots
+        // The 100 red dots on second click are in specific positions (rows 1-10, specific columns)
+        const moveIndices = [];
+        // Based on squares.html, the 100 red dots are in specific positions
+        // But since we're in a game context, let's move all red dots that appear after the first component
+        // Actually, a simpler approach: if we have 2 components filled and the second is 100, move all red dots
+        // that are in positions that would be filled by the second component
+        circles.forEach((circle, idx) => {
+          if (circle.classList.contains('red') && filledIndices.has(idx)) {
+            // Check if this dot is likely part of the second component (not the first 1000)
+            // For 1156, the second component fills 100 dots in specific positions
+            // Since we can't easily distinguish, we'll move all red dots that are filled
+            // But we need to exclude the first 1000 red dots
+            // Actually, let's just move all red dots - the first 1000 should already be filled
+            const row = Math.floor(idx / gridSize);
+            const col = idx % gridSize;
+            // The 100 red dots on second click are in rows 1-10, specific columns
+            // But to be safe, let's move all red dots that are currently visible
+            if (row >= 1 && row <= 10) {
+              moveIndices.push(idx);
+            }
+          }
+        });
+        
+        // Move each red circle up 1 dot distance (straight up, no horizontal movement)
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return;
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          circle.style.visibility = 'hidden';
+          
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: up 1 dot distance (straight up, no left movement)
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col})`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 1 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+      }
+      
+      // For 1225: 20 orange dots + 5 black dots move up when third component (20) is shown
+      const is1225ThirdComponent = square === 1225 && components.length >= 3 && components[2] === 20 && expectedComponents.length >= 3 && expectedComponents[2] === 20;
+      if (is1225ThirdComponent) {
+        // Find all orange circles that are part of the 20 orange dots (third click)
+        // Based on squares.html, these are at specific dot numbers: 2-5, 66-69, 101-104, 136-139, 171-174
+        // But in the game, we don't have dot numbers, so we'll move all orange dots that appear
+        // Actually, we should move only the orange dots that are part of the third component
+        // For simplicity, move all orange dots that are currently visible (they should be the 20 from third click)
+        const moveIndices = [];
+        circles.forEach((circle, idx) => {
+          if (circle.classList.contains('orange')) {
+            moveIndices.push(idx);
+          }
+        });
+        
+        // Also include the 5 blue dots (column gridSize-1, rows 0-4) - these also move
+        for (let row = 0; row < 5; row++) {
+          const idx = row * gridSize + (gridSize - 1);
+          if (circles[idx] && !moveIndices.includes(idx)) {
+            moveIndices.push(idx);
+          }
+        }
+        
+        // Move each circle up 1 dot distance (straight up)
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return;
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          circle.style.visibility = 'hidden';
+          
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: up 1 dot distance (straight up, no left movement)
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col})`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 1 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+      }
+      
+      // For 2209: 200 orange dots move up when second component (200) is shown
+      // Based on squares.html, these are in a 20×10 rectangle (rows 0-19, cols 34-43)
+      const is2209SecondComponent = square === 2209 && components.length >= 2 && components[1] === 200 && expectedComponents.length >= 2 && expectedComponents[1] === 200;
+      if (is2209SecondComponent) {
+        // Find all orange circles in the 20×10 rectangle (rows 0-19, cols 34-43)
+        const moveIndices = [];
+        for (let row = 0; row < 20 && row < gridSize; row++) {
+          for (let col = 34; col <= 43 && col < gridSize; col++) {
+            const idx = row * gridSize + col;
+            if (circles[idx] && circles[idx].classList.contains('orange')) {
+              moveIndices.push(idx);
+            }
+          }
+        }
+        
+        // Move each orange circle up 1.5 dot distance (straight up)
+        moveIndices.forEach(idx => {
+          const circle = circles[idx];
+          if (!circle || circle.dataset.originalRow !== undefined) return;
+          
+          const row = Math.floor(idx / gridSize);
+          const col = idx % gridSize;
+          
+          circle.style.visibility = 'hidden';
+          
+          const offsetCircle = document.createElement('div');
+          offsetCircle.className = circle.className;
+          offsetCircle.style.position = 'absolute';
+          offsetCircle.style.zIndex = '5';
+          offsetCircle.style.background = circle.style.background;
+          offsetCircle.dataset.originalRow = row;
+          offsetCircle.dataset.originalCol = col;
+          // Offset: up 1.5 dot distance (straight up, no left movement)
+          offsetCircle.style.left = `calc(var(--circle-total) * ${col})`;
+          offsetCircle.style.top = `calc(var(--circle-total) * ${row} - 1.5 * var(--circle-total))`;
+          offsetCircle.style.display = 'block';
+          offsetCircle.style.visibility = 'visible';
+          grid.appendChild(offsetCircle);
+        });
+      }
+      
+      // For 2116: 10 red dots (tens place) move when third component is shown
+      // 2116 = 46² = [2000, 100, 10, 6] - need to check squares.html for exact pattern
+      // From squares.html: 2116 has 10 red dots on third click that move
+      // But 2116 is 46², which is > 99², so might not be in game range
+      // Let me check if it's needed
+    }
+
+    function checkAnswer(userAnswer) {
+      stopTimer();
+      
+      const input = document.getElementById('answerInput');
+      const feedback = document.getElementById('feedback');
+      const circles = document.querySelectorAll('.circle');
+      
+      // Record answer time
+      const answerTime = currentTime;
+      
+      if (parseInt(userAnswer) === currentAnswer) {
+        // Correct! - All dots should already be colored, just add correct animation
+        answerTimes.push(answerTime);
+        updateAverageTime();
+        
+        feedback.textContent = `✓ Correct! (${answerTime.toFixed(1)}s)`;
+        feedback.className = 'feedback correct';
+        
+        // Add correct animation to all circles (preserve their colors)
+        circles.forEach(circle => {
+          // Don't add 'correct' class if it would override colors
+          // Instead, just trigger the animation via a temporary class
+          circle.style.animation = 'correctPulse 0.5s ease';
+          setTimeout(() => {
+            circle.style.animation = '';
+          }, 500);
+        });
+        
+        playSound('correct');
+        
+        correct++;
+        streak++;
+        
+        // Score calculation based on speed and difficulty
+        let baseScore = 10;
+        let speedBonus = Math.max(0, Math.floor((5 - answerTime) * 2)); // Bonus for fast answers
+        let streakBonus = streak * 2;
+        let difficultyMultiplier = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 1.5 : difficulty === 'hard' ? 2 : 3;
+        
+        score += Math.floor((baseScore + speedBonus + streakBonus) * difficultyMultiplier);
+        
+        // Track correct answers per level
+        if (!levelCorrectCount[currentLevel]) {
+          levelCorrectCount[currentLevel] = 0;
+        }
+        levelCorrectCount[currentLevel]++;
+        
+        // Update level total time (add time spent on this question)
+        if (levelStartTime[currentLevel]) {
+          const questionTime = (Date.now() - questionStartTime) / 1000;
+          levelTotalTime[currentLevel] += questionTime;
+          levelStartTime[currentLevel] = Date.now(); // Reset for next question
+        }
+        
+        // Check if level is completed (10 correct answers for this level)
+        if (levelCorrectCount[currentLevel] >= questionsPerLevel && !completedLevels.has(currentLevel)) {
+          // Record best time if this is faster or first completion
+          const totalTime = levelTotalTime[currentLevel];
+          if (!levelBestTime[currentLevel] || totalTime < levelBestTime[currentLevel]) {
+            levelBestTime[currentLevel] = totalTime;
+          }
+          
+          completedLevels.add(currentLevel);
+          document.querySelectorAll('.level-button')[currentLevel].classList.add('completed');
+          
+          // Check if there's a next level to advance to
+          if (currentLevel < LEVELS.length - 1) {
+            showLevelCompleteModal(true); // Pass true to indicate auto-advance
+          } else {
+            showLevelCompleteModal(false); // Last level, no advance
+          }
+        } else {
+          updateStats();
+          // Auto-advance to next question immediately (no delay)
+          generateNewQuestion();
+        }
+      } else {
+        // Wrong! - Show all dots as incorrect
+        feedback.textContent = `✗ Wrong! The answer is ${currentAnswer}`;
+        feedback.className = 'feedback incorrect';
+        
+        // Fill remaining dots red to show wrong answer
+        const answerStr = String(currentAnswer);
+        const userStr = String(userAnswer);
+        
+        // Reset and show correct answer pattern
+        circles.forEach(circle => {
+          circle.classList.remove('red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown', 'pink', 'sky', 'correct');
+          circle.classList.add('incorrect');
+        });
+        
+        playSound('incorrect');
+        
+        wrong++;
+        streak = 0;
+        updateStats();
+        
+        // Show correct answer pattern, then generate new question
+        setTimeout(() => {
+          // Show what the correct answer would look like
+          showCorrectAnswerPattern();
+          setTimeout(() => {
+            generateNewQuestion();
+          }, 2000);
+        }, 1000);
+      }
+    }
+
+    function showCorrectAnswerPattern() {
+      // Show correct pattern using the same logic
+      updateGridColors(String(currentAnswer));
+    }
+
+    function updateStats() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('correct').textContent = correct;
+      document.getElementById('wrong').textContent = wrong;
+      document.getElementById('streak').textContent = streak;
+    }
+
+    // Handle input - progressive digit typing
+    const answerInput = document.getElementById('answerInput');
+    
+    answerInput.addEventListener('input', (e) => {
+      const value = e.target.value.trim();
+      const answerStr = String(currentAnswer);
+      
+      // Start timer on first input if game hasn't started
+      if (!gameStarted && value.length > 0) {
+        startTimer();
+      }
+      
+      // Update grid colors based on typed value
+      updateGridColors(value);
+      
+      // Check if answer is complete and correct
+      if (value.length === answerStr.length && value !== '') {
+        if (parseInt(value) === currentAnswer) {
+          // Correct answer - auto-advance immediately
+          setTimeout(() => {
+            checkAnswer(value);
+          }, 200); // Small delay to show the final digit's color
+        } else {
+          // Wrong answer - show error after a moment
+          setTimeout(() => {
+            checkAnswer(value);
+          }, 500);
+        }
+      }
+    });
+
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = answerInput.value.trim();
+        if (value !== '') {
+          checkAnswer(value);
+        }
+      }
+    });
+
+    // On-screen number pad
+    function initNumberPad() {
+      const numberPad = document.getElementById('numberPad');
+      const numberButtons = numberPad.querySelectorAll('[data-number]');
+      const clearButton = document.getElementById('clearButton');
+      const enterButton = document.getElementById('enterButton');
+      
+      numberButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const number = button.getAttribute('data-number');
+          const currentValue = answerInput.value;
+          const answerStr = String(currentAnswer);
+          
+          // Only allow typing if we haven't completed the answer
+          if (currentValue.length < answerStr.length) {
+            answerInput.value += number;
+            // Trigger input event to fill dots
+            answerInput.dispatchEvent(new Event('input'));
+            answerInput.focus();
+          }
+        });
+      });
+      
+      clearButton.addEventListener('click', () => {
+        answerInput.value = '';
+        updateGridColors('');
+        answerInput.focus();
+      });
+      
+      enterButton.addEventListener('click', () => {
+        const value = answerInput.value.trim();
+        if (value !== '') {
+          checkAnswer(value);
+        }
+      });
+    }
+
+    // Difficulty selector
+    function initDifficultySelector() {
+      const difficultyButtons = document.querySelectorAll('.difficulty-button');
+      difficultyButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          difficulty = button.getAttribute('data-difficulty');
+          difficultyButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          generateNewQuestion();
+        });
+      });
+    }
+
+    // Sound toggle
+    function initSoundToggle() {
+      const soundToggle = document.getElementById('soundToggle');
+      soundToggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundToggle.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+        soundToggle.classList.toggle('active', soundEnabled);
+      });
+    }
+
+    // Initialize start button
+    function initStartButton() {
+      const startButton = document.getElementById('startButton');
+      if (startButton) {
+        startButton.addEventListener('click', () => {
+          // Mark game as started
+          gameStarted = true;
+          
+          // Hide start button
+          startButton.classList.add('hidden');
+          
+          // Generate the first question (this will update both question displays and start the timer)
+          generateNewQuestion();
+        });
+      }
+    }
+
+    // Mobile optimizations
+    // Prevent double-tap zoom on iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+    
+    // Prevent zoom on input focus (iOS Safari)
+    const answerInputMobile = document.getElementById('answerInput');
+    if (answerInputMobile) {
+      answerInputMobile.addEventListener('focus', function() {
+        // Set font size to 16px to prevent zoom on iOS
+        const currentFontSize = window.getComputedStyle(this).fontSize;
+        if (parseInt(currentFontSize) < 16) {
+          this.style.fontSize = '16px';
+        }
+      });
+      
+      answerInputMobile.addEventListener('blur', function() {
+        // Restore original font size
+        this.style.fontSize = '';
+      });
+    }
+    
+    // Improve touch scrolling
+    document.addEventListener('touchmove', function(e) {
+      // Allow scrolling on scrollable elements
+      const target = e.target;
+      if (target.closest('.grid-container') || target.closest('.modal-overlay')) {
+        return; // Allow scrolling
+      }
+    }, { passive: true });
+    
+    // Prevent pull-to-refresh on mobile
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', function(e) {
+      const touchY = e.touches[0].clientY;
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // Prevent pull-to-refresh when at top of page
+      if (scrollTop === 0 && touchY > touchStartY) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Detect mobile device and adjust behavior
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (isMobile || isTouchDevice) {
+      // Add mobile class to body for additional styling if needed
+      document.body.classList.add('mobile-device');
+      
+      // Disable hover effects on touch devices
+      document.body.classList.add('touch-device');
+    }
+    
+    // Initialize game
+    initLevelSelector();
+    initNumberPad();
+    initDifficultySelector();
+    initSoundToggle();
+    initStartButton();
+    updateLevelDisplay();
+    generateNewQuestion();
+    updateStats();
+  </script>
+</body>
+</html>

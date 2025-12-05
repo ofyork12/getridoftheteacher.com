@@ -759,6 +759,7 @@
     <a href="index.html" class="game-nav-button">← Go Back</a>
     <a href="bigger-smaller.html" class="game-nav-button">Bigger/Smaller</a>
     <a href="squares.html" class="game-nav-button active">Squares</a>
+    <a href="squares - game.html" class="game-nav-button">Squares Game</a>
   </div>
 
   <div class="controls" role="group" aria-label="Language selector">
@@ -860,6 +861,113 @@
 
 <script>
 const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];
+
+// Performance optimization: Batch DOM updates for faster rendering
+function batchUpdateCircles(circles, indices, colorClass, removeClasses = COLOR_CLASSES) {
+  if (!circles || !indices || indices.length === 0) return;
+  
+  // For very large batches (1000+), use requestAnimationFrame to avoid blocking
+  if (indices.length > 1000) {
+    const batchSize = 500;
+    let currentIndex = 0;
+    
+    const processBatch = () => {
+      const endIndex = Math.min(currentIndex + batchSize, indices.length);
+      
+      // Batch DOM reads first
+      const updates = [];
+      for (let i = currentIndex; i < endIndex; i++) {
+        const idx = indices[i];
+        if (circles[idx]) {
+          updates.push({ circle: circles[idx], idx });
+        }
+      }
+      
+      // Then batch DOM writes
+      updates.forEach(({ circle }) => {
+        circle.classList.remove(...removeClasses, 'red');
+        if (colorClass) {
+          circle.classList.add(colorClass);
+        }
+      });
+      
+      currentIndex = endIndex;
+      
+      if (currentIndex < indices.length) {
+        requestAnimationFrame(processBatch);
+      }
+    };
+    
+    requestAnimationFrame(processBatch);
+  } else {
+    // For smaller batches, do it synchronously but still batch the operations
+    // Use DocumentFragment approach: batch all reads first, then all writes
+    const updates = indices.map(idx => circles[idx]).filter(Boolean);
+    
+    // Batch remove classes
+    updates.forEach(circle => {
+      circle.classList.remove(...removeClasses, 'red');
+    });
+    
+    // Batch add classes
+    if (colorClass) {
+      updates.forEach(circle => {
+        circle.classList.add(colorClass);
+      });
+    }
+  }
+}
+
+// Fast fill function for simple patterns (all dots, rectangular areas)
+function fastFillPattern(grid, gridSize, pattern, colorClass) {
+  const circles = Array.from(grid.querySelectorAll('.circle'));
+  if (!circles || circles.length === 0) return;
+  
+  let indicesToFill = [];
+  
+  switch(pattern.type) {
+    case 'all':
+      // Fill all circles
+      indicesToFill = circles.map((_, i) => i);
+      break;
+    case 'rect':
+      // Fill rectangular area
+      const { startRow, endRow, startCol, endCol } = pattern;
+      for (let row = startRow; row <= endRow && row < gridSize; row++) {
+        for (let col = startCol; col <= endCol && col < gridSize; col++) {
+          indicesToFill.push(row * gridSize + col);
+        }
+      }
+      break;
+    case 'bottom':
+      // Fill from bottom up
+      const count = pattern.count || circles.length;
+      for (let row = gridSize - 1; row >= 0 && indicesToFill.length < count; row--) {
+        for (let col = 0; col < gridSize && indicesToFill.length < count; col++) {
+          indicesToFill.push(row * gridSize + col);
+        }
+      }
+      indicesToFill = indicesToFill.slice(0, count);
+      break;
+    case 'top':
+      // Fill from top down
+      const topCount = pattern.count || circles.length;
+      for (let row = 0; row < gridSize && indicesToFill.length < topCount; row++) {
+        for (let col = 0; col < gridSize && indicesToFill.length < topCount; col++) {
+          indicesToFill.push(row * gridSize + col);
+        }
+      }
+      indicesToFill = indicesToFill.slice(0, topCount);
+      break;
+    case 'indices':
+      // Use provided indices
+      indicesToFill = pattern.indices || [];
+      break;
+  }
+  
+  batchUpdateCircles(circles, indicesToFill, colorClass);
+}
+
 // Generate number words up to 625
 const basic = {
   en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"],
@@ -7036,23 +7144,22 @@ if (moreSquaresContainer) {
     
     if (second39ClickCount === 1) {
       // First click: Fill 1000 dots red from bottom, excluding last 3 columns in top 2 rows
+      // Use optimized batch update
+      const indicesToFill = [];
       let filledCount = 0;
       // Fill from bottom row upward, left to right within each row
       for (let row = 38; row >= 0 && filledCount < 1000; row--) {
         for (let col = 0; col < 39 && filledCount < 1000; col++) {
           const index = row * 39 + col;
           // Skip last 3 columns in top 2 rows (rows 0 and 1)
-          if ((row === 0 || row === 1) && lastThreeCols.has(col)) {
-            // Keep these black (don't fill)
-            second39Circles[index].classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink');
-          } else {
-            // Fill red
-            second39Circles[index].classList.remove(...COLOR_CLASSES, 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink');
-            second39Circles[index].classList.add('red');
+          if (!((row === 0 || row === 1) && lastThreeCols.has(col))) {
+            indicesToFill.push(index);
             filledCount++;
           }
         }
       }
+      // Batch update all at once for better performance
+      batchUpdateCircles(second39Circles, indicesToFill, 'red', [...COLOR_CLASSES, 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink']);
       speakNumber(1000);
     } else if (second39ClickCount === 2) {
       // Second click: Fill exactly 500 dots blue
@@ -15402,7 +15509,8 @@ if (moreSquaresContainer) {
   
   moreSquaresContainer.appendChild(grid99Section);
   
-  // Create 100×100 grid (10000 dots) with special click behavior
+  // Create 100×100 grid (100² = 10000 dots) with special click behavior
+  // 100 squared equals 10,000 total dots
   const grid100Section = document.createElement('section');
   grid100Section.className = 'set';
   grid100Section.style.marginBottom = '40px';
@@ -15450,11 +15558,8 @@ if (moreSquaresContainer) {
       // Digit-based coloring: 10000 = first digit 1 = red
       const colorFor10000 = COLOR_MAP[1] || 'red'; // 1 = red
       
-      // Fill all dots red
-      for (let i = 0; i < totalDots100; i++) {
-        grid100Circles[i].classList.remove(...COLOR_CLASSES);
-        grid100Circles[i].classList.add(colorFor10000);
-      }
+      // Use optimized batch update for faster rendering
+      fastFillPattern(grid100, gridSize100, { type: 'all' }, colorFor10000);
       
       speakNumber(10000);
       clickCount100 = 1;
@@ -15466,10 +15571,9 @@ if (moreSquaresContainer) {
         answerDisplay100.classList.add('show');
       }
     } else {
-      // Reset
-      grid100Circles.forEach(circle => {
-        circle.classList.remove(...COLOR_CLASSES, 'blue', 'green', 'sky', 'purple', 'orange', 'brown', 'pink', 'red', 'yellow');
-      });
+      // Reset - use optimized batch update
+      const allIndices = grid100Circles.map((_, i) => i);
+      batchUpdateCircles(grid100Circles, allIndices, null, [...COLOR_CLASSES, 'blue', 'green', 'sky', 'purple', 'orange', 'brown', 'pink', 'red', 'yellow']);
       speakNumber(0);
       clickCount100 = 0;
       const answerDisplay100 = grid100Section.querySelector('.answer-display');

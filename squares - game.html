@@ -16,14 +16,30 @@
       const isPhone = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(userAgent);
       const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(userAgent);
       const screenWidth = window.innerWidth;
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      // If it's a phone (not a tablet), redirect to mobile version
-      if (isPhone && !isTablet && screenWidth <= 768) {
+      // More aggressive detection: if it's a phone OR small screen with touch, redirect
+      if ((isPhone && !isTablet) || (isTouchDevice && screenWidth <= 768 && !isTablet)) {
         const currentPath = window.location.pathname;
-        const mobilePath = currentPath.replace('squares - game.html', 'squares-game - mobile.html')
-                                      .replace('squares-game.html', 'squares-game - mobile.html');
+        const fileName = currentPath.split('/').pop();
+        let mobilePath;
+        
+        if (fileName === 'squares - game.html' || fileName === 'squares-game.html') {
+          mobilePath = currentPath.replace(/squares[ -]game\.html/i, 'squares-game - mobile.html');
+        } else {
+          mobilePath = 'squares-game - mobile.html';
+        }
+        
         if (currentPath !== mobilePath && !currentPath.includes('mobile')) {
-          window.location.href = mobilePath;
+          // Hide number pad immediately before redirect
+          const numberPad = document.getElementById('numberPad');
+          if (numberPad) {
+            numberPad.style.display = 'none';
+            numberPad.style.visibility = 'hidden';
+            numberPad.style.height = '0';
+            numberPad.style.overflow = 'hidden';
+          }
+          window.location.replace(mobilePath);
         }
       }
     })();
@@ -31,8 +47,25 @@
   <style>
     /* Hide number pad on mobile by default - will be shown via JavaScript if desktop/tablet */
     @media (max-width: 768px) {
-      #numberPad {
+      #numberPad,
+      .number-pad,
+      [id*="numberPad"],
+      [class*="number-pad"] {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+      }
+    }
+    
+    /* Also hide on touch devices with small screens */
+    @media (max-width: 768px) and (pointer: coarse) {
+      #numberPad,
+      .number-pad {
+        display: none !important;
+        visibility: hidden !important;
       }
     }
     
@@ -192,6 +225,28 @@
     .mobile-phone .answer-side {
       width: 100%;
       min-width: auto;
+    }
+    
+    /* Aggressively hide number pad on mobile phones */
+    .mobile-phone .number-pad,
+    .mobile-phone #numberPad,
+    .mobile-phone [id*="numberPad"],
+    .mobile-phone [class*="number-pad"] {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      pointer-events: none !important;
+    }
+    
+    .mobile-phone .number-pad-button,
+    .mobile-phone [class*="number-pad-button"] {
+      display: none !important;
+      visibility: hidden !important;
     }
     
     .question-side {
@@ -1106,19 +1161,19 @@
         <span class="question-label" id="equationLabel">9² =</span>
       </div>
       
-      <div class="number-pad" id="numberPad">
-      <button class="number-pad-button" data-number="1">1</button>
-      <button class="number-pad-button" data-number="2">2</button>
-      <button class="number-pad-button" data-number="3">3</button>
-      <button class="number-pad-button" data-number="4">4</button>
-      <button class="number-pad-button" data-number="5">5</button>
-      <button class="number-pad-button" data-number="6">6</button>
-      <button class="number-pad-button" data-number="7">7</button>
-      <button class="number-pad-button" data-number="8">8</button>
-      <button class="number-pad-button" data-number="9">9</button>
-      <button class="number-pad-button clear" id="clearButton">Clear</button>
-      <button class="number-pad-button" data-number="0">0</button>
-      <button class="number-pad-button enter" id="enterButton">Enter</button>
+      <div class="number-pad" id="numberPad" style="display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; opacity: 0 !important;">
+      <button class="number-pad-button" data-number="1" style="display: none !important;">1</button>
+      <button class="number-pad-button" data-number="2" style="display: none !important;">2</button>
+      <button class="number-pad-button" data-number="3" style="display: none !important;">3</button>
+      <button class="number-pad-button" data-number="4" style="display: none !important;">4</button>
+      <button class="number-pad-button" data-number="5" style="display: none !important;">5</button>
+      <button class="number-pad-button" data-number="6" style="display: none !important;">6</button>
+      <button class="number-pad-button" data-number="7" style="display: none !important;">7</button>
+      <button class="number-pad-button" data-number="8" style="display: none !important;">8</button>
+      <button class="number-pad-button" data-number="9" style="display: none !important;">9</button>
+      <button class="number-pad-button clear" id="clearButton" style="display: none !important;">Clear</button>
+      <button class="number-pad-button" data-number="0" style="display: none !important;">0</button>
+      <button class="number-pad-button enter" id="enterButton" style="display: none !important;">Enter</button>
       </div>
 
       <div class="answer-side">
@@ -3043,22 +3098,39 @@
       // Show number pad on tablets and desktops (they may not have keyboards)
       const numberPad = document.getElementById('numberPad');
       if (numberPad) {
-        if (isPhone || screenWidth <= 768) {
-          // Definitely a phone - hide number pad
+        // Check if it's a phone - be very aggressive
+        const isDefinitelyPhone = isPhone || (screenWidth <= 768 && isTouchDevice && !isTabletUA);
+        
+        if (isDefinitelyPhone || screenWidth <= 480) {
+          // Definitely a phone - hide number pad completely and immediately
           document.body.classList.add('mobile-phone');
           document.body.classList.remove('desktop-or-tablet');
-          numberPad.style.display = 'none';
-          numberPad.style.visibility = 'hidden';
-          numberPad.style.height = '0';
-          numberPad.style.overflow = 'hidden';
+          
+          // Hide immediately with inline styles (most aggressive - use cssText for immediate effect)
+          numberPad.style.cssText = 'display: none !important; visibility: hidden !important; height: 0 !important; width: 0 !important; overflow: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important; pointer-events: none !important;';
+          
+          // Also hide all buttons inside immediately
+          const buttons = numberPad.querySelectorAll('button');
+          buttons.forEach(btn => {
+            btn.style.cssText = 'display: none !important; visibility: hidden !important; height: 0 !important; width: 0 !important; opacity: 0 !important; pointer-events: none !important;';
+          });
+          
+          // Remove from DOM flow completely
+          numberPad.setAttribute('aria-hidden', 'true');
+          numberPad.setAttribute('tabindex', '-1');
         } else {
           // Desktop or tablet - show the number pad
           document.body.classList.remove('mobile-phone');
           document.body.classList.add('desktop-or-tablet');
-          numberPad.style.display = 'grid';
-          numberPad.style.visibility = 'visible';
-          numberPad.style.height = 'auto';
-          numberPad.style.overflow = 'visible';
+          numberPad.style.cssText = 'display: grid; visibility: visible; height: auto; width: auto; overflow: visible; opacity: 1; position: static; left: auto; pointer-events: auto;';
+          numberPad.removeAttribute('aria-hidden');
+          numberPad.removeAttribute('tabindex');
+          
+          // Show all buttons inside
+          const buttons = numberPad.querySelectorAll('button');
+          buttons.forEach(btn => {
+            btn.style.cssText = '';
+          });
         }
       }
     }

@@ -9,40 +9,7 @@
   <meta http-equiv="Expires" content="0">
   <title>Squares Game - Practice Mode</title>
   <script>
-    // Redirect mobile phones to mobile version (no number pad)
-    // Keep tablets and desktops on this version (with number pad)
-    (function() {
-      const userAgent = navigator.userAgent;
-      const isPhone = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(userAgent);
-      const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(userAgent);
-      const screenWidth = window.innerWidth;
-      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      
-      // More aggressive detection: if it's a phone OR small screen with touch, redirect
-      if ((isPhone && !isTablet) || (isTouchDevice && screenWidth <= 768 && !isTablet)) {
-        const currentPath = window.location.pathname;
-        const fileName = currentPath.split('/').pop();
-        let mobilePath;
-        
-        if (fileName === 'squares - game.html' || fileName === 'squares-game.html') {
-          mobilePath = currentPath.replace(/squares[ -]game\.html/i, 'squares-game - mobile.html');
-        } else {
-          mobilePath = 'squares-game - mobile.html';
-        }
-        
-        if (currentPath !== mobilePath && !currentPath.includes('mobile')) {
-          // Hide number pad immediately before redirect
-          const numberPad = document.getElementById('numberPad');
-          if (numberPad) {
-            numberPad.style.display = 'none';
-            numberPad.style.visibility = 'hidden';
-            numberPad.style.height = '0';
-            numberPad.style.overflow = 'hidden';
-          }
-          window.location.replace(mobilePath);
-        }
-      }
-    })();
+    // No mobile redirect - use the same page for all devices
   </script>
   <style>
     /* Hide number pad on mobile by default - will be shown via JavaScript if desktop/tablet */

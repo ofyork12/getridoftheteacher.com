@@ -21,24 +21,7 @@
       buttons.forEach(btn => btn.remove());
     })();
     
-    // Redirect tablets and desktops to desktop version (with number pad)
-    // Keep mobile phones on this version (no number pad)
-    (function() {
-      const userAgent = navigator.userAgent;
-      const isPhone = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(userAgent);
-      const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(userAgent);
-      const screenWidth = window.innerWidth;
-      
-      // If it's a tablet or desktop (not a phone), redirect to desktop version
-      if ((isTablet || (!isPhone && screenWidth > 768)) && !userAgent.includes('mobile')) {
-        const currentPath = window.location.pathname;
-        const desktopPath = currentPath.replace('squares-game - mobile.html', 'squares - game.html')
-                                       .replace('mobile', '');
-        if (currentPath !== desktopPath && !currentPath.includes('squares - game.html')) {
-          window.location.href = desktopPath;
-        }
-      }
-    })();
+    // No redirect - use the same page for all devices
   </script>
   <style>
     :root {

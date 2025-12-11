@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <!-- These kill ALL caching forever – latest version every refresh -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
@@ -521,8 +524,7 @@ const dualLang = new Set();
 let lastSpokenCount = 0;
 const SOUND_MODE = {
   OFF: "off",
-  SOUND_ONLY: "sound",
-  SOUND_WITH_VOICE: "voice+sound"
+  SOUND_ONLY: "sound"
 };
 let soundMode = SOUND_MODE.OFF;
 
@@ -558,6 +560,24 @@ function initVoices(lang = currentLang) {
 if ("speechSynthesis" in window) {
   window.speechSynthesis.onvoiceschanged = initVoices;
   initVoices();
+  
+  // Mobile/TV: Initialize voices after user interaction (required on iOS/Android)
+  let voicesInitialized = false;
+  const initializeVoicesOnInteraction = () => {
+    if (!voicesInitialized) {
+      voicesInitialized = true;
+      initVoices();
+      // Ensure AudioContext is resumed for mobile devices
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+    }
+  };
+  
+  // Listen for any user interaction to initialize voices
+  document.addEventListener('touchstart', initializeVoicesOnInteraction, { once: true });
+  document.addEventListener('click', initializeVoicesOnInteraction, { once: true });
+  document.addEventListener('touchend', initializeVoicesOnInteraction, { once: true });
 }
 
 function speakNumber(count) {
@@ -569,26 +589,73 @@ function speakNumber(count) {
   const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
 
   if (shouldSpeakVoice) {
+    // Ensure AudioContext is active (required for mobile)
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    
     window.speechSynthesis.cancel();
     window.speechSynthesis.resume();
+    
     const utterance = new SpeechSynthesisUtterance(words[count]);
     utterance.rate = 1.15;
     utterance.pitch = 1;
+    utterance.volume = 1.0;
     if (preferredVoice) utterance.voice = preferredVoice;
-    requestAnimationFrame(() => {
-      window.speechSynthesis.speak(utterance);
-      if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
-        const englishWord = NUMBER_WORDS.en[count];
-        const follow = new SpeechSynthesisUtterance(englishWord);
-        follow.rate = 1.15;
-        follow.pitch = 1;
-        follow.voice = englishVoice;
-        window.speechSynthesis.speak(follow);
+    
+    // Mobile: Ensure voices are initialized
+    if (!preferredVoice) {
+      initVoices();
+      if (pickVoice(currentLang)) {
+        utterance.voice = pickVoice(currentLang);
       }
-      if (shouldPlayTone) {
-        playTone(count);
+    }
+    
+    // Handle errors gracefully on mobile
+    utterance.onerror = () => {
+      // Silently fail - mobile browsers may block speech
+    };
+    
+    // Use direct speak for mobile, requestAnimationFrame for desktop
+    const speakUtterance = () => {
+      try {
+        window.speechSynthesis.speak(utterance);
+        
+        // Handle dual language
+        if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
+          utterance.onend = () => {
+            const englishWord = NUMBER_WORDS.en[count];
+            const follow = new SpeechSynthesisUtterance(englishWord);
+            follow.rate = 1.15;
+            follow.pitch = 1;
+            follow.volume = 1.0;
+            follow.voice = englishVoice;
+            window.speechSynthesis.speak(follow);
+            if (shouldPlayTone) {
+              playTone(count);
+            }
+          };
+        } else if (shouldPlayTone) {
+          utterance.onend = () => {
+            playTone(count);
+          };
+        }
+      } catch (e) {
+        // Fallback: just play tone if speech fails
+        if (shouldPlayTone) {
+          playTone(count);
+        }
       }
-    });
+    };
+    
+    // Mobile/TV devices often need immediate execution
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isTV = /TV|SmartTV|SMART-TV/i.test(navigator.userAgent);
+    if (isMobile || isTV) {
+      speakUtterance();
+    } else {
+      requestAnimationFrame(speakUtterance);
+    }
   } else if (shouldPlayTone) {
     playTone(count);
   }
@@ -609,20 +676,28 @@ function setupGroup(selector, palette) {
   }
 
   circles.forEach(circle => {
-    circle.addEventListener("click", () => {
+    // Handle both click and touch for mobile/tablet/TV compatibility
+    const handleInteraction = (e) => {
+      e.preventDefault();
       circle.classList.toggle("red");
       const count = refreshColors();
       speakNumber(count);
-    });
+    };
+    
+    circle.addEventListener("click", handleInteraction);
+    circle.addEventListener("touchend", handleInteraction);
   });
 }
 
 // NUMBER 1 – single circle with voice feedback
 const single = document.getElementById("one");
-single.addEventListener("click", function() {
-  this.classList.toggle("red");
-  speakNumber(this.classList.contains("red") ? 1 : 0);
-});
+const handleSingleInteraction = (e) => {
+  e.preventDefault();
+  single.classList.toggle("red");
+  speakNumber(single.classList.contains("red") ? 1 : 0);
+};
+single.addEventListener("click", handleSingleInteraction);
+single.addEventListener("touchend", handleSingleInteraction);
 
 // Language + sound controls
 const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));
@@ -633,9 +708,6 @@ const cycleSoundMode = () => {
   if (soundMode === SOUND_MODE.OFF) {
     soundMode = SOUND_MODE.SOUND_ONLY;
     soundToggle.textContent = "Sound Only";
-  } else if (soundMode === SOUND_MODE.SOUND_ONLY) {
-    soundMode = SOUND_MODE.SOUND_WITH_VOICE;
-    soundToggle.textContent = "Sound + Voice";
   } else {
     soundMode = SOUND_MODE.OFF;
     soundToggle.textContent = "Sound";
@@ -656,6 +728,22 @@ function selectLanguage(lang, useDual, silent = false) {
   if (useDual && lang !== "en") {
     dualLang.add(lang);
   }
+  
+  // Save language selection to localStorage
+  try {
+    localStorage.setItem('selectedLanguage', lang);
+    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  
+  // Turn off sound when language is clicked
+  soundMode = SOUND_MODE.OFF;
+  if (soundToggle) {
+    soundToggle.textContent = "Sound";
+    soundToggle.classList.remove("active");
+  }
+  
   buttons.forEach(btn => {
     const active = btn.dataset.lang === lang && !useDual;
     btn.classList.toggle("active", active);
@@ -675,6 +763,12 @@ const NOTE_FREQUENCIES = [0, 262, 294, 330, 349, 392, 440, 494, 523, 587, 659]; 
 
 function playTone(count) {
   if (!audioCtx || count <= 0 || count >= NOTE_FREQUENCIES.length) return;
+  
+  // Ensure AudioContext is resumed (required for mobile/TV)
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
+  }
+  
   const frequency = NOTE_FREQUENCIES[count];
   const duration = 0.25;
   const now = audioCtx.currentTime;
@@ -686,8 +780,13 @@ function playTone(count) {
   gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
   oscillator.connect(gain);
   gain.connect(audioCtx.destination);
-  oscillator.start(now);
-  oscillator.stop(now + duration);
+  
+  try {
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+  } catch (e) {
+    // Silently fail if audio context not ready (mobile/TV)
+  }
 }
 
 buttons.forEach(btn => {
@@ -702,7 +801,18 @@ dualButtons.forEach(btn => {
   });
 });
 
-selectLanguage("en", false, true);
+// Load saved language from localStorage
+try {
+  const savedLang = localStorage.getItem('selectedLanguage');
+  const savedDual = localStorage.getItem('useDualLanguage') === 'true';
+  if (savedLang && NUMBER_WORDS[savedLang]) {
+    selectLanguage(savedLang, savedDual, true);
+  } else {
+    selectLanguage("en", false, true);
+  }
+} catch (e) {
+  selectLanguage("en", false, true);
+}
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});

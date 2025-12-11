@@ -625,6 +625,19 @@ function speakNumber(count) {
   const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
 
   if (shouldSpeakVoice) {
+    // On mobile, ensure speech synthesis is initialized
+    if (typeof speechInitialized === 'undefined' || !speechInitialized) {
+      // Try to wake up speech synthesis
+      try {
+        const testUtterance = new SpeechSynthesisUtterance('');
+        testUtterance.volume = 0;
+        window.speechSynthesis.speak(testUtterance);
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        // Ignore test errors
+      }
+    }
+    
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
     
@@ -644,6 +657,7 @@ function speakNumber(count) {
       initVoices();
     }
     
+    // Create utterance and speak immediately (mobile requires synchronous call from user event)
     const utterance = new SpeechSynthesisUtterance(words[count]);
     utterance.rate = 1.0; // Slightly slower for mobile
     utterance.pitch = 1.0;
@@ -714,7 +728,17 @@ function speakNumber(count) {
     // Speak the number
     try {
       // On mobile, speak directly without requestAnimationFrame
+      // Log for debugging
+      console.log('Attempting to speak:', words[count], 'Voice:', preferredVoice ? preferredVoice.name : 'default');
+      
       window.speechSynthesis.speak(utterance);
+      
+      // Check if it actually started (for debugging)
+      setTimeout(() => {
+        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          console.log('Speech may not have started - mobile browser might be blocking it');
+        }
+      }, 100);
     } catch (e) {
       console.log('Speech synthesis speak error:', e);
       // Fallback: play tone if speech fails
@@ -846,17 +870,39 @@ selectLanguage("en", false, true);
 // On mobile, ensure speech synthesis works after user interaction
 // Some mobile browsers require user interaction before allowing speech
 if ("speechSynthesis" in window) {
-  // Try to initialize voices immediately on any user interaction
-  document.addEventListener('click', function initSpeechOnInteraction() {
+  let speechInitialized = false;
+  
+  function wakeUpSpeech() {
+    if (speechInitialized) return;
+    speechInitialized = true;
+    
     initVoices();
-    // Remove listener after first interaction
-    document.removeEventListener('click', initSpeechOnInteraction);
-  }, { once: true });
+    
+    // "Wake up" speech synthesis with a silent test utterance
+    // This is required on some mobile browsers
+    try {
+      const testUtterance = new SpeechSynthesisUtterance('');
+      testUtterance.volume = 0;
+      testUtterance.rate = 0.1;
+      window.speechSynthesis.speak(testUtterance);
+      window.speechSynthesis.cancel(); // Cancel immediately
+    } catch (e) {
+      console.log('Speech wake-up test failed:', e);
+    }
+  }
+  
+  // Try to initialize voices immediately on any user interaction
+  document.addEventListener('click', function initSpeechOnInteraction(e) {
+    wakeUpSpeech();
+    // Also try to speak a test number if clicking a circle
+    if (e.target && e.target.classList.contains('circle')) {
+      // Speech will be triggered by the click handler
+    }
+  }, { once: false }); // Keep listening for clicks
   
   document.addEventListener('touchstart', function initSpeechOnTouch() {
-    initVoices();
-    document.removeEventListener('touchstart', initSpeechOnTouch);
-  }, { once: true });
+    wakeUpSpeech();
+  }, { once: false }); // Keep listening for touches
 }
 
 setupGroup("#two .circle",   {2: "orange"});

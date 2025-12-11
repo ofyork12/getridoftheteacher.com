@@ -1263,20 +1263,54 @@ function pickVoice(langCode) {
   }
   
   const langGroup = voices.filter(v => v.lang && v.lang.startsWith(langHint));
-  if (langGroup.length) return langGroup[0];
+  
+  // Prefer female voices
+  if (langGroup.length) {
+    // First try to find female voices
+    const femaleVoices = langGroup.filter(v => 
+      v.name.toLowerCase().includes('female') || 
+      v.name.toLowerCase().includes('woman') || 
+      v.name.toLowerCase().includes('zira') ||
+      v.name.toLowerCase().includes('samantha') ||
+      v.name.toLowerCase().includes('karen') ||
+      v.name.toLowerCase().includes('victoria') ||
+      v.name.toLowerCase().includes('aria')
+    );
+    if (femaleVoices.length) {
+      return femaleVoices[0];
+    }
+    // If no female voice found, return first available
+    return langGroup[0];
+  }
 
-  const fallbacks = [
-    "Microsoft Aria Online (Natural) - English (United States)",
-    "Google US English",
+  // Fallbacks - prefer female voices
+  const femaleFallbacks = [
     "Google UK English Female",
-    "Microsoft Zira Desktop - English (United States)"
+    "Microsoft Zira Desktop - English (United States)",
+    "Microsoft Aria Online (Natural) - English (United States)",
+    "Samantha",
+    "Karen",
+    "Victoria"
   ];
-
-  for (const name of fallbacks) {
+  
+  for (const name of femaleFallbacks) {
     const voice = voices.find(v => v.name === name);
     if (voice) return voice;
   }
-  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
+  
+  // Try to find any female English voice
+  const englishVoices = voices.filter(v => v.lang && v.lang.startsWith("en"));
+  const femaleEnglish = englishVoices.filter(v => 
+    v.name.toLowerCase().includes('female') || 
+    v.name.toLowerCase().includes('woman') || 
+    v.name.toLowerCase().includes('zira') ||
+    v.name.toLowerCase().includes('samantha')
+  );
+  if (femaleEnglish.length) {
+    return femaleEnglish[0];
+  }
+  
+  return englishVoices[0] || voices[0];
 }
 
 function initVoices(lang = currentLang) {
@@ -1322,7 +1356,7 @@ function speakNumber(count) {
   
   lastSpokenCount = count;
   
-  // Re-initialize voice for current language to ensure it's correct
+  // Re-initialize voice for current language to ensure it's correct (prefer female)
   preferredVoice = pickVoice(currentLang);
   
   // Cancel any ongoing speech
@@ -1345,12 +1379,30 @@ function speakNumber(count) {
   utterance.volume = 1.0; // Full volume
   utterance.lang = LANGUAGE_HINTS[currentLang] || "en-US";
   
-  // Try to set voice, but don't fail if not available
+  // Always try to set the preferred voice (female voice) - especially important for "one"
   if (preferredVoice) {
     try {
       utterance.voice = preferredVoice;
     } catch (e) {
-      // Voice might not be available, continue without it
+      // Voice might not be available, try to re-initialize
+      preferredVoice = pickVoice(currentLang);
+      if (preferredVoice) {
+        try {
+          utterance.voice = preferredVoice;
+        } catch (e2) {
+          // Continue without voice if still fails
+        }
+      }
+    }
+  } else {
+    // If no voice, try to initialize again
+    preferredVoice = pickVoice(currentLang);
+    if (preferredVoice) {
+      try {
+        utterance.voice = preferredVoice;
+      } catch (e) {
+        // Continue without voice
+      }
     }
   }
   
@@ -1513,6 +1565,22 @@ dualButtons.forEach(btn => {
 });
 
 selectLanguage("en", false, true);
+
+// On mobile, ensure speech synthesis works after user interaction
+// Some mobile browsers require user interaction before allowing speech
+if ("speechSynthesis" in window) {
+  // Try to initialize voices immediately on any user interaction
+  document.addEventListener('click', function initSpeechOnInteraction() {
+    initVoices();
+    // Remove listener after first interaction
+    document.removeEventListener('click', initSpeechOnInteraction);
+  }, { once: true });
+  
+  document.addEventListener('touchstart', function initSpeechOnTouch() {
+    initVoices();
+    document.removeEventListener('touchstart', initSpeechOnTouch);
+  }, { once: true });
+}
 
 // Sound toggle button
 const soundToggle = document.querySelector('.controls button[data-mode="sound"]');

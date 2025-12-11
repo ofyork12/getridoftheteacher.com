@@ -57,21 +57,27 @@
       }
       /* Grid wrapper is the scrollable container that keeps grid centered */
       .grid-wrapper {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
+        width: 100vw;
+        display: block;
         overflow-x: auto;
         overflow-y: visible;
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
         position: relative;
         /* JavaScript will set width and padding dynamically */
-      }
-      /* Grids inside wrapper */
-      .grid-wrapper > [class*="grid-"],
-      .grid-wrapper > .grid-dynamic {
-        flex-shrink: 0;
         margin: 0;
+        padding: 0;
+      }
+      /* Grids inside wrapper - centered by padding */
+      .grid-wrapper > [class*="grid-"],
+      .grid-wrapper > .grid-dynamic,
+      .grid-wrapper > .grid-two,
+      .grid-wrapper > .grid-three,
+      .grid-wrapper > .grid-four,
+      .grid-wrapper > .grid-five {
+        flex-shrink: 0;
+        margin: 0 auto;
+        display: block;
       }
     }
     .game-navigation {
@@ -15724,6 +15730,135 @@ if (moreSquaresContainer) {
   });
   
   moreSquaresContainer.appendChild(grid100Section);
+  
+  // Wrap ALL grids in centering containers (for mobile)
+  function wrapAllGrids() {
+    // Find all grids that aren't already wrapped
+    const allGrids = document.querySelectorAll('[class*="grid-"], .grid-dynamic, .grid-two, .grid-three, .grid-four, .grid-five');
+    
+    allGrids.forEach(grid => {
+      // Skip if already wrapped
+      if (grid.parentElement && grid.parentElement.classList.contains('grid-wrapper')) {
+        return;
+      }
+      
+      // Create wrapper
+      const wrapper = document.createElement('div');
+      wrapper.className = 'grid-wrapper';
+      
+      // Insert wrapper before grid
+      grid.parentNode.insertBefore(wrapper, grid);
+      
+      // Move grid into wrapper
+      wrapper.appendChild(grid);
+    });
+    
+    // Center all grids
+    centerAllGrids();
+  }
+  
+  // Center all grids on mobile
+  function centerAllGrids() {
+    if (window.innerWidth > 768) {
+      // Desktop - reset styles
+      document.querySelectorAll('.grid-wrapper').forEach(wrapper => {
+        wrapper.style.paddingLeft = '';
+        wrapper.style.paddingRight = '';
+        wrapper.style.width = '';
+        wrapper.style.minWidth = '';
+      });
+      return;
+    }
+    
+    const wrappers = document.querySelectorAll('.grid-wrapper');
+    wrappers.forEach(wrapper => {
+      const grid = wrapper.querySelector('[class*="grid-"], .grid-dynamic, .grid-two, .grid-three, .grid-four, .grid-five');
+      if (!grid) return;
+      
+      // Force a reflow to ensure grid is rendered
+      void grid.offsetHeight;
+      
+      // Get width from computed style or inline style
+      let gridWidth = grid.offsetWidth;
+      
+      // If offsetWidth is 0, try to calculate from CSS
+      if (!gridWidth || gridWidth === 0) {
+        const computedStyle = window.getComputedStyle(grid);
+        const widthStr = computedStyle.width || grid.style.width;
+        if (widthStr && widthStr.includes('calc')) {
+          // Parse calc() - get the multiplier
+          const match = widthStr.match(/calc\(var\(--circle-total\)\s*\*\s*(\d+)\)/);
+          if (match) {
+            const gridSize = parseInt(match[1]);
+            const rootStyle = getComputedStyle(document.documentElement);
+            const circleSize = parseFloat(rootStyle.getPropertyValue('--circle-size')) || 10;
+            const circleBorder = parseFloat(rootStyle.getPropertyValue('--circle-border')) || 1;
+            const circleTotal = circleSize + (circleBorder * 2);
+            gridWidth = circleTotal * gridSize;
+          }
+        } else if (widthStr) {
+          gridWidth = parseFloat(widthStr);
+        }
+      }
+      
+      // Fallback: use scrollWidth
+      if (!gridWidth || gridWidth === 0) {
+        gridWidth = grid.scrollWidth;
+      }
+      
+      const viewportWidth = window.innerWidth;
+      
+      if (gridWidth > viewportWidth) {
+        // Grid is wider - add padding to center it
+        const padding = Math.max(0, (gridWidth - viewportWidth) / 2);
+        wrapper.style.paddingLeft = padding + 'px';
+        wrapper.style.paddingRight = padding + 'px';
+        wrapper.style.width = gridWidth + 'px';
+        wrapper.style.minWidth = gridWidth + 'px';
+        wrapper.style.maxWidth = 'none';
+      } else {
+        // Grid fits - center normally
+        wrapper.style.paddingLeft = '0';
+        wrapper.style.paddingRight = '0';
+        wrapper.style.width = '100vw';
+        wrapper.style.minWidth = '100vw';
+        wrapper.style.maxWidth = '100vw';
+      }
+    });
+  }
+  
+  // Wrap and center on load - run multiple times to catch all grids
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(wrapAllGrids, 100);
+      setTimeout(wrapAllGrids, 500);
+      setTimeout(wrapAllGrids, 1000);
+    });
+  } else {
+    setTimeout(wrapAllGrids, 100);
+    setTimeout(wrapAllGrids, 500);
+    setTimeout(wrapAllGrids, 1000);
+  }
+  
+  // Re-center on resize
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      centerAllGrids();
+    }, 150);
+  });
+  
+  // Also wrap grids that are added dynamically
+  if ('MutationObserver' in window) {
+    const observer = new MutationObserver(() => {
+      wrapAllGrids();
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
   
   // Debug: Log everything after appending
   setTimeout(() => {

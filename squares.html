@@ -33,7 +33,7 @@
     /* Center content vertically on mobile devices */
     @media (max-width: 768px) {
       html, body {
-        overflow-x: hidden;
+        overflow-x: auto;
         overflow-y: auto;
         width: 100%;
       }
@@ -43,7 +43,7 @@
         padding: 20px 0;
         min-height: 100vh;
       }
-      /* Sets contain grids */
+      /* Sets contain grids - allow horizontal scroll */
       .set {
         align-items: center;
         width: 100vw;
@@ -52,26 +52,19 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        overflow-x: visible;
-        overflow-y: visible;
-      }
-      /* Grid wrapper is the scrollable container that keeps grid centered */
-      .grid-wrapper {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
         overflow-x: auto;
         overflow-y: visible;
         -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-        position: relative;
-        /* JavaScript will set width and padding dynamically */
       }
-      /* Grids inside wrapper */
-      .grid-wrapper > [class*="grid-"],
-      .grid-wrapper > .grid-dynamic {
+      /* Center grids in sets */
+      .set > [class*="grid-"],
+      .set > .grid-dynamic,
+      .set > .grid-two,
+      .set > .grid-three,
+      .set > .grid-four,
+      .set > .grid-five {
+        margin: 0 auto;
         flex-shrink: 0;
-        margin: 0;
       }
     }
     .game-navigation {
@@ -2113,72 +2106,7 @@ function generateSquare(n, label = null) {
     grid.style.display = 'none';
   }
   
-  // Wrap grid in a centering container for mobile
-  const gridWrapper = document.createElement('div');
-  gridWrapper.className = 'grid-wrapper';
-  gridWrapper.appendChild(grid);
-  section.appendChild(gridWrapper);
-  
-  // On mobile, ensure grid stays centered when wider than viewport
-  function centerGrid() {
-    if (window.innerWidth <= 768) {
-      // Get grid width from computed style or inline style
-      let gridWidth = 0;
-      if (grid.style.width) {
-        // Parse calc() or pixel values
-        const widthMatch = grid.style.width.match(/(\d+(?:\.\d+)?)/);
-        if (widthMatch) {
-          // If it's a calc, we need to evaluate it - for now use offsetWidth
-          gridWidth = grid.offsetWidth;
-        }
-      } else {
-        gridWidth = grid.offsetWidth;
-      }
-      
-      // Fallback: calculate from grid size if offsetWidth not available yet
-      if (!gridWidth || gridWidth === 0) {
-        const computedStyle = window.getComputedStyle(grid);
-        const circleTotal = parseFloat(computedStyle.getPropertyValue('--circle-total')) || 
-                          parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--circle-total')) ||
-                          (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--circle-size')) + 
-                           parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--circle-border')) * 2);
-        gridWidth = circleTotal * gridSize;
-      }
-      
-      const viewportWidth = window.innerWidth;
-      if (gridWidth > viewportWidth) {
-        // Grid is wider than viewport - add padding to center it
-        const padding = Math.max(0, (gridWidth - viewportWidth) / 2);
-        gridWrapper.style.paddingLeft = padding + 'px';
-        gridWrapper.style.paddingRight = padding + 'px';
-        gridWrapper.style.width = gridWidth + 'px';
-        gridWrapper.style.minWidth = gridWidth + 'px';
-      } else {
-        // Grid fits in viewport - center normally
-        gridWrapper.style.paddingLeft = '0';
-        gridWrapper.style.paddingRight = '0';
-        gridWrapper.style.width = '100vw';
-        gridWrapper.style.minWidth = '100vw';
-      }
-    } else {
-      // Desktop - reset styles
-      gridWrapper.style.paddingLeft = '';
-      gridWrapper.style.paddingRight = '';
-      gridWrapper.style.width = '';
-      gridWrapper.style.minWidth = '';
-    }
-  }
-  
-  // Center on load and resize - use multiple timeouts to ensure grid is rendered
-  setTimeout(centerGrid, 50);
-  setTimeout(centerGrid, 200);
-  setTimeout(centerGrid, 500);
-  window.addEventListener('resize', centerGrid);
-  // Also center when grid becomes visible
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(() => centerGrid(), { threshold: 0 });
-    observer.observe(grid);
-  }
+  section.appendChild(grid);
   
   // Add answer display
   const answerDisplay = document.createElement('div');

@@ -27,13 +27,31 @@
       gap: var(--section-gap);
       padding: 40px 12px 120px;
       overflow-y: auto;
+      overflow-x: auto;
       -webkit-tap-highlight-color: transparent;
     }
     /* Center content vertically on mobile devices */
     @media (max-width: 768px) {
       body {
         justify-content: center;
+        align-items: center;
         padding: 20px 12px;
+        overflow-x: auto;
+        overflow-y: auto;
+        width: 100%;
+      }
+      /* Allow sets to be wider than viewport when grids are large */
+      .set {
+        align-items: center;
+        width: auto;
+        min-width: 100%;
+        max-width: max-content;
+      }
+      /* Ensure grids can be wider than viewport and scroll horizontally */
+      .set > [class*="grid-"],
+      .set > .grid-dynamic {
+        margin: 0 auto;
+        flex-shrink: 0;
       }
     }
     .game-navigation {
@@ -70,7 +88,9 @@
       align-items: center;
       gap: 12px;
       width: 100%;
+      min-width: min-content;
       text-align: center;
+      overflow-x: visible;
     }
     .set > :last-child {
       margin: 0 auto;
@@ -754,6 +774,13 @@
       display: grid;
       gap: 0;
       cursor: pointer;
+      overflow: visible;
+      min-width: min-content;
+    }
+    /* Ensure all grids can overflow and be scrollable */
+    [class*="grid-"], .grid-dynamic {
+      overflow: visible;
+      min-width: min-content;
     }
     .grid-dynamic .circle {
       position: static;

@@ -524,7 +524,7 @@ const SOUND_MODE = {
   SOUND_ONLY: "sound",
   SOUND_WITH_VOICE: "voice+sound"
 };
-let soundMode = SOUND_MODE.SOUND_WITH_VOICE; // Enable voice by default
+let soundMode = SOUND_MODE.OFF;
 
 const audioCtx = "AudioContext" in window ? new AudioContext() : ("webkitAudioContext" in window ? new webkitAudioContext() : null);
 
@@ -556,115 +556,39 @@ function initVoices(lang = currentLang) {
 }
 
 if ("speechSynthesis" in window) {
-  // Initialize voices immediately
+  window.speechSynthesis.onvoiceschanged = initVoices;
   initVoices();
-  
-  // Also listen for voices to be loaded (some browsers load them asynchronously)
-  if (window.speechSynthesis.getVoices().length === 0) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      initVoices();
-      // Remove listener after first load
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  } else {
-    window.speechSynthesis.onvoiceschanged = initVoices;
-  }
-  
-  // Try again after a short delay in case voices load late
-  setTimeout(initVoices, 500);
-  setTimeout(initVoices, 1000);
 }
 
 function speakNumber(count) {
   const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
   if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
-  
-  // Ensure voices are initialized
-  if (!preferredVoice) {
-    initVoices();
-  }
-  
   lastSpokenCount = count;
   const shouldSpeakVoice = soundMode !== SOUND_MODE.SOUND_ONLY;
   const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
 
   if (shouldSpeakVoice) {
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
-    
-    // On mobile, ensure speech synthesis is ready
-    if (window.speechSynthesis.pending) {
-      window.speechSynthesis.cancel();
-    }
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
-    
+    window.speechSynthesis.resume();
     const utterance = new SpeechSynthesisUtterance(words[count]);
-    utterance.rate = 1.0; // Slightly slower for mobile
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    utterance.lang = LANGUAGE_HINTS[currentLang] || "en-US";
-    
-    // Try to set voice, but don't fail if not available
-    if (preferredVoice) {
-      try {
-        utterance.voice = preferredVoice;
-      } catch (e) {
-        // Voice might not be available, continue without it
-        console.log('Voice not available, using default');
-      }
-    }
-    
-    // Error handling
-    utterance.onerror = (e) => {
-      console.log('Speech synthesis error:', e);
-    };
-    
-    // Set up onend handler before speaking
-    utterance.onend = () => {
-      // Handle dual language
+    utterance.rate = 1.15;
+    utterance.pitch = 1;
+    if (preferredVoice) utterance.voice = preferredVoice;
+    requestAnimationFrame(() => {
+      window.speechSynthesis.speak(utterance);
       if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
         const englishWord = NUMBER_WORDS.en[count];
         const follow = new SpeechSynthesisUtterance(englishWord);
-        follow.rate = 1.0;
-        follow.pitch = 1.0;
-        follow.volume = 1.0;
-        follow.lang = "en-US";
-        try {
-          follow.voice = englishVoice;
-        } catch (e) {
-          // Continue without voice
-        }
-        follow.onend = () => {
-          if (shouldPlayTone) {
-            playTone(count);
-          }
-        };
+        follow.rate = 1.15;
+        follow.pitch = 1;
+        follow.voice = englishVoice;
         window.speechSynthesis.speak(follow);
-      } else {
-        // Play tone after speech ends
-        if (shouldPlayTone) {
-          playTone(count);
-        }
       }
-    };
-    
-    // Speak the number
-    try {
-      // On mobile, speak directly without requestAnimationFrame
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.log('Speech synthesis speak error:', e);
-      // Fallback: play tone if speech fails
       if (shouldPlayTone) {
         playTone(count);
       }
-    }
+    });
   } else if (shouldPlayTone) {
     playTone(count);
   }
@@ -721,12 +645,6 @@ const cycleSoundMode = () => {
     audioCtx.resume();
   }
 };
-
-// Update button text to reflect default state
-if (soundToggle) {
-  soundToggle.textContent = "Sound + Voice";
-  soundToggle.classList.add("active");
-}
 
 soundToggle.addEventListener("click", cycleSoundMode);
 

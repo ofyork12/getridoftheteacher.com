@@ -1325,47 +1325,68 @@ function speakNumber(count) {
   // Re-initialize voice for current language to ensure it's correct
   preferredVoice = pickVoice(currentLang);
   
+  // Cancel any ongoing speech
   window.speechSynthesis.cancel();
+  
+  // On mobile, ensure speech synthesis is ready
+  if (window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel();
+  }
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+  }
   if (window.speechSynthesis.paused) {
     window.speechSynthesis.resume();
   }
+  
   const utterance = new SpeechSynthesisUtterance(words[count]);
-  utterance.rate = 1.15;
-  utterance.pitch = 1;
+  utterance.rate = 1.0; // Slightly slower for mobile compatibility
+  utterance.pitch = 1.0;
   utterance.volume = 1.0; // Full volume
-  utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
+  utterance.lang = LANGUAGE_HINTS[currentLang] || "en-US";
+  
+  // Try to set voice, but don't fail if not available
   if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  } else {
-    // If no voice found, at least set the language hint
-    utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
+    try {
+      utterance.voice = preferredVoice;
+    } catch (e) {
+      // Voice might not be available, continue without it
+    }
   }
+  
+  // Error handling
+  utterance.onerror = (e) => {
+    console.log('Speech synthesis error:', e);
+  };
   
   const isDual = dualLang.has(currentLang);
   const isEnglish = currentLang === 'en';
   
-  requestAnimationFrame(() => {
-    if (isEnglish) {
-      // English only - say it once
-      window.speechSynthesis.speak(utterance);
-    } else if (isDual) {
-      // Dual mode: native first, then English
-      utterance.onend = () => {
-        const englishWord = NUMBER_WORDS.en[count];
-        const follow = new SpeechSynthesisUtterance(englishWord);
-        follow.rate = 1.15;
-        follow.pitch = 1;
-        follow.volume = 0.5; // 50% volume
-        follow.lang = LANGUAGE_HINTS.en || "en";
+  // Set up onend handler before speaking
+  if (isDual && !isEnglish) {
+    // Dual mode: native first, then English
+    utterance.onend = () => {
+      const englishWord = NUMBER_WORDS.en[count];
+      const follow = new SpeechSynthesisUtterance(englishWord);
+      follow.rate = 1.0;
+      follow.pitch = 1.0;
+      follow.volume = 1.0;
+      follow.lang = "en-US";
+      try {
         if (englishVoice) follow.voice = englishVoice;
-        window.speechSynthesis.speak(follow);
-      };
-      window.speechSynthesis.speak(utterance);
-    } else {
-      // Native only
-      window.speechSynthesis.speak(utterance);
-    }
-  });
+      } catch (e) {
+        // Continue without voice
+      }
+      window.speechSynthesis.speak(follow);
+    };
+  }
+  
+  // Speak directly (no requestAnimationFrame for better mobile compatibility)
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.log('Speech synthesis speak error:', e);
+  }
 }
 
 function setupGroup(selector, palette) {

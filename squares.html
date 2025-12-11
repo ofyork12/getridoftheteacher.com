@@ -1223,94 +1223,21 @@ function pickVoice(langCode) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const langHint = LANGUAGE_HINTS[langCode] || langCode;
-  
-  // For Chinese, try to find a good Chinese voice
-  if (langCode === "zh") {
-    // Try to find Chinese voices, prefer zh-CN
-    const chineseVoices = voices.filter(v => 
-      v.lang && (v.lang.startsWith("zh-CN") || v.lang.startsWith("zh") || v.lang.includes("Chinese"))
-    );
-    if (chineseVoices.length > 0) {
-      // Prefer zh-CN voices
-      const cnVoice = chineseVoices.find(v => v.lang.startsWith("zh-CN"));
-      if (cnVoice) return cnVoice;
-      return chineseVoices[0];
-    }
-  }
-  
-  // For Vietnamese, try to find a good Vietnamese voice (prefer female voices)
-  if (langCode === "vi") {
-    const vietnameseVoices = voices.filter(v => 
-      v.lang && (v.lang.startsWith("vi-VN") || v.lang.startsWith("vi") || v.lang.includes("Vietnamese"))
-    );
-    if (vietnameseVoices.length > 0) {
-      // Prefer female voices (check if name contains "Female" or similar indicators)
-      const femaleVoices = vietnameseVoices.filter(v => 
-        v.name && (v.name.toLowerCase().includes("female") || v.name.toLowerCase().includes("nữ"))
-      );
-      if (femaleVoices.length > 0) {
-        // Prefer vi-VN female voices
-        const vnFemaleVoice = femaleVoices.find(v => v.lang.startsWith("vi-VN"));
-        if (vnFemaleVoice) return vnFemaleVoice;
-        return femaleVoices[0];
-      }
-      // If no female voice found, prefer vi-VN voices
-      const vnVoice = vietnameseVoices.find(v => v.lang.startsWith("vi-VN"));
-      if (vnVoice) return vnVoice;
-      return vietnameseVoices[0];
-    }
-  }
-  
-  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(langHint));
-  
-  // Prefer female voices
-  if (langGroup.length) {
-    // First try to find female voices
-    const femaleVoices = langGroup.filter(v => 
-      v.name.toLowerCase().includes('female') || 
-      v.name.toLowerCase().includes('woman') || 
-      v.name.toLowerCase().includes('zira') ||
-      v.name.toLowerCase().includes('samantha') ||
-      v.name.toLowerCase().includes('karen') ||
-      v.name.toLowerCase().includes('victoria') ||
-      v.name.toLowerCase().includes('aria')
-    );
-    if (femaleVoices.length) {
-      return femaleVoices[0];
-    }
-    // If no female voice found, return first available
-    return langGroup[0];
-  }
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
+  if (langGroup.length) return langGroup[0];
 
-  // Fallbacks - prefer female voices
-  const femaleFallbacks = [
-    "Google UK English Female",
-    "Microsoft Zira Desktop - English (United States)",
+  const fallbacks = [
     "Microsoft Aria Online (Natural) - English (United States)",
-    "Samantha",
-    "Karen",
-    "Victoria"
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
   ];
-  
-  for (const name of femaleFallbacks) {
+
+  for (const name of fallbacks) {
     const voice = voices.find(v => v.name === name);
     if (voice) return voice;
   }
-  
-  // Try to find any female English voice
-  const englishVoices = voices.filter(v => v.lang && v.lang.startsWith("en"));
-  const femaleEnglish = englishVoices.filter(v => 
-    v.name.toLowerCase().includes('female') || 
-    v.name.toLowerCase().includes('woman') || 
-    v.name.toLowerCase().includes('zira') ||
-    v.name.toLowerCase().includes('samantha')
-  );
-  if (femaleEnglish.length) {
-    return femaleEnglish[0];
-  }
-  
-  return englishVoices[0] || voices[0];
+  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
 }
 
 function initVoices(lang = currentLang) {
@@ -1319,23 +1246,8 @@ function initVoices(lang = currentLang) {
 }
 
 if ("speechSynthesis" in window) {
-  // Initialize voices immediately
+  window.speechSynthesis.onvoiceschanged = initVoices;
   initVoices();
-  
-  // Also listen for voices to be loaded (some browsers load them asynchronously)
-  if (window.speechSynthesis.getVoices().length === 0) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      initVoices();
-      // Remove listener after first load
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  } else {
-    window.speechSynthesis.onvoiceschanged = initVoices;
-  }
-  
-  // Try again after delays in case voices load late
-  setTimeout(initVoices, 500);
-  setTimeout(initVoices, 1000);
 }
 
 // Sound toggle state
@@ -1356,8 +1268,11 @@ function speakNumber(count) {
   
   lastSpokenCount = count;
   
-  // Re-initialize voice for current language to ensure it's correct (prefer female)
-  preferredVoice = pickVoice(currentLang);
+  // Don't re-initialize voice - keep the same one for consistency
+  // Only initialize if we don't have one yet
+  if (!preferredVoice) {
+    preferredVoice = pickVoice(currentLang);
+  }
   
   // Cancel any ongoing speech
   window.speechSynthesis.cancel();
@@ -1379,30 +1294,13 @@ function speakNumber(count) {
   utterance.volume = 1.0; // Full volume
   utterance.lang = LANGUAGE_HINTS[currentLang] || "en-US";
   
-  // Always try to set the preferred voice (female voice) - especially important for "one"
+  // Always use the same preferred voice (female voice) - don't re-initialize to keep it consistent
   if (preferredVoice) {
     try {
       utterance.voice = preferredVoice;
     } catch (e) {
-      // Voice might not be available, try to re-initialize
-      preferredVoice = pickVoice(currentLang);
-      if (preferredVoice) {
-        try {
-          utterance.voice = preferredVoice;
-        } catch (e2) {
-          // Continue without voice if still fails
-        }
-      }
-    }
-  } else {
-    // If no voice, try to initialize again
-    preferredVoice = pickVoice(currentLang);
-    if (preferredVoice) {
-      try {
-        utterance.voice = preferredVoice;
-      } catch (e) {
-        // Continue without voice
-      }
+      // Voice might not be available, but don't re-initialize - keep same voice
+      console.log('Voice not available, using default');
     }
   }
   
@@ -1516,6 +1414,14 @@ function selectLanguage(lang, useDual, silent = false) {
     dualLang.add(lang);
   }
   
+  // Save language selection to localStorage
+  try {
+    localStorage.setItem('selectedLanguage', lang);
+    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  
   // Turn off sound button when selecting a language
   const soundToggle = document.querySelector('.controls button[data-mode="sound"]');
   if (soundToggle) {
@@ -1564,7 +1470,18 @@ dualButtons.forEach(btn => {
   });
 });
 
-selectLanguage("en", false, true);
+// Load saved language from localStorage
+try {
+  const savedLang = localStorage.getItem('selectedLanguage');
+  const savedDual = localStorage.getItem('useDualLanguage') === 'true';
+  if (savedLang && NUMBER_WORDS[savedLang]) {
+    selectLanguage(savedLang, savedDual, true);
+  } else {
+    selectLanguage("en", false, true);
+  }
+} catch (e) {
+  selectLanguage("en", false, true);
+}
 
 // On mobile, ensure speech synthesis works after user interaction
 // Some mobile browsers require user interaction before allowing speech

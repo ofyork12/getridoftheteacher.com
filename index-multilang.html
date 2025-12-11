@@ -1,4 +1,4 @@
-  function refreshColors() {
+ {
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -487,8 +487,7 @@ const dualLang = new Set();
 let lastSpokenCount = 0;
 const SOUND_MODE = {
   OFF: "off",
-  SOUND_ONLY: "sound",
-  SOUND_WITH_VOICE: "voice+sound"
+  SOUND_ONLY: "sound"
 };
 let soundMode = SOUND_MODE.OFF;
 
@@ -599,9 +598,6 @@ const cycleSoundMode = () => {
   if (soundMode === SOUND_MODE.OFF) {
     soundMode = SOUND_MODE.SOUND_ONLY;
     soundToggle.textContent = "Sound Only";
-  } else if (soundMode === SOUND_MODE.SOUND_ONLY) {
-    soundMode = SOUND_MODE.SOUND_WITH_VOICE;
-    soundToggle.textContent = "Sound + Voice";
   } else {
     soundMode = SOUND_MODE.OFF;
     soundToggle.textContent = "Sound";
@@ -622,6 +618,22 @@ function selectLanguage(lang, useDual, silent = false) {
   if (useDual && lang !== "en") {
     dualLang.add(lang);
   }
+  
+  // Save language selection to localStorage
+  try {
+    localStorage.setItem('selectedLanguage', lang);
+    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  
+  // Turn off sound when language is clicked
+  soundMode = SOUND_MODE.OFF;
+  if (soundToggle) {
+    soundToggle.textContent = "Sound";
+    soundToggle.classList.remove("active");
+  }
+  
   buttons.forEach(btn => {
     const active = btn.dataset.lang === lang && !useDual;
     btn.classList.toggle("active", active);
@@ -668,7 +680,18 @@ dualButtons.forEach(btn => {
   });
 });
 
-selectLanguage("en", false, true);
+// Load saved language from localStorage
+try {
+  const savedLang = localStorage.getItem('selectedLanguage');
+  const savedDual = localStorage.getItem('useDualLanguage') === 'true';
+  if (savedLang && NUMBER_WORDS[savedLang]) {
+    selectLanguage(savedLang, savedDual, true);
+  } else {
+    selectLanguage("en", false, true);
+  }
+} catch (e) {
+  selectLanguage("en", false, true);
+}
 
 setupGroup("#two .circle",   {2: "orange"});
 setupGroup("#three .circle", {2: "orange", 3: "yellow"});

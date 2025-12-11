@@ -521,10 +521,9 @@ const dualLang = new Set();
 let lastSpokenCount = 0;
 const SOUND_MODE = {
   OFF: "off",
-  SOUND_ONLY: "sound",
-  SOUND_WITH_VOICE: "voice+sound"
+  SOUND_ONLY: "sound"
 };
-let soundMode = SOUND_MODE.SOUND_WITH_VOICE; // Enable voice by default
+let soundMode = SOUND_MODE.OFF;
 
 const audioCtx = "AudioContext" in window ? new AudioContext() : ("webkitAudioContext" in window ? new webkitAudioContext() : null);
 
@@ -533,56 +532,21 @@ function pickVoice(langCode) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const langHint = LANGUAGE_HINTS[langCode] || langCode;
-  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(langHint));
-  
-  // Prefer female voices
-  if (langGroup.length) {
-    // First try to find female voices
-    const femaleVoices = langGroup.filter(v => 
-      v.name.toLowerCase().includes('female') || 
-      v.name.toLowerCase().includes('woman') || 
-      v.name.toLowerCase().includes('zira') ||
-      v.name.toLowerCase().includes('samantha') ||
-      v.name.toLowerCase().includes('karen') ||
-      v.name.toLowerCase().includes('victoria') ||
-      v.name.toLowerCase().includes('aria')
-    );
-    if (femaleVoices.length) {
-      return femaleVoices[0];
-    }
-    // If no female voice found, return first available
-    return langGroup[0];
-  }
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
+  if (langGroup.length) return langGroup[0];
 
-  // Fallbacks - prefer female voices
-  const femaleFallbacks = [
-    "Google UK English Female",
-    "Microsoft Zira Desktop - English (United States)",
+  const fallbacks = [
     "Microsoft Aria Online (Natural) - English (United States)",
-    "Samantha",
-    "Karen",
-    "Victoria"
+    "Google US English",
+    "Google UK English Female",
+    "Microsoft Zira Desktop - English (United States)"
   ];
-  
-  for (const name of femaleFallbacks) {
+
+  for (const name of fallbacks) {
     const voice = voices.find(v => v.name === name);
     if (voice) return voice;
   }
-  
-  // Try to find any female English voice
-  const englishVoices = voices.filter(v => v.lang && v.lang.startsWith("en"));
-  const femaleEnglish = englishVoices.filter(v => 
-    v.name.toLowerCase().includes('female') || 
-    v.name.toLowerCase().includes('woman') || 
-    v.name.toLowerCase().includes('zira') ||
-    v.name.toLowerCase().includes('samantha')
-  );
-  if (femaleEnglish.length) {
-    return femaleEnglish[0];
-  }
-  
-  return englishVoices[0] || voices[0];
+  return voices.find(v => v.lang && v.lang.startsWith("en")) || voices[0];
 }
 
 function initVoices(lang = currentLang) {
@@ -591,23 +555,8 @@ function initVoices(lang = currentLang) {
 }
 
 if ("speechSynthesis" in window) {
-  // Initialize voices immediately
+  window.speechSynthesis.onvoiceschanged = initVoices;
   initVoices();
-  
-  // Also listen for voices to be loaded (some browsers load them asynchronously)
-  if (window.speechSynthesis.getVoices().length === 0) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      initVoices();
-      // Remove listener after first load
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  } else {
-    window.speechSynthesis.onvoiceschanged = initVoices;
-  }
-  
-  // Try again after a short delay in case voices load late
-  setTimeout(initVoices, 500);
-  setTimeout(initVoices, 1000);
 }
 
 function speakNumber(count) {
@@ -615,81 +564,23 @@ function speakNumber(count) {
   if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
   
-  // Ensure voices are initialized
-  if (!preferredVoice) {
-    initVoices();
-  }
-  
   lastSpokenCount = count;
   const shouldSpeakVoice = soundMode !== SOUND_MODE.SOUND_ONLY;
   const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
 
   if (shouldSpeakVoice) {
-    // On mobile, ensure speech synthesis is initialized
-    if (typeof speechInitialized === 'undefined' || !speechInitialized) {
-      // Try to wake up speech synthesis
-      try {
-        const testUtterance = new SpeechSynthesisUtterance('');
-        testUtterance.volume = 0;
-        window.speechSynthesis.speak(testUtterance);
-        window.speechSynthesis.cancel();
-      } catch (e) {
-        // Ignore test errors
-      }
-    }
-    
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
-    
-    // On mobile, ensure speech synthesis is ready
-    if (window.speechSynthesis.pending) {
-      window.speechSynthesis.cancel();
-    }
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-    }
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
-    
-    // Re-initialize voice to ensure we have the right one (especially for mobile)
-    if (!preferredVoice || count === 0) {
-      initVoices();
-    }
-    
-    // Create utterance and speak immediately (mobile requires synchronous call from user event)
+    window.speechSynthesis.resume();
     const utterance = new SpeechSynthesisUtterance(words[count]);
-    utterance.rate = 1.0; // Slightly slower for mobile
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    utterance.lang = LANGUAGE_HINTS[currentLang] || "en-US";
-    
-    // Always try to set the preferred voice (female voice)
-    if (preferredVoice) {
-      try {
-        utterance.voice = preferredVoice;
-      } catch (e) {
-        // Voice might not be available, try to re-initialize
-        initVoices();
-        if (preferredVoice) {
-          try {
-            utterance.voice = preferredVoice;
-          } catch (e2) {
-            // Continue without voice if still fails
-          }
-        }
+    utterance.rate = 1.15;
+    utterance.pitch = 1;
+    if (preferredVoice) utterance.voice = preferredVoice;
+    requestAnimationFrame(() => {
+      window.speechSynthesis.speak(utterance);
+      if (shouldPlayTone) {
+        playTone(count);
       }
-    } else {
-      // If no voice, try to initialize again
-      initVoices();
-      if (preferredVoice) {
-        try {
-          utterance.voice = preferredVoice;
-        } catch (e) {
-          // Continue without voice
-        }
-      }
-    }
+    });
     
     // Error handling
     utterance.onerror = (e) => {
@@ -724,28 +615,6 @@ function speakNumber(count) {
         }
       }
     };
-    
-    // Speak the number
-    try {
-      // On mobile, speak directly without requestAnimationFrame
-      // Log for debugging
-      console.log('Attempting to speak:', words[count], 'Voice:', preferredVoice ? preferredVoice.name : 'default');
-      
-      window.speechSynthesis.speak(utterance);
-      
-      // Check if it actually started (for debugging)
-      setTimeout(() => {
-        if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-          console.log('Speech may not have started - mobile browser might be blocking it');
-        }
-      }, 100);
-    } catch (e) {
-      console.log('Speech synthesis speak error:', e);
-      // Fallback: play tone if speech fails
-      if (shouldPlayTone) {
-        playTone(count);
-      }
-    }
   } else if (shouldPlayTone) {
     playTone(count);
   }
@@ -790,9 +659,6 @@ const cycleSoundMode = () => {
   if (soundMode === SOUND_MODE.OFF) {
     soundMode = SOUND_MODE.SOUND_ONLY;
     soundToggle.textContent = "Sound Only";
-  } else if (soundMode === SOUND_MODE.SOUND_ONLY) {
-    soundMode = SOUND_MODE.SOUND_WITH_VOICE;
-    soundToggle.textContent = "Sound + Voice";
   } else {
     soundMode = SOUND_MODE.OFF;
     soundToggle.textContent = "Sound";
@@ -819,6 +685,22 @@ function selectLanguage(lang, useDual, silent = false) {
   if (useDual && lang !== "en") {
     dualLang.add(lang);
   }
+  
+  // Save language selection to localStorage
+  try {
+    localStorage.setItem('selectedLanguage', lang);
+    localStorage.setItem('useDualLanguage', useDual ? 'true' : 'false');
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+  
+  // Turn off sound when language is clicked
+  soundMode = SOUND_MODE.OFF;
+  if (soundToggle) {
+    soundToggle.textContent = "Sound";
+    soundToggle.classList.remove("active");
+  }
+  
   buttons.forEach(btn => {
     const active = btn.dataset.lang === lang && !useDual;
     btn.classList.toggle("active", active);
@@ -865,7 +747,18 @@ dualButtons.forEach(btn => {
   });
 });
 
-selectLanguage("en", false, true);
+// Load saved language from localStorage
+try {
+  const savedLang = localStorage.getItem('selectedLanguage');
+  const savedDual = localStorage.getItem('useDualLanguage') === 'true';
+  if (savedLang && NUMBER_WORDS[savedLang]) {
+    selectLanguage(savedLang, savedDual, true);
+  } else {
+    selectLanguage("en", false, true);
+  }
+} catch (e) {
+  selectLanguage("en", false, true);
+}
 
 // On mobile, ensure speech synthesis works after user interaction
 // Some mobile browsers require user interaction before allowing speech

@@ -537,6 +537,16 @@ if ("speechSynthesis" in window) {
       if (audioCtx && audioCtx.state === "suspended") {
         audioCtx.resume().catch(() => {});
       }
+      // Wake up speech synthesis on mobile (required for iOS Safari)
+      try {
+        const wakeUpUtterance = new SpeechSynthesisUtterance('');
+        wakeUpUtterance.volume = 0;
+        wakeUpUtterance.rate = 0.01;
+        window.speechSynthesis.speak(wakeUpUtterance);
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        // Ignore errors
+      }
     }
   };
   
@@ -560,67 +570,73 @@ function speakNumber(count) {
       audioCtx.resume().catch(() => {});
     }
     
+    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
+    
+    // Mobile: Resume speech synthesis (required for iOS)
+    try {
+      window.speechSynthesis.resume();
+    } catch (e) {}
+    
+    // Mobile: Must initialize voices if not ready
+    if (!preferredVoice) {
+      initVoices();
+    }
     
     const utterance = new SpeechSynthesisUtterance(words[count]);
     utterance.rate = 1.15;
     utterance.pitch = 1;
     utterance.volume = 1.0;
-    if (preferredVoice) utterance.voice = preferredVoice;
     
-    // Mobile: Ensure voices are initialized
-    if (!preferredVoice) {
-      initVoices();
-      if (pickVoice(currentLang)) {
-        utterance.voice = pickVoice(currentLang);
+    // Set voice - use current preferredVoice or get it now
+    const voiceToUse = preferredVoice || pickVoice(currentLang);
+    if (voiceToUse) {
+      try {
+        utterance.voice = voiceToUse;
+      } catch (e) {
+        // Voice might not be available, continue without it
       }
     }
     
-    // Handle errors gracefully on mobile
-    utterance.onerror = () => {
-      // Silently fail - mobile browsers may block speech
-    };
-    
-    // Use direct speak for mobile, requestAnimationFrame for desktop
-    const speakUtterance = () => {
-      try {
-        window.speechSynthesis.speak(utterance);
-        
-        // Handle dual language
-        if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
-          utterance.onend = () => {
-            const englishWord = NUMBER_WORDS.en[count];
-            const follow = new SpeechSynthesisUtterance(englishWord);
-            follow.rate = 1.15;
-            follow.pitch = 1;
-            follow.volume = 1.0;
-            follow.voice = englishVoice;
-            window.speechSynthesis.speak(follow);
-            if (shouldPlayTone) {
-              playTone(count);
-            }
-          };
-        } else if (shouldPlayTone) {
-          utterance.onend = () => {
-            playTone(count);
-          };
-        }
-      } catch (e) {
-        // Fallback: just play tone if speech fails
+    // Handle dual language
+    if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
+      utterance.onend = () => {
+        const englishWord = NUMBER_WORDS.en[count];
+        const follow = new SpeechSynthesisUtterance(englishWord);
+        follow.rate = 1.15;
+        follow.pitch = 1;
+        follow.volume = 1.0;
+        try {
+          follow.voice = englishVoice;
+        } catch (e) {}
+        window.speechSynthesis.speak(follow);
         if (shouldPlayTone) {
-          playTone(count);
+          follow.onend = () => playTone(count);
         }
+      };
+    } else if (shouldPlayTone) {
+      utterance.onend = () => {
+        playTone(count);
+      };
+    }
+    
+    // Handle errors gracefully
+    utterance.onerror = () => {
+      // If speech fails, try to play tone
+      if (shouldPlayTone) {
+        playTone(count);
       }
     };
     
-    // Mobile/TV devices often need immediate execution
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isTV = /TV|SmartTV|SMART-TV/i.test(navigator.userAgent);
-    if (isMobile || isTV) {
-      speakUtterance();
-    } else {
-      requestAnimationFrame(speakUtterance);
+    // CRITICAL: On mobile, speak MUST happen synchronously in user interaction handler
+    // No delays, no requestAnimationFrame - must be immediate
+    try {
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      // Fallback: just play tone if speech fails
+      if (shouldPlayTone) {
+        playTone(count);
+      }
     }
   } else if (shouldPlayTone) {
     playTone(count);
@@ -658,12 +674,16 @@ function setupGroup(selector, palette) {
 // NUMBER 1 – single circle with voice feedback
 const single = document.getElementById("one");
 const handleSingleInteraction = (e) => {
-  e.preventDefault();
+  // Don't preventDefault on click - let it bubble naturally
+  if (e.type === 'touchend') {
+    e.preventDefault();
+  }
   single.classList.toggle("red");
+  // Speak immediately - critical for mobile
   speakNumber(single.classList.contains("red") ? 1 : 0);
 };
 single.addEventListener("click", handleSingleInteraction);
-single.addEventListener("touchend", handleSingleInteraction);
+single.addEventListener("touchend", handleSingleInteraction, { passive: false });
 
 // Language + sound controls
 const buttons = Array.from(document.querySelectorAll(".controls button[data-lang]"));

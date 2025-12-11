@@ -607,11 +607,6 @@ function speakNumber(count) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
     
-    // Mobile: Resume speech synthesis (required for iOS)
-    try {
-      window.speechSynthesis.resume();
-    } catch (e) {}
-    
     // Mobile: Must initialize voices if not ready
     if (!preferredVoice) {
       initVoices();

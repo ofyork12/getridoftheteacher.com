@@ -525,7 +525,7 @@ const SOUND_MODE = {
   SOUND_ONLY: "sound",
   SOUND_WITH_VOICE: "voice+sound"
 };
-let soundMode = SOUND_MODE.OFF;
+let soundMode = SOUND_MODE.SOUND_WITH_VOICE; // Enable voice by default
 
 const audioCtx = "AudioContext" in window ? new AudioContext() : ("webkitAudioContext" in window ? new webkitAudioContext() : null);
 
@@ -557,39 +557,74 @@ function initVoices(lang = currentLang) {
 }
 
 if ("speechSynthesis" in window) {
-  window.speechSynthesis.onvoiceschanged = initVoices;
+  // Initialize voices immediately
   initVoices();
+  
+  // Also listen for voices to be loaded (some browsers load them asynchronously)
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      initVoices();
+      // Remove listener after first load
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  } else {
+    window.speechSynthesis.onvoiceschanged = initVoices;
+  }
+  
+  // Try again after a short delay in case voices load late
+  setTimeout(initVoices, 500);
+  setTimeout(initVoices, 1000);
 }
 
 function speakNumber(count) {
   const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
   if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
+  
+  // Ensure voices are initialized
+  if (!preferredVoice) {
+    initVoices();
+  }
+  
   lastSpokenCount = count;
   const shouldSpeakVoice = soundMode !== SOUND_MODE.SOUND_ONLY;
   const shouldPlayTone = soundMode !== SOUND_MODE.OFF;
 
   if (shouldSpeakVoice) {
     window.speechSynthesis.cancel();
-    window.speechSynthesis.resume();
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     const utterance = new SpeechSynthesisUtterance(words[count]);
     utterance.rate = 1.15;
     utterance.pitch = 1;
-    if (preferredVoice) utterance.voice = preferredVoice;
-    requestAnimationFrame(() => {
+    utterance.volume = 1.0;
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+    
+    // Ensure we speak even if voice isn't set
+    try {
+      requestAnimationFrame(() => {
+        window.speechSynthesis.speak(utterance);
+        if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
+          const englishWord = NUMBER_WORDS.en[count];
+          const follow = new SpeechSynthesisUtterance(englishWord);
+          follow.rate = 1.15;
+          follow.pitch = 1;
+          follow.volume = 1.0;
+          follow.voice = englishVoice;
+          window.speechSynthesis.speak(follow);
+        }
+        if (shouldPlayTone) {
+          playTone(count);
+        }
+      });
+    } catch (e) {
+      console.log('Speech synthesis error:', e);
+      // Fallback: try without requestAnimationFrame
       window.speechSynthesis.speak(utterance);
-      if (dualLang.has(currentLang) && currentLang !== "en" && englishVoice) {
-        const englishWord = NUMBER_WORDS.en[count];
-        const follow = new SpeechSynthesisUtterance(englishWord);
-        follow.rate = 1.15;
-        follow.pitch = 1;
-        follow.voice = englishVoice;
-        window.speechSynthesis.speak(follow);
-      }
-      if (shouldPlayTone) {
-        playTone(count);
-      }
-    });
+    }
   } else if (shouldPlayTone) {
     playTone(count);
   }
@@ -646,6 +681,12 @@ const cycleSoundMode = () => {
     audioCtx.resume();
   }
 };
+
+// Update button text to reflect default state
+if (soundToggle) {
+  soundToggle.textContent = "Sound + Voice";
+  soundToggle.classList.add("active");
+}
 
 soundToggle.addEventListener("click", cycleSoundMode);
 

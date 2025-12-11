@@ -1,1 +1,1578 @@
+<!DOCTYPE html>
+<!-- Created by Hughesmath -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=10.0, user-scalable=yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Squares Game - Practice Mode (Mobile)</title>
+  <script>
+    // Immediately remove any number pad elements that might exist
+    (function() {
+      // Remove any number pad elements
+      const numberPad = document.getElementById('numberPad');
+      if (numberPad) {
+        numberPad.remove();
+      }
+      // Remove any number pad buttons
+      const buttons = document.querySelectorAll('.number-pad-button, [class*="number-pad-button"], [id*="numberPad"], [class*="number-pad"]');
+      buttons.forEach(btn => btn.remove());
+    })();
+    
+    // Redirect tablets and desktops to desktop version (with number pad)
+    // Keep mobile phones on this version (no number pad)
+    (function() {
+      const userAgent = navigator.userAgent;
+      const isPhone = /iPhone|iPod|Android.*Mobile|BlackBerry|Windows Phone|webOS/i.test(userAgent);
+      const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(userAgent);
+      const screenWidth = window.innerWidth;
+      
+      // If it's a tablet or desktop (not a phone), redirect to desktop version
+      if ((isTablet || (!isPhone && screenWidth > 768)) && !userAgent.includes('mobile')) {
+        const currentPath = window.location.pathname;
+        const desktopPath = currentPath.replace('squares-game - mobile.html', 'squares - game.html')
+                                       .replace('mobile', '');
+        if (currentPath !== desktopPath && !currentPath.includes('squares - game.html')) {
+          window.location.href = desktopPath;
+        }
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      --circle-size: clamp(8px, 5vw, 50px);
+      --circle-border: clamp(1px, 0.5vw, 5px);
+      --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      height: 100vh;
+      max-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: fixed;
+      width: 100%;
+      -webkit-overflow-scrolling: touch;
+    }
+    .game-container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .game-navigation {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .game-nav-button {
+      padding: 15px 30px;
+      font-size: 20px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .game-nav-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .game-nav-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .level-info {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .level-title {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .level-range {
+      font-size: 24px;
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    .question-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .question {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .grid-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+      position: relative;
+      flex-shrink: 0;
+      will-change: auto;
+    }
+    .grid {
+      display: grid;
+      gap: 0;
+      background: #111;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .circle {
+      width: var(--circle-total);
+      height: var(--circle-total);
+      border-radius: 50%;
+      background: #222;
+      border: var(--circle-border) solid #fff;
+      transition: background 0.2s ease;
+    }
+    .circle.correct {
+      background: #00ff00;
+      animation: correctPulse 0.5s ease;
+    }
+    .circle.incorrect {
+      background: #ff0000;
+      animation: incorrectShake 0.5s ease;
+    }
+    @keyframes correctPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes incorrectShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      position: sticky;
+      bottom: 0;
+      background: #000;
+      padding: 10px 0;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+    .answer-input {
+      font-size: 48px;
+      padding: 20px 40px;
+      text-align: center;
+      background: #111;
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 10px;
+      width: 300px;
+      max-width: 90vw;
+      font-weight: bold;
+    }
+    .answer-input:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      /* Prevent scrolling when focused */
+      scroll-margin: 0;
+    }
+    .feedback {
+      font-size: 36px;
+      font-weight: bold;
+      min-height: 50px;
+      transition: opacity 0.3s ease;
+    }
+    .feedback.correct {
+      color: #00ff00;
+    }
+    .feedback.incorrect {
+      color: #ff0000;
+    }
+    .stats {
+      display: flex;
+      gap: 30px;
+      font-size: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #00ff00;
+    }
+    .level-selector {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .level-button {
+      padding: 15px 25px;
+      font-size: 20px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .level-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .level-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .level-button.completed {
+      border-color: #00ff00;
+      color: #00ff00;
+    }
+    .instructions {
+      text-align: center;
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 20px;
+      max-width: 600px;
+    }
+    /* Ensure no number pad elements can appear */
+    .number-pad,
+    #numberPad,
+    [id*="numberPad"],
+    [class*="number-pad"],
+    .number-pad-button,
+    [class*="number-pad-button"] {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      pointer-events: none !important;
+    }
+    /* Remove number input spinners */
+    .answer-input::-webkit-inner-spin-button,
+    .answer-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+    }
+    .answer-input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    /* Timer display */
+    .timer-container {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .timer-display {
+      font-size: 28px;
+      font-weight: bold;
+      color: #00ff00;
+    }
+    .timer-display.warning {
+      color: #ffaa00;
+    }
+    .timer-display.danger {
+      color: #ff0000;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .avg-time {
+      font-size: 20px;
+      color: #aaa;
+    }
+    /* Difficulty selector */
+    .difficulty-selector {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .difficulty-button {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .difficulty-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .difficulty-button.active {
+      background: #fff;
+      color: #000;
+    }
+    .difficulty-button.easy {
+      border-color: #00ff00;
+    }
+    .difficulty-button.medium {
+      border-color: #ffaa00;
+    }
+    .difficulty-button.hard {
+      border-color: #ff0000;
+    }
+    .difficulty-button.expert {
+      border-color: #ff00ff;
+    }
+    /* Sound toggle */
+    .sound-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #222;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .sound-toggle:hover {
+      background: #444;
+    }
+    .sound-toggle.active {
+      background: #00ff00;
+      color: #000;
+    }
+    /* Audio input container */
+    /* Input mode selector */
+    .input-mode-selector {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .mode-button {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .mode-button:hover {
+      background: #fff;
+      color: #000;
+    }
+    .mode-button.active {
+      background: #00ff00;
+      border-color: #00ff00;
+      color: #000;
+    }
+    .audio-input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .audio-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .microphone-indicator {
+      font-size: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #222;
+      border: 3px solid #666;
+      transition: all 0.3s ease;
+    }
+    .microphone-indicator.active {
+      background: #ff0000;
+      border-color: #ff0000;
+      animation: pulse-recording 1s infinite;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    }
+    @keyframes pulse-recording {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    .audio-input-button {
+      padding: 15px 30px;
+      font-size: 20px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #00ff00;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .audio-input-button:hover {
+      background: #00ff00;
+      color: #000;
+    }
+    .audio-input-button.recording {
+      background: #ff0000;
+      border-color: #ff0000;
+      color: #fff;
+    }
+    .audio-input-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .audio-status {
+      font-size: 18px;
+      font-weight: bold;
+      color: #aaa;
+      min-height: 25px;
+      text-align: center;
+      padding: 5px 10px;
+    }
+    .audio-status.listening {
+      color: #00ff00;
+    }
+    .audio-status.error {
+      color: #ff0000;
+    }
+    .audio-status.success {
+      color: #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-navigation">
+      <a href="index.html" class="game-nav-button">← Go Back</a>
+      <a href="squares.html" class="game-nav-button">View All Squares</a>
+    </div>
+
+    <div class="level-info">
+      <div class="level-title">Squares Practice Game</div>
+      <div class="instructions">
+        Type the answer as fast as you can when you see the grid!
+      </div>
+    </div>
+
+    <button class="sound-toggle" id="soundToggle">🔊 Sound On</button>
+
+    <div class="difficulty-selector" id="difficultySelector">
+      <button class="difficulty-button easy active" data-difficulty="easy">Easy</button>
+      <button class="difficulty-button medium" data-difficulty="medium">Medium</button>
+      <button class="difficulty-button hard" data-difficulty="hard">Hard</button>
+      <button class="difficulty-button expert" data-difficulty="expert">Expert</button>
+    </div>
+
+    <div class="level-selector" id="levelSelector"></div>
+
+    <div class="level-info">
+      <div class="level-range" id="levelRange">Level 1: Squares 1 through 15</div>
+    </div>
+
+    <div class="timer-container">
+      <div class="timer-display" id="timer">Time: 0.0s</div>
+      <div class="avg-time" id="avgTime">Avg: 0.0s</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div>Score</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Correct</div>
+        <div class="stat-value" id="correct">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Wrong</div>
+        <div class="stat-value" id="wrong">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Streak</div>
+        <div class="stat-value" id="streak">0</div>
+      </div>
+    </div>
+
+    <div class="question-container">
+      <div class="question" id="question">What is 5²?</div>
+    </div>
+
+    <div class="grid-container">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-mode-selector" id="inputModeSelector">
+        <button class="mode-button active" data-mode="keyboard" id="keyboardModeButton">
+          <span>⌨️ Keyboard</span>
+        </button>
+        <button class="mode-button" data-mode="audio" id="audioModeButton">
+          <span>🎤 Start with Audio</span>
+        </button>
+      </div>
+      <input 
+        type="text" 
+        class="answer-input" 
+        id="answerInput" 
+        placeholder="Type answer..."
+        autofocus
+        autocomplete="off"
+        inputmode="numeric"
+        pattern="[0-9]*"
+      />
+      <div class="audio-input-container" id="audioInputContainer" style="display: none;">
+        <div class="audio-controls">
+          <div class="microphone-indicator" id="microphoneIndicator">🎤</div>
+          <button class="audio-input-button" id="audioInputButton">
+            <span>Start Listening</span>
+          </button>
+        </div>
+        <div class="audio-status" id="audioStatus"></div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+  </div>
+
+  <script>
+    // Game levels: [start, end] (inclusive)
+    // Each level includes the boundary number from previous level for review
+    const LEVELS = [
+      [1, 15],      // Level 1: Squares 1 through 15
+      [15, 25],     // Level 2: Squares 15 through 25 (includes 15 for review)
+      [25, 35],     // Level 3: Squares 25 through 35 (includes 25 for review)
+      [35, 45],     // Level 4: Squares 35 through 45 (includes 35 for review)
+      [45, 55],     // Level 5: Squares 45 through 55 (includes 45 for review)
+      [55, 65],     // Level 6: Squares 55 through 65 (includes 55 for review)
+      [65, 75],     // Level 7: Squares 65 through 75 (includes 65 for review)
+      [75, 85],     // Level 8: Squares 75 through 85 (includes 75 for review)
+      [85, 95],     // Level 9: Squares 85 through 95 (includes 85 for review)
+      [95, 100]     // Level 10: Squares 95 through 100 (includes 95 for review)
+    ];
+
+    let currentLevel = 0;
+    let currentNumber = 0;
+    let currentAnswer = 0;
+    let score = 0;
+    let correct = 0;
+    let wrong = 0;
+    let streak = 0;
+    let completedLevels = new Set();
+    let difficulty = 'easy';
+    let soundEnabled = true;
+    let questionStartTime = 0;
+    let timerInterval = null;
+    let currentTime = 0;
+    let answerTimes = [];
+    let timeLimit = null; // null = no limit, or seconds for timed mode
+    let pausedTime = 0; // Time when tab was hidden
+    let isTabVisible = true; // Track if tab is visible
+
+    // Speech synthesis for speaking numbers
+    const NUMBER_WORDS = {
+      en: ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"]
+    };
+    let preferredVoice = null;
+
+    function initVoices() {
+      if (!("speechSynthesis" in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return;
+
+      // Try to find a good English voice
+      const englishVoices = voices.filter(v => v.lang && v.lang.startsWith("en"));
+      if (englishVoices.length) {
+        preferredVoice = englishVoices[0];
+      } else {
+        preferredVoice = voices[0];
+      }
+    }
+
+    if ("speechSynthesis" in window) {
+      // Initialize voices immediately
+      initVoices();
+      
+      // Also listen for voices to be loaded (some browsers load them asynchronously)
+      if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          initVoices();
+          // Remove listener after first load
+          window.speechSynthesis.onvoiceschanged = null;
+        };
+      } else {
+        window.speechSynthesis.onvoiceschanged = initVoices;
+      }
+      
+      // Try again after delays in case voices load late
+      setTimeout(initVoices, 500);
+      setTimeout(initVoices, 1000);
+    }
+
+    function speakNumber(number) {
+      if (!("speechSynthesis" in window)) return;
+      if (!soundEnabled) return;
+      
+      // Initialize voices if not already done
+      if (!preferredVoice) {
+        initVoices();
+      }
+      
+      // Convert number to words
+      let words = "";
+      if (number <= 20 && NUMBER_WORDS.en[number]) {
+        words = NUMBER_WORDS.en[number];
+      } else {
+        // For numbers above 20, just say the number as digits
+        words = number.toString().split('').join(' ');
+      }
+      
+      if (words) {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        const utterance = new SpeechSynthesisUtterance(words);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        utterance.lang = "en-US";
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+        
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.log('Speech synthesis error:', e);
+          // Try again without voice selection
+          try {
+            const fallbackUtterance = new SpeechSynthesisUtterance(words);
+            fallbackUtterance.rate = 1.0;
+            fallbackUtterance.pitch = 1.0;
+            fallbackUtterance.volume = 1.0;
+            fallbackUtterance.lang = "en-US";
+            window.speechSynthesis.speak(fallbackUtterance);
+          } catch (e2) {
+            console.log('Fallback speech synthesis error:', e2);
+          }
+        }
+      }
+    }
+
+    // Initialize level selector
+    function initLevelSelector() {
+      const selector = document.getElementById('levelSelector');
+      LEVELS.forEach((level, index) => {
+        const button = document.createElement('button');
+        button.className = 'level-button';
+        button.textContent = `Level ${index + 1}`;
+        if (index === currentLevel) {
+          button.classList.add('active');
+        }
+        if (completedLevels.has(index)) {
+          button.classList.add('completed');
+        }
+        button.addEventListener('click', () => {
+          currentLevel = index;
+          updateLevelDisplay();
+          generateNewQuestion();
+          document.querySelectorAll('.level-button').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+          });
+        });
+        selector.appendChild(button);
+      });
+    }
+
+    function updateLevelDisplay() {
+      const [start, end] = LEVELS[currentLevel];
+      document.getElementById('levelRange').textContent = `Level ${currentLevel + 1}: Squares ${start} through ${end}`;
+    }
+
+    // Sound effects
+    function playSound(type) {
+      if (!soundEnabled) return;
+      
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'correct') {
+        // Pleasant ascending tone
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(554, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.2);
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } else if (type === 'incorrect') {
+        // Low buzz
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.type = 'sawtooth';
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } else if (type === 'timeout') {
+        // Warning beep
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.type = 'square';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      }
+    }
+
+    function startTimer() {
+      // Adjust start time if we were paused
+      if (pausedTime > 0) {
+        const pauseDuration = Date.now() - pausedTime;
+        questionStartTime += pauseDuration;
+        pausedTime = 0;
+      } else {
+        questionStartTime = Date.now();
+        currentTime = 0;
+      }
+      
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
+        // Only update timer if tab is visible
+        if (isTabVisible) {
+          currentTime = (Date.now() - questionStartTime) / 1000;
+          updateTimerDisplay();
+          
+          // Check time limit for hard/expert modes
+          if (timeLimit && currentTime >= timeLimit) {
+            handleTimeout();
+          }
+        }
+      }, 100);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function updateTimerDisplay() {
+      const timerDisplay = document.getElementById('timer');
+      timerDisplay.textContent = `Time: ${currentTime.toFixed(1)}s`;
+      
+      // Color coding based on time
+      timerDisplay.className = 'timer-display';
+      if (timeLimit) {
+        const remaining = timeLimit - currentTime;
+        if (remaining < timeLimit * 0.3) {
+          timerDisplay.classList.add('danger');
+        } else if (remaining < timeLimit * 0.6) {
+          timerDisplay.classList.add('warning');
+        }
+      }
+    }
+
+    function handleTimeout() {
+      stopTimer();
+      playSound('timeout');
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = `⏱ Time's up! The answer is ${currentAnswer}`;
+      feedback.className = 'feedback incorrect';
+      
+      wrong++;
+      streak = 0;
+      updateStats();
+      
+      setTimeout(() => {
+        generateNewQuestion();
+      }, 2000);
+    }
+
+    function updateAverageTime() {
+      if (answerTimes.length > 0) {
+        const avg = answerTimes.reduce((a, b) => a + b, 0) / answerTimes.length;
+        document.getElementById('avgTime').textContent = `Avg: ${avg.toFixed(1)}s`;
+      }
+    }
+
+    function generateNewQuestion() {
+      stopTimer();
+      
+      // Stop any active audio recognition
+      if (recognition && isListening) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          // Ignore errors if already stopped
+        }
+        isListening = false;
+        const audioButton = document.getElementById('audioInputButton');
+        const microphoneIndicator = document.getElementById('microphoneIndicator');
+        if (audioButton) {
+          audioButton.classList.remove('recording');
+          audioButton.innerHTML = '<span>Start Listening</span>';
+        }
+        if (microphoneIndicator) {
+          microphoneIndicator.classList.remove('active');
+          microphoneIndicator.textContent = '🎤';
+        }
+      }
+      
+      // Clear stored audio question/answer values when generating new question
+      // Note: The onresult handler captures these values immediately, so they're safe even if cleared here
+      audioQuestionNumber = null;
+      audioExpectedAnswer = null;
+      
+      const [start, end] = LEVELS[currentLevel];
+      
+      // Adjust range based on difficulty
+      let adjustedStart = start;
+      let adjustedEnd = end;
+      
+      if (difficulty === 'easy') {
+        // Easy: focus on lower numbers in range
+        adjustedEnd = Math.min(end, start + Math.floor((end - start) * 0.6));
+      } else if (difficulty === 'hard') {
+        // Hard: focus on higher numbers in range
+        adjustedStart = start + Math.floor((end - start) * 0.4);
+      } else if (difficulty === 'expert') {
+        // Expert: all numbers, but with time pressure
+        timeLimit = 5; // 5 seconds per question
+      } else {
+        // Medium: full range
+        timeLimit = null;
+      }
+      
+      // Generate random number in adjusted range
+      currentNumber = Math.floor(Math.random() * (adjustedEnd - adjustedStart + 1)) + adjustedStart;
+      currentAnswer = currentNumber * currentNumber;
+      
+      // Update question
+      document.getElementById('question').textContent = `What is ${currentNumber}²?`;
+      
+      // Clear feedback
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = '';
+      feedback.className = 'feedback';
+      
+      // Clear audio status
+      const audioStatus = document.getElementById('audioStatus');
+      if (audioStatus) {
+        audioStatus.textContent = '';
+        audioStatus.className = 'audio-status';
+      }
+      
+      // Generate grid
+      generateGrid(currentNumber);
+      
+      // Speak the number
+      setTimeout(() => {
+        speakNumber(currentNumber);
+      }, 300); // Small delay to ensure grid is rendered
+      
+      // Clear and focus input based on mode
+      if (inputMode === 'keyboard') {
+        const input = document.getElementById('answerInput');
+        input.value = '';
+        
+        // Prevent scrolling when focusing input
+        setTimeout(() => {
+          input.focus();
+          if (input.scrollIntoView) {
+            input.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
+          }
+        }, 100);
+      }
+      
+      // Start timer
+      startTimer();
+    }
+
+    function generateGrid(n) {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = `repeat(${n}, var(--circle-total))`;
+      grid.style.gridTemplateRows = `repeat(${n}, var(--circle-total))`;
+      
+      const totalDots = n * n;
+      for (let i = 0; i < totalDots; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'circle';
+        grid.appendChild(circle);
+      }
+    }
+
+    function checkAnswer(userAnswer, expectedAnswerOverride = null, questionNumberOverride = null) {
+      stopTimer();
+      
+      const input = document.getElementById('answerInput');
+      const feedback = document.getElementById('feedback');
+      
+      // Record answer time
+      const answerTime = currentTime;
+      
+      // Parse the answer - handle both string and number
+      const userAnswerNum = parseInt(userAnswer);
+      // Use override if provided (for audio recognition with timing issues), otherwise use current
+      const expectedAnswer = expectedAnswerOverride !== null ? expectedAnswerOverride : currentAnswer;
+      const questionNumber = questionNumberOverride !== null ? questionNumberOverride : currentNumber;
+      
+      // If we're checking against a different question than what's displayed, regenerate the grid
+      // This ensures the visual feedback matches what we're checking
+      if (questionNumberOverride !== null && questionNumberOverride !== currentNumber) {
+        console.log(`[CHECK ANSWER] Regenerating grid: Override=${questionNumberOverride}²=${expectedAnswerOverride}, Current=${currentNumber}²=${currentAnswer}`);
+        generateGrid(questionNumberOverride);
+        // Update the question text to match
+        document.getElementById('question').textContent = `What is ${questionNumberOverride}²?`;
+      }
+      
+      const circles = document.querySelectorAll('.circle');
+      
+      // Debug logging (can be removed later)
+      console.log(`Checking answer: User said "${userAnswer}" (${userAnswerNum}), Expected: ${expectedAnswer} for ${questionNumber}²`);
+      
+      if (userAnswerNum === expectedAnswer) {
+        // Correct!
+        answerTimes.push(answerTime);
+        updateAverageTime();
+        
+        feedback.textContent = `✓ Correct! (${answerTime.toFixed(1)}s)`;
+        feedback.className = 'feedback correct';
+        circles.forEach(circle => {
+          circle.classList.add('correct');
+        });
+        
+        playSound('correct');
+        
+        correct++;
+        streak++;
+        
+        // Score calculation based on speed and difficulty
+        let baseScore = 10;
+        let speedBonus = Math.max(0, Math.floor((5 - answerTime) * 2)); // Bonus for fast answers
+        let streakBonus = streak * 2;
+        let difficultyMultiplier = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 1.5 : difficulty === 'hard' ? 2 : 3;
+        
+        score += Math.floor((baseScore + speedBonus + streakBonus) * difficultyMultiplier);
+        
+        // Mark level as completed if all questions answered correctly
+        if (correct % 10 === 0) {
+          completedLevels.add(currentLevel);
+          document.querySelectorAll('.level-button')[currentLevel].classList.add('completed');
+        }
+        
+        updateStats();
+        
+        // Generate new question after delay
+        setTimeout(() => {
+          generateNewQuestion();
+        }, 1500);
+      } else {
+        // Wrong!
+        feedback.textContent = `✗ Wrong! The answer is ${expectedAnswer}`;
+        feedback.className = 'feedback incorrect';
+        circles.forEach(circle => {
+          circle.classList.add('incorrect');
+        });
+        
+        playSound('incorrect');
+        
+        wrong++;
+        streak = 0;
+        updateStats();
+        
+        // Show correct answer, then generate new question
+        setTimeout(() => {
+          generateNewQuestion();
+        }, 2000);
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('correct').textContent = correct;
+      document.getElementById('wrong').textContent = wrong;
+      document.getElementById('streak').textContent = streak;
+    }
+
+    // Handle input
+    const answerInput = document.getElementById('answerInput');
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = answerInput.value.trim();
+        if (value !== '') {
+          checkAnswer(value);
+        }
+      }
+    });
+
+    // Also check on input change for faster response
+    answerInput.addEventListener('input', (e) => {
+      const value = e.target.value.trim();
+      // Auto-submit when correct number of digits is entered (for small numbers)
+      if (currentAnswer < 1000 && value.length === String(currentAnswer).length) {
+        // Small delay to allow user to see their input
+        setTimeout(() => {
+          if (parseInt(value) === currentAnswer) {
+            checkAnswer(value);
+          }
+        }, 100);
+      }
+    });
+
+    // Difficulty selector
+    function initDifficultySelector() {
+      const difficultyButtons = document.querySelectorAll('.difficulty-button');
+      difficultyButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          difficulty = button.getAttribute('data-difficulty');
+          difficultyButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          generateNewQuestion();
+        });
+      });
+    }
+
+    // Sound toggle
+    function initSoundToggle() {
+      const soundToggle = document.getElementById('soundToggle');
+      soundToggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        soundToggle.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+        soundToggle.classList.toggle('active', soundEnabled);
+      });
+    }
+
+    // Input mode management
+    let inputMode = 'keyboard'; // 'keyboard' or 'audio'
+    
+    function initInputModeSelector() {
+      const keyboardButton = document.getElementById('keyboardModeButton');
+      const audioButton = document.getElementById('audioModeButton');
+      const audioContainer = document.getElementById('audioInputContainer');
+      const answerInput = document.getElementById('answerInput');
+      
+      keyboardButton.addEventListener('click', () => {
+        inputMode = 'keyboard';
+        keyboardButton.classList.add('active');
+        audioButton.classList.remove('active');
+        audioContainer.style.display = 'none';
+        answerInput.style.display = 'block';
+        answerInput.focus();
+        // Stop any active audio recognition
+        if (recognition && isListening) {
+          recognition.stop();
+        }
+      });
+      
+      audioButton.addEventListener('click', () => {
+        inputMode = 'audio';
+        audioButton.classList.add('active');
+        keyboardButton.classList.remove('active');
+        audioContainer.style.display = 'flex';
+        answerInput.style.display = 'none';
+        // Initialize audio if not already done
+        if (!recognition) {
+          initAudioInput();
+        }
+      });
+    }
+
+    // Audio/Speech input functionality
+    let recognition = null;
+    let isListening = false;
+    // Store question/answer when recognition starts to prevent timing issues
+    let audioQuestionNumber = null;
+    let audioExpectedAnswer = null;
+    
+    // Check if browser supports speech recognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    function initAudioInput() {
+      const audioButton = document.getElementById('audioInputButton');
+      const audioStatus = document.getElementById('audioStatus');
+      const microphoneIndicator = document.getElementById('microphoneIndicator');
+      const answerInput = document.getElementById('answerInput');
+      
+      if (!SpeechRecognition) {
+        audioButton.disabled = true;
+        audioButton.innerHTML = '<span>❌ Audio Not Supported</span>';
+        audioStatus.textContent = 'Your browser does not support speech recognition';
+        audioStatus.className = 'audio-status error';
+        microphoneIndicator.textContent = '❌';
+        return;
+      }
+      
+      // Only create recognition if it doesn't exist
+      if (!recognition) {
+        recognition = new SpeechRecognition();
+      }
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 3; // Get multiple recognition alternatives
+      
+      // Improved number conversion - handles more cases
+      function wordsToNumber(words) {
+        if (!words || words.trim() === '') return 0;
+        
+        // First, try to extract any digits directly
+        const digitMatch = words.match(/\d+/);
+        if (digitMatch) {
+          const num = parseInt(digitMatch[0]);
+          if (num > 0) return num;
+        }
+        
+        // Word to number mapping
+        const wordMap = {
+          'zero': 0, 'oh': 0, 'o': 0,
+          'one': 1, 'won': 1, 'wan': 1,
+          'two': 2, 'to': 2, 'too': 2, 'tu': 2,
+          'three': 3, 'tree': 3, 'free': 3,
+          'four': 4, 'for': 4, 'fore': 4,
+          'five': 5, 'fife': 5,
+          'six': 6, 'sicks': 6,
+          'seven': 7, 'sevin': 7,
+          'eight': 8, 'ate': 8, 'ait': 8,
+          'nine': 9, 'nein': 9, 'nigh': 9,
+          'ten': 10, 'tin': 10,
+          'eleven': 11, 'elevent': 11,
+          'twelve': 12, 'twelf': 12,
+          'thirteen': 13, 'thirteenth': 13,
+          'fourteen': 14, 'fourteenth': 14,
+          'fifteen': 15, 'fifteenth': 15,
+          'sixteen': 16, 'sixteenth': 16,
+          'seventeen': 17, 'seventeenth': 17,
+          'eighteen': 18, 'eighteenth': 18,
+          'nineteen': 19, 'nineteenth': 19,
+          'twenty': 20, 'twentieth': 20,
+          'thirty': 30, 'thirtieth': 30,
+          'forty': 40, 'fourty': 40, 'fortieth': 40,
+          'fifty': 50, 'fiftieth': 50,
+          'sixty': 60, 'sixtieth': 60,
+          'seventy': 70, 'seventieth': 70,
+          'eighty': 80, 'eightieth': 80,
+          'ninety': 90, 'ninetieth': 90,
+          'hundred': 100, 'hundreds': 100,
+          'thousand': 1000, 'thousands': 1000
+        };
+        
+        // Clean the input
+        let cleanWords = words.toLowerCase()
+          .replace(/[^\w\s]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        // Try direct match first
+        if (wordMap[cleanWords] !== undefined) {
+          return wordMap[cleanWords];
+        }
+        
+        // Split into parts
+        const parts = cleanWords.split(/\s+/);
+        
+        // Handle compound numbers
+        let result = 0;
+        let current = 0;
+        
+        for (let i = 0; i < parts.length; i++) {
+          const word = parts[i];
+          let num = wordMap[word];
+          
+          // Try fuzzy matching for common mispronunciations
+          if (num === undefined) {
+            // Try common variations
+            for (const [key, value] of Object.entries(wordMap)) {
+              if (word.includes(key) || key.includes(word)) {
+                num = value;
+                break;
+              }
+            }
+          }
+          
+          if (num !== undefined) {
+            if (num >= 1000) {
+              result = (result + current) * num;
+              current = 0;
+            } else if (num >= 100) {
+              result += (current || 1) * num;
+              current = 0;
+            } else if (num >= 20) {
+              result += current;
+              current = num;
+            } else {
+              current += num;
+            }
+          }
+        }
+        
+        result += current;
+        return result > 0 ? result : 0;
+      }
+      
+      audioButton.addEventListener('click', () => {
+        if (!recognition || isListening) return;
+        
+        // Capture the current question/answer BEFORE starting recognition
+        // This prevents timing issues if generateNewQuestion() is called while listening
+        // Validate that we have valid values before proceeding
+        if (!currentNumber || currentNumber <= 0 || !currentAnswer || currentAnswer <= 0) {
+          audioStatus.textContent = 'Error: No question available. Please wait for a question to appear.';
+          audioStatus.className = 'audio-status error';
+          return;
+        }
+        
+        audioQuestionNumber = currentNumber;
+        audioExpectedAnswer = currentAnswer;
+        
+        // Log for debugging
+        console.log(`Audio recognition starting: Captured question ${audioQuestionNumber}² = ${audioExpectedAnswer}`);
+        
+        // Start listening
+        try {
+          recognition.start();
+          isListening = true;
+          audioButton.classList.add('recording');
+          audioButton.innerHTML = '<span>Stop Audio</span>';
+          microphoneIndicator.classList.add('active');
+          microphoneIndicator.textContent = '🎤';
+          audioStatus.textContent = `🎤 Listening... Say the answer for ${audioQuestionNumber}²!`;
+          audioStatus.className = 'audio-status listening';
+        } catch (error) {
+          audioStatus.textContent = 'Error: ' + error.message;
+          audioStatus.className = 'audio-status error';
+          isListening = false;
+          // Clear stored values on error
+          audioQuestionNumber = null;
+          audioExpectedAnswer = null;
+        }
+      });
+      
+      recognition.onresult = (event) => {
+        // IMMEDIATELY capture stored values before any processing
+        // This prevents them from being cleared by generateNewQuestion() while we're processing
+        const storedQuestionNumber = audioQuestionNumber;
+        const storedExpectedAnswer = audioExpectedAnswer;
+        
+        console.log(`[AUDIO RESULT] Captured stored values: ${storedQuestionNumber}² = ${storedExpectedAnswer}`);
+        console.log(`[AUDIO RESULT] Current values: ${currentNumber}² = ${currentAnswer}`);
+        
+        // Try all alternatives
+        let bestNumber = 0;
+        let bestTranscript = '';
+        
+        for (let i = 0; i < event.results.length; i++) {
+          for (let j = 0; j < event.results[i].length; j++) {
+            const transcript = event.results[i][j].transcript;
+            const confidence = event.results[i][j].confidence || 0.5;
+            const number = wordsToNumber(transcript);
+            
+            if (number > 0 && (bestNumber === 0 || confidence > 0.5)) {
+              bestNumber = number;
+              bestTranscript = transcript;
+            }
+          }
+        }
+        
+        // If no good result, try the first one
+        if (bestNumber === 0 && event.results.length > 0) {
+          bestTranscript = event.results[0][0].transcript;
+          bestNumber = wordsToNumber(bestTranscript);
+        }
+        
+        if (bestNumber > 0) {
+          // Use the stored question/answer values that were captured when recognition started
+          // These were captured IMMEDIATELY at the start of this handler to prevent race conditions
+          const answerToCheck = bestNumber;
+          const expectedAnswer = storedExpectedAnswer;
+          const questionNumber = storedQuestionNumber;
+          
+          console.log(`Audio input: Saying ${answerToCheck}, Expected ${expectedAnswer} for ${questionNumber}² (stored when listening started)`);
+          
+          // Check if we still have valid stored values
+          if (expectedAnswer !== null && questionNumber !== null && expectedAnswer > 0 && questionNumber > 0) {
+            audioStatus.textContent = `✓ Heard: "${bestTranscript}" → ${bestNumber}`;
+            audioStatus.className = 'audio-status success';
+            
+            // Auto-submit the answer - use the stored values
+            // Values are already captured in closure (expectedAnswer, questionNumber, answerToCheck)
+            setTimeout(() => {
+              // Use the stored values directly - they represent the question that was active when listening started
+              // Pass them directly to checkAnswer so it checks against the correct question
+              console.log(`Submitting answer: ${answerToCheck} for question ${questionNumber}² (expected: ${expectedAnswer})`);
+              checkAnswer(answerToCheck.toString(), expectedAnswer, questionNumber);
+              
+              // Clear stored values after processing
+              audioQuestionNumber = null;
+              audioExpectedAnswer = null;
+            }, 300);
+          } else {
+            console.warn(`Invalid stored values: questionNumber=${storedQuestionNumber}, expectedAnswer=${storedExpectedAnswer}`);
+            audioStatus.textContent = `Question changed while listening (was ${storedQuestionNumber}²). Please try again.`;
+            audioStatus.className = 'audio-status error';
+            // Clear stored values
+            audioQuestionNumber = null;
+            audioExpectedAnswer = null;
+          }
+        } else {
+          audioStatus.textContent = `Could not understand: "${bestTranscript}". Try saying just the number.`;
+          audioStatus.className = 'audio-status error';
+          // Don't clear stored values here - they might still be valid for retry
+        }
+        
+        // Reset UI
+        isListening = false;
+        audioButton.classList.remove('recording');
+        audioButton.innerHTML = '<span>Start Audio</span>';
+        microphoneIndicator.classList.remove('active');
+        microphoneIndicator.textContent = '🎤';
+      };
+      
+      recognition.onerror = (event) => {
+        isListening = false;
+        audioButton.classList.remove('recording');
+        audioButton.innerHTML = '<span>Start Audio</span>';
+        microphoneIndicator.classList.remove('active');
+        microphoneIndicator.textContent = '🎤';
+        
+        // Clear stored values on error
+        audioQuestionNumber = null;
+        audioExpectedAnswer = null;
+        
+        let errorMsg = 'Error occurred';
+        if (event.error === 'no-speech') {
+          errorMsg = 'No speech detected. Click "Start Audio" and try again.';
+        } else if (event.error === 'audio-capture') {
+          errorMsg = 'No microphone found.';
+        } else if (event.error === 'not-allowed') {
+          errorMsg = 'Microphone permission denied. Please allow microphone access.';
+        } else if (event.error === 'aborted') {
+          // User stopped it, don't show error
+          audioStatus.textContent = '';
+          audioStatus.className = 'audio-status';
+          return;
+        } else {
+          errorMsg = 'Error: ' + event.error;
+        }
+        
+        audioStatus.textContent = errorMsg;
+        audioStatus.className = 'audio-status error';
+      };
+      
+      recognition.onend = () => {
+        isListening = false;
+        audioButton.classList.remove('recording');
+        audioButton.innerHTML = '<span>Start Audio</span>';
+        microphoneIndicator.classList.remove('active');
+        microphoneIndicator.textContent = '🎤';
+        // Clear stored values when recognition ends (if not already cleared)
+        // Note: They may have been cleared in onresult, but clear them here too for safety
+        if (!audioQuestionNumber && !audioExpectedAnswer) {
+          // Already cleared, do nothing
+        } else {
+          // Still have values but recognition ended without result - clear them
+          audioQuestionNumber = null;
+          audioExpectedAnswer = null;
+        }
+      };
+    }
+
+    // Page Visibility API - Pause game when tab is hidden
+    let wasTimerRunning = false;
+    
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        // Tab is now hidden - pause the game
+        wasTimerRunning = (timerInterval !== null);
+        if (wasTimerRunning) {
+          pausedTime = Date.now();
+          stopTimer();
+        }
+        isTabVisible = false;
+      } else {
+        // Tab is now visible - resume the game
+        isTabVisible = true;
+        if (wasTimerRunning) {
+          // Resume timer from where it left off
+          startTimer();
+          wasTimerRunning = false;
+        }
+      }
+    });
+    
+    // Also handle window blur/focus for older browsers
+    window.addEventListener('blur', function() {
+      wasTimerRunning = (timerInterval !== null);
+      if (wasTimerRunning) {
+        pausedTime = Date.now();
+        stopTimer();
+      }
+      isTabVisible = false;
+    });
+    
+    window.addEventListener('focus', function() {
+      isTabVisible = true;
+      if (wasTimerRunning) {
+        startTimer();
+        wasTimerRunning = false;
+      }
+    });
+
+    // Prevent layout shifts when keyboard appears
+    let scrollPosition = 0;
+    
+    // Lock scroll position when input is focused
+    const answerInputMobile = document.getElementById('answerInput');
+    if (answerInputMobile) {
+      answerInputMobile.addEventListener('focus', function(e) {
+        // Save current scroll position
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Prevent scrolling by locking body position
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollPosition}px`;
+        document.body.style.width = '100%';
+        
+        // Prevent input from scrolling into view
+        e.preventDefault();
+      });
+      
+      answerInputMobile.addEventListener('blur', function(e) {
+        // Restore scroll position
+        const scrollTop = scrollPosition;
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        
+        // Restore scroll position smoothly
+        setTimeout(() => {
+          window.scrollTo({ top: scrollTop, behavior: 'instant' });
+        }, 0);
+      });
+      
+      // Prevent input from causing scroll during typing
+      answerInputMobile.addEventListener('input', function(e) {
+        // Keep scroll position locked while typing
+        if (document.body.style.position === 'fixed') {
+          window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+        }
+      });
+    }
+    
+    // Prevent viewport resize from keyboard causing layout shifts
+    let viewportHeight = window.innerHeight;
+    window.addEventListener('resize', function() {
+      // Only update if significant change (keyboard appearing/disappearing)
+      const newHeight = window.innerHeight;
+      if (Math.abs(newHeight - viewportHeight) > 150) {
+        viewportHeight = newHeight;
+        // Use CSS variable to maintain consistent height
+        document.documentElement.style.setProperty('--vh', `${newHeight * 0.01}px`);
+      }
+    });
+    
+    // Set initial viewport height
+    document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+    
+    // Prevent any auto-scrolling when input is focused
+    window.addEventListener('scroll', function(e) {
+      if (answerInputMobile && document.activeElement === answerInputMobile) {
+        // If input is focused, prevent scrolling
+        window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+      }
+    }, { passive: false });
+    
+    // Initialize game
+    initLevelSelector();
+    initDifficultySelector();
+    initSoundToggle();
+    initInputModeSelector();
+    // Only initialize audio if browser supports it and user selects audio mode
+    if (SpeechRecognition) {
+      // Will be initialized when user clicks "Start with Audio"
+    } else {
+      // Disable audio button if not supported
+      const audioModeButton = document.getElementById('audioModeButton');
+      if (audioModeButton) {
+        audioModeButton.disabled = true;
+        audioModeButton.innerHTML = '<span>❌ Audio Not Supported</span>';
+      }
+    }
+    updateLevelDisplay();
+    generateNewQuestion();
+    updateStats();
+    
+    // Final check to remove any number pad elements that might have been created
+    setTimeout(() => {
+      const numberPad = document.getElementById('numberPad');
+      if (numberPad) {
+        numberPad.remove();
+      }
+      const buttons = document.querySelectorAll('.number-pad-button, [class*="number-pad-button"], [id*="numberPad"], [class*="number-pad"]');
+      buttons.forEach(btn => btn.remove());
+    }, 100);
+  </script>
+</body>
+</html>
 

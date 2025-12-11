@@ -1285,8 +1285,23 @@ function initVoices(lang = currentLang) {
 }
 
 if ("speechSynthesis" in window) {
-  window.speechSynthesis.onvoiceschanged = initVoices;
+  // Initialize voices immediately
   initVoices();
+  
+  // Also listen for voices to be loaded (some browsers load them asynchronously)
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      initVoices();
+      // Remove listener after first load
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  } else {
+    window.speechSynthesis.onvoiceschanged = initVoices;
+  }
+  
+  // Try again after delays in case voices load late
+  setTimeout(initVoices, 500);
+  setTimeout(initVoices, 1000);
 }
 
 // Sound toggle state
@@ -1299,17 +1314,25 @@ function speakNumber(count) {
   const words = NUMBER_WORDS[currentLang] || NUMBER_WORDS.en;
   if (count < 0 || count >= words.length) return;
   if (!("speechSynthesis" in window)) return;
+  
+  // Ensure voices are initialized
+  if (!preferredVoice) {
+    initVoices();
+  }
+  
   lastSpokenCount = count;
   
   // Re-initialize voice for current language to ensure it's correct
-    preferredVoice = pickVoice(currentLang);
+  preferredVoice = pickVoice(currentLang);
   
   window.speechSynthesis.cancel();
-  window.speechSynthesis.resume();
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
   const utterance = new SpeechSynthesisUtterance(words[count]);
   utterance.rate = 1.15;
   utterance.pitch = 1;
-  utterance.volume = 0.5; // 50% volume
+  utterance.volume = 1.0; // Full volume
   utterance.lang = LANGUAGE_HINTS[currentLang] || currentLang;
   if (preferredVoice) {
     utterance.voice = preferredVoice;

@@ -211,7 +211,7 @@
     .circle.sky { background: #38c7ff; }
     .circle.red-final { background: #ff0000; }
     
-    /* 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), and 32×32 (1024) grids - same size */
+    /* 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), 32×32 (1024), 33×33 (1089), 34×34 (1156), 35×35 (1225), 36×36 (1296), 37×37 (1369), 38×38 (1444), 39×39 (1521), 40×40 (1600), 41×41 (1681), 42×42 (1764), 43×43 (1849), 44×44 (1936), 45×45 (2025), 46×46 (2116), 47×47 (2209), 48×48 (2304), 49×49 (2401), 50×50 (2500), 51×51 (2601), 52×52 (2704), 53×53 (2809), 54×54 (2916), 55×55 (3025), 56×56 (3136), 57×57 (3249), 58×58 (3364), 59×59 (3481), 60×60 (3600), 61×61 (3721), 62×62 (3844), 63×63 (3969), 64×64 (4096), 65×65 (4225), 66×66 (4356), 67×67 (4489), 68×68 (4624), 69×69 (4761), 70×70 (4900), 71×71 (5041), 72×72 (5184), 73×73 (5329), 74×74 (5476), 75×75 (5625), 76×76 (5776), 77×77 (5929), 78×78 (6084), 79×79 (6241), 80×80 (6400), 81×81 (6561), 82×82 (6724), 83×83 (6889), 84×84 (7056), 85×85 (7225), 86×86 (7396), 87×87 (7569), 88×88 (7744), 89×89 (7921), 90×90 (8100), 91×91 (8281), 92×92 (8464), 93×93 (8649), 94×94 (8836), 95×95 (9025), 96×96 (9216), 97×97 (9409), 98×98 (9604), 99×99 (9801), and 100×100 (10000) grids - same size */
     .grid-169 {
       grid-template-columns: repeat(13, var(--circle-total)) !important;
       grid-template-rows: repeat(13, var(--circle-total)) !important;
@@ -459,374 +459,832 @@
       height: var(--circle-total-1024) !important;
       border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
-    /* Grids 34×34 through 60×60 - make them bigger */
-    .grid-1156, .grid-1225, .grid-1296, .grid-1444, .grid-1521, .grid-1600,
-    .grid-1681, .grid-1764, .grid-1849, .grid-1936, .grid-2025, .grid-2116, .grid-2209,
-    .grid-2304, .grid-2401, .grid-2500, .grid-2601, .grid-2704, .grid-2809, .grid-2916,
-    .grid-3025, .grid-3136, .grid-3249, .grid-3364, .grid-3481, .grid-3600, .grid-3721, .grid-3844, .grid-3969, .grid-4096, .grid-4225, .grid-4356, .grid-4489, .grid-4624, .grid-4761, .grid-4900, .grid-5041, .grid-5184, .grid-5329, .grid-5476, .grid-5625, .grid-5776, .grid-5929, .grid-6084, .grid-6241, .grid-6400, .grid-6561, .grid-6724, .grid-6889, .grid-7056, .grid-7225, .grid-7396, .grid-7569, .grid-7744, .grid-7921, .grid-8100, .grid-8281, .grid-8464, .grid-8649, .grid-8836, .grid-9025, .grid-9216, .grid-9409, .grid-9604, .grid-9801, .grid-10000 {
-      --circle-size-large: clamp(12px, 7vw, 70px); /* Allow much smaller when zoomed out */
-      --circle-total-large: calc(var(--circle-size-large) + var(--circle-border) * 2);
+    /* Thinner borders for grids 33×33 (1089) through 100×100 (10000) */
+    .grid-1089 .circle,
+    .grid-1156 .circle,
+    .grid-1225 .circle,
+    .grid-1296 .circle,
+    .grid-1369 .circle,
+    .grid-1444 .circle,
+    .grid-1521 .circle,
+    .grid-1600 .circle,
+    .grid-1681 .circle,
+    .grid-1764 .circle,
+    .grid-1849 .circle,
+    .grid-1936 .circle,
+    .grid-2025 .circle,
+    .grid-2116 .circle,
+    .grid-2209 .circle,
+    .grid-2304 .circle,
+    .grid-2401 .circle,
+    .grid-2500 .circle,
+    .grid-2601 .circle,
+    .grid-2704 .circle,
+    .grid-2809 .circle,
+    .grid-2916 .circle,
+    .grid-3025 .circle,
+    .grid-3136 .circle,
+    .grid-3249 .circle,
+    .grid-3364 .circle,
+    .grid-3481 .circle,
+    .grid-3600 .circle,
+    .grid-1089 {
+      --circle-total-1089: calc(var(--circle-total) * 13 / 33);
+      grid-template-columns: repeat(33, var(--circle-total-1089)) !important;
+      grid-template-rows: repeat(33, var(--circle-total-1089)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
-    /* 1156, 1225, and squares 36×36 through 50×50 use regular size like square 33 (1089) */
+    .grid-1089 .circle {
+      width: var(--circle-total-1089) !important;
+      height: var(--circle-total-1089) !important;
+    }
     .grid-1156 {
-      grid-template-columns: repeat(34, var(--circle-total)) !important;
-      grid-template-rows: repeat(34, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 34) !important;
+      --circle-total-1156: calc(var(--circle-total) * 13 / 34);
+      grid-template-columns: repeat(34, var(--circle-total-1156)) !important;
+      grid-template-rows: repeat(34, var(--circle-total-1156)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1156 .circle {
+      width: var(--circle-total-1156) !important;
+      height: var(--circle-total-1156) !important;
     }
     .grid-1225 {
-      grid-template-columns: repeat(35, var(--circle-total)) !important;
-      grid-template-rows: repeat(35, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 35) !important;
+      --circle-total-1225: calc(var(--circle-total) * 13 / 35);
+      grid-template-columns: repeat(35, var(--circle-total-1225)) !important;
+      grid-template-rows: repeat(35, var(--circle-total-1225)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1225 .circle {
+      width: var(--circle-total-1225) !important;
+      height: var(--circle-total-1225) !important;
     }
     .grid-1296 {
-      grid-template-columns: repeat(36, var(--circle-total)) !important;
-      grid-template-rows: repeat(36, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 36) !important;
+      --circle-total-1296: calc(var(--circle-total) * 13 / 36);
+      grid-template-columns: repeat(36, var(--circle-total-1296)) !important;
+      grid-template-rows: repeat(36, var(--circle-total-1296)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1296 .circle {
+      width: var(--circle-total-1296) !important;
+      height: var(--circle-total-1296) !important;
     }
     .grid-1369 {
-      grid-template-columns: repeat(37, var(--circle-total)) !important;
-      grid-template-rows: repeat(37, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 37) !important;
+      --circle-total-1369: calc(var(--circle-total) * 13 / 37);
+      grid-template-columns: repeat(37, var(--circle-total-1369)) !important;
+      grid-template-rows: repeat(37, var(--circle-total-1369)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1369 .circle {
+      width: var(--circle-total-1369) !important;
+      height: var(--circle-total-1369) !important;
     }
     .grid-1444 {
-      grid-template-columns: repeat(38, var(--circle-total)) !important;
-      grid-template-rows: repeat(38, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 38) !important;
+      --circle-total-1444: calc(var(--circle-total) * 13 / 38);
+      grid-template-columns: repeat(38, var(--circle-total-1444)) !important;
+      grid-template-rows: repeat(38, var(--circle-total-1444)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1444 .circle {
+      width: var(--circle-total-1444) !important;
+      height: var(--circle-total-1444) !important;
     }
     .grid-1521 {
-      grid-template-columns: repeat(39, var(--circle-total)) !important;
-      grid-template-rows: repeat(39, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 39) !important;
+      --circle-total-1521: calc(var(--circle-total) * 13 / 39);
+      grid-template-columns: repeat(39, var(--circle-total-1521)) !important;
+      grid-template-rows: repeat(39, var(--circle-total-1521)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1521 .circle {
+      width: var(--circle-total-1521) !important;
+      height: var(--circle-total-1521) !important;
     }
     .grid-1600 {
-      grid-template-columns: repeat(40, var(--circle-total)) !important;
-      grid-template-rows: repeat(40, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 40) !important;
+      --circle-total-1600: calc(var(--circle-total) * 13 / 40);
+      grid-template-columns: repeat(40, var(--circle-total-1600)) !important;
+      grid-template-rows: repeat(40, var(--circle-total-1600)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1600 .circle {
+      width: var(--circle-total-1600) !important;
+      height: var(--circle-total-1600) !important;
     }
     .grid-1681 {
-      grid-template-columns: repeat(41, var(--circle-total)) !important;
-      grid-template-rows: repeat(41, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 41) !important;
+      --circle-total-1681: calc(var(--circle-total) * 13 / 41);
+      grid-template-columns: repeat(41, var(--circle-total-1681)) !important;
+      grid-template-rows: repeat(41, var(--circle-total-1681)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1681 .circle {
+      width: var(--circle-total-1681) !important;
+      height: var(--circle-total-1681) !important;
     }
     .grid-1764 {
-      grid-template-columns: repeat(42, var(--circle-total)) !important;
-      grid-template-rows: repeat(42, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 42) !important;
+      --circle-total-1764: calc(var(--circle-total) * 13 / 42);
+      grid-template-columns: repeat(42, var(--circle-total-1764)) !important;
+      grid-template-rows: repeat(42, var(--circle-total-1764)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1764 .circle {
+      width: var(--circle-total-1764) !important;
+      height: var(--circle-total-1764) !important;
     }
     .grid-1849 {
-      grid-template-columns: repeat(43, var(--circle-total)) !important;
-      grid-template-rows: repeat(43, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 43) !important;
+      --circle-total-1849: calc(var(--circle-total) * 13 / 43);
+      grid-template-columns: repeat(43, var(--circle-total-1849)) !important;
+      grid-template-rows: repeat(43, var(--circle-total-1849)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1849 .circle {
+      width: var(--circle-total-1849) !important;
+      height: var(--circle-total-1849) !important;
     }
     .grid-1936 {
-      grid-template-columns: repeat(44, var(--circle-total)) !important;
-      grid-template-rows: repeat(44, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 44) !important;
+      --circle-total-1936: calc(var(--circle-total) * 13 / 44);
+      grid-template-columns: repeat(44, var(--circle-total-1936)) !important;
+      grid-template-rows: repeat(44, var(--circle-total-1936)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1936 .circle {
+      width: var(--circle-total-1936) !important;
+      height: var(--circle-total-1936) !important;
     }
     .grid-2025 {
-      grid-template-columns: repeat(45, var(--circle-total)) !important;
-      grid-template-rows: repeat(45, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 45) !important;
+      --circle-total-2025: calc(var(--circle-total) * 13 / 45);
+      grid-template-columns: repeat(45, var(--circle-total-2025)) !important;
+      grid-template-rows: repeat(45, var(--circle-total-2025)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2025 .circle {
+      width: var(--circle-total-2025) !important;
+      height: var(--circle-total-2025) !important;
     }
     .grid-2116 {
-      grid-template-columns: repeat(46, var(--circle-total)) !important;
-      grid-template-rows: repeat(46, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 46) !important;
+      --circle-total-2116: calc(var(--circle-total) * 13 / 46);
+      grid-template-columns: repeat(46, var(--circle-total-2116)) !important;
+      grid-template-rows: repeat(46, var(--circle-total-2116)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2116 .circle {
+      width: var(--circle-total-2116) !important;
+      height: var(--circle-total-2116) !important;
     }
     .grid-2209 {
-      grid-template-columns: repeat(47, var(--circle-total)) !important;
-      grid-template-rows: repeat(47, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 47) !important;
+      --circle-total-2209: calc(var(--circle-total) * 13 / 47);
+      grid-template-columns: repeat(47, var(--circle-total-2209)) !important;
+      grid-template-rows: repeat(47, var(--circle-total-2209)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2209 .circle {
+      width: var(--circle-total-2209) !important;
+      height: var(--circle-total-2209) !important;
     }
     .grid-2304 {
-      grid-template-columns: repeat(48, var(--circle-total)) !important;
-      grid-template-rows: repeat(48, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 48) !important;
+      --circle-total-2304: calc(var(--circle-total) * 13 / 48);
+      grid-template-columns: repeat(48, var(--circle-total-2304)) !important;
+      grid-template-rows: repeat(48, var(--circle-total-2304)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2304 .circle {
+      width: var(--circle-total-2304) !important;
+      height: var(--circle-total-2304) !important;
     }
     .grid-2401 {
-      grid-template-columns: repeat(49, var(--circle-total)) !important;
-      grid-template-rows: repeat(49, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 49) !important;
+      --circle-total-2401: calc(var(--circle-total) * 13 / 49);
+      grid-template-columns: repeat(49, var(--circle-total-2401)) !important;
+      grid-template-rows: repeat(49, var(--circle-total-2401)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2401 .circle {
+      width: var(--circle-total-2401) !important;
+      height: var(--circle-total-2401) !important;
     }
     .grid-2500 {
-      grid-template-columns: repeat(50, var(--circle-total)) !important;
-      grid-template-rows: repeat(50, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 50) !important;
+      --circle-total-2500: calc(var(--circle-total) * 13 / 50);
+      grid-template-columns: repeat(50, var(--circle-total-2500)) !important;
+      grid-template-rows: repeat(50, var(--circle-total-2500)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2500 .circle {
+      width: var(--circle-total-2500) !important;
+      height: var(--circle-total-2500) !important;
     }
     .grid-2601 {
-      grid-template-columns: repeat(51, var(--circle-total)) !important;
-      grid-template-rows: repeat(51, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 51) !important;
+      --circle-total-2601: calc(var(--circle-total) * 13 / 51);
+      grid-template-columns: repeat(51, var(--circle-total-2601)) !important;
+      grid-template-rows: repeat(51, var(--circle-total-2601)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2601 .circle {
+      width: var(--circle-total-2601) !important;
+      height: var(--circle-total-2601) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-2704 {
-      grid-template-columns: repeat(52, var(--circle-total)) !important;
-      grid-template-rows: repeat(52, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 52) !important;
+      --circle-total-2704: calc(var(--circle-total) * 13 / 52);
+      grid-template-columns: repeat(52, var(--circle-total-2704)) !important;
+      grid-template-rows: repeat(52, var(--circle-total-2704)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2704 .circle {
+      width: var(--circle-total-2704) !important;
+      height: var(--circle-total-2704) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-2809 {
-      grid-template-columns: repeat(53, var(--circle-total)) !important;
-      grid-template-rows: repeat(53, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 53) !important;
+      --circle-total-2809: calc(var(--circle-total) * 13 / 53);
+      grid-template-columns: repeat(53, var(--circle-total-2809)) !important;
+      grid-template-rows: repeat(53, var(--circle-total-2809)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2809 .circle {
+      width: var(--circle-total-2809) !important;
+      height: var(--circle-total-2809) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-2916 {
-      grid-template-columns: repeat(54, var(--circle-total)) !important;
-      grid-template-rows: repeat(54, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 54) !important;
+      --circle-total-2916: calc(var(--circle-total) * 13 / 54);
+      grid-template-columns: repeat(54, var(--circle-total-2916)) !important;
+      grid-template-rows: repeat(54, var(--circle-total-2916)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-2916 .circle {
+      width: var(--circle-total-2916) !important;
+      height: var(--circle-total-2916) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3025 {
-      grid-template-columns: repeat(55, var(--circle-total)) !important;
-      grid-template-rows: repeat(55, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 55) !important;
+      --circle-total-3025: calc(var(--circle-total) * 13 / 55);
+      grid-template-columns: repeat(55, var(--circle-total-3025)) !important;
+      grid-template-rows: repeat(55, var(--circle-total-3025)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3025 .circle {
+      width: var(--circle-total-3025) !important;
+      height: var(--circle-total-3025) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3136 {
-      grid-template-columns: repeat(56, var(--circle-total)) !important;
-      grid-template-rows: repeat(56, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 56) !important;
+      --circle-total-3136: calc(var(--circle-total) * 13 / 56);
+      grid-template-columns: repeat(56, var(--circle-total-3136)) !important;
+      grid-template-rows: repeat(56, var(--circle-total-3136)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3136 .circle {
+      width: var(--circle-total-3136) !important;
+      height: var(--circle-total-3136) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3249 {
-      grid-template-columns: repeat(57, var(--circle-total)) !important;
-      grid-template-rows: repeat(57, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 57) !important;
+      --circle-total-3249: calc(var(--circle-total) * 13 / 57);
+      grid-template-columns: repeat(57, var(--circle-total-3249)) !important;
+      grid-template-rows: repeat(57, var(--circle-total-3249)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3249 .circle {
+      width: var(--circle-total-3249) !important;
+      height: var(--circle-total-3249) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3364 {
-      grid-template-columns: repeat(58, var(--circle-total)) !important;
-      grid-template-rows: repeat(58, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 58) !important;
+      --circle-total-3364: calc(var(--circle-total) * 13 / 58);
+      grid-template-columns: repeat(58, var(--circle-total-3364)) !important;
+      grid-template-rows: repeat(58, var(--circle-total-3364)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3364 .circle {
+      width: var(--circle-total-3364) !important;
+      height: var(--circle-total-3364) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3481 {
-      grid-template-columns: repeat(59, var(--circle-total)) !important;
-      grid-template-rows: repeat(59, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 59) !important;
+      --circle-total-3481: calc(var(--circle-total) * 13 / 59);
+      grid-template-columns: repeat(59, var(--circle-total-3481)) !important;
+      grid-template-rows: repeat(59, var(--circle-total-3481)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3481 .circle {
+      width: var(--circle-total-3481) !important;
+      height: var(--circle-total-3481) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3600 {
-      grid-template-columns: repeat(60, var(--circle-total)) !important;
-      grid-template-rows: repeat(60, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 60) !important;
+      --circle-total-3600: calc(var(--circle-total) * 13 / 60);
+      grid-template-columns: repeat(60, var(--circle-total-3600)) !important;
+      grid-template-rows: repeat(60, var(--circle-total-3600)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3600 .circle {
+      width: var(--circle-total-3600) !important;
+      height: var(--circle-total-3600) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3721 {
-      grid-template-columns: repeat(61, var(--circle-total)) !important;
-      grid-template-rows: repeat(61, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 61) !important;
+      --circle-total-3721: calc(var(--circle-total) * 13 / 61);
+      grid-template-columns: repeat(61, var(--circle-total-3721)) !important;
+      grid-template-rows: repeat(61, var(--circle-total-3721)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3721 .circle {
+      width: var(--circle-total-3721) !important;
+      height: var(--circle-total-3721) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3844 {
-      grid-template-columns: repeat(62, var(--circle-total)) !important;
-      grid-template-rows: repeat(62, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 62) !important;
+      --circle-total-3844: calc(var(--circle-total) * 13 / 62);
+      grid-template-columns: repeat(62, var(--circle-total-3844)) !important;
+      grid-template-rows: repeat(62, var(--circle-total-3844)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3844 .circle {
+      width: var(--circle-total-3844) !important;
+      height: var(--circle-total-3844) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3969 {
-      grid-template-columns: repeat(63, var(--circle-total)) !important;
-      grid-template-rows: repeat(63, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 63) !important;
+      --circle-total-3969: calc(var(--circle-total) * 13 / 63);
+      grid-template-columns: repeat(63, var(--circle-total-3969)) !important;
+      grid-template-rows: repeat(63, var(--circle-total-3969)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3969 .circle {
+      width: var(--circle-total-3969) !important;
+      height: var(--circle-total-3969) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4096 {
-      grid-template-columns: repeat(64, var(--circle-total)) !important;
-      grid-template-rows: repeat(64, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 64) !important;
+      --circle-total-4096: calc(var(--circle-total) * 13 / 64);
+      grid-template-columns: repeat(64, var(--circle-total-4096)) !important;
+      grid-template-rows: repeat(64, var(--circle-total-4096)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4096 .circle {
+      width: var(--circle-total-4096) !important;
+      height: var(--circle-total-4096) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4225 {
-      grid-template-columns: repeat(65, var(--circle-total)) !important;
-      grid-template-rows: repeat(65, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 65) !important;
+      --circle-total-4225: calc(var(--circle-total) * 13 / 65);
+      grid-template-columns: repeat(65, var(--circle-total-4225)) !important;
+      grid-template-rows: repeat(65, var(--circle-total-4225)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4225 .circle {
+      width: var(--circle-total-4225) !important;
+      height: var(--circle-total-4225) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4356 {
-      grid-template-columns: repeat(66, var(--circle-total)) !important;
-      grid-template-rows: repeat(66, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 66) !important;
+      --circle-total-4356: calc(var(--circle-total) * 13 / 66);
+      grid-template-columns: repeat(66, var(--circle-total-4356)) !important;
+      grid-template-rows: repeat(66, var(--circle-total-4356)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4356 .circle {
+      width: var(--circle-total-4356) !important;
+      height: var(--circle-total-4356) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4489 {
-      grid-template-columns: repeat(67, var(--circle-total)) !important;
-      grid-template-rows: repeat(67, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 67) !important;
+      --circle-total-4489: calc(var(--circle-total) * 13 / 67);
+      grid-template-columns: repeat(67, var(--circle-total-4489)) !important;
+      grid-template-rows: repeat(67, var(--circle-total-4489)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4489 .circle {
+      width: var(--circle-total-4489) !important;
+      height: var(--circle-total-4489) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4624 {
-      grid-template-columns: repeat(68, var(--circle-total)) !important;
-      grid-template-rows: repeat(68, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 68) !important;
+      --circle-total-4624: calc(var(--circle-total) * 13 / 68);
+      grid-template-columns: repeat(68, var(--circle-total-4624)) !important;
+      grid-template-rows: repeat(68, var(--circle-total-4624)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4624 .circle {
+      width: var(--circle-total-4624) !important;
+      height: var(--circle-total-4624) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4761 {
-      grid-template-columns: repeat(69, var(--circle-total)) !important;
-      grid-template-rows: repeat(69, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 69) !important;
+      --circle-total-4761: calc(var(--circle-total) * 13 / 69);
+      grid-template-columns: repeat(69, var(--circle-total-4761)) !important;
+      grid-template-rows: repeat(69, var(--circle-total-4761)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4761 .circle {
+      width: var(--circle-total-4761) !important;
+      height: var(--circle-total-4761) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-4900 {
-      grid-template-columns: repeat(70, var(--circle-total)) !important;
-      grid-template-rows: repeat(70, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 70) !important;
+      --circle-total-4900: calc(var(--circle-total) * 13 / 70);
+      grid-template-columns: repeat(70, var(--circle-total-4900)) !important;
+      grid-template-rows: repeat(70, var(--circle-total-4900)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4900 .circle {
+      width: var(--circle-total-4900) !important;
+      height: var(--circle-total-4900) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5041 {
-      grid-template-columns: repeat(71, var(--circle-total)) !important;
-      grid-template-rows: repeat(71, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 71) !important;
+      --circle-total-5041: calc(var(--circle-total) * 13 / 71);
+      grid-template-columns: repeat(71, var(--circle-total-5041)) !important;
+      grid-template-rows: repeat(71, var(--circle-total-5041)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5041 .circle {
+      width: var(--circle-total-5041) !important;
+      height: var(--circle-total-5041) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5184 {
-      grid-template-columns: repeat(72, var(--circle-total)) !important;
-      grid-template-rows: repeat(72, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 72) !important;
+      --circle-total-5184: calc(var(--circle-total) * 13 / 72);
+      grid-template-columns: repeat(72, var(--circle-total-5184)) !important;
+      grid-template-rows: repeat(72, var(--circle-total-5184)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5184 .circle {
+      width: var(--circle-total-5184) !important;
+      height: var(--circle-total-5184) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5329 {
-      grid-template-columns: repeat(73, var(--circle-total)) !important;
-      grid-template-rows: repeat(73, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 73) !important;
+      --circle-total-5329: calc(var(--circle-total) * 13 / 73);
+      grid-template-columns: repeat(73, var(--circle-total-5329)) !important;
+      grid-template-rows: repeat(73, var(--circle-total-5329)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5329 .circle {
+      width: var(--circle-total-5329) !important;
+      height: var(--circle-total-5329) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5476 {
-      grid-template-columns: repeat(74, var(--circle-total)) !important;
-      grid-template-rows: repeat(74, var(--circle-total)) !important;
+      --circle-total-5476: calc(var(--circle-total) * 13 / 74);
+      grid-template-columns: repeat(74, var(--circle-total-5476)) !important;
+      grid-template-rows: repeat(74, var(--circle-total-5476)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5476 .circle {
+      width: var(--circle-total-5476) !important;
+      height: var(--circle-total-5476) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5625 {
-      grid-template-columns: repeat(75, var(--circle-total)) !important;
-      grid-template-rows: repeat(75, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 75) !important;
-      height: calc(var(--circle-total) * 75) !important;
+      --circle-total-5625: calc(var(--circle-total) * 13 / 75);
+      grid-template-columns: repeat(75, var(--circle-total-5625)) !important;
+      grid-template-rows: repeat(75, var(--circle-total-5625)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5625 .circle {
+      width: var(--circle-total-5625) !important;
+      height: var(--circle-total-5625) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5776 {
-      grid-template-columns: repeat(76, var(--circle-total)) !important;
-      grid-template-rows: repeat(76, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 76) !important;
-      height: calc(var(--circle-total) * 76) !important;
+      --circle-total-5776: calc(var(--circle-total) * 13 / 76);
+      grid-template-columns: repeat(76, var(--circle-total-5776)) !important;
+      grid-template-rows: repeat(76, var(--circle-total-5776)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5776 .circle {
+      width: var(--circle-total-5776) !important;
+      height: var(--circle-total-5776) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-5929 {
-      grid-template-columns: repeat(77, var(--circle-total)) !important;
-      grid-template-rows: repeat(77, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 77) !important;
-      height: calc(var(--circle-total) * 77) !important;
+      --circle-total-5929: calc(var(--circle-total) * 13 / 77);
+      grid-template-columns: repeat(77, var(--circle-total-5929)) !important;
+      grid-template-rows: repeat(77, var(--circle-total-5929)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-5929 .circle {
+      width: var(--circle-total-5929) !important;
+      height: var(--circle-total-5929) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6084 {
-      grid-template-columns: repeat(78, var(--circle-total)) !important;
-      grid-template-rows: repeat(78, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 78) !important;
-      height: calc(var(--circle-total) * 78) !important;
+      --circle-total-6084: calc(var(--circle-total) * 13 / 78);
+      grid-template-columns: repeat(78, var(--circle-total-6084)) !important;
+      grid-template-rows: repeat(78, var(--circle-total-6084)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6084 .circle {
+      width: var(--circle-total-6084) !important;
+      height: var(--circle-total-6084) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6241 {
-      grid-template-columns: repeat(79, var(--circle-total)) !important;
-      grid-template-rows: repeat(79, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 79) !important;
-      height: calc(var(--circle-total) * 79) !important;
+      --circle-total-6241: calc(var(--circle-total) * 13 / 79);
+      grid-template-columns: repeat(79, var(--circle-total-6241)) !important;
+      grid-template-rows: repeat(79, var(--circle-total-6241)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6241 .circle {
+      width: var(--circle-total-6241) !important;
+      height: var(--circle-total-6241) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6400 {
-      grid-template-columns: repeat(80, var(--circle-total)) !important;
-      grid-template-rows: repeat(80, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 80) !important;
-      height: calc(var(--circle-total) * 80) !important;
+      --circle-total-6400: calc(var(--circle-total) * 13 / 80);
+      grid-template-columns: repeat(80, var(--circle-total-6400)) !important;
+      grid-template-rows: repeat(80, var(--circle-total-6400)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6400 .circle {
+      width: var(--circle-total-6400) !important;
+      height: var(--circle-total-6400) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6561 {
-      grid-template-columns: repeat(81, var(--circle-total)) !important;
-      grid-template-rows: repeat(81, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 81) !important;
-      height: calc(var(--circle-total) * 81) !important;
+      --circle-total-6561: calc(var(--circle-total) * 13 / 81);
+      grid-template-columns: repeat(81, var(--circle-total-6561)) !important;
+      grid-template-rows: repeat(81, var(--circle-total-6561)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6561 .circle {
+      width: var(--circle-total-6561) !important;
+      height: var(--circle-total-6561) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6724 {
-      grid-template-columns: repeat(82, var(--circle-total)) !important;
-      grid-template-rows: repeat(82, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 82) !important;
-      height: calc(var(--circle-total) * 82) !important;
+      --circle-total-6724: calc(var(--circle-total) * 13 / 82);
+      grid-template-columns: repeat(82, var(--circle-total-6724)) !important;
+      grid-template-rows: repeat(82, var(--circle-total-6724)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6724 .circle {
+      width: var(--circle-total-6724) !important;
+      height: var(--circle-total-6724) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-6889 {
-      grid-template-columns: repeat(83, var(--circle-total)) !important;
-      grid-template-rows: repeat(83, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 83) !important;
-      height: calc(var(--circle-total) * 83) !important;
+      --circle-total-6889: calc(var(--circle-total) * 13 / 83);
+      grid-template-columns: repeat(83, var(--circle-total-6889)) !important;
+      grid-template-rows: repeat(83, var(--circle-total-6889)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-6889 .circle {
+      width: var(--circle-total-6889) !important;
+      height: var(--circle-total-6889) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7056 {
-      grid-template-columns: repeat(84, var(--circle-total)) !important;
-      grid-template-rows: repeat(84, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 84) !important;
-      height: calc(var(--circle-total) * 84) !important;
+      --circle-total-7056: calc(var(--circle-total) * 13 / 84);
+      grid-template-columns: repeat(84, var(--circle-total-7056)) !important;
+      grid-template-rows: repeat(84, var(--circle-total-7056)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7056 .circle {
+      width: var(--circle-total-7056) !important;
+      height: var(--circle-total-7056) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7225 {
-      grid-template-columns: repeat(85, var(--circle-total)) !important;
-      grid-template-rows: repeat(85, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 85) !important;
-      height: calc(var(--circle-total) * 85) !important;
+      --circle-total-7225: calc(var(--circle-total) * 13 / 85);
+      grid-template-columns: repeat(85, var(--circle-total-7225)) !important;
+      grid-template-rows: repeat(85, var(--circle-total-7225)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7225 .circle {
+      width: var(--circle-total-7225) !important;
+      height: var(--circle-total-7225) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7396 {
-      grid-template-columns: repeat(86, var(--circle-total)) !important;
-      grid-template-rows: repeat(86, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 86) !important;
-      height: calc(var(--circle-total) * 86) !important;
+      --circle-total-7396: calc(var(--circle-total) * 13 / 86);
+      grid-template-columns: repeat(86, var(--circle-total-7396)) !important;
+      grid-template-rows: repeat(86, var(--circle-total-7396)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7396 .circle {
+      width: var(--circle-total-7396) !important;
+      height: var(--circle-total-7396) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7569 {
-      grid-template-columns: repeat(87, var(--circle-total)) !important;
-      grid-template-rows: repeat(87, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 87) !important;
-      height: calc(var(--circle-total) * 87) !important;
+      --circle-total-7569: calc(var(--circle-total) * 13 / 87);
+      grid-template-columns: repeat(87, var(--circle-total-7569)) !important;
+      grid-template-rows: repeat(87, var(--circle-total-7569)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7569 .circle {
+      width: var(--circle-total-7569) !important;
+      height: var(--circle-total-7569) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7744 {
-      grid-template-columns: repeat(88, var(--circle-total)) !important;
-      grid-template-rows: repeat(88, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 88) !important;
-      height: calc(var(--circle-total) * 88) !important;
+      --circle-total-7744: calc(var(--circle-total) * 13 / 88);
+      grid-template-columns: repeat(88, var(--circle-total-7744)) !important;
+      grid-template-rows: repeat(88, var(--circle-total-7744)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7744 .circle {
+      width: var(--circle-total-7744) !important;
+      height: var(--circle-total-7744) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-7921 {
-      grid-template-columns: repeat(89, var(--circle-total)) !important;
-      grid-template-rows: repeat(89, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 89) !important;
-      height: calc(var(--circle-total) * 89) !important;
+      --circle-total-7921: calc(var(--circle-total) * 13 / 89);
+      grid-template-columns: repeat(89, var(--circle-total-7921)) !important;
+      grid-template-rows: repeat(89, var(--circle-total-7921)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-7921 .circle {
+      width: var(--circle-total-7921) !important;
+      height: var(--circle-total-7921) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-8100 {
-      grid-template-columns: repeat(90, var(--circle-total)) !important;
-      grid-template-rows: repeat(90, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 90) !important;
-      height: calc(var(--circle-total) * 90) !important;
+      --circle-total-8100: calc(var(--circle-total) * 13 / 90);
+      grid-template-columns: repeat(90, var(--circle-total-8100)) !important;
+      grid-template-rows: repeat(90, var(--circle-total-8100)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-8100 .circle {
+      width: var(--circle-total-8100) !important;
+      height: var(--circle-total-8100) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-8281 {
-      grid-template-columns: repeat(91, var(--circle-total)) !important;
-      grid-template-rows: repeat(91, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 91) !important;
-      height: calc(var(--circle-total) * 91) !important;
+      --circle-total-8281: calc(var(--circle-total) * 13 / 91);
+      grid-template-columns: repeat(91, var(--circle-total-8281)) !important;
+      grid-template-rows: repeat(91, var(--circle-total-8281)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-8281 .circle {
+      width: var(--circle-total-8281) !important;
+      height: var(--circle-total-8281) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-8464 {
-      grid-template-columns: repeat(92, var(--circle-total)) !important;
-      grid-template-rows: repeat(92, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 92) !important;
-      height: calc(var(--circle-total) * 92) !important;
+      --circle-total-8464: calc(var(--circle-total) * 13 / 92);
+      grid-template-columns: repeat(92, var(--circle-total-8464)) !important;
+      grid-template-rows: repeat(92, var(--circle-total-8464)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-8464 .circle {
+      width: var(--circle-total-8464) !important;
+      height: var(--circle-total-8464) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-8649 {
-      grid-template-columns: repeat(93, var(--circle-total)) !important;
-      grid-template-rows: repeat(93, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 93) !important;
-      height: calc(var(--circle-total) * 93) !important;
+      --circle-total-8649: calc(var(--circle-total) * 13 / 93);
+      grid-template-columns: repeat(93, var(--circle-total-8649)) !important;
+      grid-template-rows: repeat(93, var(--circle-total-8649)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-8649 .circle {
+      width: var(--circle-total-8649) !important;
+      height: var(--circle-total-8649) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-8836 {
-      grid-template-columns: repeat(94, var(--circle-total)) !important;
-      grid-template-rows: repeat(94, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 94) !important;
-      height: calc(var(--circle-total) * 94) !important;
+      --circle-total-8836: calc(var(--circle-total) * 13 / 94);
+      grid-template-columns: repeat(94, var(--circle-total-8836)) !important;
+      grid-template-rows: repeat(94, var(--circle-total-8836)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-8836 .circle {
+      width: var(--circle-total-8836) !important;
+      height: var(--circle-total-8836) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-9025 {
-      grid-template-columns: repeat(95, var(--circle-total)) !important;
-      grid-template-rows: repeat(95, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 95) !important;
-      height: calc(var(--circle-total) * 95) !important;
+      --circle-total-9025: calc(var(--circle-total) * 13 / 95);
+      grid-template-columns: repeat(95, var(--circle-total-9025)) !important;
+      grid-template-rows: repeat(95, var(--circle-total-9025)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9025 .circle {
+      width: var(--circle-total-9025) !important;
+      height: var(--circle-total-9025) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-9216 {
-      grid-template-columns: repeat(96, var(--circle-total)) !important;
-      grid-template-rows: repeat(96, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 96) !important;
-      height: calc(var(--circle-total) * 96) !important;
+      --circle-total-9216: calc(var(--circle-total) * 13 / 96);
+      grid-template-columns: repeat(96, var(--circle-total-9216)) !important;
+      grid-template-rows: repeat(96, var(--circle-total-9216)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9216 .circle {
+      width: var(--circle-total-9216) !important;
+      height: var(--circle-total-9216) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-9409 {
-      grid-template-columns: repeat(97, var(--circle-total)) !important;
-      grid-template-rows: repeat(97, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 97) !important;
-      height: calc(var(--circle-total) * 97) !important;
+      --circle-total-9409: calc(var(--circle-total) * 13 / 97);
+      grid-template-columns: repeat(97, var(--circle-total-9409)) !important;
+      grid-template-rows: repeat(97, var(--circle-total-9409)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9409 .circle {
+      width: var(--circle-total-9409) !important;
+      height: var(--circle-total-9409) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-9604 {
-      grid-template-columns: repeat(98, var(--circle-total)) !important;
-      grid-template-rows: repeat(98, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 98) !important;
-      height: calc(var(--circle-total) * 98) !important;
+      --circle-total-9604: calc(var(--circle-total) * 13 / 98);
+      grid-template-columns: repeat(98, var(--circle-total-9604)) !important;
+      grid-template-rows: repeat(98, var(--circle-total-9604)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9604 .circle {
+      width: var(--circle-total-9604) !important;
+      height: var(--circle-total-9604) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-9801 {
-      grid-template-columns: repeat(99, var(--circle-total)) !important;
-      grid-template-rows: repeat(99, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 99) !important;
-      height: calc(var(--circle-total) * 99) !important;
+      --circle-total-9801: calc(var(--circle-total) * 13 / 99);
+      grid-template-columns: repeat(99, var(--circle-total-9801)) !important;
+      grid-template-rows: repeat(99, var(--circle-total-9801)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9801 .circle {
+      width: var(--circle-total-9801) !important;
+      height: var(--circle-total-9801) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-10000 {
-      grid-template-columns: repeat(100, var(--circle-total)) !important;
-      grid-template-rows: repeat(100, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 100) !important;
-      height: calc(var(--circle-total) * 100) !important;
+      --circle-total-10000: calc(var(--circle-total) * 13 / 100);
+      grid-template-columns: repeat(100, var(--circle-total-10000)) !important;
+      grid-template-rows: repeat(100, var(--circle-total-10000)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-10000 .circle {
+      width: var(--circle-total-10000) !important;
+      height: var(--circle-total-10000) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     /* Circle sizes for grids 34×34 through 50×50 */
     /* 1156, 1225 use regular size like square 33 (1089) */
@@ -845,7 +1303,7 @@
     }
     .circle-1369, .circle-1444, .circle-1521, .circle-1600,
     .circle-1681, .circle-1764, .circle-1849, .circle-1936, .circle-2025, .circle-2116, .circle-2209,
-    .circle-2304, .circle-2401, .circle-2500, .circle-2601, .circle-2704, .circle-2809, .circle-2916, .circle-3025, .circle-3136, .circle-3249, .circle-3364, .circle-3481, .circle-3600, .circle-3721, .circle-3844, .circle-3969, .circle-4096, .circle-4225, .circle-4356, .circle-4489, .circle-4624, .circle-4761, .circle-4900, .circle-5041, .circle-5184, .circle-5329, .circle-5476, .circle-5625, .circle-5776, .circle-5929, .circle-6084, .circle-6241, .circle-6400, .circle-6561, .circle-6724, .circle-6889, .circle-7056, .circle-7225, .circle-7396, .circle-7569, .circle-7744, .circle-7921, .circle-8100, .circle-8281, .circle-8464, .circle-8649, .circle-8836, .circle-9025, .circle-9216, .circle-9409, .circle-9604, .circle-9801, .circle-10000 {
+    .circle-2304, .circle-2401, .circle-2500, .circle-2601, .circle-2704, .circle-2809, .circle-2916, .circle-3025, .circle-3136, .circle-3249, .circle-3364, .circle-3481, .circle-3600, .circle-3721, .circle-3844, .circle-3969, .circle-4096, .circle-4225, .circle-4356, .circle-4489, .circle-4624, .circle-4761, .circle-4900, .circle-5041, .circle-5184, .circle-5329, .circle-5476, .circle-5625, .circle-5776, .circle-5929, .circle-6084, .circle-6241, .circle-6400, .circle-6561, .circle-6724, .circle-6889, .circle-7056, .circle-7225, .circle-7396, .circle-7569, .circle-7744, .circle-7921, .circle-8100 {
       width: var(--circle-total) !important;
       height: var(--circle-total) !important;
       display: flex;
@@ -2234,8 +2692,8 @@ function generateSquare(n, label = null) {
   grid.className = `grid-dynamic`;
   grid.id = `square-${square}`;
   
-  // Special handling for 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), and 32×32 (1024) grids - CSS handles sizing
-  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024) {
+  // Special handling for 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), 32×32 (1024), 33×33 (1089), 34×34 (1156), 35×35 (1225), 36×36 (1296), 37×37 (1369), 38×38 (1444), 39×39 (1521), 40×40 (1600), 41×41 (1681), 42×42 (1764), 43×43 (1849), 44×44 (1936), 45×45 (2025), 46×46 (2116), 47×47 (2209), 48×48 (2304), 49×49 (2401), 50×50 (2500), 51×51 (2601), 52×52 (2704), 53×53 (2809), 54×54 (2916), 55×55 (3025), 56×56 (3136), 57×57 (3249), 58×58 (3364), 59×59 (3481), 60×60 (3600), 61×61 (3721), 62×62 (3844), 63×63 (3969), 64×64 (4096), 65×65 (4225), 66×66 (4356), 67×67 (4489), 68×68 (4624), 69×69 (4761), 70×70 (4900), 71×71 (5041), 72×72 (5184), 73×73 (5329), 74×74 (5476), 75×75 (5625), 76×76 (5776), 77×77 (5929), 78×78 (6084), 79×79 (6241), 80×80 (6400), 81×81 (6561), 82×82 (6724), 83×83 (6889), 84×84 (7056), 85×85 (7225), 86×86 (7396), 87×87 (7569), 88×88 (7744), 89×89 (7921), 90×90 (8100), 91×91 (8281), 92×92 (8464), 93×93 (8649), 94×94 (8836), 95×95 (9025), 96×96 (9216), 97×97 (9409), 98×98 (9604), 99×99 (9801), and 100×100 (10000) grids - CSS handles sizing
+  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369 || square === 1444 || square === 1521 || square === 1600 || square === 1681 || square === 1764 || square === 1849 || square === 1936 || square === 2025 || square === 2116 || square === 2209 || square === 2304 || square === 2401 || square === 2500 || square === 2601 || square === 2704 || square === 2809 || square === 2916 || square === 3025 || square === 3136 || square === 3249 || square === 3364 || square === 3481 || square === 3600 || square === 3721 || square === 3844 || square === 3969 || square === 4096 || square === 4225 || square === 4356 || square === 4489 || square === 4624 || square === 4761 || square === 4900 || square === 5041 || square === 5184 || square === 5329 || square === 5476 || square === 5625 || square === 5776 || square === 5929 || square === 6084 || square === 6241 || square === 6400 || square === 6561 || square === 6724 || square === 6889 || square === 7056 || square === 7225 || square === 7396 || square === 7569 || square === 7744 || square === 7921 || square === 8100 || square === 8281 || square === 8464 || square === 8649 || square === 8836 || square === 9025 || square === 9216 || square === 9409 || square === 9604 || square === 9801 || square === 10000) {
     grid.classList.add(`grid-${square}`);
   } else {
     // Use the standard size for all other grids (including 37×37)
@@ -6978,11 +7436,8 @@ if (moreSquaresContainer) {
   row37Section.appendChild(h2);
   
   const row37Grid = document.createElement('div');
-  row37Grid.className = 'grid-dynamic';
-  row37Grid.style.gridTemplateColumns = 'repeat(37, var(--circle-total))';
-  row37Grid.style.gridTemplateRows = 'repeat(37, var(--circle-total))';
-  row37Grid.style.width = 'calc(var(--circle-total) * 37)';
-  row37Grid.style.height = 'calc(var(--circle-total) * 37)';
+  row37Grid.className = 'grid-dynamic grid-1369';
+  // CSS handles sizing for grid-1369 to match 13×13 grid size
   row37Grid.style.gap = '0'; // No gap between dots - they touch tangentially
   
   // Create all 1369 dots (37 rows × 37 columns) in normal order so row 1 appears at the top
@@ -7192,11 +7647,8 @@ if (moreSquaresContainer) {
   row38Section.appendChild(h2_38);
   
   const row38Grid = document.createElement('div');
-  row38Grid.className = 'grid-dynamic';
-  row38Grid.style.gridTemplateColumns = 'repeat(38, var(--circle-total))';
-  row38Grid.style.gridTemplateRows = 'repeat(38, var(--circle-total))';
-  row38Grid.style.width = 'calc(var(--circle-total) * 38)';
-  row38Grid.style.height = 'calc(var(--circle-total) * 38)';
+  row38Grid.className = 'grid-dynamic grid-1444';
+  // CSS handles sizing for grid-1444 to match 13×13 grid size
   row38Grid.style.gap = '0'; // No gap between dots - they touch tangentially
   row38Grid.style.position = 'relative'; // Make grid position relative so we can absolutely position separated dots
   
@@ -7455,12 +7907,9 @@ if (moreSquaresContainer) {
   
   // Create the grid element - EXACTLY like 38² grid
   const second39Grid = document.createElement('div');
-  second39Grid.className = 'grid-dynamic';
+  second39Grid.className = 'grid-dynamic grid-1521';
   second39Grid.id = 'square-1521-2';
-  second39Grid.style.gridTemplateColumns = 'repeat(39, var(--circle-total))';
-  second39Grid.style.gridTemplateRows = 'repeat(39, var(--circle-total))';
-  second39Grid.style.width = 'calc(var(--circle-total) * 39)';
-  second39Grid.style.height = 'calc(var(--circle-total) * 39)';
+  // CSS handles sizing for grid-1521 to match 13×13 grid size
   second39Grid.style.gap = '0';
   second39Grid.style.position = 'relative';
   

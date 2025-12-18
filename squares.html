@@ -11,7 +11,7 @@
   <style>
     :root {
       --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
-      --circle-border: clamp(1px, 0.6vw, 6px);
+      --circle-border: 0.5px; /* Smallest possible border while maintaining tangential connection */
       --circle-total: calc(var(--circle-size) + var(--circle-border) * 2);
       --section-gap: clamp(10px, 6vw, 60px);
     }
@@ -188,7 +188,8 @@
       height: var(--circle-total);
       border-radius: 50%;
       background: #222;
-      border: var(--circle-border) solid #fff;
+      border: 0.5px solid #fff !important;
+      border-width: 0.5px !important;
       cursor: pointer;
       transition: background 0.25s ease;
       box-sizing: border-box;
@@ -211,15 +212,14 @@
     .circle.sky { background: #38c7ff; }
     .circle.red-final { background: #ff0000; }
     
-    /* 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), 32×32 (1024), 33×33 (1089), 34×34 (1156), 35×35 (1225), 36×36 (1296), 37×37 (1369), 38×38 (1444), 39×39 (1521), 40×40 (1600), 41×41 (1681), 42×42 (1764), 43×43 (1849), 44×44 (1936), 45×45 (2025), 46×46 (2116), 47×47 (2209), 48×48 (2304), 49×49 (2401), 50×50 (2500), 51×51 (2601), 52×52 (2704), 53×53 (2809), 54×54 (2916), 55×55 (3025), 56×56 (3136), 57×57 (3249), 58×58 (3364), 59×59 (3481), 60×60 (3600), 61×61 (3721), 62×62 (3844), 63×63 (3969), 64×64 (4096), 65×65 (4225), 66×66 (4356), 67×67 (4489), 68×68 (4624), 69×69 (4761), 70×70 (4900), 71×71 (5041), 72×72 (5184), 73×73 (5329), 74×74 (5476), 75×75 (5625), 76×76 (5776), 77×77 (5929), 78×78 (6084), 79×79 (6241), 80×80 (6400), 81×81 (6561), 82×82 (6724), 83×83 (6889), 84×84 (7056), 85×85 (7225), 86×86 (7396), 87×87 (7569), 88×88 (7744), 89×89 (7921), 90×90 (8100), 91×91 (8281), 92×92 (8464), 93×93 (8649), 94×94 (8836), 95×95 (9025), 96×96 (9216), 97×97 (9409), 98×98 (9604), 99×99 (9801), and 100×100 (10000) grids - same size */
+    /* 26×26 through 30×30 grids with numbers - larger circles */
+    /* Removed old rules for grids 676, 729, 784, 841, 900 - now using same size as 13×13 grid */
+    /* 13×13 (169), 14×14 (196), and 15×15 (225) grids - same size */
     .grid-169 {
       grid-template-columns: repeat(13, var(--circle-total)) !important;
       grid-template-rows: repeat(13, var(--circle-total)) !important;
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-169 .circle {
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
     }
     .grid-196 {
       --circle-total-196: calc(var(--circle-total) * 13 / 14);
@@ -228,10 +228,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-196 .circle-196 {
+    .grid-196 .circle {
       width: var(--circle-total-196) !important;
       height: var(--circle-total-196) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-225 {
       --circle-total-225: calc(var(--circle-total) * 13 / 15);
@@ -240,10 +240,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-225 .circle-225 {
+    .grid-225 .circle {
       width: var(--circle-total-225) !important;
       height: var(--circle-total-225) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-256 {
       --circle-total-256: calc(var(--circle-total) * 13 / 16);
@@ -252,10 +252,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-256 .circle-256 {
+    .grid-256 .circle {
       width: var(--circle-total-256) !important;
       height: var(--circle-total-256) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-289 {
       --circle-total-289: calc(var(--circle-total) * 13 / 17);
@@ -264,10 +264,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-289 .circle-289 {
+    .grid-289 .circle {
       width: var(--circle-total-289) !important;
       height: var(--circle-total-289) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-324 {
       --circle-total-324: calc(var(--circle-total) * 13 / 18);
@@ -276,10 +276,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-324 .circle-324 {
+    .grid-324 .circle {
       width: var(--circle-total-324) !important;
       height: var(--circle-total-324) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-361 {
       --circle-total-361: calc(var(--circle-total) * 13 / 19);
@@ -288,20 +288,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-361 .circle-361 {
+    .grid-361 .circle {
       width: var(--circle-total-361) !important;
       height: var(--circle-total-361) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
-    /* Thinner borders for grids 6×6 (36) through 12×12 (144) */
-    .grid-36 .circle,
-    .grid-49 .circle,
-    .grid-64 .circle,
-    .grid-81 .circle,
-    .grid-100 .circle,
-    .grid-121 .circle,
-    .grid-144 .circle {
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-400 {
       --circle-total-400: calc(var(--circle-total) * 13 / 20);
@@ -310,10 +300,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-400 .circle-400 {
+    .grid-400 .circle {
       width: var(--circle-total-400) !important;
       height: var(--circle-total-400) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-441 {
       --circle-total-441: calc(var(--circle-total) * 13 / 21);
@@ -322,10 +312,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-441 .circle-441 {
+    .grid-441 .circle {
       width: var(--circle-total-441) !important;
       height: var(--circle-total-441) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-484 {
       --circle-total-484: calc(var(--circle-total) * 13 / 22);
@@ -334,10 +324,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-484 .circle-484 {
+    .grid-484 .circle {
       width: var(--circle-total-484) !important;
       height: var(--circle-total-484) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-529 {
       --circle-total-529: calc(var(--circle-total) * 13 / 23);
@@ -346,10 +336,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-529 .circle-529 {
+    .grid-529 .circle {
       width: var(--circle-total-529) !important;
       height: var(--circle-total-529) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-576 {
       --circle-total-576: calc(var(--circle-total) * 13 / 24);
@@ -358,10 +348,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-576 .circle-576 {
+    .grid-576 .circle {
       width: var(--circle-total-576) !important;
       height: var(--circle-total-576) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-625 {
       --circle-total-625: calc(var(--circle-total) * 13 / 25);
@@ -370,10 +360,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-625 .circle-625 {
+    .grid-625 .circle {
       width: var(--circle-total-625) !important;
       height: var(--circle-total-625) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-676 {
       --circle-total-676: calc(var(--circle-total) * 13 / 26);
@@ -382,10 +372,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-676 .circle-676 {
+    .grid-676 .circle {
       width: var(--circle-total-676) !important;
       height: var(--circle-total-676) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-729 {
       --circle-total-729: calc(var(--circle-total) * 13 / 27);
@@ -394,10 +384,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-729 .circle-729 {
+    .grid-729 .circle {
       width: var(--circle-total-729) !important;
       height: var(--circle-total-729) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-784 {
       --circle-total-784: calc(var(--circle-total) * 13 / 28);
@@ -406,10 +396,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-784 .circle-784 {
+    .grid-784 .circle {
       width: var(--circle-total-784) !important;
       height: var(--circle-total-784) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-841 {
       --circle-total-841: calc(var(--circle-total) * 13 / 29);
@@ -418,10 +408,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-841 .circle-841 {
+    .grid-841 .circle {
       width: var(--circle-total-841) !important;
       height: var(--circle-total-841) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-900 {
       --circle-total-900: calc(var(--circle-total) * 13 / 30);
@@ -430,10 +420,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-900 .circle-900 {
+    .grid-900 .circle {
       width: var(--circle-total-900) !important;
       height: var(--circle-total-900) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-961 {
       --circle-total-961: calc(var(--circle-total) * 13 / 31);
@@ -442,10 +432,10 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-961 .circle-961 {
+    .grid-961 .circle {
       width: var(--circle-total-961) !important;
       height: var(--circle-total-961) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-1024 {
       --circle-total-1024: calc(var(--circle-total) * 13 / 32);
@@ -454,40 +444,11 @@
       width: calc(var(--circle-total) * 13) !important;
       height: calc(var(--circle-total) * 13) !important;
     }
-    .grid-1024 .circle-1024 {
+    .grid-1024 .circle {
       width: var(--circle-total-1024) !important;
       height: var(--circle-total-1024) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
-    /* Thinner borders for grids 33×33 (1089) through 100×100 (10000) */
-    .grid-1089 .circle,
-    .grid-1156 .circle,
-    .grid-1225 .circle,
-    .grid-1296 .circle,
-    .grid-1369 .circle,
-    .grid-1444 .circle,
-    .grid-1521 .circle,
-    .grid-1600 .circle,
-    .grid-1681 .circle,
-    .grid-1764 .circle,
-    .grid-1849 .circle,
-    .grid-1936 .circle,
-    .grid-2025 .circle,
-    .grid-2116 .circle,
-    .grid-2209 .circle,
-    .grid-2304 .circle,
-    .grid-2401 .circle,
-    .grid-2500 .circle,
-    .grid-2601 .circle,
-    .grid-2704 .circle,
-    .grid-2809 .circle,
-    .grid-2916 .circle,
-    .grid-3025 .circle,
-    .grid-3136 .circle,
-    .grid-3249 .circle,
-    .grid-3364 .circle,
-    .grid-3481 .circle,
-    .grid-3600 .circle,
     .grid-1089 {
       --circle-total-1089: calc(var(--circle-total) * 13 / 33);
       grid-template-columns: repeat(33, var(--circle-total-1089)) !important;
@@ -498,56 +459,18 @@
     .grid-1089 .circle {
       width: var(--circle-total-1089) !important;
       height: var(--circle-total-1089) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
-    .grid-1156 {
-      --circle-total-1156: calc(var(--circle-total) * 13 / 34);
-      grid-template-columns: repeat(34, var(--circle-total-1156)) !important;
-      grid-template-rows: repeat(34, var(--circle-total-1156)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
+    /* Grids 34×34 through 60×60 - make them bigger */
+    .grid-1521, .grid-1600,
+    .grid-1681, .grid-1764, .grid-1849, .grid-1936, .grid-2025, .grid-2116, .grid-2209,
+    .grid-2304, .grid-2401, .grid-2500, .grid-2601, .grid-2704, .grid-2809, .grid-2916,
+    .grid-3025, .grid-3136, .grid-3249, .grid-3364, .grid-3481, .grid-3600, .grid-3721, .grid-3844, .grid-3969, .grid-4096, .grid-4225, .grid-4356, .grid-4489, .grid-4624, .grid-4761, .grid-4900, .grid-5041, .grid-5184, .grid-5329, .grid-5476, .grid-5625, .grid-5776, .grid-5929, .grid-6084, .grid-6241, .grid-6400, .grid-6561, .grid-6724, .grid-6889, .grid-7056, .grid-7225, .grid-7396, .grid-7569, .grid-7744, .grid-7921, .grid-8100, .grid-8281, .grid-8464, .grid-8649, .grid-8836, .grid-9025, .grid-9216, .grid-9409, .grid-9604, .grid-9801, .grid-10000 {
+      --circle-size-large: clamp(12px, 7vw, 70px); /* Allow much smaller when zoomed out */
+      --circle-total-large: calc(var(--circle-size-large) + var(--circle-border) * 2);
     }
-    .grid-1156 .circle {
-      width: var(--circle-total-1156) !important;
-      height: var(--circle-total-1156) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
-    .grid-1225 {
-      --circle-total-1225: calc(var(--circle-total) * 13 / 35);
-      grid-template-columns: repeat(35, var(--circle-total-1225)) !important;
-      grid-template-rows: repeat(35, var(--circle-total-1225)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1225 .circle {
-      width: var(--circle-total-1225) !important;
-      height: var(--circle-total-1225) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
-    .grid-1296 {
-      --circle-total-1296: calc(var(--circle-total) * 13 / 36);
-      grid-template-columns: repeat(36, var(--circle-total-1296)) !important;
-      grid-template-rows: repeat(36, var(--circle-total-1296)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1296 .circle {
-      width: var(--circle-total-1296) !important;
-      height: var(--circle-total-1296) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
-    .grid-1369 {
-      --circle-total-1369: calc(var(--circle-total) * 13 / 37);
-      grid-template-columns: repeat(37, var(--circle-total-1369)) !important;
-      grid-template-rows: repeat(37, var(--circle-total-1369)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1369 .circle {
-      width: var(--circle-total-1369) !important;
-      height: var(--circle-total-1369) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
+    /* Note: grid-1444 (38×38) is excluded from above - it has its own specific sizing rule below */
+    /* 38×38 (1444) - same size as 13×13 grid - MUST come after general rule to override */
     .grid-1444 {
       --circle-total-1444: calc(var(--circle-total) * 13 / 38);
       grid-template-columns: repeat(38, var(--circle-total-1444)) !important;
@@ -558,8 +481,61 @@
     .grid-1444 .circle {
       width: var(--circle-total-1444) !important;
       height: var(--circle-total-1444) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
+    /* 34×34 (1156) - same size as 13×13 grid */
+    .grid-1156 {
+      --circle-total-1156: calc(var(--circle-total) * 13 / 34);
+      grid-template-columns: repeat(34, var(--circle-total-1156)) !important;
+      grid-template-rows: repeat(34, var(--circle-total-1156)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1156 .circle {
+      width: var(--circle-total-1156) !important;
+      height: var(--circle-total-1156) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 35×35 (1225) - same size as 13×13 grid */
+    .grid-1225 {
+      --circle-total-1225: calc(var(--circle-total) * 13 / 35);
+      grid-template-columns: repeat(35, var(--circle-total-1225)) !important;
+      grid-template-rows: repeat(35, var(--circle-total-1225)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1225 .circle {
+      width: var(--circle-total-1225) !important;
+      height: var(--circle-total-1225) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 36×36 (1296) - same size as 13×13 grid */
+    .grid-1296 {
+      --circle-total-1296: calc(var(--circle-total) * 13 / 36);
+      grid-template-columns: repeat(36, var(--circle-total-1296)) !important;
+      grid-template-rows: repeat(36, var(--circle-total-1296)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1296 .circle {
+      width: var(--circle-total-1296) !important;
+      height: var(--circle-total-1296) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 37×37 (1369) - same size as 13×13 grid */
+    .grid-1369 {
+      --circle-total-1369: calc(var(--circle-total) * 13 / 37);
+      grid-template-columns: repeat(37, var(--circle-total-1369)) !important;
+      grid-template-rows: repeat(37, var(--circle-total-1369)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1369 .circle {
+      width: var(--circle-total-1369) !important;
+      height: var(--circle-total-1369) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 39×39 (1521) - same size as 13×13 grid - MUST come after general rule to override */
     .grid-1521 {
       --circle-total-1521: calc(var(--circle-total) * 13 / 39);
       grid-template-columns: repeat(39, var(--circle-total-1521)) !important;
@@ -570,758 +546,347 @@
     .grid-1521 .circle {
       width: var(--circle-total-1521) !important;
       height: var(--circle-total-1521) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-1600 {
-      --circle-total-1600: calc(var(--circle-total) * 13 / 40);
-      grid-template-columns: repeat(40, var(--circle-total-1600)) !important;
-      grid-template-rows: repeat(40, var(--circle-total-1600)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1600 .circle {
-      width: var(--circle-total-1600) !important;
-      height: var(--circle-total-1600) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(40, var(--circle-total)) !important;
+      grid-template-rows: repeat(40, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 40) !important;
     }
     .grid-1681 {
-      --circle-total-1681: calc(var(--circle-total) * 13 / 41);
-      grid-template-columns: repeat(41, var(--circle-total-1681)) !important;
-      grid-template-rows: repeat(41, var(--circle-total-1681)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1681 .circle {
-      width: var(--circle-total-1681) !important;
-      height: var(--circle-total-1681) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(41, var(--circle-total)) !important;
+      grid-template-rows: repeat(41, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 41) !important;
     }
     .grid-1764 {
-      --circle-total-1764: calc(var(--circle-total) * 13 / 42);
-      grid-template-columns: repeat(42, var(--circle-total-1764)) !important;
-      grid-template-rows: repeat(42, var(--circle-total-1764)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1764 .circle {
-      width: var(--circle-total-1764) !important;
-      height: var(--circle-total-1764) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(42, var(--circle-total)) !important;
+      grid-template-rows: repeat(42, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 42) !important;
     }
     .grid-1849 {
-      --circle-total-1849: calc(var(--circle-total) * 13 / 43);
-      grid-template-columns: repeat(43, var(--circle-total-1849)) !important;
-      grid-template-rows: repeat(43, var(--circle-total-1849)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1849 .circle {
-      width: var(--circle-total-1849) !important;
-      height: var(--circle-total-1849) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(43, var(--circle-total)) !important;
+      grid-template-rows: repeat(43, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 43) !important;
     }
     .grid-1936 {
-      --circle-total-1936: calc(var(--circle-total) * 13 / 44);
-      grid-template-columns: repeat(44, var(--circle-total-1936)) !important;
-      grid-template-rows: repeat(44, var(--circle-total-1936)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1936 .circle {
-      width: var(--circle-total-1936) !important;
-      height: var(--circle-total-1936) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(44, var(--circle-total)) !important;
+      grid-template-rows: repeat(44, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 44) !important;
     }
     .grid-2025 {
-      --circle-total-2025: calc(var(--circle-total) * 13 / 45);
-      grid-template-columns: repeat(45, var(--circle-total-2025)) !important;
-      grid-template-rows: repeat(45, var(--circle-total-2025)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2025 .circle {
-      width: var(--circle-total-2025) !important;
-      height: var(--circle-total-2025) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(45, var(--circle-total)) !important;
+      grid-template-rows: repeat(45, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 45) !important;
     }
     .grid-2116 {
-      --circle-total-2116: calc(var(--circle-total) * 13 / 46);
-      grid-template-columns: repeat(46, var(--circle-total-2116)) !important;
-      grid-template-rows: repeat(46, var(--circle-total-2116)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2116 .circle {
-      width: var(--circle-total-2116) !important;
-      height: var(--circle-total-2116) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(46, var(--circle-total)) !important;
+      grid-template-rows: repeat(46, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 46) !important;
     }
     .grid-2209 {
-      --circle-total-2209: calc(var(--circle-total) * 13 / 47);
-      grid-template-columns: repeat(47, var(--circle-total-2209)) !important;
-      grid-template-rows: repeat(47, var(--circle-total-2209)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2209 .circle {
-      width: var(--circle-total-2209) !important;
-      height: var(--circle-total-2209) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(47, var(--circle-total)) !important;
+      grid-template-rows: repeat(47, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 47) !important;
     }
     .grid-2304 {
-      --circle-total-2304: calc(var(--circle-total) * 13 / 48);
-      grid-template-columns: repeat(48, var(--circle-total-2304)) !important;
-      grid-template-rows: repeat(48, var(--circle-total-2304)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2304 .circle {
-      width: var(--circle-total-2304) !important;
-      height: var(--circle-total-2304) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(48, var(--circle-total)) !important;
+      grid-template-rows: repeat(48, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 48) !important;
     }
     .grid-2401 {
-      --circle-total-2401: calc(var(--circle-total) * 13 / 49);
-      grid-template-columns: repeat(49, var(--circle-total-2401)) !important;
-      grid-template-rows: repeat(49, var(--circle-total-2401)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2401 .circle {
-      width: var(--circle-total-2401) !important;
-      height: var(--circle-total-2401) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(49, var(--circle-total)) !important;
+      grid-template-rows: repeat(49, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 49) !important;
     }
     .grid-2500 {
-      --circle-total-2500: calc(var(--circle-total) * 13 / 50);
-      grid-template-columns: repeat(50, var(--circle-total-2500)) !important;
-      grid-template-rows: repeat(50, var(--circle-total-2500)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2500 .circle {
-      width: var(--circle-total-2500) !important;
-      height: var(--circle-total-2500) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(50, var(--circle-total)) !important;
+      grid-template-rows: repeat(50, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 50) !important;
     }
     .grid-2601 {
-      --circle-total-2601: calc(var(--circle-total) * 13 / 51);
-      grid-template-columns: repeat(51, var(--circle-total-2601)) !important;
-      grid-template-rows: repeat(51, var(--circle-total-2601)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2601 .circle {
-      width: var(--circle-total-2601) !important;
-      height: var(--circle-total-2601) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(51, var(--circle-total)) !important;
+      grid-template-rows: repeat(51, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 51) !important;
     }
     .grid-2704 {
-      --circle-total-2704: calc(var(--circle-total) * 13 / 52);
-      grid-template-columns: repeat(52, var(--circle-total-2704)) !important;
-      grid-template-rows: repeat(52, var(--circle-total-2704)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2704 .circle {
-      width: var(--circle-total-2704) !important;
-      height: var(--circle-total-2704) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(52, var(--circle-total)) !important;
+      grid-template-rows: repeat(52, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 52) !important;
     }
     .grid-2809 {
-      --circle-total-2809: calc(var(--circle-total) * 13 / 53);
-      grid-template-columns: repeat(53, var(--circle-total-2809)) !important;
-      grid-template-rows: repeat(53, var(--circle-total-2809)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2809 .circle {
-      width: var(--circle-total-2809) !important;
-      height: var(--circle-total-2809) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(53, var(--circle-total)) !important;
+      grid-template-rows: repeat(53, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 53) !important;
     }
     .grid-2916 {
-      --circle-total-2916: calc(var(--circle-total) * 13 / 54);
-      grid-template-columns: repeat(54, var(--circle-total-2916)) !important;
-      grid-template-rows: repeat(54, var(--circle-total-2916)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-2916 .circle {
-      width: var(--circle-total-2916) !important;
-      height: var(--circle-total-2916) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(54, var(--circle-total)) !important;
+      grid-template-rows: repeat(54, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 54) !important;
     }
     .grid-3025 {
-      --circle-total-3025: calc(var(--circle-total) * 13 / 55);
-      grid-template-columns: repeat(55, var(--circle-total-3025)) !important;
-      grid-template-rows: repeat(55, var(--circle-total-3025)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3025 .circle {
-      width: var(--circle-total-3025) !important;
-      height: var(--circle-total-3025) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(55, var(--circle-total)) !important;
+      grid-template-rows: repeat(55, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 55) !important;
     }
     .grid-3136 {
-      --circle-total-3136: calc(var(--circle-total) * 13 / 56);
-      grid-template-columns: repeat(56, var(--circle-total-3136)) !important;
-      grid-template-rows: repeat(56, var(--circle-total-3136)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3136 .circle {
-      width: var(--circle-total-3136) !important;
-      height: var(--circle-total-3136) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(56, var(--circle-total)) !important;
+      grid-template-rows: repeat(56, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 56) !important;
     }
     .grid-3249 {
-      --circle-total-3249: calc(var(--circle-total) * 13 / 57);
-      grid-template-columns: repeat(57, var(--circle-total-3249)) !important;
-      grid-template-rows: repeat(57, var(--circle-total-3249)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3249 .circle {
-      width: var(--circle-total-3249) !important;
-      height: var(--circle-total-3249) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(57, var(--circle-total)) !important;
+      grid-template-rows: repeat(57, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 57) !important;
     }
     .grid-3364 {
-      --circle-total-3364: calc(var(--circle-total) * 13 / 58);
-      grid-template-columns: repeat(58, var(--circle-total-3364)) !important;
-      grid-template-rows: repeat(58, var(--circle-total-3364)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3364 .circle {
-      width: var(--circle-total-3364) !important;
-      height: var(--circle-total-3364) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(58, var(--circle-total)) !important;
+      grid-template-rows: repeat(58, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 58) !important;
     }
     .grid-3481 {
-      --circle-total-3481: calc(var(--circle-total) * 13 / 59);
-      grid-template-columns: repeat(59, var(--circle-total-3481)) !important;
-      grid-template-rows: repeat(59, var(--circle-total-3481)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3481 .circle {
-      width: var(--circle-total-3481) !important;
-      height: var(--circle-total-3481) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(59, var(--circle-total)) !important;
+      grid-template-rows: repeat(59, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 59) !important;
     }
     .grid-3600 {
-      --circle-total-3600: calc(var(--circle-total) * 13 / 60);
-      grid-template-columns: repeat(60, var(--circle-total-3600)) !important;
-      grid-template-rows: repeat(60, var(--circle-total-3600)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3600 .circle {
-      width: var(--circle-total-3600) !important;
-      height: var(--circle-total-3600) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(60, var(--circle-total)) !important;
+      grid-template-rows: repeat(60, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 60) !important;
     }
     .grid-3721 {
-      --circle-total-3721: calc(var(--circle-total) * 13 / 61);
-      grid-template-columns: repeat(61, var(--circle-total-3721)) !important;
-      grid-template-rows: repeat(61, var(--circle-total-3721)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3721 .circle {
-      width: var(--circle-total-3721) !important;
-      height: var(--circle-total-3721) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(61, var(--circle-total)) !important;
+      grid-template-rows: repeat(61, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 61) !important;
     }
     .grid-3844 {
-      --circle-total-3844: calc(var(--circle-total) * 13 / 62);
-      grid-template-columns: repeat(62, var(--circle-total-3844)) !important;
-      grid-template-rows: repeat(62, var(--circle-total-3844)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3844 .circle {
-      width: var(--circle-total-3844) !important;
-      height: var(--circle-total-3844) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(62, var(--circle-total)) !important;
+      grid-template-rows: repeat(62, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 62) !important;
     }
     .grid-3969 {
-      --circle-total-3969: calc(var(--circle-total) * 13 / 63);
-      grid-template-columns: repeat(63, var(--circle-total-3969)) !important;
-      grid-template-rows: repeat(63, var(--circle-total-3969)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-3969 .circle {
-      width: var(--circle-total-3969) !important;
-      height: var(--circle-total-3969) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(63, var(--circle-total)) !important;
+      grid-template-rows: repeat(63, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 63) !important;
     }
     .grid-4096 {
-      --circle-total-4096: calc(var(--circle-total) * 13 / 64);
-      grid-template-columns: repeat(64, var(--circle-total-4096)) !important;
-      grid-template-rows: repeat(64, var(--circle-total-4096)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4096 .circle {
-      width: var(--circle-total-4096) !important;
-      height: var(--circle-total-4096) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(64, var(--circle-total)) !important;
+      grid-template-rows: repeat(64, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 64) !important;
     }
     .grid-4225 {
-      --circle-total-4225: calc(var(--circle-total) * 13 / 65);
-      grid-template-columns: repeat(65, var(--circle-total-4225)) !important;
-      grid-template-rows: repeat(65, var(--circle-total-4225)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4225 .circle {
-      width: var(--circle-total-4225) !important;
-      height: var(--circle-total-4225) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(65, var(--circle-total)) !important;
+      grid-template-rows: repeat(65, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 65) !important;
     }
     .grid-4356 {
-      --circle-total-4356: calc(var(--circle-total) * 13 / 66);
-      grid-template-columns: repeat(66, var(--circle-total-4356)) !important;
-      grid-template-rows: repeat(66, var(--circle-total-4356)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4356 .circle {
-      width: var(--circle-total-4356) !important;
-      height: var(--circle-total-4356) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(66, var(--circle-total)) !important;
+      grid-template-rows: repeat(66, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 66) !important;
     }
     .grid-4489 {
-      --circle-total-4489: calc(var(--circle-total) * 13 / 67);
-      grid-template-columns: repeat(67, var(--circle-total-4489)) !important;
-      grid-template-rows: repeat(67, var(--circle-total-4489)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4489 .circle {
-      width: var(--circle-total-4489) !important;
-      height: var(--circle-total-4489) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(67, var(--circle-total)) !important;
+      grid-template-rows: repeat(67, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 67) !important;
     }
     .grid-4624 {
-      --circle-total-4624: calc(var(--circle-total) * 13 / 68);
-      grid-template-columns: repeat(68, var(--circle-total-4624)) !important;
-      grid-template-rows: repeat(68, var(--circle-total-4624)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4624 .circle {
-      width: var(--circle-total-4624) !important;
-      height: var(--circle-total-4624) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(68, var(--circle-total)) !important;
+      grid-template-rows: repeat(68, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 68) !important;
     }
     .grid-4761 {
-      --circle-total-4761: calc(var(--circle-total) * 13 / 69);
-      grid-template-columns: repeat(69, var(--circle-total-4761)) !important;
-      grid-template-rows: repeat(69, var(--circle-total-4761)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4761 .circle {
-      width: var(--circle-total-4761) !important;
-      height: var(--circle-total-4761) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(69, var(--circle-total)) !important;
+      grid-template-rows: repeat(69, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 69) !important;
     }
     .grid-4900 {
-      --circle-total-4900: calc(var(--circle-total) * 13 / 70);
-      grid-template-columns: repeat(70, var(--circle-total-4900)) !important;
-      grid-template-rows: repeat(70, var(--circle-total-4900)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-4900 .circle {
-      width: var(--circle-total-4900) !important;
-      height: var(--circle-total-4900) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(70, var(--circle-total)) !important;
+      grid-template-rows: repeat(70, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 70) !important;
     }
     .grid-5041 {
-      --circle-total-5041: calc(var(--circle-total) * 13 / 71);
-      grid-template-columns: repeat(71, var(--circle-total-5041)) !important;
-      grid-template-rows: repeat(71, var(--circle-total-5041)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5041 .circle {
-      width: var(--circle-total-5041) !important;
-      height: var(--circle-total-5041) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(71, var(--circle-total)) !important;
+      grid-template-rows: repeat(71, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 71) !important;
     }
     .grid-5184 {
-      --circle-total-5184: calc(var(--circle-total) * 13 / 72);
-      grid-template-columns: repeat(72, var(--circle-total-5184)) !important;
-      grid-template-rows: repeat(72, var(--circle-total-5184)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5184 .circle {
-      width: var(--circle-total-5184) !important;
-      height: var(--circle-total-5184) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(72, var(--circle-total)) !important;
+      grid-template-rows: repeat(72, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 72) !important;
     }
     .grid-5329 {
-      --circle-total-5329: calc(var(--circle-total) * 13 / 73);
-      grid-template-columns: repeat(73, var(--circle-total-5329)) !important;
-      grid-template-rows: repeat(73, var(--circle-total-5329)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5329 .circle {
-      width: var(--circle-total-5329) !important;
-      height: var(--circle-total-5329) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(73, var(--circle-total)) !important;
+      grid-template-rows: repeat(73, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 73) !important;
     }
     .grid-5476 {
-      --circle-total-5476: calc(var(--circle-total) * 13 / 74);
-      grid-template-columns: repeat(74, var(--circle-total-5476)) !important;
-      grid-template-rows: repeat(74, var(--circle-total-5476)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5476 .circle {
-      width: var(--circle-total-5476) !important;
-      height: var(--circle-total-5476) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(74, var(--circle-total)) !important;
+      grid-template-rows: repeat(74, var(--circle-total)) !important;
     }
     .grid-5625 {
-      --circle-total-5625: calc(var(--circle-total) * 13 / 75);
-      grid-template-columns: repeat(75, var(--circle-total-5625)) !important;
-      grid-template-rows: repeat(75, var(--circle-total-5625)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5625 .circle {
-      width: var(--circle-total-5625) !important;
-      height: var(--circle-total-5625) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(75, var(--circle-total)) !important;
+      grid-template-rows: repeat(75, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 75) !important;
+      height: calc(var(--circle-total) * 75) !important;
     }
     .grid-5776 {
-      --circle-total-5776: calc(var(--circle-total) * 13 / 76);
-      grid-template-columns: repeat(76, var(--circle-total-5776)) !important;
-      grid-template-rows: repeat(76, var(--circle-total-5776)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5776 .circle {
-      width: var(--circle-total-5776) !important;
-      height: var(--circle-total-5776) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(76, var(--circle-total)) !important;
+      grid-template-rows: repeat(76, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 76) !important;
+      height: calc(var(--circle-total) * 76) !important;
     }
     .grid-5929 {
-      --circle-total-5929: calc(var(--circle-total) * 13 / 77);
-      grid-template-columns: repeat(77, var(--circle-total-5929)) !important;
-      grid-template-rows: repeat(77, var(--circle-total-5929)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-5929 .circle {
-      width: var(--circle-total-5929) !important;
-      height: var(--circle-total-5929) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(77, var(--circle-total)) !important;
+      grid-template-rows: repeat(77, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 77) !important;
+      height: calc(var(--circle-total) * 77) !important;
     }
     .grid-6084 {
-      --circle-total-6084: calc(var(--circle-total) * 13 / 78);
-      grid-template-columns: repeat(78, var(--circle-total-6084)) !important;
-      grid-template-rows: repeat(78, var(--circle-total-6084)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6084 .circle {
-      width: var(--circle-total-6084) !important;
-      height: var(--circle-total-6084) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(78, var(--circle-total)) !important;
+      grid-template-rows: repeat(78, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 78) !important;
+      height: calc(var(--circle-total) * 78) !important;
     }
     .grid-6241 {
-      --circle-total-6241: calc(var(--circle-total) * 13 / 79);
-      grid-template-columns: repeat(79, var(--circle-total-6241)) !important;
-      grid-template-rows: repeat(79, var(--circle-total-6241)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6241 .circle {
-      width: var(--circle-total-6241) !important;
-      height: var(--circle-total-6241) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(79, var(--circle-total)) !important;
+      grid-template-rows: repeat(79, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 79) !important;
+      height: calc(var(--circle-total) * 79) !important;
     }
     .grid-6400 {
-      --circle-total-6400: calc(var(--circle-total) * 13 / 80);
-      grid-template-columns: repeat(80, var(--circle-total-6400)) !important;
-      grid-template-rows: repeat(80, var(--circle-total-6400)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6400 .circle {
-      width: var(--circle-total-6400) !important;
-      height: var(--circle-total-6400) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(80, var(--circle-total)) !important;
+      grid-template-rows: repeat(80, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 80) !important;
+      height: calc(var(--circle-total) * 80) !important;
     }
     .grid-6561 {
-      --circle-total-6561: calc(var(--circle-total) * 13 / 81);
-      grid-template-columns: repeat(81, var(--circle-total-6561)) !important;
-      grid-template-rows: repeat(81, var(--circle-total-6561)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6561 .circle {
-      width: var(--circle-total-6561) !important;
-      height: var(--circle-total-6561) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(81, var(--circle-total)) !important;
+      grid-template-rows: repeat(81, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 81) !important;
+      height: calc(var(--circle-total) * 81) !important;
     }
     .grid-6724 {
-      --circle-total-6724: calc(var(--circle-total) * 13 / 82);
-      grid-template-columns: repeat(82, var(--circle-total-6724)) !important;
-      grid-template-rows: repeat(82, var(--circle-total-6724)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6724 .circle {
-      width: var(--circle-total-6724) !important;
-      height: var(--circle-total-6724) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(82, var(--circle-total)) !important;
+      grid-template-rows: repeat(82, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 82) !important;
+      height: calc(var(--circle-total) * 82) !important;
     }
     .grid-6889 {
-      --circle-total-6889: calc(var(--circle-total) * 13 / 83);
-      grid-template-columns: repeat(83, var(--circle-total-6889)) !important;
-      grid-template-rows: repeat(83, var(--circle-total-6889)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-6889 .circle {
-      width: var(--circle-total-6889) !important;
-      height: var(--circle-total-6889) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(83, var(--circle-total)) !important;
+      grid-template-rows: repeat(83, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 83) !important;
+      height: calc(var(--circle-total) * 83) !important;
     }
     .grid-7056 {
-      --circle-total-7056: calc(var(--circle-total) * 13 / 84);
-      grid-template-columns: repeat(84, var(--circle-total-7056)) !important;
-      grid-template-rows: repeat(84, var(--circle-total-7056)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7056 .circle {
-      width: var(--circle-total-7056) !important;
-      height: var(--circle-total-7056) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(84, var(--circle-total)) !important;
+      grid-template-rows: repeat(84, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 84) !important;
+      height: calc(var(--circle-total) * 84) !important;
     }
     .grid-7225 {
-      --circle-total-7225: calc(var(--circle-total) * 13 / 85);
-      grid-template-columns: repeat(85, var(--circle-total-7225)) !important;
-      grid-template-rows: repeat(85, var(--circle-total-7225)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7225 .circle {
-      width: var(--circle-total-7225) !important;
-      height: var(--circle-total-7225) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(85, var(--circle-total)) !important;
+      grid-template-rows: repeat(85, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 85) !important;
+      height: calc(var(--circle-total) * 85) !important;
     }
     .grid-7396 {
-      --circle-total-7396: calc(var(--circle-total) * 13 / 86);
-      grid-template-columns: repeat(86, var(--circle-total-7396)) !important;
-      grid-template-rows: repeat(86, var(--circle-total-7396)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7396 .circle {
-      width: var(--circle-total-7396) !important;
-      height: var(--circle-total-7396) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(86, var(--circle-total)) !important;
+      grid-template-rows: repeat(86, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 86) !important;
+      height: calc(var(--circle-total) * 86) !important;
     }
     .grid-7569 {
-      --circle-total-7569: calc(var(--circle-total) * 13 / 87);
-      grid-template-columns: repeat(87, var(--circle-total-7569)) !important;
-      grid-template-rows: repeat(87, var(--circle-total-7569)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7569 .circle {
-      width: var(--circle-total-7569) !important;
-      height: var(--circle-total-7569) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(87, var(--circle-total)) !important;
+      grid-template-rows: repeat(87, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 87) !important;
+      height: calc(var(--circle-total) * 87) !important;
     }
     .grid-7744 {
-      --circle-total-7744: calc(var(--circle-total) * 13 / 88);
-      grid-template-columns: repeat(88, var(--circle-total-7744)) !important;
-      grid-template-rows: repeat(88, var(--circle-total-7744)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7744 .circle {
-      width: var(--circle-total-7744) !important;
-      height: var(--circle-total-7744) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(88, var(--circle-total)) !important;
+      grid-template-rows: repeat(88, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 88) !important;
+      height: calc(var(--circle-total) * 88) !important;
     }
     .grid-7921 {
-      --circle-total-7921: calc(var(--circle-total) * 13 / 89);
-      grid-template-columns: repeat(89, var(--circle-total-7921)) !important;
-      grid-template-rows: repeat(89, var(--circle-total-7921)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-7921 .circle {
-      width: var(--circle-total-7921) !important;
-      height: var(--circle-total-7921) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(89, var(--circle-total)) !important;
+      grid-template-rows: repeat(89, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 89) !important;
+      height: calc(var(--circle-total) * 89) !important;
     }
     .grid-8100 {
-      --circle-total-8100: calc(var(--circle-total) * 13 / 90);
-      grid-template-columns: repeat(90, var(--circle-total-8100)) !important;
-      grid-template-rows: repeat(90, var(--circle-total-8100)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-8100 .circle {
-      width: var(--circle-total-8100) !important;
-      height: var(--circle-total-8100) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(90, var(--circle-total)) !important;
+      grid-template-rows: repeat(90, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 90) !important;
+      height: calc(var(--circle-total) * 90) !important;
     }
     .grid-8281 {
-      --circle-total-8281: calc(var(--circle-total) * 13 / 91);
-      grid-template-columns: repeat(91, var(--circle-total-8281)) !important;
-      grid-template-rows: repeat(91, var(--circle-total-8281)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-8281 .circle {
-      width: var(--circle-total-8281) !important;
-      height: var(--circle-total-8281) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(91, var(--circle-total)) !important;
+      grid-template-rows: repeat(91, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 91) !important;
+      height: calc(var(--circle-total) * 91) !important;
     }
     .grid-8464 {
-      --circle-total-8464: calc(var(--circle-total) * 13 / 92);
-      grid-template-columns: repeat(92, var(--circle-total-8464)) !important;
-      grid-template-rows: repeat(92, var(--circle-total-8464)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-8464 .circle {
-      width: var(--circle-total-8464) !important;
-      height: var(--circle-total-8464) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(92, var(--circle-total)) !important;
+      grid-template-rows: repeat(92, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 92) !important;
+      height: calc(var(--circle-total) * 92) !important;
     }
     .grid-8649 {
-      --circle-total-8649: calc(var(--circle-total) * 13 / 93);
-      grid-template-columns: repeat(93, var(--circle-total-8649)) !important;
-      grid-template-rows: repeat(93, var(--circle-total-8649)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-8649 .circle {
-      width: var(--circle-total-8649) !important;
-      height: var(--circle-total-8649) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(93, var(--circle-total)) !important;
+      grid-template-rows: repeat(93, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 93) !important;
+      height: calc(var(--circle-total) * 93) !important;
     }
     .grid-8836 {
-      --circle-total-8836: calc(var(--circle-total) * 13 / 94);
-      grid-template-columns: repeat(94, var(--circle-total-8836)) !important;
-      grid-template-rows: repeat(94, var(--circle-total-8836)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-8836 .circle {
-      width: var(--circle-total-8836) !important;
-      height: var(--circle-total-8836) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(94, var(--circle-total)) !important;
+      grid-template-rows: repeat(94, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 94) !important;
+      height: calc(var(--circle-total) * 94) !important;
     }
     .grid-9025 {
-      --circle-total-9025: calc(var(--circle-total) * 13 / 95);
-      grid-template-columns: repeat(95, var(--circle-total-9025)) !important;
-      grid-template-rows: repeat(95, var(--circle-total-9025)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-9025 .circle {
-      width: var(--circle-total-9025) !important;
-      height: var(--circle-total-9025) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(95, var(--circle-total)) !important;
+      grid-template-rows: repeat(95, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 95) !important;
+      height: calc(var(--circle-total) * 95) !important;
     }
     .grid-9216 {
-      --circle-total-9216: calc(var(--circle-total) * 13 / 96);
-      grid-template-columns: repeat(96, var(--circle-total-9216)) !important;
-      grid-template-rows: repeat(96, var(--circle-total-9216)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-9216 .circle {
-      width: var(--circle-total-9216) !important;
-      height: var(--circle-total-9216) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(96, var(--circle-total)) !important;
+      grid-template-rows: repeat(96, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 96) !important;
+      height: calc(var(--circle-total) * 96) !important;
     }
     .grid-9409 {
-      --circle-total-9409: calc(var(--circle-total) * 13 / 97);
-      grid-template-columns: repeat(97, var(--circle-total-9409)) !important;
-      grid-template-rows: repeat(97, var(--circle-total-9409)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-9409 .circle {
-      width: var(--circle-total-9409) !important;
-      height: var(--circle-total-9409) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(97, var(--circle-total)) !important;
+      grid-template-rows: repeat(97, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 97) !important;
+      height: calc(var(--circle-total) * 97) !important;
     }
     .grid-9604 {
-      --circle-total-9604: calc(var(--circle-total) * 13 / 98);
-      grid-template-columns: repeat(98, var(--circle-total-9604)) !important;
-      grid-template-rows: repeat(98, var(--circle-total-9604)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-9604 .circle {
-      width: var(--circle-total-9604) !important;
-      height: var(--circle-total-9604) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(98, var(--circle-total)) !important;
+      grid-template-rows: repeat(98, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 98) !important;
+      height: calc(var(--circle-total) * 98) !important;
     }
     .grid-9801 {
-      --circle-total-9801: calc(var(--circle-total) * 13 / 99);
-      grid-template-columns: repeat(99, var(--circle-total-9801)) !important;
-      grid-template-rows: repeat(99, var(--circle-total-9801)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-9801 .circle {
-      width: var(--circle-total-9801) !important;
-      height: var(--circle-total-9801) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
+      grid-template-columns: repeat(99, var(--circle-total)) !important;
+      grid-template-rows: repeat(99, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 99) !important;
+      height: calc(var(--circle-total) * 99) !important;
     }
     .grid-10000 {
-      --circle-total-10000: calc(var(--circle-total) * 13 / 100);
-      grid-template-columns: repeat(100, var(--circle-total-10000)) !important;
-      grid-template-rows: repeat(100, var(--circle-total-10000)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
+      grid-template-columns: repeat(100, var(--circle-total)) !important;
+      grid-template-rows: repeat(100, var(--circle-total)) !important;
+      width: calc(var(--circle-total) * 100) !important;
+      height: calc(var(--circle-total) * 100) !important;
     }
-    .grid-10000 .circle {
-      width: var(--circle-total-10000) !important;
-      height: var(--circle-total-10000) !important;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
+    /* Removed old circle size rules for 676, 729, 784, 841, 900 - now using grid-specific sizes */
     /* Circle sizes for grids 34×34 through 50×50 */
     /* 1156, 1225 use regular size like square 33 (1089) */
     /* 1296 (36×36) uses larger size for readability */
-    .circle-1156, .circle-1225 {
-      width: var(--circle-total) !important;
-      height: var(--circle-total) !important;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    .circle-1296 {
-      width: var(--circle-total) !important;
-      height: var(--circle-total) !important;
-    }
-    .circle-1369, .circle-1444, .circle-1521, .circle-1600,
+    /* Removed circle-1156 and circle-1225 - now using grid-specific sizes */
+    /* Removed circle-1296, circle-1369, and circle-1444 - now using grid-specific sizes */
+    .circle-1521, .circle-1600,
     .circle-1681, .circle-1764, .circle-1849, .circle-1936, .circle-2025, .circle-2116, .circle-2209,
-    .circle-2304, .circle-2401, .circle-2500, .circle-2601, .circle-2704, .circle-2809, .circle-2916, .circle-3025, .circle-3136, .circle-3249, .circle-3364, .circle-3481, .circle-3600, .circle-3721, .circle-3844, .circle-3969, .circle-4096, .circle-4225, .circle-4356, .circle-4489, .circle-4624, .circle-4761, .circle-4900, .circle-5041, .circle-5184, .circle-5329, .circle-5476, .circle-5625, .circle-5776, .circle-5929, .circle-6084, .circle-6241, .circle-6400, .circle-6561, .circle-6724, .circle-6889, .circle-7056, .circle-7225, .circle-7396, .circle-7569, .circle-7744, .circle-7921, .circle-8100 {
+    .circle-2304, .circle-2401, .circle-2500, .circle-2601, .circle-2704, .circle-2809, .circle-2916, .circle-3025, .circle-3136, .circle-3249, .circle-3364, .circle-3481, .circle-3600, .circle-3721, .circle-3844, .circle-3969, .circle-4096, .circle-4225, .circle-4356, .circle-4489, .circle-4624, .circle-4761, .circle-4900, .circle-5041, .circle-5184, .circle-5329, .circle-5476, .circle-5625, .circle-5776, .circle-5929, .circle-6084, .circle-6241, .circle-6400, .circle-6561, .circle-6724, .circle-6889, .circle-7056, .circle-7225, .circle-7396, .circle-7569, .circle-7744, .circle-7921, .circle-8100, .circle-8281, .circle-8464, .circle-8649, .circle-8836, .circle-9025, .circle-9216, .circle-9409, .circle-9604, .circle-9801, .circle-10000 {
       width: var(--circle-total) !important;
       height: var(--circle-total) !important;
       display: flex;
@@ -1431,9 +996,6 @@
       width: var(--circle-total);
       height: var(--circle-total);
     }
-    .single-circle .circle {
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
-    }
 
     /* 2x2 grid (4 circles) */
     .grid-two {
@@ -1446,7 +1008,6 @@
     }
     .grid-two .circle {
       position: static;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
     }
 
     /* 3x3 grid (9 circles) */
@@ -1460,7 +1021,6 @@
     }
     .grid-three .circle {
       position: static;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
     }
 
     /* 4x4 grid (16 circles) */
@@ -1474,7 +1034,6 @@
     }
     .grid-four .circle {
       position: static;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
     }
 
     /* 5x5 grid (25 circles) */
@@ -1488,7 +1047,6 @@
     }
     .grid-five .circle {
       position: static;
-      border-width: clamp(0.25px, 0.05vw, 0.5px) !important;
     }
 
     /* Dynamic grid classes for larger squares */
@@ -2710,19 +2268,20 @@ function generateSquare(n, label = null) {
   grid.className = `grid-dynamic`;
   grid.id = `square-${square}`;
   
-  // Special handling for 13×13 (169), 14×14 (196), 15×15 (225), 16×16 (256), 17×17 (289), 18×18 (324), 19×19 (361), 20×20 (400), 21×21 (441), 22×22 (484), 23×23 (529), 24×24 (576), 25×25 (625), 26×26 (676), 27×27 (729), 28×28 (784), 29×29 (841), 30×30 (900), 31×31 (961), 32×32 (1024), 33×33 (1089), 34×34 (1156), 35×35 (1225), 36×36 (1296), 37×37 (1369), 38×38 (1444), 39×39 (1521), 40×40 (1600), 41×41 (1681), 42×42 (1764), 43×43 (1849), 44×44 (1936), 45×45 (2025), 46×46 (2116), 47×47 (2209), 48×48 (2304), 49×49 (2401), 50×50 (2500), 51×51 (2601), 52×52 (2704), 53×53 (2809), 54×54 (2916), 55×55 (3025), 56×56 (3136), 57×57 (3249), 58×58 (3364), 59×59 (3481), 60×60 (3600), 61×61 (3721), 62×62 (3844), 63×63 (3969), 64×64 (4096), 65×65 (4225), 66×66 (4356), 67×67 (4489), 68×68 (4624), 69×69 (4761), 70×70 (4900), 71×71 (5041), 72×72 (5184), 73×73 (5329), 74×74 (5476), 75×75 (5625), 76×76 (5776), 77×77 (5929), 78×78 (6084), 79×79 (6241), 80×80 (6400), 81×81 (6561), 82×82 (6724), 83×83 (6889), 84×84 (7056), 85×85 (7225), 86×86 (7396), 87×87 (7569), 88×88 (7744), 89×89 (7921), 90×90 (8100), 91×91 (8281), 92×92 (8464), 93×93 (8649), 94×94 (8836), 95×95 (9025), 96×96 (9216), 97×97 (9409), 98×98 (9604), 99×99 (9801), and 100×100 (10000) grids - CSS handles sizing
-  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369 || square === 1444 || square === 1521 || square === 1600 || square === 1681 || square === 1764 || square === 1849 || square === 1936 || square === 2025 || square === 2116 || square === 2209 || square === 2304 || square === 2401 || square === 2500 || square === 2601 || square === 2704 || square === 2809 || square === 2916 || square === 3025 || square === 3136 || square === 3249 || square === 3364 || square === 3481 || square === 3600 || square === 3721 || square === 3844 || square === 3969 || square === 4096 || square === 4225 || square === 4356 || square === 4489 || square === 4624 || square === 4761 || square === 4900 || square === 5041 || square === 5184 || square === 5329 || square === 5476 || square === 5625 || square === 5776 || square === 5929 || square === 6084 || square === 6241 || square === 6400 || square === 6561 || square === 6724 || square === 6889 || square === 7056 || square === 7225 || square === 7396 || square === 7569 || square === 7744 || square === 7921 || square === 8100 || square === 8281 || square === 8464 || square === 8649 || square === 8836 || square === 9025 || square === 9216 || square === 9409 || square === 9604 || square === 9801 || square === 10000) {
+  // Special handling for 13×13 (169) through 38×38 (1444) grids - CSS handles sizing
+  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369 || square === 1444) {
     grid.classList.add(`grid-${square}`);
   } else {
     // Use the standard size for all other grids (including 37×37)
-    grid.style.gridTemplateColumns = `repeat(${gridSize}, var(--circle-total))`;
-    grid.style.gridTemplateRows = `repeat(${gridSize}, var(--circle-total))`;
-    grid.style.width = `calc(var(--circle-total) * ${gridSize})`;
-    grid.style.height = `calc(var(--circle-total) * ${gridSize})`;
+  grid.style.gridTemplateColumns = `repeat(${gridSize}, var(--circle-total))`;
+  grid.style.gridTemplateRows = `repeat(${gridSize}, var(--circle-total))`;
+  grid.style.width = `calc(var(--circle-total) * ${gridSize})`;
+  grid.style.height = `calc(var(--circle-total) * ${gridSize})`;
   }
   
   // For 256, 225, 441, 1156, and 1225, make grid position relative so we can absolutely position separated dots relative to it
   // 841 doesn't need relative positioning since dots don't move
+  // 1444 (38×38) does NOT move dots - removed from this check
   // For squares that may have separated/moving dots, make grid position relative
   if (square === 256 || square === 225 || square === 441 || square === 1156 || square === 1225 || (square > 1225 && square <= 2704)) {
     grid.style.position = 'relative';
@@ -2741,11 +2300,9 @@ function generateSquare(n, label = null) {
   for (let i = 0; i < square; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle';
-    // For grid-196, grid-225, grid-256, grid-289, grid-324, grid-361, grid-400, grid-441, grid-484, grid-529, grid-576, grid-625, grid-676, grid-729, grid-784, grid-841, grid-900, grid-961, and grid-1024, use smaller circles to fit same size as grid-169
+    // For grids 14×14 through 33×33, use smaller circles to fit same size as grid-169
     if (square === 196) {
       circle.classList.add('circle-196');
-    } else if (square === 225) {
-      circle.classList.add('circle-225');
     } else if (square === 256) {
       circle.classList.add('circle-256');
     } else if (square === 289) {
@@ -2780,6 +2337,18 @@ function generateSquare(n, label = null) {
       circle.classList.add('circle-961');
     } else if (square === 1024) {
       circle.classList.add('circle-1024');
+    } else if (square === 1089) {
+      circle.classList.add('circle-1089');
+    } else if (square === 1156) {
+      circle.classList.add('circle-1156');
+    } else if (square === 1225) {
+      circle.classList.add('circle-1225');
+    } else if (square === 1296) {
+      circle.classList.add('circle-1296');
+    } else if (square === 1369) {
+      circle.classList.add('circle-1369');
+    } else if (square === 1444) {
+      circle.classList.add('circle-1444');
     }
     // For 26×26 through 29×29, add numbers inside each circle and make circles bigger
     // But exclude 676, 729, 784, 841 and 900 - keep them smaller
@@ -2940,6 +2509,9 @@ function generateSquare(n, label = null) {
   else if (square === 2704) {
     components = [2000, 700, 4];
   }
+  // Special: 1444 (38×38) - use normal breakDownNumber like 1369 (37×37)
+  // NO MOVEMENT - just fill dots in place, same as 37×37 grid
+  // Removed special components - let breakDownNumber handle it naturally
   // REPLICA: Handle completely independently first
   const isReplica = grid.id === 'square-1296-replica';
   if (isReplica) {
@@ -3176,10 +2748,11 @@ function generateSquare(n, label = null) {
       });
       
       // Extra check for 441: explicitly ensure row 0, col 20 is black and visible
-      if (square === 441) {
+      // Note: On second click, this dot moves with the other 41 dots, so don't reset its position here
+      if (square === 441 && clickCount === 0) {
         const idx = 0 * gridSize + 20;
         if (circles[idx]) {
-          // Force remove red class
+          // Force remove red class (only on first click/reset)
           circles[idx].classList.remove('red', ...COLOR_CLASSES);
           circles[idx].style.visibility = '';
           circles[idx].style.display = '';
@@ -3927,8 +3500,9 @@ function generateSquare(n, label = null) {
             } else if (isOnesPlace) {
               color = "sky"; // 9 sky blue
             }
-          } else if (sourceSquare === 144) {
+          } else if (sourceSquare === 144 && square !== 1444) {
             // 38×38 (1444) maps to 12×12 (144): 1400 (hundreds), 40 green (tens), 4 green (ones)
+            // BUT: square 1444 itself has its own special handling (1000, 400, 40, 4) - skip pattern mapping
             if (isHundredsPlace) {
               color = COLOR_MAP[1] || "red"; // 1400 starts with 1
             } else if (isTensPlace || isOnesPlace) {
@@ -4703,6 +4277,25 @@ function generateSquare(n, label = null) {
                   continue;
                 }
                 // Include row 0, col 12 (13th dot in top row) - it should be green
+                allIndices.push(idx);
+              }
+            }
+            indicesToFill = allIndices
+              .filter(i => !alreadyFilled.has(i))
+              .slice(0, componentValue);
+          } else if (square === 256 && isHundredsPlace) {
+            // Special: 256 (16×16) - 200 red dots on first click
+            // Leave top-right corner: 7 rows × 8 columns (rows 0-6, cols 8-15) = 56 black dots
+            // Rotated: 7 deep (rows) × 8 across (columns), top row has 8 dots
+            const allIndices = [];
+            // Fill from bottom, leaving the top-right 7×8 area empty
+            for (let row = gridSize - 1; row >= 0; row--) {
+              for (let col = 0; col < gridSize; col++) {
+                // Skip the top-right 7×8 area (rows 0-6, cols 8-15)
+                if (row < 7 && col >= 8 && col <= 15) {
+                  continue; // Skip this position - it's in the top-right 7×8 area
+                }
+                const idx = row * gridSize + col;
                 allIndices.push(idx);
               }
             }
@@ -5651,8 +5244,9 @@ function generateSquare(n, label = null) {
               indicesToFill = allIndices
                 .filter(i => !alreadyFilled.has(i))
                 .slice(0, componentValue);
-            } else if (sourceSquare === 144) {
+            } else if (sourceSquare === 144 && square !== 1444) {
               // 38×38 (1444) maps to 12×12 (144) - pattern for 44 (40 green + 4 green)
+              // BUT: square 1444 itself has its own special handling (1000, 400, 40, 4) - skip pattern mapping
               // Actually, 144 breaks down as 100 + 40 + 4, so we're mapping 40 + 4
               // First click: 1400 dots (leaving 44 black dots matching 144 pattern)
               const blackDots = new Set();
@@ -5938,6 +5532,29 @@ function generateSquare(n, label = null) {
                 allIndices.push(idx);
               }
             }
+            indicesToFill = allIndices.slice(0, componentValue);
+          } else if (square === 256 && isTensPlace) {
+            // Special: 256 (16×16) - 50 blue dots on second click
+            // Fill the top-right 7×8 area (rows 0-6, cols 8-15) EXCEPT the triangle of 6 dots
+            // Rotated: 7 deep (rows) × 8 across (columns), top row has 8 dots
+            // Triangle pattern: row 0 has cols 13,14,15; row 1 has cols 14,15; row 2 has col 15
+            const triangleIndices = getTrianglePatternIndices(gridSize);
+            const triangleSet = new Set(triangleIndices);
+            const allIndices = [];
+            // Fill the 7×8 area (rows 0-6, cols 8-15) except the triangle
+            for (let row = 0; row < 7 && row < gridSize && allIndices.length < componentValue; row++) {
+              for (let col = 8; col < 16 && col < gridSize && allIndices.length < componentValue; col++) {
+                const idx = row * gridSize + col;
+                // Skip the triangle of 6 dots (in the right-hand corner)
+                if (triangleSet.has(idx)) {
+                  continue;
+                }
+                if (!alreadyFilled.has(idx)) {
+                  allIndices.push(idx);
+                }
+              }
+            }
+            // Should be 56 - 6 = 50 blue dots
             indicesToFill = allIndices.slice(0, componentValue);
           } else if (square === 361) {
             // Special: 361 - 60 purple exactly as specified:
@@ -6373,41 +5990,30 @@ function generateSquare(n, label = null) {
             }
           } else if (square === 441) {
             // Special: 441 - 41 dots total: 40 in 8×5 rectangle + 1 diagonal dot
-            // All 41 should offset together on second click
-            // BUT: row 0, col 20 (top-right of rectangle) stays BLACK until third click
+            // All 41 should offset together on second click, including row 0, col 20 (which stays black)
             const allIndices = [];
-            // 8×5 rectangle: rows 0-4, cols 13-20 (40 positions total)
-            // Fill 39 positions in the rectangle (excluding row 0, col 20 which stays black)
+            // 8×5 rectangle: rows 0-4, cols 13-20 (40 positions total, including row 0, col 20)
+            // Include ALL 40 positions in the rectangle (including row 0, col 20 which stays black but moves)
             for (let row = 0; row < 5 && row < gridSize; row++) {
               for (let col = 13; col < 21 && col < gridSize; col++) {
                 const idx = row * gridSize + col;
-                // Exclude row 0, col 20 - it stays black until third click
-                if (row === 0 && col === 20) {
-                  continue;
-                }
-                // Include the other 39 positions in the rectangle
+                // Include ALL positions in the rectangle (including row 0, col 20)
                 if (!alreadyFilled.has(idx)) {
                   allIndices.push(idx);
                 }
               }
             }
             // Add the diagonal dot (row 5, col 12) - diagonal from bottom-left of rectangle (row 4, col 13)
-            // This makes 40 dots total (39 in rectangle + 1 diagonal)
+            // This makes 41 dots total (40 in rectangle + 1 diagonal)
             const diagonalIdx = 5 * gridSize + 12;
-            // Ensure diagonal dot is included - add it at the end to guarantee it's in the 40
+            // Ensure diagonal dot is included - add it at the end to guarantee it's in the 41
             if (!alreadyFilled.has(diagonalIdx) && !allIndices.includes(diagonalIdx)) {
               allIndices.push(diagonalIdx);
             }
-            // We need 41 dots total, but row 0, col 20 stays black
-            // So we fill 40 dots here (39 in rectangle + 1 diagonal)
-            // The 41st dot (row 0, col 20) will be filled on the third click as red
-            // Make sure we get exactly 40 dots (componentValue is 40)
-            // Ensure diagonal dot is always included in the final list
-            indicesToFill = allIndices.slice(0, componentValue);
-            if (!indicesToFill.includes(diagonalIdx) && allIndices.includes(diagonalIdx)) {
-              // Replace the last item with diagonal dot to ensure it's included
-              indicesToFill[indicesToFill.length - 1] = diagonalIdx;
-            }
+            // All 41 dots move together, but row 0, col 20 stays black (handled in movement code)
+            // We need all 41 dots (40 in rectangle + 1 diagonal) to move together
+            // Don't slice to componentValue - include all 41 dots
+            indicesToFill = allIndices;
           } else if (square === 484) {
             // Special: 484 - 80 pink total
             // Keep all green dots from first click, fill remaining black dots with pink
@@ -6703,8 +6309,83 @@ function generateSquare(n, label = null) {
           console.log('1600 second click - indicesToFill length:', indicesToFill.length, 'indicesToProcess length:', indicesToProcess.length, 'componentValue:', componentValue);
         }
         
+        // Special handling for 441 third click - update existing separated circle to red
+        // This needs to happen BEFORE processing indices, to ensure the separated circle is found and updated
+        if (square === 441 && isOnesPlace) {
+          // Find the existing separated circle for row 0, col 20 (created on second click)
+          // Search through all separated circles to find the one with matching originalRow and originalCol
+          const existingSeparated = separatedCircles.find(sc => {
+            const scRow = parseInt(sc.dataset.originalRow);
+            const scCol = parseInt(sc.dataset.originalCol);
+            return scRow === 0 && scCol === 20;
+          });
+          
+          if (existingSeparated) {
+            // Update the existing black separated circle to red
+            // Remove all color classes first, then add red
+            existingSeparated.classList.remove(...COLOR_CLASSES);
+            existingSeparated.classList.remove('red');
+            existingSeparated.classList.add('red'); // Explicitly add red color
+            existingSeparated.style.zIndex = '10';
+            existingSeparated.style.visibility = 'visible';
+            existingSeparated.style.display = 'block';
+            existingSeparated.style.opacity = '1';
+            // Also hide the original circle in the grid if it's still visible
+            const originalIdx = 0 * gridSize + 20;
+            if (circles[originalIdx]) {
+              circles[originalIdx].style.visibility = 'hidden';
+            }
+          }
+        }
+        
+        // For 1225 third click, also process the 5 black dots in col 34 (rows 0-4) to move them with the 5×5 grid
+        // These dots are not in indicesToFill, but they need to be moved along with the orange dots
+        if (square === 1225 && clickCount === 2) {
+          for (let row = 0; row < 5; row++) {
+            const col = gridSize - 1; // col 34
+            const idx = row * gridSize + col;
+            const c = circles[idx];
+            
+            // Only process if not already processed
+            if (c && !separatedCircles.find(sc => {
+              const scRow = parseInt(sc.dataset.originalRow);
+              const scCol = parseInt(sc.dataset.originalCol);
+              return scRow === row && scCol === col;
+            })) {
+              // Hide the original circle
+              c.style.visibility = 'hidden';
+              
+              // Create a separated circle for the black dot
+              const separatedCircle = document.createElement('div');
+              separatedCircle.className = 'circle'; // Keep black
+              separatedCircle.style.position = 'absolute';
+              separatedCircle.style.zIndex = '5';
+              separatedCircle.dataset.originalRow = row;
+              separatedCircle.dataset.originalCol = col;
+              
+              // Copy size classes to maintain exact grid spacing
+              c.classList.forEach(cls => {
+                if (cls.startsWith('circle-')) {
+                  separatedCircle.classList.add(cls);
+                }
+              });
+              
+              // Position to the right and up (same as orange dots)
+              const circleSizeVar = 'var(--circle-total-1225)';
+              separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+              separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
+              separatedCircle.style.display = 'block';
+              separatedCircle.style.visibility = 'visible';
+              separatedCircle.style.opacity = '1';
+              grid.appendChild(separatedCircle);
+              separatedCircles.push(separatedCircle);
+            }
+          }
+        }
+        
         indicesToProcess.forEach(i => {
           const c = circles[i];
+          
           // Only fill if not already filled and color is set
           if (!alreadyFilled.has(i) && color) {
             c.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink');
@@ -6717,10 +6398,11 @@ function generateSquare(n, label = null) {
             // For 441, offset ALL 41 dots (tens place) - the entire 8×5 rectangle + 1 diagonal dot
             // All 41 dots should offset together on the second click
             // This includes row 0, col 20 which stays black but also offsets
-            // For 1156 second click (clickCount === 1), move 100 red dots up 1 dot distance (vertically only)
-            // For 1225 third click (clickCount === 2), move 20 orange dots up 1 dot distance (vertically only)
+            // For 1156 second click (clickCount === 1), move 100 red dots up 0.5 dot distance (vertically only)
+            // For 1225 third click (clickCount === 2), move 20 orange dots right 0.5 and up 0.5 dot (like 225)
             // For 2209 second click (clickCount === 1), move 200 orange dots up 1.5 dot distance (vertically only)
             // For 841, don't offset - just change colors in place
+            // NOTE: 1444 (38×38) does NOT move dots - they stay in place and just fill normally
             if ((square === 441 && isTensPlace) || (square === 1156 && clickCount === 1) || (square === 1225 && clickCount === 2) || (square === 2209 && clickCount === 1)) {
               const row = Math.floor(i / gridSize);
               const col = i % gridSize;
@@ -6728,9 +6410,10 @@ function generateSquare(n, label = null) {
               // Check if this dot should offset:
               // For 441: 8×5 rectangle (rows 0-4, cols 13-20) - including row 0, col 20
               //          Diagonal dot (row 5, col 12)
-              // For 1156: all 100 red dots on second click move up 1 dot distance (straight up)
-              // For 1225: all 20 orange dots + 5 black dots (that will turn blue) on third click move up 1 dot distance (straight up)
+              // For 1156: all 100 red dots on second click move up 0.5 dot distance (straight up)
+              // For 1225: all 20 orange dots + 5 black dots (that will turn blue) on third click move right 0.5 dot and up 0.5 dot (like 225)
               // For 2209: all 200 orange dots on second click move up 1.5 dot distance (straight up)
+              // NOTE: 1444 (38×38) does NOT move dots - they stay in place
               const isInRectangle = (square === 441 && row >= 0 && row < 5 && col >= 13 && col < 21);
               const isDiagonalDot = (square === 441 && row === 5 && col === 12);
               const is1156SecondClick = (square === 1156 && clickCount === 1);
@@ -6738,8 +6421,10 @@ function generateSquare(n, label = null) {
               const is2209SecondClick = (square === 2209 && clickCount === 1);
               // For 1225 third click: also include the 5 blue dots (column 34, rows 0-4) in movement
               const is1225BlueDot = (square === 1225 && clickCount === 2 && col === gridSize - 1 && row < 5);
+              // For 1225: check if dot is in the 5×5 area (rows 0-4, cols 30-34)
+              const is1225In5x5 = (square === 1225 && clickCount === 2 && row >= 0 && row < 5 && col >= 30 && col < 35);
               
-              if (isInRectangle || isDiagonalDot || is1156SecondClick || is1225ThirdClick || is1225BlueDot || is2209SecondClick) {
+              if (isInRectangle || isDiagonalDot || is1156SecondClick || is1225In5x5 || is2209SecondClick) {
                 // Hide the original circle in the grid
                 c.style.visibility = 'hidden';
                 
@@ -6780,8 +6465,10 @@ function generateSquare(n, label = null) {
                     // After standard offset, move it just a bit closer to touch tangentially:
                     // - Move it to the RIGHT: col + 1.5 (positive = right)
                     // - Move it UP: row - 1.5 (negative = up, since top is measured from top)
-                    separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.5 * var(--circle-total))`;
-                    separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.5 * var(--circle-total))`;
+                    // Use grid-specific circle size for 441 to maintain tangential connection when grid shrinks
+                    const circleSizeVar = square === 441 ? 'var(--circle-total-441)' : 'var(--circle-total)';
+                    separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 1.5 * ${circleSizeVar})`;
+                    separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 1.5 * ${circleSizeVar})`;
                     // Ensure it's visible and has green color, and give it a higher z-index so it's on top
                     separatedCircle.className = `circle ${color}`;
                     // Copy size classes
@@ -6791,19 +6478,20 @@ function generateSquare(n, label = null) {
                       }
                     });
                     separatedCircle.style.zIndex = '6'; // Slightly higher than rectangle dots to ensure visibility
-                  } else if (is1156SecondClick || is1225ThirdClick || is1225BlueDot || is2209SecondClick) {
-                    // For 1156 second click: move all 100 red dots UP 1 dot distance (straight up, no left movement)
-                    // For 1225 third click: move all 20 orange dots + 5 black dots UP 1 dot distance (straight up, no left movement)
+                  } else if (is1156SecondClick || is1225In5x5 || is2209SecondClick) {
+                    // For 1156 second click: move all 100 red dots UP 0.5 dot distance (straight up, no left movement)
+                    // For 1225 third click: move all 20 orange dots + 5 black dots RIGHT 0.5 dot and UP 0.5 dot (like 225)
                     // For 2209 second click: move all 200 orange dots UP 1.5 dot distance (straight up, no left movement)
                     // All dots maintain their exact grid spacing relative to each other - they move as a connected unit
-                    // UP: negative top value = row - 1 (move up by exactly 1 dot distance) or row - 1.5 (for 2209)
-                    // Keep same horizontal position (no left offset) - use --circle-total (regular size)
+                    // For 1225: RIGHT by 0.5 dot, UP by 0.5 dot (like square 225)
+                    // For 1156: UP by 0.5 dot (straight up)
+                    // For 2209: UP by 1.5 dots (straight up)
                     // Set className first, then add size classes to maintain exact spacing
                     // For blue dots (is1225BlueDot), keep them black (no color class)
                     if (is1225BlueDot) {
                       separatedCircle.className = 'circle'; // Keep black
                     } else {
-                      separatedCircle.className = `circle ${color}`; // Orange for orange dots
+                      separatedCircle.className = `circle ${color}`; // Red for 1156, orange for 1225
                     }
                     // Copy size classes AFTER setting className to maintain exact grid spacing
                     c.classList.forEach(cls => {
@@ -6811,12 +6499,25 @@ function generateSquare(n, label = null) {
                         separatedCircle.classList.add(cls);
                       }
                     });
-                    // Use --circle-total (regular size) to maintain exact grid spacing
-                    // All dots use the same calculation, so they stay connected tangentially
-                    // For 2209, move up by 1.5 dots; for others, move up by 1 dot
-                    const moveUpDistance = is2209SecondClick ? 1.5 : 1;
-                    separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
-                    separatedCircle.style.top = `calc(var(--circle-total) * ${row} - ${moveUpDistance} * var(--circle-total))`;
+                    // Use grid-specific circle size to maintain tangential connection when grid shrinks
+                    // For 1156, use --circle-total-1156; for 1225, use --circle-total-1225; for others, use --circle-total
+                    const circleSizeVar = square === 1156 ? 'var(--circle-total-1156)' : 
+                                        (square === 1225 ? 'var(--circle-total-1225)' : 'var(--circle-total)');
+                    // For 1225, move right by 0.5 dots and up by 0.5 dots (like square 225)
+                    // This includes both the 20 orange dots and the 5 black dots in col 34 for 1225
+                    if (is1225In5x5) {
+                      separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+                      separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
+                      // For the 5 black dots in col 34 (1225), keep them black (no color class)
+                      if (is1225BlueDot) {
+                        separatedCircle.className = 'circle'; // Keep black
+                      }
+                    } else {
+                      // For 1156 and 2209, move straight up only
+                      const moveUpDistance = is1156SecondClick ? 0.5 : (is2209SecondClick ? 1.5 : 1);
+                      separatedCircle.style.left = `calc(${circleSizeVar} * ${col})`;
+                      separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - ${moveUpDistance} * ${circleSizeVar})`;
+                    }
                     // Ensure no transform or other positioning that could cause separation
                     separatedCircle.style.transform = 'none';
                     separatedCircle.style.margin = '0';
@@ -6830,8 +6531,10 @@ function generateSquare(n, label = null) {
                     // Standard offset for all other dots (all 41 move together) - moves RIGHT and UP diagonally
                     // RIGHT: positive left value = col + 1.2
                     // UP: negative top value = row - 1.2
-                    separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
-                    separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total))`;
+                    // Use grid-specific circle size for 441 to maintain tangential connection when grid shrinks
+                    const circleSizeVar = square === 441 ? 'var(--circle-total-441)' : 'var(--circle-total)';
+                    separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 1.2 * ${circleSizeVar})`;
+                    separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 1.2 * ${circleSizeVar})`;
                     
                     // Copy the dot number data attribute if it exists (for squares 1156 and 1225)
                     if (c.dataset.dotNumber) {
@@ -6858,6 +6561,8 @@ function generateSquare(n, label = null) {
             
             // For 441, offset the 1 part (ones place) - red dot at top right corner, offset
             // For 841, don't offset - just change color in place
+            // Note: For 441, the separated circle update is handled BEFORE the forEach loop above
+            // This code only handles the case where a new separated circle needs to be created (shouldn't happen for 441)
             if (square === 441 && isOnesPlace) {
               const row = Math.floor(i / gridSize);
               const col = i % gridSize;
@@ -6868,6 +6573,7 @@ function generateSquare(n, label = null) {
                 c.style.visibility = 'hidden';
                 
                 // Check if we've already created a separated circle for this index (the black one from second click)
+                // This should have been updated BEFORE the forEach loop, but check again just in case
                 const existingSeparated = separatedCircles.find(sc => {
                   const scRow = parseInt(sc.dataset.originalRow);
                   const scCol = parseInt(sc.dataset.originalCol);
@@ -6875,14 +6581,18 @@ function generateSquare(n, label = null) {
                 });
                 
                 if (existingSeparated) {
-                  // Update the existing black separated circle to red
-                  // Keep it in the same position as the second click (don't move it again)
+                  // Update the existing black separated circle to red (if not already updated)
+                  if (!existingSeparated.classList.contains('red')) {
                   existingSeparated.classList.remove(...COLOR_CLASSES);
-                  existingSeparated.classList.add(color); // Add red color
-                  existingSeparated.style.zIndex = '10'; // Higher z-index for red dot
-                  // Don't change the position - it stays where it was moved to on the second click
+                    existingSeparated.classList.add('red');
+                    existingSeparated.style.zIndex = '10';
+                    existingSeparated.style.visibility = 'visible';
+                    existingSeparated.style.display = 'block';
+                    existingSeparated.style.opacity = '1';
+                  }
                 } else {
-                  // Create a new circle positioned offset (right and up from top-right corner)
+                  // Fallback: Create a new circle positioned offset (right and up from top-right corner)
+                  // This shouldn't happen if the second click worked correctly
                   const separatedCircle = document.createElement('div');
                   separatedCircle.className = `circle ${color}`;
                   separatedCircle.style.position = 'absolute';
@@ -6900,8 +6610,10 @@ function generateSquare(n, label = null) {
                   // Small offset to the RIGHT and UP (the red dot moves just a little bit more than the 40)
                   // RIGHT: positive left value = col + 1.5 (1.2 + 0.3)
                   // UP: negative top value = row - 1.5 (1.2 + 0.3)
-                  separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.5 * var(--circle-total))`;
-                  separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.5 * var(--circle-total))`;
+                  // Use grid-specific circle size for 441 to maintain tangential connection when grid shrinks
+                  const circleSizeVar = square === 441 ? 'var(--circle-total-441)' : 'var(--circle-total)';
+                  separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 1.5 * ${circleSizeVar})`;
+                  separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 1.5 * ${circleSizeVar})`;
                   
                   // Copy the number span if it exists (for numbered grids)
                   const originalNumber = c.querySelector('.circle-number');
@@ -6942,9 +6654,9 @@ function generateSquare(n, label = null) {
               const row = Math.floor(i / gridSize);
               const col = i % gridSize;
               
-              // Only process dots that are in the 5×5 area
+              // Only process dots that are in the 5×5 area (first 4 columns for orange dots)
               const startCol = square === 225 ? 10 : (gridSize - 5);
-              const endCol = square === 225 ? 14 : (gridSize - 1);
+              const endCol = square === 225 ? 13 : (gridSize - 2); // Exclude rightmost column (black dots)
               if (row >= 0 && row < 5 && col >= startCol && col <= endCol) {
                 // Hide the original circle in the grid (remove it from the visual grid)
                 c.style.visibility = 'hidden';
@@ -6957,17 +6669,27 @@ function generateSquare(n, label = null) {
                 });
                 
                 if (!existingSeparated) {
-                  // Create a new circle positioned to the right and up, separated from the main grid
+                  // Create a new circle positioned to the right and DOWN, separated from the main grid
+                  // All 25 dots (20 orange + 5 black) move together, maintaining tangential connection
                   const separatedCircle = document.createElement('div');
                   separatedCircle.className = 'circle orange';
                   separatedCircle.style.position = 'absolute';
                   separatedCircle.style.zIndex = '5'; // Lower z-index than blue dots
                   separatedCircle.dataset.originalRow = row;
                   separatedCircle.dataset.originalCol = col;
-                  // Position to the right and up from where the original circle was
-                  // Symmetric offset: same distance right and up for balanced separation
-                  separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
-                  separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+                  
+                  // Copy size classes to maintain exact grid spacing and tangential connection
+                  c.classList.forEach(cls => {
+                    if (cls.startsWith('circle-')) {
+                      separatedCircle.classList.add(cls);
+                    }
+                  });
+                  
+                  // Position to the right and UP from where the original circle was
+                  // All 25 dots (20 orange + 5 black) move together maintaining tangential connection
+                  // Use --circle-total-225 to maintain correct spacing for the 15×15 grid
+                  separatedCircle.style.left = `calc(var(--circle-total-225) * ${col} + 0.5 * var(--circle-total-225))`;
+                  separatedCircle.style.top = `calc(var(--circle-total-225) * ${row} - 0.5 * var(--circle-total-225))`;
                   separatedCircle.style.display = 'block';
                   separatedCircle.style.visibility = 'visible';
                   separatedCircle.style.opacity = '1';
@@ -7011,8 +6733,57 @@ function generateSquare(n, label = null) {
                   separatedCircle.dataset.originalCol = col;
                   // Position to the right and up from where the original circle was
                   // Same offset as the orange dots so they form the complete 5×5 rectangle
-                  separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
-                  separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+                  // Use grid-specific circle size for 225 to maintain tangential connection
+                  const circleSizeVar = square === 225 ? 'var(--circle-total-225)' : 'var(--circle-total)';
+                  separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+                  separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
+                  separatedCircle.style.display = 'block';
+                  separatedCircle.style.visibility = 'visible';
+                  separatedCircle.style.opacity = '1';
+                  grid.appendChild(separatedCircle);
+                  separatedCircles.push(separatedCircle);
+                }
+              }
+            }
+            
+            // For 1225, also separate the 5 blue dots (fourth click) in the separated 5×5 rectangle
+            // The blue dots should replace the 5 black separated dots in col 34 (rightmost column)
+            if (square === 1225 && clickCount === 3 && color === 'blue') {
+              const row = Math.floor(i / gridSize);
+              const col = i % gridSize;
+              
+              // Only process dots that are in the rightmost column of the 5×5 area (rows 0-4, col 34)
+              const rightmostCol = gridSize - 1; // col 34 for 35×35 grid
+              if (row >= 0 && row < 5 && col === rightmostCol) {
+                // Hide the original circle in the grid (remove it from the visual grid)
+                c.style.visibility = 'hidden';
+                
+                // Check if we've already created a separated circle for this index (should be a black one from third click)
+                const existingSeparated = separatedCircles.find(sc => {
+                  const scRow = parseInt(sc.dataset.originalRow);
+                  const scCol = parseInt(sc.dataset.originalCol);
+                  return scRow === row && scCol === col;
+                });
+                
+                if (existingSeparated) {
+                  // If already existing (the black separated dot from third click), just update its color and z-index
+                  existingSeparated.classList.remove(...COLOR_CLASSES);
+                  existingSeparated.classList.add('blue');
+                  existingSeparated.style.zIndex = '20'; // Higher z-index to appear on top
+                } else {
+                  // Should not happen, but create it if somehow missing
+                  const separatedCircle = document.createElement('div');
+                  separatedCircle.className = 'circle blue';
+                  separatedCircle.style.position = 'absolute';
+                  separatedCircle.style.zIndex = '20'; // Higher z-index to appear on top
+                  separatedCircle.dataset.originalRow = row;
+                  separatedCircle.dataset.originalCol = col;
+                  // Position to the right and up from where the original circle was
+                  // Same offset as the orange dots so they form the complete 5×5 rectangle
+                  // Use grid-specific circle size for 1225 to maintain tangential connection
+                  const circleSizeVar = 'var(--circle-total-1225)';
+                  separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+                  separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
                   separatedCircle.style.display = 'block';
                   separatedCircle.style.visibility = 'visible';
                   separatedCircle.style.opacity = '1';
@@ -7207,8 +6978,21 @@ function generateSquare(n, label = null) {
               separatedBlackCircle.style.zIndex = '5';
               separatedBlackCircle.dataset.originalRow = blackRow;
               separatedBlackCircle.dataset.originalCol = blackCol;
-              separatedBlackCircle.style.left = `calc(var(--circle-total) * ${blackCol} + 0.5 * var(--circle-total))`;
-              separatedBlackCircle.style.top = `calc(var(--circle-total) * ${blackRow} - 0.5 * var(--circle-total))`;
+              
+              // Copy size classes to maintain exact grid spacing and tangential connection
+              if (circles[blackIdx]) {
+                circles[blackIdx].classList.forEach(cls => {
+                  if (cls.startsWith('circle-')) {
+                    separatedBlackCircle.classList.add(cls);
+                  }
+                });
+              }
+              
+              // Position to the right and UP from where the original circle was
+              // All 25 dots (20 orange + 5 black) move together maintaining tangential connection
+              // Use --circle-total-225 to maintain correct spacing for the 15×15 grid
+              separatedBlackCircle.style.left = `calc(var(--circle-total-225) * ${blackCol} + 0.5 * var(--circle-total-225))`;
+              separatedBlackCircle.style.top = `calc(var(--circle-total-225) * ${blackRow} - 0.5 * var(--circle-total-225))`;
               separatedBlackCircle.style.display = 'block';
               separatedBlackCircle.style.visibility = 'visible';
               separatedBlackCircle.style.opacity = '1';
@@ -7455,7 +7239,6 @@ if (moreSquaresContainer) {
   
   const row37Grid = document.createElement('div');
   row37Grid.className = 'grid-dynamic grid-1369';
-  // CSS handles sizing for grid-1369 to match 13×13 grid size
   row37Grid.style.gap = '0'; // No gap between dots - they touch tangentially
   
   // Create all 1369 dots (37 rows × 37 columns) in normal order so row 1 appears at the top
@@ -7666,7 +7449,6 @@ if (moreSquaresContainer) {
   
   const row38Grid = document.createElement('div');
   row38Grid.className = 'grid-dynamic grid-1444';
-  // CSS handles sizing for grid-1444 to match 13×13 grid size
   row38Grid.style.gap = '0'; // No gap between dots - they touch tangentially
   row38Grid.style.position = 'relative'; // Make grid position relative so we can absolutely position separated dots
   
@@ -7927,7 +7709,6 @@ if (moreSquaresContainer) {
   const second39Grid = document.createElement('div');
   second39Grid.className = 'grid-dynamic grid-1521';
   second39Grid.id = 'square-1521-2';
-  // CSS handles sizing for grid-1521 to match 13×13 grid size
   second39Grid.style.gap = '0';
   second39Grid.style.position = 'relative';
   

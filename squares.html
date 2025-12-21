@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Squares Game</title>
+  <title>Natalie's Learning Squares</title>
   <style>
     :root {
       --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
@@ -469,20 +469,6 @@
       --circle-size-large: clamp(12px, 7vw, 70px); /* Allow much smaller when zoomed out */
       --circle-total-large: calc(var(--circle-size-large) + var(--circle-border) * 2);
     }
-    /* Note: grid-1444 (38×38) is excluded from above - it has its own specific sizing rule below */
-    /* 38×38 (1444) - same size as 13×13 grid - MUST come after general rule to override */
-    .grid-1444 {
-      --circle-total-1444: calc(var(--circle-total) * 13 / 38);
-      grid-template-columns: repeat(38, var(--circle-total-1444)) !important;
-      grid-template-rows: repeat(38, var(--circle-total-1444)) !important;
-      width: calc(var(--circle-total) * 13) !important;
-      height: calc(var(--circle-total) * 13) !important;
-    }
-    .grid-1444 .circle {
-      width: var(--circle-total-1444) !important;
-      height: var(--circle-total-1444) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
-    }
     /* 34×34 (1156) - same size as 13×13 grid */
     .grid-1156 {
       --circle-total-1156: calc(var(--circle-total) * 13 / 34);
@@ -535,6 +521,19 @@
       height: var(--circle-total-1369) !important;
       border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
+    /* 38×38 (1444) - same size as 13×13 grid */
+    .grid-1444 {
+      --circle-total-1444: calc(var(--circle-total) * 13 / 38);
+      grid-template-columns: repeat(38, var(--circle-total-1444)) !important;
+      grid-template-rows: repeat(38, var(--circle-total-1444)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1444 .circle {
+      width: var(--circle-total-1444) !important;
+      height: var(--circle-total-1444) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
     /* 39×39 (1521) - same size as 13×13 grid - MUST come after general rule to override */
     .grid-1521 {
       --circle-total-1521: calc(var(--circle-total) * 13 / 39);
@@ -548,115 +547,291 @@
       height: var(--circle-total-1521) !important;
       border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
+    /* 40×40 (1600) - same size as 13×13 grid */
     .grid-1600 {
-      grid-template-columns: repeat(40, var(--circle-total)) !important;
-      grid-template-rows: repeat(40, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 40) !important;
+      --circle-total-1600: calc(var(--circle-total) * 13 / 40);
+      grid-template-columns: repeat(40, var(--circle-total-1600)) !important;
+      grid-template-rows: repeat(40, var(--circle-total-1600)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-1600 .circle {
+      width: var(--circle-total-1600) !important;
+      height: var(--circle-total-1600) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 41×41 (1681) - same size as 13×13 grid */
     .grid-1681 {
-      grid-template-columns: repeat(41, var(--circle-total)) !important;
-      grid-template-rows: repeat(41, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 41) !important;
+      --circle-total-1681: calc(var(--circle-total) * 13 / 41);
+      grid-template-columns: repeat(41, var(--circle-total-1681)) !important;
+      grid-template-rows: repeat(41, var(--circle-total-1681)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-1681 .circle {
+      width: var(--circle-total-1681) !important;
+      height: var(--circle-total-1681) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 42×42 (1764) - same size as 13×13 grid */
     .grid-1764 {
-      grid-template-columns: repeat(42, var(--circle-total)) !important;
-      grid-template-rows: repeat(42, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 42) !important;
+      --circle-total-1764: calc(var(--circle-total) * 13 / 42);
+      grid-template-columns: repeat(42, var(--circle-total-1764)) !important;
+      grid-template-rows: repeat(42, var(--circle-total-1764)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-1764 .circle {
+      width: var(--circle-total-1764) !important;
+      height: var(--circle-total-1764) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 43×43 (1849) - same size as 13×13 grid */
     .grid-1849 {
-      grid-template-columns: repeat(43, var(--circle-total)) !important;
-      grid-template-rows: repeat(43, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 43) !important;
+      --circle-total-1849: calc(var(--circle-total) * 13 / 43);
+      grid-template-columns: repeat(43, var(--circle-total-1849)) !important;
+      grid-template-rows: repeat(43, var(--circle-total-1849)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-1849 .circle {
+      width: var(--circle-total-1849) !important;
+      height: var(--circle-total-1849) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 44×44 (1936) - same size as 13×13 grid */
     .grid-1936 {
-      grid-template-columns: repeat(44, var(--circle-total)) !important;
-      grid-template-rows: repeat(44, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 44) !important;
+      --circle-total-1936: calc(var(--circle-total) * 13 / 44);
+      grid-template-columns: repeat(44, var(--circle-total-1936)) !important;
+      grid-template-rows: repeat(44, var(--circle-total-1936)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-1936 .circle {
+      width: var(--circle-total-1936) !important;
+      height: var(--circle-total-1936) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 45×45 (2025) - same size as 13×13 grid */
     .grid-2025 {
-      grid-template-columns: repeat(45, var(--circle-total)) !important;
-      grid-template-rows: repeat(45, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 45) !important;
+      --circle-total-2025: calc(var(--circle-total) * 13 / 45);
+      grid-template-columns: repeat(45, var(--circle-total-2025)) !important;
+      grid-template-rows: repeat(45, var(--circle-total-2025)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2025 .circle {
+      width: var(--circle-total-2025) !important;
+      height: var(--circle-total-2025) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 46×46 (2116) - same size as 13×13 grid */
     .grid-2116 {
-      grid-template-columns: repeat(46, var(--circle-total)) !important;
-      grid-template-rows: repeat(46, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 46) !important;
+      --circle-total-2116: calc(var(--circle-total) * 13 / 46);
+      grid-template-columns: repeat(46, var(--circle-total-2116)) !important;
+      grid-template-rows: repeat(46, var(--circle-total-2116)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2116 .circle {
+      width: var(--circle-total-2116) !important;
+      height: var(--circle-total-2116) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 47×47 (2209) - same size as 13×13 grid */
     .grid-2209 {
-      grid-template-columns: repeat(47, var(--circle-total)) !important;
-      grid-template-rows: repeat(47, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 47) !important;
+      --circle-total-2209: calc(var(--circle-total) * 13 / 47);
+      grid-template-columns: repeat(47, var(--circle-total-2209)) !important;
+      grid-template-rows: repeat(47, var(--circle-total-2209)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2209 .circle {
+      width: var(--circle-total-2209) !important;
+      height: var(--circle-total-2209) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 48×48 (2304) - same size as 13×13 grid */
     .grid-2304 {
-      grid-template-columns: repeat(48, var(--circle-total)) !important;
-      grid-template-rows: repeat(48, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 48) !important;
+      --circle-total-2304: calc(var(--circle-total) * 13 / 48);
+      grid-template-columns: repeat(48, var(--circle-total-2304)) !important;
+      grid-template-rows: repeat(48, var(--circle-total-2304)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2304 .circle {
+      width: var(--circle-total-2304) !important;
+      height: var(--circle-total-2304) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 49×49 (2401) - same size as 13×13 grid */
     .grid-2401 {
-      grid-template-columns: repeat(49, var(--circle-total)) !important;
-      grid-template-rows: repeat(49, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 49) !important;
+      --circle-total-2401: calc(var(--circle-total) * 13 / 49);
+      grid-template-columns: repeat(49, var(--circle-total-2401)) !important;
+      grid-template-rows: repeat(49, var(--circle-total-2401)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2401 .circle {
+      width: var(--circle-total-2401) !important;
+      height: var(--circle-total-2401) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 50×50 (2500) - same size as 13×13 grid */
     .grid-2500 {
-      grid-template-columns: repeat(50, var(--circle-total)) !important;
-      grid-template-rows: repeat(50, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 50) !important;
+      --circle-total-2500: calc(var(--circle-total) * 13 / 50);
+      grid-template-columns: repeat(50, var(--circle-total-2500)) !important;
+      grid-template-rows: repeat(50, var(--circle-total-2500)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2500 .circle {
+      width: var(--circle-total-2500) !important;
+      height: var(--circle-total-2500) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 51×51 (2601) - same size as 13×13 grid */
     .grid-2601 {
-      grid-template-columns: repeat(51, var(--circle-total)) !important;
-      grid-template-rows: repeat(51, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 51) !important;
+      --circle-total-2601: calc(var(--circle-total) * 13 / 51);
+      grid-template-columns: repeat(51, var(--circle-total-2601)) !important;
+      grid-template-rows: repeat(51, var(--circle-total-2601)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2601 .circle {
+      width: var(--circle-total-2601) !important;
+      height: var(--circle-total-2601) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 52×52 (2704) - same size as 13×13 grid */
     .grid-2704 {
-      grid-template-columns: repeat(52, var(--circle-total)) !important;
-      grid-template-rows: repeat(52, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 52) !important;
+      --circle-total-2704: calc(var(--circle-total) * 13 / 52);
+      grid-template-columns: repeat(52, var(--circle-total-2704)) !important;
+      grid-template-rows: repeat(52, var(--circle-total-2704)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2704 .circle {
+      width: var(--circle-total-2704) !important;
+      height: var(--circle-total-2704) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 53×53 (2809) - same size as 13×13 grid */
     .grid-2809 {
-      grid-template-columns: repeat(53, var(--circle-total)) !important;
-      grid-template-rows: repeat(53, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 53) !important;
+      --circle-total-2809: calc(var(--circle-total) * 13 / 53);
+      grid-template-columns: repeat(53, var(--circle-total-2809)) !important;
+      grid-template-rows: repeat(53, var(--circle-total-2809)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2809 .circle {
+      width: var(--circle-total-2809) !important;
+      height: var(--circle-total-2809) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 54×54 (2916) - same size as 13×13 grid */
     .grid-2916 {
-      grid-template-columns: repeat(54, var(--circle-total)) !important;
-      grid-template-rows: repeat(54, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 54) !important;
+      --circle-total-2916: calc(var(--circle-total) * 13 / 54);
+      grid-template-columns: repeat(54, var(--circle-total-2916)) !important;
+      grid-template-rows: repeat(54, var(--circle-total-2916)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-2916 .circle {
+      width: var(--circle-total-2916) !important;
+      height: var(--circle-total-2916) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 55×55 (3025) - same size as 13×13 grid */
     .grid-3025 {
-      grid-template-columns: repeat(55, var(--circle-total)) !important;
-      grid-template-rows: repeat(55, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 55) !important;
+      --circle-total-3025: calc(var(--circle-total) * 13 / 55);
+      grid-template-columns: repeat(55, var(--circle-total-3025)) !important;
+      grid-template-rows: repeat(55, var(--circle-total-3025)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3025 .circle {
+      width: var(--circle-total-3025) !important;
+      height: var(--circle-total-3025) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 56×56 (3136) - same size as 13×13 grid */
     .grid-3136 {
-      grid-template-columns: repeat(56, var(--circle-total)) !important;
-      grid-template-rows: repeat(56, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 56) !important;
+      --circle-total-3136: calc(var(--circle-total) * 13 / 56);
+      grid-template-columns: repeat(56, var(--circle-total-3136)) !important;
+      grid-template-rows: repeat(56, var(--circle-total-3136)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3136 .circle {
+      width: var(--circle-total-3136) !important;
+      height: var(--circle-total-3136) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 57×57 (3249) - same size as 13×13 grid */
     .grid-3249 {
-      grid-template-columns: repeat(57, var(--circle-total)) !important;
-      grid-template-rows: repeat(57, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 57) !important;
+      --circle-total-3249: calc(var(--circle-total) * 13 / 57);
+      grid-template-columns: repeat(57, var(--circle-total-3249)) !important;
+      grid-template-rows: repeat(57, var(--circle-total-3249)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3249 .circle {
+      width: var(--circle-total-3249) !important;
+      height: var(--circle-total-3249) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 58×58 (3364) - same size as 13×13 grid */
     .grid-3364 {
-      grid-template-columns: repeat(58, var(--circle-total)) !important;
-      grid-template-rows: repeat(58, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 58) !important;
+      --circle-total-3364: calc(var(--circle-total) * 13 / 58);
+      grid-template-columns: repeat(58, var(--circle-total-3364)) !important;
+      grid-template-rows: repeat(58, var(--circle-total-3364)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3364 .circle {
+      width: var(--circle-total-3364) !important;
+      height: var(--circle-total-3364) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 59×59 (3481) - same size as 13×13 grid */
     .grid-3481 {
-      grid-template-columns: repeat(59, var(--circle-total)) !important;
-      grid-template-rows: repeat(59, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 59) !important;
+      --circle-total-3481: calc(var(--circle-total) * 13 / 59);
+      grid-template-columns: repeat(59, var(--circle-total-3481)) !important;
+      grid-template-rows: repeat(59, var(--circle-total-3481)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3481 .circle {
+      width: var(--circle-total-3481) !important;
+      height: var(--circle-total-3481) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 60×60 (3600) - same size as 13×13 grid */
     .grid-3600 {
-      grid-template-columns: repeat(60, var(--circle-total)) !important;
-      grid-template-rows: repeat(60, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 60) !important;
+      --circle-total-3600: calc(var(--circle-total) * 13 / 60);
+      grid-template-columns: repeat(60, var(--circle-total-3600)) !important;
+      grid-template-rows: repeat(60, var(--circle-total-3600)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
     }
+    .grid-3600 .circle {
+      width: var(--circle-total-3600) !important;
+      height: var(--circle-total-3600) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+    }
+    /* 61×61 (3721) - same size as 13×13 grid */
     .grid-3721 {
-      grid-template-columns: repeat(61, var(--circle-total)) !important;
-      grid-template-rows: repeat(61, var(--circle-total)) !important;
-      width: calc(var(--circle-total) * 61) !important;
+      --circle-total-3721: calc(var(--circle-total) * 13 / 61);
+      grid-template-columns: repeat(61, var(--circle-total-3721)) !important;
+      grid-template-rows: repeat(61, var(--circle-total-3721)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-3721 .circle {
+      width: var(--circle-total-3721) !important;
+      height: var(--circle-total-3721) !important;
+      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
     }
     .grid-3844 {
       grid-template-columns: repeat(62, var(--circle-total)) !important;
@@ -884,8 +1059,8 @@
     /* 1296 (36×36) uses larger size for readability */
     /* Removed circle-1156 and circle-1225 - now using grid-specific sizes */
     /* Removed circle-1296, circle-1369, and circle-1444 - now using grid-specific sizes */
-    .circle-1521, .circle-1600,
-    .circle-1681, .circle-1764, .circle-1849, .circle-1936, .circle-2025, .circle-2116, .circle-2209,
+    /* Removed circle-1600, circle-1681, circle-1764, circle-1849, circle-1936, circle-2025, circle-2116 - now using grid-specific sizes */
+    .circle-1521, .circle-2209,
     .circle-2304, .circle-2401, .circle-2500, .circle-2601, .circle-2704, .circle-2809, .circle-2916, .circle-3025, .circle-3136, .circle-3249, .circle-3364, .circle-3481, .circle-3600, .circle-3721, .circle-3844, .circle-3969, .circle-4096, .circle-4225, .circle-4356, .circle-4489, .circle-4624, .circle-4761, .circle-4900, .circle-5041, .circle-5184, .circle-5329, .circle-5476, .circle-5625, .circle-5776, .circle-5929, .circle-6084, .circle-6241, .circle-6400, .circle-6561, .circle-6724, .circle-6889, .circle-7056, .circle-7225, .circle-7396, .circle-7569, .circle-7744, .circle-7921, .circle-8100, .circle-8281, .circle-8464, .circle-8649, .circle-8836, .circle-9025, .circle-9216, .circle-9409, .circle-9604, .circle-9801, .circle-10000 {
       width: var(--circle-total) !important;
       height: var(--circle-total) !important;
@@ -910,16 +1085,36 @@
       transform: translate(-50%, -50%);
       text-align: center;
     }
-    /* Larger numbers for very large squares 38×38 and above */
-    .circle-1444 .circle-number,
-    .circle-1521 .circle-number,
-    .circle-1600 .circle-number,
-    .circle-1681 .circle-number,
-    .circle-1764 .circle-number,
-    .circle-1849 .circle-number,
-    .circle-1936 .circle-number,
-    .circle-2025 .circle-number,
-    .circle-2116 .circle-number,
+    /* Larger numbers for very large squares 39×39 and above */
+    .circle-1521 .circle-number {
+      font-size: clamp(10px, 3vw, 32px); /* Allow smaller when zoomed out */
+      font-weight: bold;
+    }
+    /* Numbers for 40×40 through 44×44 grids - scale with circle size */
+    .circle-1600 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-1600) * 0.4), 8px) !important;
+    }
+    .circle-1681 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-1681) * 0.4), 8px) !important;
+    }
+    .circle-1764 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-1764) * 0.4), 8px) !important;
+    }
+    .circle-1849 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-1849) * 0.4), 8px) !important;
+    }
+    .circle-1936 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-1936) * 0.4), 8px) !important;
+    }
+    /* Numbers for 45×45 grid - scale with circle size */
+    .circle-2025 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-2025) * 0.4), 8px) !important;
+    }
+    /* Numbers for 46×46 grid - scale with circle size */
+    .circle-2116 .circle-number {
+      font-size: clamp(3px, calc(var(--circle-total-2116) * 0.4), 8px) !important;
+    }
+    .circle-2209 .circle-number,
     .circle-2209 .circle-number,
     .circle-2304 .circle-number,
     .circle-2401 .circle-number,
@@ -2268,8 +2463,8 @@ function generateSquare(n, label = null) {
   grid.className = `grid-dynamic`;
   grid.id = `square-${square}`;
   
-  // Special handling for 13×13 (169) through 38×38 (1444) grids - CSS handles sizing
-  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369 || square === 1444) {
+  // Special handling for 13×13 (169) through 37×37 (1369) grids - CSS handles sizing
+  if (square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369) {
     grid.classList.add(`grid-${square}`);
   } else {
     // Use the standard size for all other grids (including 37×37)
@@ -2347,8 +2542,6 @@ function generateSquare(n, label = null) {
       circle.classList.add('circle-1296');
     } else if (square === 1369) {
       circle.classList.add('circle-1369');
-    } else if (square === 1444) {
-      circle.classList.add('circle-1444');
     }
     // For 26×26 through 29×29, add numbers inside each circle and make circles bigger
     // But exclude 676, 729, 784, 841 and 900 - keep them smaller
@@ -2459,9 +2652,9 @@ function generateSquare(n, label = null) {
   if (square === 1225) {
     components = [1000, 200, 20, 5];
   }
-  // Special: 1600 (40×40) - 1000 red on first click, fill from bottom-left
+  // Special: 1600 (40×40) - 1000 red, 400 green (20×20), 40 green (4×10), 4×4 square (16 dots)
   if (square === 1600) {
-    components = [1000, 600];
+    components = [1000, 400, 40, 16];
   }
   // Special: 1681 (41×41) - 1000 red on first click, 600 purple on second click, 80 pink on third click, 1 red on fourth click
   else if (square === 1681) {
@@ -2509,9 +2702,6 @@ function generateSquare(n, label = null) {
   else if (square === 2704) {
     components = [2000, 700, 4];
   }
-  // Special: 1444 (38×38) - use normal breakDownNumber like 1369 (37×37)
-  // NO MOVEMENT - just fill dots in place, same as 37×37 grid
-  // Removed special components - let breakDownNumber handle it naturally
   // REPLICA: Handle completely independently first
   const isReplica = grid.id === 'square-1296-replica';
   if (isReplica) {
@@ -2804,24 +2994,85 @@ function generateSquare(n, label = null) {
         // Track already filled indices (check for any color class) - needed by handlers
         const alreadyFilled = new Set();
         
-        // Special: 1600 first click - fill 1000 dots from bottom-left
+        // Special: 1600 first click - fill 1000 red dots from bottom-left, excluding:
+        // - 20×20 square in top left (rows 0-19, cols 0-19) - 400 dots for green
+        // - 4×10 rectangle (rows 0-9, cols 24-27) - 40 dots for green (5 columns over from col 19)
+        // - 4×4 square in top right (rows 0-3, cols 36-39) - 16 dots
         if (square === 1600 && clickCount === 0) {
+          const excludedIndices = new Set();
+          // 20×20 square in top left: rows 0-19, cols 0-19
+          for (let row = 0; row < 20; row++) {
+            for (let col = 0; col < 20; col++) {
+              excludedIndices.add(row * gridSize + col);
+            }
+          }
+          // 4×10 rectangle: rows 0-9, cols 24-27 (5 columns over from col 19)
+          for (let row = 0; row < 10; row++) {
+            for (let col = 24; col < 28; col++) {
+              excludedIndices.add(row * gridSize + col);
+            }
+          }
+          // 4×4 square in top right: rows 0-3, cols 36-39
+          for (let row = 0; row < 4; row++) {
+            for (let col = 36; col < 40; col++) {
+              excludedIndices.add(row * gridSize + col);
+            }
+          }
+          
           const allIndices = [];
           for (let row = gridSize - 1; row >= 0; row--) {
             for (let col = 0; col < gridSize; col++) {
               const idx = row * gridSize + col;
-              allIndices.push(idx);
+              if (!excludedIndices.has(idx)) {
+                allIndices.push(idx);
+              }
             }
           }
           indicesToFill = allIndices
             .filter(i => !alreadyFilled.has(i))
             .slice(0, componentValue);
         }
-        // Special: 1600 second click - fill remaining 600 dots purple from top
-        // 600 is hundreds place, so handle it specially
+        // Special: 1600 second click - fill 20×20 square (400 green dots) in top left
         else if (square === 1600 && clickCount === 1) {
-          // Wait for alreadyFilled to be populated first (it's populated below)
-          // We'll set indicesToFill after alreadyFilled is ready
+          const allIndices = [];
+          // 20×20 square: rows 0-19, cols 0-19
+          for (let row = 0; row < 20; row++) {
+            for (let col = 0; col < 20; col++) {
+              const idx = row * gridSize + col;
+              if (!alreadyFilled.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+          }
+          indicesToFill = allIndices.slice(0, componentValue);
+        }
+        // Special: 1600 third click - fill 4×10 rectangle (40 green dots)
+        else if (square === 1600 && clickCount === 2) {
+          const allIndices = [];
+          // 4×10 rectangle: rows 0-9, cols 24-27
+          for (let row = 0; row < 10; row++) {
+            for (let col = 24; col < 28; col++) {
+              const idx = row * gridSize + col;
+              if (!alreadyFilled.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+          }
+          indicesToFill = allIndices.slice(0, componentValue);
+        }
+        // Special: 1600 fourth click - fill 4×4 square (16 green dots) in top right
+        else if (square === 1600 && clickCount === 3) {
+          const allIndices = [];
+          // 4×4 square: rows 0-3, cols 36-39
+          for (let row = 0; row < 4; row++) {
+            for (let col = 36; col < 40; col++) {
+              const idx = row * gridSize + col;
+              if (!alreadyFilled.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+          }
+          indicesToFill = allIndices.slice(0, componentValue);
         }
         circles.forEach((c, i) => {
           if (c.classList.contains("red") || c.classList.contains("orange") || 
@@ -2832,35 +3083,8 @@ function generateSquare(n, label = null) {
             alreadyFilled.add(i);
           }
         });
-        
-        // Special: 1600 second click - fill remaining 600 dots purple from top
-        // Do this AFTER alreadyFilled is populated, and FORCE it to override any previous setting
-        if (square === 1600 && clickCount === 1) {
-          console.log('1600 second click - gridSize:', gridSize, 'alreadyFilled size:', alreadyFilled.size, 'componentValue:', componentValue);
-          const allIndices = [];
-          // Fill from top row downward, left to right, only black dots (not red)
-          // Collect ALL black dots first, then take first 600
-          for (let row = 0; row < gridSize; row++) {
-            for (let col = 0; col < gridSize; col++) {
-              const idx = row * gridSize + col;
-              // Check if circle is red by checking alreadyFilled (which includes red dots)
-              if (!alreadyFilled.has(idx)) {
-                allIndices.push(idx);
-              }
-            }
-            if (row === 0) {
-              console.log('1600 second click - after row 0, allIndices length:', allIndices.length);
-            }
-          }
-          console.log('1600 second click - collected', allIndices.length, 'black dots, taking first', componentValue);
-          // Take exactly componentValue (600) dots - FORCE override
-          indicesToFill = allIndices.slice(0, componentValue);
-          console.log('1600 second click - indicesToFill FORCED to', indicesToFill.length, 'indices');
-          // Mark that we've handled 1600 second click to prevent any other handlers from overwriting
-          window._1600SecondClickHandled = true;
-        }
         // Special: 1681 second click - fill remaining 600 dots purple from top (same as 1600)
-        else if (square === 1681 && clickCount === 1) {
+        if (square === 1681 && clickCount === 1) {
           const allIndices = [];
           // Fill from top row downward, left to right, only black dots (not red)
           // Collect ALL black dots first, then take first 600
@@ -3061,12 +3285,20 @@ function generateSquare(n, label = null) {
           const topRightIndices1849 = get3x3TopRightIndices(gridSize);
           indicesToFill = topRightIndices1849.filter(i => !alreadyFilled.has(i)).slice(0, componentValue);
         }
-        // Special: 2209 second click - fill 200 orange dots in 20×10 rectangle (rows 0-19, cols 34-43)
+        // Special: 2209 second click - fill orange dots in scaled rectangle
+        // Original 47×47: 20×10 rectangle (rows 0-19, cols 34-43) = 200 dots
+        // Scaled to 13×13: 6×3 rectangle (rows 0-5, cols 10-12) = 18 dots (proportionally scaled)
         else if (square === 2209 && clickCount === 1) {
           const allIndices = [];
-          // Fill 20×10 rectangle: rows 0-19, cols 34-43 (200 orange dots)
-          for (let row = 0; row < 20 && row < gridSize; row++) {
-            for (let col = 34; col <= 43 && col < gridSize; col++) {
+          // Scaled rectangle: rows 0-5, cols 10-12 (18 orange dots for 13×13 display)
+          // When gridSize is 47, use original: rows 0-19, cols 34-43
+          // When gridSize is 13 (scaled display), use: rows 0-5, cols 10-12
+          const rectStartRow = gridSize === 47 ? 0 : 0;
+          const rectEndRow = gridSize === 47 ? 19 : 5;
+          const rectStartCol = gridSize === 47 ? 34 : 10;
+          const rectEndCol = gridSize === 47 ? 43 : 12;
+          for (let row = rectStartRow; row <= rectEndRow && row < gridSize; row++) {
+            for (let col = rectStartCol; col <= rectEndCol && col < gridSize; col++) {
               const idx = row * gridSize + col;
               if (!alreadyFilled.has(idx)) {
                 allIndices.push(idx);
@@ -3500,9 +3732,8 @@ function generateSquare(n, label = null) {
             } else if (isOnesPlace) {
               color = "sky"; // 9 sky blue
             }
-          } else if (sourceSquare === 144 && square !== 1444) {
-            // 38×38 (1444) maps to 12×12 (144): 1400 (hundreds), 40 green (tens), 4 green (ones)
-            // BUT: square 1444 itself has its own special handling (1000, 400, 40, 4) - skip pattern mapping
+          } else if (sourceSquare === 144) {
+            // 12×12 (144): 1400 (hundreds), 40 green (tens), 4 green (ones)
             if (isHundredsPlace) {
               color = COLOR_MAP[1] || "red"; // 1400 starts with 1
             } else if (isTensPlace || isOnesPlace) {
@@ -3529,10 +3760,15 @@ function generateSquare(n, label = null) {
               }
             }
           } else if (sourceSquare === 100) {
-            // 40×40 (1600) maps to 10×10 (100): 1600 (all filled on first click)
-            // BUT: second click (600) should be purple, not red
-            if (square === 1600 && clickCount === 1) {
-              color = "purple"; // 600 purple dots on second click
+            // 40×40 (1600): 1000 red (first), 400 green (second), 40 green (third), 16 green (fourth)
+            if (square === 1600 && clickCount === 0) {
+              color = "red"; // 1000 red dots on first click
+            } else if (square === 1600 && clickCount === 1) {
+              color = "green"; // 400 green dots (20×20 square) on second click
+            } else if (square === 1600 && clickCount === 2) {
+              color = "green"; // 40 green dots (4×10 rectangle) on third click
+            } else if (square === 1600 && clickCount === 3) {
+              color = "green"; // 16 green dots (4×4 square) on fourth click
             } else if (isHundredsPlace) {
               color = COLOR_MAP[1] || "red"; // 1600 starts with 1
             }
@@ -4127,20 +4363,26 @@ function generateSquare(n, label = null) {
         } else if (square === 1600 && clickCount === 1 && indicesToFill.length > 0) {
           // 1600 second click already handled above - skip other handlers
         } else if (square === 2209 && clickCount === 0) {
-          // Special: 2209 - 2000 orange on first click, leave exactly 209 black dots: 20×10 rectangle (rows 0-19, cols 34-43) + 3×3 square (rows 0-2, cols 44-46)
+          // Special: 2209 - 2000 orange on first click, leave exactly 209 black dots
+          // Original 47×47: 20×10 rectangle (rows 0-19, cols 34-43) + 3×3 square (rows 0-2, cols 44-46)
+          // Scaled to 13×13: 6×3 rectangle (rows 0-5, cols 10-12) + 3×3 square (rows 0-2, cols 10-12, but 3×3 is always top-right)
           // Must be BEFORE isHundredsPlace check because components.length === 1, so isHundredsPlace is false
           const allIndices = [];
           // Fill from bottom, leaving:
-          // - 20×10 rectangle: rows 0-19, cols 34-43 (200 black dots)
-          // - 3×3 square: rows 0-2, cols 44-46 (9 black dots)
-          // Total: 209 black dots
+          // - Scaled rectangle: rows 0-5, cols 10-12 (for 13×13) OR rows 0-19, cols 34-43 (for 47×47)
+          // - 3×3 square: rows 0-2, cols (gridSize-3) to (gridSize-1) (always top-right)
+          // Total: 209 black dots (or proportionally scaled)
+          const rectStartRow = gridSize === 47 ? 0 : 0;
+          const rectEndRow = gridSize === 47 ? 19 : 5;
+          const rectStartCol = gridSize === 47 ? 34 : 10;
+          const rectEndCol = gridSize === 47 ? 43 : 12;
           for (let row = gridSize - 1; row >= 0; row--) {
             for (let col = 0; col < gridSize; col++) {
-              // Skip the 20×10 rectangle area (rows 0-19, cols 34-43)
-              const isIn20x10Area = row < 20 && col >= 34 && col <= 43;
-              // Skip the 3×3 rectangle area (rows 0-2, cols 44-46)
+              // Skip the scaled rectangle area
+              const isInRectangleArea = row >= rectStartRow && row <= rectEndRow && col >= rectStartCol && col <= rectEndCol;
+              // Skip the 3×3 rectangle area (rows 0-2, cols gridSize-3 to gridSize-1, always top-right)
               const isIn3x3Area = row < 3 && col >= gridSize - 3;
-              if (isIn20x10Area || isIn3x3Area) {
+              if (isInRectangleArea || isIn3x3Area) {
                 continue; // Skip this position - it's in the black area
               }
               const idx = row * gridSize + col;
@@ -6330,6 +6572,16 @@ function generateSquare(n, label = null) {
             existingSeparated.style.visibility = 'visible';
             existingSeparated.style.display = 'block';
             existingSeparated.style.opacity = '1';
+            // Ensure it has a click listener (in case it was created before we added the listener)
+            if (square === 441 && !existingSeparated.hasAttribute('data-click-listener-added')) {
+              existingSeparated.style.cursor = 'pointer';
+              existingSeparated.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent event from bubbling to grid
+                // Trigger the grid's click handler
+                grid.dispatchEvent(new Event('click', { bubbles: true }));
+              });
+              existingSeparated.setAttribute('data-click-listener-added', 'true');
+            }
             // Also hide the original circle in the grid if it's still visible
             const originalIdx = 0 * gridSize + 20;
             if (circles[originalIdx]) {
@@ -6412,7 +6664,7 @@ function generateSquare(n, label = null) {
               //          Diagonal dot (row 5, col 12)
               // For 1156: all 100 red dots on second click move up 0.5 dot distance (straight up)
               // For 1225: all 20 orange dots + 5 black dots (that will turn blue) on third click move right 0.5 dot and up 0.5 dot (like 225)
-              // For 2209: all 200 orange dots on second click move up 1.5 dot distance (straight up)
+              // For 2209: all orange dots in rectangle (200 in 47×47, scaled proportionally in 13×13) on second click move up 1.5 dot distance (straight up)
               // NOTE: 1444 (38×38) does NOT move dots - they stay in place
               const isInRectangle = (square === 441 && row >= 0 && row < 5 && col >= 13 && col < 21);
               const isDiagonalDot = (square === 441 && row === 5 && col === 12);
@@ -6481,7 +6733,8 @@ function generateSquare(n, label = null) {
                   } else if (is1156SecondClick || is1225In5x5 || is2209SecondClick) {
                     // For 1156 second click: move all 100 red dots UP 0.5 dot distance (straight up, no left movement)
                     // For 1225 third click: move all 20 orange dots + 5 black dots RIGHT 0.5 dot and UP 0.5 dot (like 225)
-                    // For 2209 second click: move all 200 orange dots UP 1.5 dot distance (straight up, no left movement)
+                    // For 2209 second click: move all orange dots in rectangle UP 1.5 dot distance (straight up, no left movement)
+                    //   Rectangle: rows 0-19, cols 34-43 (47×47) or rows 0-5, cols 10-12 (13×13 scaled display)
                     // All dots maintain their exact grid spacing relative to each other - they move as a connected unit
                     // For 1225: RIGHT by 0.5 dot, UP by 0.5 dot (like square 225)
                     // For 1156: UP by 0.5 dot (straight up)
@@ -6500,9 +6753,10 @@ function generateSquare(n, label = null) {
                       }
                     });
                     // Use grid-specific circle size to maintain tangential connection when grid shrinks
-                    // For 1156, use --circle-total-1156; for 1225, use --circle-total-1225; for others, use --circle-total
+                    // For 1156, use --circle-total-1156; for 1225, use --circle-total-1225; for 2209, use --circle-total-2209; for others, use --circle-total
                     const circleSizeVar = square === 1156 ? 'var(--circle-total-1156)' : 
-                                        (square === 1225 ? 'var(--circle-total-1225)' : 'var(--circle-total)');
+                                        (square === 1225 ? 'var(--circle-total-1225)' : 
+                                        (square === 2209 ? 'var(--circle-total-2209)' : 'var(--circle-total)'));
                     // For 1225, move right by 0.5 dots and up by 0.5 dots (like square 225)
                     // This includes both the 20 orange dots and the 5 black dots in col 34 for 1225
                     if (is1225In5x5) {
@@ -6555,6 +6809,18 @@ function generateSquare(n, label = null) {
                   separatedCircle.style.opacity = '1';
                   grid.appendChild(separatedCircle);
                   separatedCircles.push(separatedCircle);
+                  
+                  // Add click listener to separated circle for 441 grid
+                  // Make it trigger the grid's click handler so clicks advance the state
+                  if (square === 441) {
+                    separatedCircle.style.cursor = 'pointer';
+                    separatedCircle.addEventListener('click', (e) => {
+                      e.stopPropagation(); // Prevent event from bubbling to grid
+                      // Trigger the grid's click handler
+                      grid.dispatchEvent(new Event('click', { bubbles: true }));
+                    });
+                    separatedCircle.setAttribute('data-click-listener-added', 'true');
+                  }
                 }
               }
             }
@@ -6687,14 +6953,26 @@ function generateSquare(n, label = null) {
                   
                   // Position to the right and UP from where the original circle was
                   // All 25 dots (20 orange + 5 black) move together maintaining tangential connection
-                  // Use --circle-total-225 to maintain correct spacing for the 15×15 grid
-                  separatedCircle.style.left = `calc(var(--circle-total-225) * ${col} + 0.5 * var(--circle-total-225))`;
-                  separatedCircle.style.top = `calc(var(--circle-total-225) * ${row} - 0.5 * var(--circle-total-225))`;
+                  // Use correct circle size variable for each grid
+                  const circleSizeVar = square === 225 ? 'var(--circle-total-225)' : 'var(--circle-total-2025)';
+                  separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+                  separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
                   separatedCircle.style.display = 'block';
                   separatedCircle.style.visibility = 'visible';
                   separatedCircle.style.opacity = '1';
                   grid.appendChild(separatedCircle);
                   separatedCircles.push(separatedCircle);
+                  
+                  // Add click listener to separated circle for 225 grid
+                  // Make it trigger the grid's click handler so clicks advance the state
+                  if (square === 225 || square === 2025) {
+                    separatedCircle.style.cursor = 'pointer';
+                    separatedCircle.addEventListener('click', (e) => {
+                      e.stopPropagation(); // Prevent event from bubbling to grid
+                      // Trigger the grid's click handler
+                      grid.dispatchEvent(new Event('click', { bubbles: true }));
+                    });
+                  }
                 }
               }
             }
@@ -6733,8 +7011,8 @@ function generateSquare(n, label = null) {
                   separatedCircle.dataset.originalCol = col;
                   // Position to the right and up from where the original circle was
                   // Same offset as the orange dots so they form the complete 5×5 rectangle
-                  // Use grid-specific circle size for 225 to maintain tangential connection
-                  const circleSizeVar = square === 225 ? 'var(--circle-total-225)' : 'var(--circle-total)';
+                  // Use grid-specific circle size to maintain tangential connection
+                  const circleSizeVar = square === 225 ? 'var(--circle-total-225)' : 'var(--circle-total-2025)';
                   separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
                   separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
                   separatedCircle.style.display = 'block';
@@ -6742,6 +7020,17 @@ function generateSquare(n, label = null) {
                   separatedCircle.style.opacity = '1';
                   grid.appendChild(separatedCircle);
                   separatedCircles.push(separatedCircle);
+                  
+                  // Add click listener to separated circle for 225 grid
+                  // Make it trigger the grid's click handler so clicks advance the state
+                  if (square === 225 || square === 2025) {
+                    separatedCircle.style.cursor = 'pointer';
+                    separatedCircle.addEventListener('click', (e) => {
+                      e.stopPropagation(); // Prevent event from bubbling to grid
+                      // Trigger the grid's click handler
+                      grid.dispatchEvent(new Event('click', { bubbles: true }));
+                    });
+                  }
                 }
               }
             }
@@ -6789,6 +7078,18 @@ function generateSquare(n, label = null) {
                   separatedCircle.style.opacity = '1';
                   grid.appendChild(separatedCircle);
                   separatedCircles.push(separatedCircle);
+                  
+                  // Add click listener to separated circle for 441 grid (fallback case)
+                  // Make it trigger the grid's click handler so clicks advance the state
+                  if (square === 441) {
+                    separatedCircle.style.cursor = 'pointer';
+                    separatedCircle.addEventListener('click', (e) => {
+                      e.stopPropagation(); // Prevent event from bubbling to grid
+                      // Trigger the grid's click handler
+                      grid.dispatchEvent(new Event('click', { bubbles: true }));
+                    });
+                    separatedCircle.setAttribute('data-click-listener-added', 'true');
+                  }
                 }
               }
             }
@@ -6822,8 +7123,10 @@ function generateSquare(n, label = null) {
                   separatedCircle.dataset.originalCol = col;
                   // Position to the right and up from where the original circle was
                   // Same offset as the 5×5 in 15×15 grid
-                  separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
-                  separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+                  // Use grid-specific circle size for 2116 to maintain correct positioning
+                  const circleSizeVar = square === 2116 ? 'var(--circle-total-2116)' : 'var(--circle-total)';
+                  separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+                  separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
                   separatedCircle.style.display = 'block';
                   separatedCircle.style.visibility = 'visible';
                   separatedCircle.style.opacity = '1';
@@ -6899,6 +7202,18 @@ function generateSquare(n, label = null) {
               separatedCircle.style.opacity = '1';
               grid.appendChild(separatedCircle);
               separatedCircles.push(separatedCircle);
+              
+              // Add click listener to separated circle for 441 grid (top-right corner dot)
+              // Make it trigger the grid's click handler so clicks advance the state
+              if (square === 441) {
+                separatedCircle.style.cursor = 'pointer';
+                separatedCircle.addEventListener('click', (e) => {
+                  e.stopPropagation(); // Prevent event from bubbling to grid
+                  // Trigger the grid's click handler
+                  grid.dispatchEvent(new Event('click', { bubbles: true }));
+                });
+                separatedCircle.setAttribute('data-click-listener-added', 'true');
+              }
             }
           }
         }
@@ -6931,8 +7246,10 @@ function generateSquare(n, label = null) {
                 separatedBlackCircle.dataset.originalRow = blackRow;
                 separatedBlackCircle.dataset.originalCol = blackCol;
                 // Position to the right and up from where the original circle was (same offset as red dots)
-                separatedBlackCircle.style.left = `calc(var(--circle-total) * ${blackCol} + 0.5 * var(--circle-total))`;
-                separatedBlackCircle.style.top = `calc(var(--circle-total) * ${blackRow} - 0.5 * var(--circle-total))`;
+                // Use grid-specific circle size for 2116 to maintain correct positioning
+                const circleSizeVar2116 = 'var(--circle-total-2116)';
+                separatedBlackCircle.style.left = `calc(${circleSizeVar2116} * ${blackCol} + 0.5 * ${circleSizeVar2116})`;
+                separatedBlackCircle.style.top = `calc(${circleSizeVar2116} * ${blackRow} - 0.5 * ${circleSizeVar2116})`;
                 separatedBlackCircle.style.display = 'block';
                 separatedBlackCircle.style.visibility = 'visible';
                 separatedBlackCircle.style.opacity = '1';
@@ -6990,17 +7307,29 @@ function generateSquare(n, label = null) {
               
               // Position to the right and UP from where the original circle was
               // All 25 dots (20 orange + 5 black) move together maintaining tangential connection
-              // Use --circle-total-225 to maintain correct spacing for the 15×15 grid
-              separatedBlackCircle.style.left = `calc(var(--circle-total-225) * ${blackCol} + 0.5 * var(--circle-total-225))`;
-              separatedBlackCircle.style.top = `calc(var(--circle-total-225) * ${blackRow} - 0.5 * var(--circle-total-225))`;
+              // Use correct circle size variable for each grid
+              const circleSizeVar = square === 225 ? 'var(--circle-total-225)' : 'var(--circle-total-2025)';
+              separatedBlackCircle.style.left = `calc(${circleSizeVar} * ${blackCol} + 0.5 * ${circleSizeVar})`;
+              separatedBlackCircle.style.top = `calc(${circleSizeVar} * ${blackRow} - 0.5 * ${circleSizeVar})`;
               separatedBlackCircle.style.display = 'block';
               separatedBlackCircle.style.visibility = 'visible';
               separatedBlackCircle.style.opacity = '1';
               grid.appendChild(separatedBlackCircle);
               separatedCircles.push(separatedBlackCircle);
-            }
+              
+              // Add click listener to separated black circle for 225 grid
+              // Make it trigger the grid's click handler so clicks advance the state
+              if (square === 225 || square === 2025) {
+                separatedBlackCircle.style.cursor = 'pointer';
+                separatedBlackCircle.addEventListener('click', (e) => {
+                  e.stopPropagation(); // Prevent event from bubbling to grid
+                  // Trigger the grid's click handler
+                  grid.dispatchEvent(new Event('click', { bubbles: true }));
+                });
+              }
             }
           }
+        }
         
         // For 2116 fourth click: color the 6 separated black dots (triangle pattern) purple
         if (square === 2116 && clickCount === 3) {
@@ -7210,10 +7539,6 @@ if (moreSquaresContainer) {
   const existing1369 = document.querySelector('[data-square="1369"]');
   if (existing1369) {
     existing1369.remove();
-  }
-  const existing1444 = document.querySelector('[data-square="1444"]');
-  if (existing1444) {
-    existing1444.remove();
   }
 
   // Generate remaining squares from 6^2 to 36^2
@@ -7437,20 +7762,20 @@ if (moreSquaresContainer) {
   
   moreSquaresContainer.appendChild(row37Section);
   
-  // Add a 38×38 grid (38²) between 37² and 39²
+  // Create a 38×38 grid (38 rows × 38 columns = 1444 dots)
   const row38Section = document.createElement('section');
   row38Section.className = 'set';
   row38Section.style.marginBottom = '40px';
   
-  // Add h2 heading "38²"
+  // Add h2 heading "Natalie's Learning Squares"
   const h2_38 = document.createElement('h2');
-  h2_38.textContent = '38²';
+  h2_38.textContent = "Natalie's Learning Squares";
   row38Section.appendChild(h2_38);
   
   const row38Grid = document.createElement('div');
   row38Grid.className = 'grid-dynamic grid-1444';
   row38Grid.style.gap = '0'; // No gap between dots - they touch tangentially
-  row38Grid.style.position = 'relative'; // Make grid position relative so we can absolutely position separated dots
+  row38Grid.style.position = 'relative'; // Allow absolute positioning for offset dots
   
   // Create all 1444 dots (38 rows × 38 columns)
   const row38Circles = [];
@@ -7463,239 +7788,203 @@ if (moreSquaresContainer) {
     }
   }
   
-  // Add click handler to fill 1000 dots red from bottom on first click, then 400 dots in second column on second click
+  // Add answer display showing "1444" (create before click handler)
+  const answerDisplay38 = document.createElement('div');
+  answerDisplay38.className = 'answer-display';
+  answerDisplay38.dataset.answer = '1444';
+  answerDisplay38.textContent = '1444';
+  
+  // Add click handler for 38×38 grid (1444 = 1000 + 400 + 40 + 4)
   let row38ClickCount = 0;
-  const row38SeparatedCircles = []; // Track separated circles for black dots
-  row38Grid.addEventListener('click', () => {
-    if (row38ClickCount === 0) {
-      // First click: Fill 1000 dots red starting from bottom and filling upward
-      // Total grid is 38×38 = 1444 dots
-      // Fill from bottom row upward: start at index 1443 (last dot) and go backward
-      const indicesToFill = [];
-      // Fill from bottom to top, left to right within each row
-      for (let row = 37; row >= 0 && indicesToFill.length < 1000; row--) {
-        for (let col = 0; col < 38 && indicesToFill.length < 1000; col++) {
+  const lastTwoCols = new Set([36, 37]); // Last 2 columns for 38×38 grid
+  const row38SeparatedCircles = []; // Track separated circles for the 11×4 rectangle
+  
+  row38Grid.addEventListener('click', (e) => {
+    if (e.target.dataset.originalRow !== undefined) {
+      return;
+    }
+    
+    row38ClickCount++;
+    
+    if (row38ClickCount === 1) {
+      // First click: Fill 1000 dots red from bottom, excluding 20×20 square in top left (400 dots) and 11×4 grid in top right (44 dots)
+      // 20×20 square in top left corner: rows 0-19, cols 0-19 (400 dots) - leave black for green on second click
+      // Top right 11×4 grid: rows 0-10, cols 34-37 (44 dots) - leave black
+      const excludedIndices = new Set();
+      // 20×20 square in top left corner: rows 0-19, cols 0-19
+      for (let row = 0; row < 20; row++) {
+        for (let col = 0; col < 20; col++) {
+          excludedIndices.add(row * 38 + col);
+        }
+      }
+      // 11×4 grid in top right corner: rows 0-10, cols 34-37
+      for (let row = 0; row < 11; row++) {
+        for (let col = 34; col < 38; col++) {
+          excludedIndices.add(row * 38 + col);
+        }
+      }
+      
+      // Fill from bottom row upward, left to right within each row, excluding 20×20 square and top right 11×4 grid
+      let filledCount = 0;
+      for (let row = 37; row >= 0 && filledCount < 1000; row--) {
+        for (let col = 0; col < 38 && filledCount < 1000; col++) {
           const index = row * 38 + col;
-          indicesToFill.push(index);
-        }
-      }
-      
-      // Fill the dots red
-      indicesToFill.forEach(index => {
-        row38Circles[index].classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-        row38Circles[index].classList.add('red');
-      });
-      
-      speakNumber(1000); // Announce the count
-      row38ClickCount = 1;
-    } else if (row38ClickCount === 1) {
-      // Second click: Fill 396 dots in column 0 going down, then 4 dots horizontally in row 11
-      const indicesToFill = [];
-      let currentColumn = 0; // Start with first column (column 0)
-      
-      // Fill 396 dots from top row down, column by column, stopping at red dots
-      while (indicesToFill.length < 396 && currentColumn < 38) {
-        let hitRedDot = false;
-        // Fill from top row down in current column
-        for (let row = 0; row < 38 && indicesToFill.length < 396; row++) {
-          const index = row * 38 + currentColumn;
-          // Check if this dot is already red - if so, stop filling in this column
-          if (row38Circles[index].classList.contains('red')) {
-            hitRedDot = true;
-            break; // Stop filling in this column, move to next column
+          if (!excludedIndices.has(index)) {
+            row38Circles[index].classList.remove(...COLOR_CLASSES, 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink');
+            row38Circles[index].classList.add('red');
+            filledCount++;
           }
-          // Fill this dot with green
-          row38Circles[index].classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-          row38Circles[index].classList.add('green');
-          indicesToFill.push(index);
-        }
-        // If we hit a red dot in this column, move to next column
-        if (hitRedDot) {
-          currentColumn++;
-        } else {
-          // If we filled the entire column without hitting red, move to next column
-          currentColumn++;
         }
       }
-      
-      // Fill the last 4 dots horizontally in row 12 (0-indexed row 11)
-      const targetRow = 11; // Row 12 (0-indexed as 11)
-      for (let col = 0; col < 38 && indicesToFill.length < 400; col++) {
-        const index = targetRow * 38 + col;
-        // Skip if already red or already green
-        if (row38Circles[index].classList.contains('red') || row38Circles[index].classList.contains('green')) {
-          continue;
-        }
-        // Fill this dot with green
-        row38Circles[index].classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-        row38Circles[index].classList.add('green');
-        indicesToFill.push(index);
-      }
-      
-      speakNumber(1400); // Announce cumulative count: 1000 + 400 = 1400
-      row38ClickCount = 2;
+      speakNumber(1000);
     } else if (row38ClickCount === 2) {
-      // Third click: Color 40 black dots, keep 4 black in top-right corner (2x2), and move all 44 dots
-      // Top-right corner 2x2 square: rows 0-1, cols 36-37
-      const topRightCornerIndices = [
-        0 * 38 + 36, // Row 0, Col 36
-        0 * 38 + 37, // Row 0, Col 37
-        1 * 38 + 36, // Row 1, Col 36
-        1 * 38 + 37  // Row 1, Col 37
-      ];
-      
-      // Find all black dots (not red, not green)
-      const blackDotIndices = [];
-      for (let row = 0; row < 38; row++) {
-        for (let col = 0; col < 38; col++) {
+      // Second click: Fill 20×20 square in top left corner (400 green dots), leaving only the 11×4 rectangle in top right corner black
+      // 20×20 square: rows 0-19, cols 0-19 (400 green dots)
+      // Top right corner: rows 0-10, cols 34-37 (11 rows × 4 columns = 44 dots) - keep black
+      let greenCount = 0;
+      for (let row = 0; row < 20; row++) {
+        for (let col = 0; col < 20; col++) {
           const index = row * 38 + col;
-          const circle = row38Circles[index];
-          
-          // Check if this dot is black (not red, not green)
-          if (!circle.classList.contains('red') && !circle.classList.contains('green')) {
-            blackDotIndices.push({ index, row, col });
+          // Turn all dots in 20×20 square green (don't change red dots if any overlap)
+          if (!row38Circles[index].classList.contains('red')) {
+            row38Circles[index].classList.remove(...COLOR_CLASSES, 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
+            row38Circles[index].classList.add('green');
+            greenCount++;
           }
         }
       }
+      speakNumber(1000 + greenCount);
+    } else if (row38ClickCount === 3) {
+      // Third click: Move the entire 11×4 rectangle (all 44 dots, rows 0-10, cols 34-37) right 0.5 dot and up 0.5 dot
+      // After moving, color 40 dots of the rectangle green, leaving the top-right 2×2 square (4 dots) black
       
-      // Color 40 of the black dots (excluding the 4 in top-right corner)
-      let coloredCount = 0;
-      for (const { index, row, col } of blackDotIndices) {
-        // Skip the 4 dots in top-right corner - keep them black
-        if (topRightCornerIndices.includes(index)) {
-          continue;
-        }
-        
-        // Color this dot green (matching the pattern)
-        if (coloredCount < 40) {
-          row38Circles[index].classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-          row38Circles[index].classList.add('green');
-          coloredCount++;
-        }
-      }
+      const circleSizeVar = 'var(--circle-total-1444)';
+      const rectangleRows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 11 rows
+      const rectangleCols = [34, 35, 36, 37]; // 4 columns
       
-      // Now move all 44 black dots (40 colored + 4 black) - similar to 441's 41 dots movement
-      for (const { index, row, col } of blackDotIndices) {
-        // Check if we've already created a separated circle for this position
-        const existingSeparated = row38SeparatedCircles.find(sc => {
-          const scRow = parseInt(sc.dataset.originalRow);
-          const scCol = parseInt(sc.dataset.originalCol);
-          return scRow === row && scCol === col;
-        });
-        
-        if (!existingSeparated) {
-          const circle = row38Circles[index];
+      // Track separated circles with their original positions for coloring
+      const separatedCirclesMap = new Map(); // Map: "row,col" -> separatedCircle
+      
+      // Move ALL 44 dots of the 11×4 rectangle by creating separated circles offset right 0.5 and up 0.5
+      rectangleRows.forEach(row => {
+        rectangleCols.forEach(col => {
+          const index = row * 38 + col;
+          const originalCircle = row38Circles[index];
           
-          // Hide the original circle in the grid
-          circle.style.visibility = 'hidden';
-          
-          // Determine if this dot should stay black (top-right corner)
-          const isTopRightCorner = topRightCornerIndices.includes(index);
-          
-          // Create a new circle positioned offset (moves diagonally like 441's 41 dots)
+          // Create a separated circle for this position
           const separatedCircle = document.createElement('div');
-          
-          // If it's in top-right corner, keep it black; otherwise use the color from the original circle
-          // (which will be green if we colored it, or black if we didn't)
-          if (isTopRightCorner) {
-            separatedCircle.className = 'circle'; // Keep it black
-    } else {
-            // Use the color from the original circle (should be green after we colored it)
-            separatedCircle.className = circle.className;
-          }
-          
-          separatedCircle.style.position = 'absolute';
-          separatedCircle.style.zIndex = '5';
+          separatedCircle.className = 'circle';
+          // Store original position as data attributes for easy lookup
           separatedCircle.dataset.originalRow = row;
           separatedCircle.dataset.originalCol = col;
-          
-          // Keep the same size as original circle - copy size classes
-          circle.classList.forEach(cls => {
-            if (cls.startsWith('circle-')) {
-              separatedCircle.classList.add(cls);
-            }
+          // Copy all classes from original circle (including color classes)
+          originalCircle.classList.forEach(cls => {
+            separatedCircle.classList.add(cls);
           });
+          // Remove any color classes that shouldn't be copied, then re-add the current ones
+          separatedCircle.classList.remove(...COLOR_CLASSES);
+          // Copy current color state
+          if (originalCircle.classList.contains('red')) {
+            separatedCircle.classList.add('red');
+          } else if (originalCircle.classList.contains('green')) {
+            separatedCircle.classList.add('green');
+          }
+          // If it's black, it stays black (no color class added)
           
-          // Offset to the RIGHT and UP (diagonal movement, same as 441's 41 dots)
-          // RIGHT: positive left value = col + 1.2
-          // UP: negative top value = row - 1.2
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total))`;
-          
+          // Position offset: right 0.5 dot, up 0.5 dot
+          separatedCircle.style.position = 'absolute';
+          separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 0.5 * ${circleSizeVar})`;
+          separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 0.5 * ${circleSizeVar})`;
           separatedCircle.style.display = 'block';
           separatedCircle.style.visibility = 'visible';
           separatedCircle.style.opacity = '1';
           row38Grid.appendChild(separatedCircle);
           row38SeparatedCircles.push(separatedCircle);
-        }
-      }
-      
-      speakNumber(1440); // Announce cumulative count: 1000 + 400 + 40 = 1440
-      row38ClickCount = 3;
-    } else if (row38ClickCount === 3) {
-      // Fourth click: Move the 4 black dots (top-right corner) farther away and color them green
-      // Top-right corner 2x2 square: rows 0-1, cols 36-37
-      const topRightCornerRows = [0, 1];
-      const topRightCornerCols = [36, 37];
-      
-      // Find and update the 4 black separated circles in the top-right corner
-      row38SeparatedCircles.forEach(sc => {
-        const scRow = parseInt(sc.dataset.originalRow);
-        const scCol = parseInt(sc.dataset.originalCol);
-        
-        // Check if this is one of the 4 black dots in top-right corner
-        if (topRightCornerRows.includes(scRow) && topRightCornerCols.includes(scCol)) {
-          // Color it green
-          sc.classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-          sc.classList.add('green');
           
-          // Move it farther away - more offset (up and right)
-          // Move farther RIGHT: col + 2.4 (double the previous 1.2)
-          // Move farther UP: row - 2.4 (double the previous 1.2)
-          sc.style.left = `calc(var(--circle-total) * ${scCol} + 2.4 * var(--circle-total))`;
-          sc.style.top = `calc(var(--circle-total) * ${scRow} - 2.4 * var(--circle-total))`;
-        }
+          // Store reference to this separated circle with its position
+          separatedCirclesMap.set(`${row},${col}`, separatedCircle);
+          
+          // Hide the original circle
+          originalCircle.style.visibility = 'hidden';
+        });
       });
       
-      speakNumber(1444); // Announce cumulative count: 1000 + 400 + 40 + 4 = 1444
-      // Show the answer display on 4th click
-      if (answerDisplay38) {
-        answerDisplay38.classList.add('show');
-      }
-      row38ClickCount = 4;
-    } else {
+      // After moving, color 40 dots of the rectangle green (all except top-right 2×2 square)
+      // The top-right 2×2 square is rows 0-1, cols 36-37 of the rectangle
+      rectangleRows.forEach(row => {
+        rectangleCols.forEach(col => {
+          // Skip the top-right 2×2 square (rows 0-1, cols 36-37) - keep it black
+          if (row < 2 && col >= 36) {
+            return; // Leave these 4 dots black
+          }
+          
+          // Color this separated circle green
+          const separatedCircle = separatedCirclesMap.get(`${row},${col}`);
+          if (separatedCircle) {
+            separatedCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
+            separatedCircle.classList.add('green');
+          }
+        });
+      });
+      
+      speakNumber(1440);
+    } else if (row38ClickCount === 4) {
+      // Fourth click: Move the 2×2 black square (rows 0-1, cols 36-37) right 0.5 dot and up 0.5 dot, then turn green
+      const circleSizeVar = 'var(--circle-total-1444)';
+      const twoByTwoRows = [0, 1];
+      const twoByTwoCols = [36, 37];
+      
+      // Find and move the 2×2 black square (these are already separated circles from the 3rd click)
+      // They're already offset by 0.5 right and 0.5 up, so we need to add another 0.5 offset
+      twoByTwoRows.forEach(row => {
+        twoByTwoCols.forEach(col => {
+          // Find the separated circle by its original position using data attributes
+          const separatedCircle = row38SeparatedCircles.find(sc => {
+            return sc.dataset.originalRow == row && sc.dataset.originalCol == col;
+          });
+          
+          if (separatedCircle) {
+            // Update position: add another 0.5 offset (right 0.5, up 0.5)
+            // Current: calc(var(--circle-total-1444) * col + 0.5 * var(--circle-total-1444))
+            // New: calc(var(--circle-total-1444) * col + 1.0 * var(--circle-total-1444))
+            separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 1.0 * ${circleSizeVar})`;
+            separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 1.0 * ${circleSizeVar})`;
+            
+            // Turn it green
+            separatedCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
+            separatedCircle.classList.add('green');
+          }
+        });
+      });
+      
+      answerDisplay38.classList.add('show');
+      speakNumber(1444);
+    } else if (row38ClickCount === 5) {
       // Fifth click: Reset
+      row38ClickCount = 0;
+      answerDisplay38.classList.remove('show');
+      
       // Remove separated circles
-      row38SeparatedCircles.forEach(sc => sc.remove());
+      row38SeparatedCircles.forEach(separatedCircle => {
+        separatedCircle.remove();
+      });
       row38SeparatedCircles.length = 0;
       
-      // Reset all circles
+      // Reset all original circles
       row38Circles.forEach(circle => {
-        circle.classList.remove(...COLOR_CLASSES, 'red', 'red-final', 'yellow', 'purple', 'sky');
-        circle.style.visibility = 'visible'; // Make sure visibility is reset
+        circle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'green', 'yellow', 'purple', 'sky', 'brown', 'pink');
+        circle.style.visibility = 'visible'; // Make sure all circles are visible again
       });
-      // Hide the answer display on reset
-      if (answerDisplay38) {
-        answerDisplay38.classList.remove('show');
-      }
       speakNumber(0);
-      row38ClickCount = 0;
     }
   });
   
   row38Section.appendChild(row38Grid);
-  
-  // Add answer display showing "1444"
-  const answerDisplay38 = document.createElement('div');
-  answerDisplay38.className = 'answer-display';
-  answerDisplay38.dataset.answer = '1444';
-  answerDisplay38.textContent = '1444';
   row38Section.appendChild(answerDisplay38);
   
   moreSquaresContainer.appendChild(row38Section);
   
-  // Add a second 39×39 grid - build it manually EXACTLY like the 38×38 grid
-  // This goes RIGHT AFTER 38², before the other grids
+  // Add a second 39×39 grid
   const second39Section = document.createElement('section');
   second39Section.className = 'set';
   second39Section.style.marginBottom = '40px';
@@ -8461,9 +8750,10 @@ if (moreSquaresContainer) {
             }
           });
           
-          // Move up by 1.5 dot distance (straight up, like 2209)
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.5 * var(--circle-total))`;
+          // Move up by 0.5 dot distance (straight up)
+          // Use scaled circle size to maintain proper movement when grid shrinks
+          separatedCircle.style.left = `calc(var(--circle-total-3136) * ${col})`;
+          separatedCircle.style.top = `calc(var(--circle-total-3136) * ${row} - 0.5 * var(--circle-total-3136))`;
           separatedCircle.style.transform = 'none';
           
           grid56.appendChild(separatedCircle);
@@ -8779,6 +9069,7 @@ if (moreSquaresContainer) {
     } else if (clickCount58 === 1) {
       // Second click: Fill 300 yellow dots in 10×30 rectangle and move them up 1/2 dot distance
       // Rectangle: rows 0-9, cols 20-49 (30 across, 10 deep, positioned just to the left of 8×8)
+      // Grid always has 58×58 structure, coordinates remain the same
       const blackRectangle10x30Rows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
       const blackRectangle10x30Cols = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49];
       
@@ -8807,8 +9098,9 @@ if (moreSquaresContainer) {
           });
           
           // Move up by 0.5 dot distance (straight up)
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+          // Use scaled circle size to maintain proper movement when grid shrinks
+          separatedCircle.style.left = `calc(var(--circle-total-3364) * ${col})`;
+          separatedCircle.style.top = `calc(var(--circle-total-3364) * ${row} - 0.5 * var(--circle-total-3364))`;
           separatedCircle.style.transform = 'none';
           
           grid58.appendChild(separatedCircle);
@@ -9355,7 +9647,8 @@ if (moreSquaresContainer) {
       speakNumber(3800); // 3000 yellow + 800 pink
       clickCount62 = 2;
     } else if (clickCount62 === 2) {
-      // Third click: Color 40 dots in 4×11 rectangle, keep 4 black in top-right corner (2×2), and move all 44 dots
+      // Third click: Color 40 dots in 4×11 rectangle, keep 4 black in top-right corner (2×2)
+      // Nothing moves on this click - just color the dots
       // Top-right corner 2×2 square: rows 0-1, cols 60-61
       const topRightCornerIndices = [
         0 * gridSize62 + 60, // Row 0, Col 60
@@ -9367,8 +9660,9 @@ if (moreSquaresContainer) {
       // Find all black dots in the 4×11 rectangle
       const blackRectangle4x11Rows = [0, 1, 2, 3];
       const blackRectangle4x11Cols = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61];
-      const blackDotIndices = [];
       
+      // Color 40 of the black dots (excluding the 4 in top-right corner) - no movement
+      let coloredCount = 0;
       for (let row of blackRectangle4x11Rows) {
         for (let col of blackRectangle4x11Cols) {
           const idx = row * gridSize62 + col;
@@ -9376,108 +9670,62 @@ if (moreSquaresContainer) {
           
           // Check if this dot is black (not yellow, not pink)
           if (!circle.classList.contains('yellow') && !circle.classList.contains('pink')) {
-            blackDotIndices.push({ index: idx, row, col });
-          }
-        }
-      }
-      
-      // Color 40 of the black dots (excluding the 4 in top-right corner)
-      let coloredCount = 0;
-      for (const { index, row, col } of blackDotIndices) {
-        // Skip the 4 dots in top-right corner - keep them black
-        if (topRightCornerIndices.includes(index)) {
-          continue;
-        }
-        
-        // Color this dot green
-        if (coloredCount < 40) {
-          grid62Circles[index].classList.remove(...COLOR_CLASSES);
-          grid62Circles[index].classList.add('green');
-          coloredCount++;
-        }
-      }
-      
-      // Now move all 44 black dots (40 colored + 4 black) - similar to 38×38's movement
-      for (const { index, row, col } of blackDotIndices) {
-        // Check if we've already created a separated circle for this position
-        const existingSeparated = separatedCircles62.find(sc => {
-          const scRow = parseInt(sc.dataset.originalRow);
-          const scCol = parseInt(sc.dataset.originalCol);
-          return scRow === row && scCol === col;
-        });
-        
-        if (!existingSeparated) {
-          const circle = grid62Circles[index];
-          
-          // Hide the original circle in the grid
-          circle.style.visibility = 'hidden';
-          
-          // Determine if this dot should stay black (top-right corner)
-          const isTopRightCorner = topRightCornerIndices.includes(index);
-          
-          // Create a new circle positioned offset (moves diagonally like 38×38's 44 dots)
-          const separatedCircle = document.createElement('div');
-          
-          // If it's in top-right corner, keep it black; otherwise use the color from the original circle
-          if (isTopRightCorner) {
-            separatedCircle.className = 'circle'; // Keep it black
-          } else {
-            // Use the color from the original circle (should be green after we colored it)
-            separatedCircle.className = circle.className;
-          }
-          
-          separatedCircle.style.position = 'absolute';
-          separatedCircle.style.zIndex = '5';
-          separatedCircle.dataset.originalRow = row;
-          separatedCircle.dataset.originalCol = col;
-          
-          // Keep the same size as original circle - copy size classes
-          circle.classList.forEach(cls => {
-            if (cls.startsWith('circle-')) {
-              separatedCircle.classList.add(cls);
+            // Skip the 4 dots in top-right corner - keep them black
+            if (topRightCornerIndices.includes(idx)) {
+              continue;
             }
-          });
-          
-          // Offset to the RIGHT and UP (diagonal movement, half the distance of 38×38's 44 dots)
-          // RIGHT: positive left value = col + 0.6
-          // UP: negative top value = row - 0.6
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.6 * var(--circle-total))`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.6 * var(--circle-total))`;
-          
-          separatedCircle.style.display = 'block';
-          separatedCircle.style.visibility = 'visible';
-          separatedCircle.style.opacity = '1';
-          grid62.appendChild(separatedCircle);
-          separatedCircles62.push(separatedCircle);
+            
+            // Color this dot green
+            if (coloredCount < 40) {
+              circle.classList.remove(...COLOR_CLASSES);
+              circle.classList.add('green');
+              coloredCount++;
+            }
+          }
         }
       }
       
       speakNumber(3840); // 3000 yellow + 800 pink + 40 green
       clickCount62 = 3;
     } else if (clickCount62 === 3) {
-      // Fourth click: Move the 4 black dots (top-right corner) farther away and color them green
+      // Fourth click: Move the 2×2 square (top-right corner) 1/2 dot right and 1/2 dot up, and turn it green
       // Top-right corner 2×2 square: rows 0-1, cols 60-61
       const topRightCornerRows = [0, 1];
       const topRightCornerCols = [60, 61];
       
-      // Find and update the 4 black separated circles in the top-right corner
-      separatedCircles62.forEach(sc => {
-        const scRow = parseInt(sc.dataset.originalRow);
-        const scCol = parseInt(sc.dataset.originalCol);
-        
-        // Check if this is one of the 4 black dots in top-right corner
-        if (topRightCornerRows.includes(scRow) && topRightCornerCols.includes(scCol)) {
-          // Color it green
-          sc.classList.remove(...COLOR_CLASSES);
-          sc.classList.add('green');
+      // Move all 4 dots of the 2×2 square
+      for (let row of topRightCornerRows) {
+        for (let col of topRightCornerCols) {
+          const idx = row * gridSize62 + col;
+          const circle = grid62Circles[idx];
           
-          // Move it farther away - more offset (up and right)
-          // Move farther RIGHT: col + 1.2 (double the previous 0.6)
-          // Move farther UP: row - 1.2 (double the previous 0.6)
-          sc.style.left = `calc(var(--circle-total) * ${scCol} + 1.2 * var(--circle-total))`;
-          sc.style.top = `calc(var(--circle-total) * ${scRow} - 1.2 * var(--circle-total))`;
+          // Hide the original circle
+          circle.style.visibility = 'hidden';
+          
+          // Create a separated circle that moves 1/2 dot right and 1/2 dot up
+          const separatedCircle = document.createElement('div');
+          separatedCircle.className = 'circle green';
+          separatedCircle.style.position = 'absolute';
+          separatedCircle.style.zIndex = '5';
+          separatedCircle.dataset.originalRow = row;
+          separatedCircle.dataset.originalCol = col;
+          
+          // Copy size classes
+          circle.classList.forEach(cls => {
+            if (cls.startsWith('circle-')) {
+              separatedCircle.classList.add(cls);
+            }
+          });
+          
+          // Move 1/2 dot right and 1/2 dot up
+          separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
+          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+          separatedCircle.style.transform = 'none';
+          
+          grid62.appendChild(separatedCircle);
+          separatedCircles62.push(separatedCircle);
         }
-      });
+      }
       
       speakNumber(3844); // All 3844 dots filled
       clickCount62 = 4;

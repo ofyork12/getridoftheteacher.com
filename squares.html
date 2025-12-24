@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Natalie's Learning Squares</title>
+  <title>Squares Game</title>
   <style>
     :root {
       --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
@@ -2652,9 +2652,9 @@ function generateSquare(n, label = null) {
   if (square === 1225) {
     components = [1000, 200, 20, 5];
   }
-  // Special: 1600 (40×40) - 1000 red, 400 green (20×20), 40 green (4×10), 4×4 square (16 dots)
+  // Special: 1600 (40×40) - 1000 red on first click, fill from bottom-left
   if (square === 1600) {
-    components = [1000, 400, 40, 16];
+    components = [1000, 600];
   }
   // Special: 1681 (41×41) - 1000 red on first click, 600 purple on second click, 80 pink on third click, 1 red on fourth click
   else if (square === 1681) {
@@ -2994,85 +2994,24 @@ function generateSquare(n, label = null) {
         // Track already filled indices (check for any color class) - needed by handlers
         const alreadyFilled = new Set();
         
-        // Special: 1600 first click - fill 1000 red dots from bottom-left, excluding:
-        // - 20×20 square in top left (rows 0-19, cols 0-19) - 400 dots for green
-        // - 4×10 rectangle (rows 0-9, cols 24-27) - 40 dots for green (5 columns over from col 19)
-        // - 4×4 square in top right (rows 0-3, cols 36-39) - 16 dots
+        // Special: 1600 first click - fill 1000 dots from bottom-left
         if (square === 1600 && clickCount === 0) {
-          const excludedIndices = new Set();
-          // 20×20 square in top left: rows 0-19, cols 0-19
-          for (let row = 0; row < 20; row++) {
-            for (let col = 0; col < 20; col++) {
-              excludedIndices.add(row * gridSize + col);
-            }
-          }
-          // 4×10 rectangle: rows 0-9, cols 24-27 (5 columns over from col 19)
-          for (let row = 0; row < 10; row++) {
-            for (let col = 24; col < 28; col++) {
-              excludedIndices.add(row * gridSize + col);
-            }
-          }
-          // 4×4 square in top right: rows 0-3, cols 36-39
-          for (let row = 0; row < 4; row++) {
-            for (let col = 36; col < 40; col++) {
-              excludedIndices.add(row * gridSize + col);
-            }
-          }
-          
           const allIndices = [];
           for (let row = gridSize - 1; row >= 0; row--) {
             for (let col = 0; col < gridSize; col++) {
               const idx = row * gridSize + col;
-              if (!excludedIndices.has(idx)) {
                 allIndices.push(idx);
-              }
             }
           }
           indicesToFill = allIndices
             .filter(i => !alreadyFilled.has(i))
             .slice(0, componentValue);
         }
-        // Special: 1600 second click - fill 20×20 square (400 green dots) in top left
+        // Special: 1600 second click - fill remaining 600 dots purple from top
+        // 600 is hundreds place, so handle it specially
         else if (square === 1600 && clickCount === 1) {
-          const allIndices = [];
-          // 20×20 square: rows 0-19, cols 0-19
-          for (let row = 0; row < 20; row++) {
-            for (let col = 0; col < 20; col++) {
-              const idx = row * gridSize + col;
-              if (!alreadyFilled.has(idx)) {
-                allIndices.push(idx);
-              }
-            }
-          }
-          indicesToFill = allIndices.slice(0, componentValue);
-        }
-        // Special: 1600 third click - fill 4×10 rectangle (40 green dots)
-        else if (square === 1600 && clickCount === 2) {
-          const allIndices = [];
-          // 4×10 rectangle: rows 0-9, cols 24-27
-          for (let row = 0; row < 10; row++) {
-            for (let col = 24; col < 28; col++) {
-              const idx = row * gridSize + col;
-              if (!alreadyFilled.has(idx)) {
-                allIndices.push(idx);
-              }
-            }
-          }
-          indicesToFill = allIndices.slice(0, componentValue);
-        }
-        // Special: 1600 fourth click - fill 4×4 square (16 green dots) in top right
-        else if (square === 1600 && clickCount === 3) {
-          const allIndices = [];
-          // 4×4 square: rows 0-3, cols 36-39
-          for (let row = 0; row < 4; row++) {
-            for (let col = 36; col < 40; col++) {
-              const idx = row * gridSize + col;
-              if (!alreadyFilled.has(idx)) {
-                allIndices.push(idx);
-              }
-            }
-          }
-          indicesToFill = allIndices.slice(0, componentValue);
+          // Wait for alreadyFilled to be populated first (it's populated below)
+          // We'll set indicesToFill after alreadyFilled is ready
         }
         circles.forEach((c, i) => {
           if (c.classList.contains("red") || c.classList.contains("orange") || 
@@ -3081,10 +3020,37 @@ function generateSquare(n, label = null) {
               c.classList.contains("brown") || c.classList.contains("pink") ||
               c.classList.contains("sky") || c.classList.contains("red-final")) {
             alreadyFilled.add(i);
-          }
+        }
         });
+        
+        // Special: 1600 second click - fill remaining 600 dots purple from top
+        // Do this AFTER alreadyFilled is populated, and FORCE it to override any previous setting
+        if (square === 1600 && clickCount === 1) {
+          console.log('1600 second click - gridSize:', gridSize, 'alreadyFilled size:', alreadyFilled.size, 'componentValue:', componentValue);
+          const allIndices = [];
+          // Fill from top row downward, left to right, only black dots (not red)
+          // Collect ALL black dots first, then take first 600
+          for (let row = 0; row < gridSize; row++) {
+            for (let col = 0; col < gridSize; col++) {
+              const idx = row * gridSize + col;
+              // Check if circle is red by checking alreadyFilled (which includes red dots)
+              if (!alreadyFilled.has(idx)) {
+                allIndices.push(idx);
+              }
+            }
+            if (row === 0) {
+              console.log('1600 second click - after row 0, allIndices length:', allIndices.length);
+            }
+          }
+          console.log('1600 second click - collected', allIndices.length, 'black dots, taking first', componentValue);
+          // Take exactly componentValue (600) dots - FORCE override
+          indicesToFill = allIndices.slice(0, componentValue);
+          console.log('1600 second click - indicesToFill FORCED to', indicesToFill.length, 'indices');
+          // Mark that we've handled 1600 second click to prevent any other handlers from overwriting
+          window._1600SecondClickHandled = true;
+          }
         // Special: 1681 second click - fill remaining 600 dots purple from top (same as 1600)
-        if (square === 1681 && clickCount === 1) {
+        else if (square === 1681 && clickCount === 1) {
           const allIndices = [];
           // Fill from top row downward, left to right, only black dots (not red)
           // Collect ALL black dots first, then take first 600
@@ -3760,15 +3726,10 @@ function generateSquare(n, label = null) {
               }
             }
           } else if (sourceSquare === 100) {
-            // 40×40 (1600): 1000 red (first), 400 green (second), 40 green (third), 16 green (fourth)
-            if (square === 1600 && clickCount === 0) {
-              color = "red"; // 1000 red dots on first click
-            } else if (square === 1600 && clickCount === 1) {
-              color = "green"; // 400 green dots (20×20 square) on second click
-            } else if (square === 1600 && clickCount === 2) {
-              color = "green"; // 40 green dots (4×10 rectangle) on third click
-            } else if (square === 1600 && clickCount === 3) {
-              color = "green"; // 16 green dots (4×4 square) on fourth click
+            // 40×40 (1600) maps to 10×10 (100): 1600 (all filled on first click)
+            // BUT: second click (600) should be purple, not red
+            if (square === 1600 && clickCount === 1) {
+              color = "purple"; // 600 purple dots on second click
             } else if (isHundredsPlace) {
               color = COLOR_MAP[1] || "red"; // 1600 starts with 1
             }
@@ -7767,9 +7728,9 @@ if (moreSquaresContainer) {
   row38Section.className = 'set';
   row38Section.style.marginBottom = '40px';
   
-  // Add h2 heading "Natalie's Learning Squares"
+  // Add h2 heading "38²"
   const h2_38 = document.createElement('h2');
-  h2_38.textContent = "Natalie's Learning Squares";
+  h2_38.textContent = '38²';
   row38Section.appendChild(h2_38);
   
   const row38Grid = document.createElement('div');
@@ -7838,9 +7799,10 @@ if (moreSquaresContainer) {
       }
       speakNumber(1000);
     } else if (row38ClickCount === 2) {
-      // Second click: Fill 20×20 square in top left corner (400 green dots), leaving only the 11×4 rectangle in top right corner black
+      // Second click: Fill 20×20 square in top left corner (400 green dots)
+      // NO MOVEMENT - only color changes
       // 20×20 square: rows 0-19, cols 0-19 (400 green dots)
-      // Top right corner: rows 0-10, cols 34-37 (11 rows × 4 columns = 44 dots) - keep black
+      // Top right corner: rows 0-10, cols 34-37 (11 rows × 4 columns = 44 dots) - stays black, no movement
       let greenCount = 0;
       for (let row = 0; row < 20; row++) {
         for (let col = 0; col < 20; col++) {
@@ -7853,21 +7815,47 @@ if (moreSquaresContainer) {
           }
         }
       }
+      
       speakNumber(1000 + greenCount);
     } else if (row38ClickCount === 3) {
-      // Third click: Move the entire 11×4 rectangle (all 44 dots, rows 0-10, cols 34-37) right 0.5 dot and up 0.5 dot
-      // After moving, color 40 dots of the rectangle green, leaving the top-right 2×2 square (4 dots) black
-      
-      const circleSizeVar = 'var(--circle-total-1444)';
+      // Third click: Color 40 dots of the rectangle green, leaving the top-right 2×2 square (4 dots) black
+      // NO MOVEMENT - only color changes on original circles
       const rectangleRows = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 11 rows
       const rectangleCols = [34, 35, 36, 37]; // 4 columns
       
-      // Track separated circles with their original positions for coloring
-      const separatedCirclesMap = new Map(); // Map: "row,col" -> separatedCircle
-      
-      // Move ALL 44 dots of the 11×4 rectangle by creating separated circles offset right 0.5 and up 0.5
+      // Color 40 dots of the rectangle green (all except top-right 2×2 square)
+      // The top-right 2×2 square is rows 0-1, cols 36-37 of the rectangle
+      // Work with original circles since no movement has occurred yet
       rectangleRows.forEach(row => {
         rectangleCols.forEach(col => {
+          // Skip the top-right 2×2 square (rows 0-1, cols 36-37) - keep it black
+          if (row < 2 && col >= 36) {
+            return; // Leave these 4 dots black
+          }
+          
+          // Use original circle (no separated circles exist yet)
+          const index = row * 38 + col;
+          const originalCircle = row38Circles[index];
+          
+          if (originalCircle) {
+            // Only change color classes - do not modify position, left, top, or any style properties that affect position
+            originalCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
+            originalCircle.classList.add('green');
+          }
+        });
+      });
+      
+      speakNumber(1440);
+    } else if (row38ClickCount === 4) {
+      // Fourth click: Move ONLY the 2×2 black square (rows 0-1, cols 36-37) right 0.5 dot and up 0.5 dot, then turn green
+      // Do NOT move the 11×4 rectangle - only move the 4 dots in the top right corner
+      const circleSizeVar = 'var(--circle-total-1444)';
+      const twoByTwoRows = [0, 1];
+      const twoByTwoCols = [36, 37];
+      
+      // Move ONLY the 2×2 square (4 dots) by creating separated circles offset right 0.5 and up 0.5
+      twoByTwoRows.forEach(row => {
+        twoByTwoCols.forEach(col => {
           const index = row * 38 + col;
           const originalCircle = row38Circles[index];
           
@@ -7901,59 +7889,12 @@ if (moreSquaresContainer) {
           row38Grid.appendChild(separatedCircle);
           row38SeparatedCircles.push(separatedCircle);
           
-          // Store reference to this separated circle with its position
-          separatedCirclesMap.set(`${row},${col}`, separatedCircle);
-          
           // Hide the original circle
           originalCircle.style.visibility = 'hidden';
-        });
-      });
-      
-      // After moving, color 40 dots of the rectangle green (all except top-right 2×2 square)
-      // The top-right 2×2 square is rows 0-1, cols 36-37 of the rectangle
-      rectangleRows.forEach(row => {
-        rectangleCols.forEach(col => {
-          // Skip the top-right 2×2 square (rows 0-1, cols 36-37) - keep it black
-          if (row < 2 && col >= 36) {
-            return; // Leave these 4 dots black
-          }
           
-          // Color this separated circle green
-          const separatedCircle = separatedCirclesMap.get(`${row},${col}`);
-          if (separatedCircle) {
-            separatedCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
-            separatedCircle.classList.add('green');
-          }
-        });
-      });
-      
-      speakNumber(1440);
-    } else if (row38ClickCount === 4) {
-      // Fourth click: Move the 2×2 black square (rows 0-1, cols 36-37) right 0.5 dot and up 0.5 dot, then turn green
-      const circleSizeVar = 'var(--circle-total-1444)';
-      const twoByTwoRows = [0, 1];
-      const twoByTwoCols = [36, 37];
-      
-      // Find and move the 2×2 black square (these are already separated circles from the 3rd click)
-      // They're already offset by 0.5 right and 0.5 up, so we need to add another 0.5 offset
-      twoByTwoRows.forEach(row => {
-        twoByTwoCols.forEach(col => {
-          // Find the separated circle by its original position using data attributes
-          const separatedCircle = row38SeparatedCircles.find(sc => {
-            return sc.dataset.originalRow == row && sc.dataset.originalCol == col;
-          });
-          
-          if (separatedCircle) {
-            // Update position: add another 0.5 offset (right 0.5, up 0.5)
-            // Current: calc(var(--circle-total-1444) * col + 0.5 * var(--circle-total-1444))
-            // New: calc(var(--circle-total-1444) * col + 1.0 * var(--circle-total-1444))
-            separatedCircle.style.left = `calc(${circleSizeVar} * ${col} + 1.0 * ${circleSizeVar})`;
-            separatedCircle.style.top = `calc(${circleSizeVar} * ${row} - 1.0 * ${circleSizeVar})`;
-            
-            // Turn it green
-            separatedCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
-            separatedCircle.classList.add('green');
-          }
+          // Turn it green
+          separatedCircle.classList.remove(...COLOR_CLASSES, 'red', 'blue', 'orange', 'yellow', 'purple', 'sky', 'brown', 'pink');
+          separatedCircle.classList.add('green');
         });
       });
       

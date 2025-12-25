@@ -1772,8 +1772,8 @@
         circleSize = 'var(--circle-total)';
         gridWidth = `calc(var(--circle-total) * ${n})`;
         gridHeight = `calc(var(--circle-total) * ${n})`;
-        grid.style.gridTemplateColumns = `repeat(${n}, var(--circle-total))`;
-        grid.style.gridTemplateRows = `repeat(${n}, var(--circle-total))`;
+      grid.style.gridTemplateColumns = `repeat(${n}, var(--circle-total))`;
+      grid.style.gridTemplateRows = `repeat(${n}, var(--circle-total))`;
       } else {
         // For grids larger than 13x13, scale circles down so grid fits within 13x13 size
         // Same calculation as squares.html: circle-total * 13 / n

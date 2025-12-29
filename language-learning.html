@@ -816,94 +816,177 @@ if ("speechSynthesis" in window) {
     }
   };
   
-  window.speechSynthesis.onvoiceschanged = loadVoices;
+  window.speechSynthesis.onvoiceschanged = () => {
+    // Always reload voices when they change
+    loadVoices();
+  };
   loadVoices();
   
-  let voicesInitialized = false;
+  // Initialize voices on any interaction (not just once)
   const initializeVoicesOnInteraction = () => {
-    if (!voicesInitialized) {
-      voicesInitialized = true;
-      // Force reload voices on interaction (required for some browsers)
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        initVoices();
-      }
+    // Force reload voices on interaction (required for some browsers)
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      initVoices();
+    } else {
+      // If no voices yet, wait a bit and try again
+      setTimeout(() => {
+        const retryVoices = window.speechSynthesis.getVoices();
+        if (retryVoices.length > 0) {
+          initVoices();
+        }
+      }, 200);
     }
   };
   
-  document.addEventListener('touchstart', initializeVoicesOnInteraction, { once: true });
-  document.addEventListener('click', initializeVoicesOnInteraction, { once: true });
+  // Keep listening for interactions (not just once) to ensure voices stay initialized
+  document.addEventListener('touchstart', initializeVoicesOnInteraction);
+  document.addEventListener('click', initializeVoicesOnInteraction);
+  document.addEventListener('mousedown', initializeVoicesOnInteraction);
 }
 
 function speakWord(text, lang) {
-  if (!("speechSynthesis" in window)) return;
-  
-  window.speechSynthesis.cancel();
-  
-  // Ensure voices are initialized
-  const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0 && (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0)) {
-    initVoices();
+  if (!("speechSynthesis" in window)) {
+    console.log('Speech synthesis not available');
+    return;
   }
   
-  const utterance = new SpeechSynthesisUtterance(text);
-  
-  // Natural-sounding speech parameters (not robotic)
-  // Slower rate for more natural, human-like speech
-  if (lang === "vi") {
-    utterance.rate = 0.9;  // Slightly slower for natural Vietnamese pronunciation
-    utterance.pitch = 1.0;  // Natural pitch
-    utterance.volume = 1.0;
-  } else if (lang === "en") {
-    utterance.rate = 0.9;  // Slightly slower for natural English pronunciation
-    utterance.pitch = 1.0;  // Natural pitch
-    utterance.volume = 1.0;
-  } else {
-    utterance.rate = 0.95;  // Slightly slower for natural sound
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
+  // Always cancel any ongoing speech first
+  try {
+    window.speechSynthesis.cancel();
+  } catch (e) {
+    console.log('Error canceling speech:', e);
   }
   
-  utterance.lang = LANGUAGE_HINTS[lang] || lang;
-  
-  // Get the best available voice (prioritizing female natural voices)
-  let voice = preferredVoices[lang];
-  if (!voice) {
-    voice = pickVoice(lang);
-    if (voice) {
-      preferredVoices[lang] = voice;
-    }
-  }
-  
-  // Re-check for better voice if we have more voices now
-  if (voice && voices.length > 0) {
-    const betterVoice = pickVoice(lang);
-    if (betterVoice && betterVoice.name !== voice.name) {
-      voice = betterVoice;
-      preferredVoices[lang] = voice;
-    }
-  }
-  
-  if (voice) {
-    utterance.voice = voice;
-    // Ensure we're using the correct language code for the voice
-    utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
-  }
-  
-  // Handle errors gracefully
-  utterance.onerror = (e) => {
-    console.log('Speech error:', e);
-    // Try fallback voice if available
-    if (voice && voices.length > 0) {
-      const fallbackVoice = voices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
-      if (fallbackVoice && fallbackVoice !== voice) {
-        utterance.voice = fallbackVoice;
-        window.speechSynthesis.speak(utterance);
+  // Small delay to ensure cancellation completes (critical for rapid clicks)
+  setTimeout(() => {
+    // Ensure voices are initialized - reload voices each time to catch new ones
+    const voices = window.speechSynthesis.getVoices();
+    
+    // Always reinitialize voices if needed
+    if (voices.length > 0) {
+      // Re-check voices each time to ensure we have the latest
+      if (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0) {
+        initVoices();
+      } else {
+        // Still refresh voices to catch any new ones that loaded
+        const currentVoices = window.speechSynthesis.getVoices();
+        if (currentVoices.length > voices.length) {
+          initVoices();
+        }
       }
     }
-  };
-  
-  window.speechSynthesis.speak(utterance);
+    
+    // Get fresh voices list
+    const freshVoices = window.speechSynthesis.getVoices();
+    if (freshVoices.length === 0) {
+      console.log('No voices available');
+      return;
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Natural-sounding speech parameters (not robotic)
+    // Slower rate for more natural, human-like speech
+    if (lang === "vi") {
+      utterance.rate = 0.9;  // Slightly slower for natural Vietnamese pronunciation
+      utterance.pitch = 1.0;  // Natural pitch
+      utterance.volume = 1.0;
+    } else if (lang === "en") {
+      utterance.rate = 0.9;  // Slightly slower for natural English pronunciation
+      utterance.pitch = 1.0;  // Natural pitch
+      utterance.volume = 1.0;
+    } else {
+      utterance.rate = 0.95;  // Slightly slower for natural sound
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+    }
+    
+    utterance.lang = LANGUAGE_HINTS[lang] || lang;
+    
+    // Get the best available voice (prioritizing female natural voices)
+    let voice = preferredVoices[lang];
+    if (!voice) {
+      voice = pickVoice(lang);
+      if (voice) {
+        preferredVoices[lang] = voice;
+      }
+    }
+    
+    // Always re-check for better voice with fresh voices list
+    if (freshVoices.length > 0) {
+      const betterVoice = pickVoice(lang);
+      if (betterVoice) {
+        voice = betterVoice;
+        preferredVoices[lang] = voice;
+      }
+    }
+    
+    if (voice) {
+      try {
+        utterance.voice = voice;
+        // Ensure we're using the correct language code for the voice
+        utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
+      } catch (e) {
+        console.log('Error setting voice:', e);
+        // Continue without specific voice
+      }
+    } else {
+      // Fallback: find any voice for this language
+      const fallbackVoice = freshVoices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
+      if (fallbackVoice) {
+        try {
+          utterance.voice = fallbackVoice;
+          utterance.lang = fallbackVoice.lang;
+        } catch (e) {
+          console.log('Error setting fallback voice:', e);
+        }
+      }
+    }
+    
+    // Handle errors gracefully with retry
+    utterance.onerror = (e) => {
+      console.log('Speech error:', e, 'for language:', lang);
+      // Try fallback voice if available
+      if (freshVoices.length > 0) {
+        const fallbackVoice = freshVoices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
+        if (fallbackVoice && fallbackVoice !== voice) {
+          try {
+            const retryUtterance = new SpeechSynthesisUtterance(text);
+            retryUtterance.rate = utterance.rate;
+            retryUtterance.pitch = utterance.pitch;
+            retryUtterance.volume = utterance.volume;
+            retryUtterance.lang = fallbackVoice.lang;
+            retryUtterance.voice = fallbackVoice;
+            window.speechSynthesis.speak(retryUtterance);
+          } catch (retryError) {
+            console.log('Retry failed:', retryError);
+          }
+        }
+      }
+    };
+    
+    // Ensure speech synthesis is ready
+    try {
+      // Resume if paused (required for some browsers)
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.log('Error speaking:', e);
+      // Try one more time after a brief delay
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } catch (retryError) {
+          console.log('Final retry failed:', retryError);
+        }
+      }, 100);
+    }
+  }, 50); // Small delay to ensure cancellation completes
 }
 
 function pickVoice(langCode) {
@@ -1152,8 +1235,11 @@ document.getElementById('searchBox').addEventListener('input', (e) => {
   renderVocab();
 });
 
-// Initial render
-renderVocab();
+  // Initial render
+  renderVocab();
+  
+  // Make speakWord globally available (it's already robust enough)
+  window.speakWord = speakWord;
 </script>
 </body>
 </html>

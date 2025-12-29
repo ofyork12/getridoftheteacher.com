@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Language Learning - Vocabulary</title>
+  <style>
+    :root {
+      --primary-color: #fff;
+      --bg-color: #000;
+      --card-bg: #111;
+      --accent-color: #4a9eff;
+      --hover-color: #333;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-color);
+      color: var(--primary-color);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      padding: 20px 12px 40px;
+      overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 30px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 30px;
+      justify-content: center;
+      align-items: center;
+    }
+    .lang-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .controls button {
+      padding: 10px 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 120px;
+    }
+    .controls button:hover {
+      background: var(--hover-color);
+    }
+    .controls button.active {
+      background: var(--primary-color);
+      color: var(--bg-color);
+    }
+    .search-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: var(--card-bg);
+      color: var(--primary-color);
+      font-size: 16px;
+      margin: 0 auto 30px;
+      display: block;
+    }
+    .search-box:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+    .vocab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .vocab-card {
+      background: var(--card-bg);
+      border: 2px solid var(--primary-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .vocab-card:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+    }
+    .vocab-word {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--accent-color);
+    }
+    .vocab-translations {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .translation-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #333;
+    }
+    .translation-row:last-child {
+      border-bottom: none;
+    }
+    .lang-label {
+      font-weight: bold;
+      min-width: 80px;
+      font-size: 14px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    .lang-content {
+      flex: 1;
+      font-size: 16px;
+    }
+    .pinyin {
+      font-size: 14px;
+      opacity: 0.7;
+      font-style: italic;
+      margin-top: 4px;
+    }
+    .play-button {
+      background: var(--accent-color);
+      border: none;
+      color: var(--bg-color);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .play-button:hover {
+      background: #6bb0ff;
+      transform: scale(1.1);
+    }
+    .play-button:active {
+      transform: scale(0.95);
+    }
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      font-size: 18px;
+      opacity: 0.6;
+    }
+    @media (max-width: 768px) {
+      .vocab-grid {
+        grid-template-columns: 1fr;
+      }
+      .controls button {
+        min-width: 100px;
+        font-size: 14px;
+        padding: 8px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Language Learning - Vocabulary</h1>
+    
+    <div class="controls" role="group" aria-label="Language selector">
+      <div class="lang-group">
+        <button data-lang="all" class="active">All Languages</button>
+      </div>
+      <div class="lang-group">
+        <button data-lang="vi">Vietnamese</button>
+      </div>
+      <div class="lang-group">
+        <button data-lang="en">English</button>
+      </div>
+      <div class="lang-group">
+        <button data-lang="zh">Mandarin</button>
+      </div>
+      <div class="lang-group">
+        <button data-lang="fr">French</button>
+      </div>
+    </div>
+
+    <input type="text" class="search-box" id="searchBox" placeholder="Search vocabulary...">
+
+    <div class="vocab-grid" id="vocabGrid"></div>
+    <div class="no-results" id="noResults" style="display: none;">No vocabulary found matching your search.</div>
+  </div>
+
+<script>
+const VOCABULARY = [
+  {
+    vi: "cuối cùng",
+    en: "finally, last, final",
+    zh: "最后",
+    zhPinyin: "zuì hòu",
+    fr: "finalement, enfin"
+  },
+  {
+    vi: "đầu tiên",
+    en: "first in order",
+    zh: "第一",
+    zhPinyin: "dì yī",
+    fr: "premier / première"
+  },
+  {
+    vi: "thứ",
+    en: "thing, things, ordinal marker",
+    zh: "东西 / 第",
+    zhPinyin: "dōng xi / dì",
+    fr: "chose ; marqueur ordinal"
+  },
+  {
+    vi: "lần",
+    en: "time, times, turns",
+    zh: "次",
+    zhPinyin: "cì",
+    fr: "fois"
+  },
+  {
+    vi: "vào",
+    en: "enter, to go into",
+    zh: "进入",
+    zhPinyin: "jìn rù",
+    fr: "entrer"
+  },
+  {
+    vi: "dang",
+    en: "is / am / are action in progress",
+    zh: "正在",
+    zhPinyin: "zhèng zài",
+    fr: "être en train de"
+  },
+  {
+    vi: "lúc này",
+    en: "now, this moment, right now",
+    zh: "此刻",
+    zhPinyin: "cǐ kè",
+    fr: "en ce moment"
+  },
+  {
+    vi: "bây giờ",
+    en: "now, at the moment",
+    zh: "现在",
+    zhPinyin: "xiàn zài",
+    fr: "maintenant"
+  },
+  {
+    vi: "hiện tại",
+    en: "currently, at present",
+    zh: "目前 / 现在",
+    zhPinyin: "mù qián / xiàn zài",
+    fr: "actuellement"
+  },
+  {
+    vi: "nên",
+    en: "so, therefore, ought to",
+    zh: "所以 / 应该",
+    zhPinyin: "suǒ yǐ / yīng gāi",
+    fr: "donc, devoir"
+  },
+  {
+    vi: "trước",
+    en: "before, ago, in front of",
+    zh: "以前 / 前面",
+    zhPinyin: "yǐ qián / qián miàn",
+    fr: "avant, devant"
+  },
+  {
+    vi: "nhưng",
+    en: "but, however",
+    zh: "但是",
+    zhPinyin: "dàn shì",
+    fr: "mais"
+  },
+  {
+    vi: "mà còn",
+    en: "not only, but also",
+    zh: "而且",
+    zhPinyin: "ér qiě",
+    fr: "non seulement… mais aussi"
+  },
+  {
+    vi: "đều",
+    en: "all, both",
+    zh: "都",
+    zhPinyin: "dōu",
+    fr: "tous, toutes"
+  },
+  {
+    vi: "cả",
+    en: "all, whole",
+    zh: "全部",
+    zhPinyin: "quán bù",
+    fr: "tout, toute"
+  },
+  {
+    vi: "tuy",
+    en: "although, despite",
+    zh: "虽然",
+    zhPinyin: "suī rán",
+    fr: "bien que"
+  },
+  {
+    vi: "Nếu",
+    en: "If, conditional",
+    zh: "如果",
+    zhPinyin: "rú guǒ",
+    fr: "si"
+  },
+  {
+    vi: "trong khi",
+    en: "While, at the same time",
+    zh: "当…的时候",
+    zhPinyin: "dāng … de shí hòu",
+    fr: "pendant que"
+  },
+  {
+    vi: "thì",
+    en: "Then, sentence marker",
+    zh: "就",
+    zhPinyin: "jiù",
+    fr: "alors"
+  },
+  {
+    vi: "khi nào",
+    en: "when, at what time",
+    zh: "什么时候",
+    zhPinyin: "shén me shí hòu",
+    fr: "quand"
+  },
+  {
+    vi: "hoặc",
+    en: "or either … or",
+    zh: "或者",
+    zhPinyin: "huò zhě",
+    fr: "ou"
+  },
+  {
+    vi: "bởi vì",
+    en: "because, reason",
+    zh: "因为",
+    zhPinyin: "yīn wèi",
+    fr: "parce que"
+  },
+  {
+    vi: "tổng cộng",
+    en: "total, in total",
+    zh: "总共",
+    zhPinyin: "zǒng gòng",
+    fr: "au total"
+  },
+  {
+    vi: "số",
+    en: "number, digit",
+    zh: "数字",
+    zhPinyin: "shù zì",
+    fr: "nombre"
+  },
+  {
+    vi: "nửa",
+    en: "half, one half",
+    zh: "一半",
+    zhPinyin: "yí bàn",
+    fr: "moitié"
+  },
+  {
+    vi: "đủ",
+    en: "enough, sufficient",
+    zh: "足够",
+    zhPinyin: "zú gòu",
+    fr: "assez"
+  },
+  {
+    vi: "tỷ",
+    en: "one billion",
+    zh: "十亿",
+    zhPinyin: "shí yì",
+    fr: "milliard"
+  },
+  {
+    vi: "triệu",
+    en: "million, millions",
+    zh: "百万",
+    zhPinyin: "bǎi wàn",
+    fr: "million"
+  },
+  {
+    vi: "lẻ",
+    en: "zero",
+    zh: "零",
+    zhPinyin: "líng",
+    fr: "zéro / et"
+  },
+  {
+    vi: "mốt",
+    en: "one, used after twenty",
+    zh: "一",
+    zhPinyin: "yī",
+    fr: "un (après vingt)"
+  },
+  {
+    vi: "lăm",
+    en: "five, used after ten",
+    zh: "五",
+    zhPinyin: "wǔ",
+    fr: "cinq (après dix)"
+  },
+  {
+    vi: "nhiều",
+    en: "many, lots of",
+    zh: "很多",
+    zhPinyin: "hěn duō",
+    fr: "beaucoup"
+  },
+  {
+    vi: "tư",
+    en: "four, private",
+    zh: "四 / 私人",
+    zhPinyin: "sì / sī rén",
+    fr: "quatre / privé"
+  },
+  {
+    vi: "mười",
+    en: "number ten",
+    zh: "十",
+    zhPinyin: "shí",
+    fr: "dix"
+  },
+  {
+    vi: "chín",
+    en: "number nine",
+    zh: "九",
+    zhPinyin: "jiǔ",
+    fr: "neuf"
+  },
+  {
+    vi: "tám",
+    en: "number eight",
+    zh: "八",
+    zhPinyin: "bā",
+    fr: "huit"
+  },
+  {
+    vi: "bảy",
+    en: "number seven",
+    zh: "七",
+    zhPinyin: "qī",
+    fr: "sept"
+  },
+  {
+    vi: "sáu",
+    en: "number six",
+    zh: "六",
+    zhPinyin: "liù",
+    fr: "six"
+  },
+  {
+    vi: "trưởng thành",
+    en: "mature, adult",
+    zh: "成熟",
+    zhPinyin: "chéng shú",
+    fr: "adulte, mûr"
+  },
+  {
+    vi: "tiện lợi",
+    en: "convenient, easy to use",
+    zh: "方便",
+    zhPinyin: "fāng biàn",
+    fr: "pratique"
+  },
+  {
+    vi: "ích kỷ",
+    en: "selfish, self-centered",
+    zh: "自私",
+    zhPinyin: "zì sī",
+    fr: "égoïste"
+  },
+  {
+    vi: "nặng",
+    en: "heavy, weighty",
+    zh: "重",
+    zhPinyin: "zhòng",
+    fr: "lourd"
+  },
+  {
+    vi: "thân thiện",
+    en: "friendly, kind",
+    zh: "友好",
+    zhPinyin: "yǒu hǎo",
+    fr: "amical"
+  },
+  {
+    vi: "lịch sự",
+    en: "polite, well-mannered",
+    zh: "有礼貌",
+    zhPinyin: "yǒu lǐ mào",
+    fr: "poli"
+  },
+  {
+    vi: "tệ",
+    en: "bad, poor quality",
+    zh: "糟糕",
+    zhPinyin: "zāo gāo",
+    fr: "mauvais"
+  },
+  {
+    vi: "truyền thống",
+    en: "traditional, tradition",
+    zh: "传统",
+    zhPinyin: "chuán tǒng",
+    fr: "traditionnel, tradition"
+  },
+  {
+    vi: "sai",
+    en: "wrong, incorrect",
+    zh: "错误",
+    zhPinyin: "cuò wù",
+    fr: "faux"
+  },
+  {
+    vi: "buồn",
+    en: "sad, sorry",
+    zh: "难过",
+    zhPinyin: "nán guò",
+    fr: "triste"
+  },
+  {
+    vi: "bướng bỉnh",
+    en: "stubborn, not flexible",
+    zh: "固执",
+    zhPinyin: "gù zhí",
+    fr: "têtu"
+  },
+  {
+    vi: "nghiêm túc",
+    en: "serious, not joking",
+    zh: "严肃",
+    zhPinyin: "yán sù",
+    fr: "sérieux"
+  }
+];
+
+const LANGUAGE_HINTS = {
+  vi: "vi-VN",
+  en: "en-US",
+  zh: "zh-CN",
+  fr: "fr-FR"
+};
+
+let currentFilter = "all";
+let searchTerm = "";
+let preferredVoices = {};
+
+function initVoices() {
+  if (!("speechSynthesis" in window)) return;
+  
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+
+  Object.keys(LANGUAGE_HINTS).forEach(lang => {
+    const hint = LANGUAGE_HINTS[lang];
+    let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
+    
+    if (lang === "vi") {
+      // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
+      const femaleNaturalVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("nữ") || name.includes("woman") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalVi.length) {
+        preferredVoices[lang] = femaleNaturalVi[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural voices (even if not explicitly female)
+      const naturalVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced");
+      });
+      if (naturalVi.length) {
+        // Still prefer female if available
+        const femaleNatural = naturalVi.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("nữ") || name.includes("woman") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleNatural || naturalVi[0];
+        return;
+      }
+      
+      // PRIORITY 3: Female voices (any female voice)
+      const femaleVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("nữ") || name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleVi.length) {
+        preferredVoices[lang] = femaleVi[0];
+        return;
+      }
+      
+      // PRIORITY 4: Google Vietnamese voices (usually good quality)
+      const googleVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("google") && 
+               (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+      });
+      if (googleVi.length) {
+        // Prefer female Google voices
+        const femaleGoogle = googleVi.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("nữ") || name.includes("woman") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleGoogle || googleVi[0];
+        return;
+      }
+      
+      // PRIORITY 5: Microsoft Vietnamese voices
+      const msVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("microsoft") && 
+               (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+      });
+      if (msVi.length) {
+        // Prefer female Microsoft voices
+        const femaleMs = msVi.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("nữ") || name.includes("woman") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleMs || msVi[0];
+        return;
+      }
+      
+      // PRIORITY 6: Any voice with "vi" in name (broader search)
+      const anyVi = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("vi") || name.includes("viet");
+      });
+      if (anyVi.length) {
+        // Still prefer female
+        const femaleAny = anyVi.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("nữ") || name.includes("woman") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleAny || anyVi[0];
+        return;
+      }
+      
+      // Fallback: any Vietnamese voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
+    
+    if (lang === "en") {
+      // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
+      const femaleNaturalEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") || name.includes("zira") ||
+                        name.includes("aria") || name.includes("susan") ||
+                        name.includes("hazel") || name.includes("linda") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced") ||
+                         name.includes("online") || name.includes("aria");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalEn.length) {
+        preferredVoices[lang] = femaleNaturalEn[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural voices (preferring female)
+      const naturalEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced") ||
+               name.includes("online") || name.includes("aria");
+      });
+      if (naturalEn.length) {
+        const femaleNatural = naturalEn.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("zira") ||
+                 name.includes("aria") || name.includes("susan") ||
+                 name.includes("hazel") || name.includes("linda") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleNatural || naturalEn[0];
+        return;
+      }
+      
+      // PRIORITY 3: High-quality female voices (Microsoft Aria, Google US English Female, etc.)
+      const qualityFemaleEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return (name.includes("aria") && name.includes("online")) ||
+               (name.includes("google") && name.includes("female")) ||
+               name.includes("zira") || name.includes("susan") ||
+               name.includes("hazel") || name.includes("linda") ||
+               (name.includes("female") && (name.includes("us") || name.includes("uk")));
+      });
+      if (qualityFemaleEn.length) {
+        preferredVoices[lang] = qualityFemaleEn[0];
+        return;
+      }
+      
+      // PRIORITY 4: Any female English voice
+      const femaleEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleEn.length) {
+        preferredVoices[lang] = femaleEn[0];
+        return;
+      }
+      
+      // PRIORITY 5: Google English voices
+      const googleEn = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleEn.length) {
+        preferredVoices[lang] = googleEn[0];
+        return;
+      }
+      
+      // Fallback: any English voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
+    
+    // For other languages (French, Chinese), prefer female natural voices too
+    if (langGroup.length) {
+      // Try to find female natural voices for other languages too
+      const femaleNatural = langGroup.find(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
+      });
+      preferredVoices[lang] = femaleNatural || langGroup[0];
+    } else {
+      preferredVoices[lang] = voices.find(v => v.lang && v.lang.startsWith(lang)) || voices[0];
+    }
+  });
+  
+  // Log selected voices for debugging
+  if (preferredVoices.vi) {
+    console.log('Selected Vietnamese voice:', preferredVoices.vi.name, preferredVoices.vi.lang);
+  }
+  if (preferredVoices.en) {
+    console.log('Selected English voice:', preferredVoices.en.name, preferredVoices.en.lang);
+  }
+}
+
+if ("speechSynthesis" in window) {
+  // Wait for voices to load (may take time on some browsers)
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      initVoices();
+    } else {
+      // Retry after a short delay if voices aren't ready
+      setTimeout(loadVoices, 100);
+    }
+  };
+  
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+  
+  let voicesInitialized = false;
+  const initializeVoicesOnInteraction = () => {
+    if (!voicesInitialized) {
+      voicesInitialized = true;
+      // Force reload voices on interaction (required for some browsers)
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        initVoices();
+      }
+    }
+  };
+  
+  document.addEventListener('touchstart', initializeVoicesOnInteraction, { once: true });
+  document.addEventListener('click', initializeVoicesOnInteraction, { once: true });
+}
+
+function speakWord(text, lang) {
+  if (!("speechSynthesis" in window)) return;
+  
+  window.speechSynthesis.cancel();
+  
+  // Ensure voices are initialized
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0 && (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0)) {
+    initVoices();
+  }
+  
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  // Natural-sounding speech parameters (not robotic)
+  // Slower rate for more natural, human-like speech
+  if (lang === "vi") {
+    utterance.rate = 0.9;  // Slightly slower for natural Vietnamese pronunciation
+    utterance.pitch = 1.0;  // Natural pitch
+    utterance.volume = 1.0;
+  } else if (lang === "en") {
+    utterance.rate = 0.9;  // Slightly slower for natural English pronunciation
+    utterance.pitch = 1.0;  // Natural pitch
+    utterance.volume = 1.0;
+  } else {
+    utterance.rate = 0.95;  // Slightly slower for natural sound
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+  }
+  
+  utterance.lang = LANGUAGE_HINTS[lang] || lang;
+  
+  // Get the best available voice (prioritizing female natural voices)
+  let voice = preferredVoices[lang];
+  if (!voice) {
+    voice = pickVoice(lang);
+    if (voice) {
+      preferredVoices[lang] = voice;
+    }
+  }
+  
+  // Re-check for better voice if we have more voices now
+  if (voice && voices.length > 0) {
+    const betterVoice = pickVoice(lang);
+    if (betterVoice && betterVoice.name !== voice.name) {
+      voice = betterVoice;
+      preferredVoices[lang] = voice;
+    }
+  }
+  
+  if (voice) {
+    utterance.voice = voice;
+    // Ensure we're using the correct language code for the voice
+    utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
+  }
+  
+  // Handle errors gracefully
+  utterance.onerror = (e) => {
+    console.log('Speech error:', e);
+    // Try fallback voice if available
+    if (voice && voices.length > 0) {
+      const fallbackVoice = voices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
+      if (fallbackVoice && fallbackVoice !== voice) {
+        utterance.voice = fallbackVoice;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+  };
+  
+  window.speechSynthesis.speak(utterance);
+}
+
+function pickVoice(langCode) {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  
+  const hint = LANGUAGE_HINTS[langCode];
+  let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || langCode));
+  
+  if (langCode === "vi" && langGroup.length) {
+    // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
+    const femaleNaturalVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isFemale = name.includes("female") || name.includes("f") || 
+                      name.includes("nữ") || name.includes("woman") ||
+                      (v.gender && v.gender.toLowerCase() === "female");
+      const isNatural = name.includes("neural") || name.includes("natural") || 
+                       name.includes("premium") || name.includes("enhanced");
+      return isFemale && isNatural;
+    });
+    if (femaleNaturalVi.length) return femaleNaturalVi[0];
+    
+    // PRIORITY 2: Any Natural/Neural voices
+    const naturalVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("neural") || name.includes("natural") || 
+             name.includes("premium") || name.includes("enhanced");
+    });
+    if (naturalVi.length) {
+      const femaleNatural = naturalVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("nữ") || name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      return femaleNatural || naturalVi[0];
+    }
+    
+    // PRIORITY 3: Female voices (any female voice)
+    const femaleVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("female") || name.includes("f") || 
+             name.includes("nữ") || name.includes("woman") ||
+             (v.gender && v.gender.toLowerCase() === "female");
+    });
+    if (femaleVi.length) return femaleVi[0];
+    
+    // PRIORITY 4: Google Vietnamese voices
+    const googleVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("google") && 
+             (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+    });
+    if (googleVi.length) {
+      const femaleGoogle = googleVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("nữ") || name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      return femaleGoogle || googleVi[0];
+    }
+    
+    // PRIORITY 5: Microsoft Vietnamese voices
+    const msVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("microsoft") && 
+             (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+    });
+    if (msVi.length) {
+      const femaleMs = msVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("nữ") || name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      return femaleMs || msVi[0];
+    }
+    
+    // PRIORITY 6: Any voice with "vi" in name (broader search)
+    const anyVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("vi") || name.includes("viet");
+    });
+    if (anyVi.length) {
+      const femaleAny = anyVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("nữ") || name.includes("woman") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      return femaleAny || anyVi[0];
+    }
+    
+    return langGroup[0];
+  }
+  
+  if (langCode === "en" && langGroup.length) {
+    // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
+    const femaleNaturalEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isFemale = name.includes("female") || name.includes("f") || 
+                      name.includes("woman") || name.includes("zira") ||
+                      name.includes("aria") || name.includes("susan") ||
+                      name.includes("hazel") || name.includes("linda") ||
+                      (v.gender && v.gender.toLowerCase() === "female");
+      const isNatural = name.includes("neural") || name.includes("natural") || 
+                       name.includes("premium") || name.includes("enhanced") ||
+                       name.includes("online") || name.includes("aria");
+      return isFemale && isNatural;
+    });
+    if (femaleNaturalEn.length) return femaleNaturalEn[0];
+    
+    // PRIORITY 2: Any Natural/Neural voices (preferring female)
+    const naturalEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("neural") || name.includes("natural") || 
+             name.includes("premium") || name.includes("enhanced") ||
+             name.includes("online") || name.includes("aria");
+    });
+    if (naturalEn.length) {
+      const femaleNatural = naturalEn.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("zira") ||
+               name.includes("aria") || name.includes("susan") ||
+               name.includes("hazel") || name.includes("linda") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      return femaleNatural || naturalEn[0];
+    }
+    
+    // PRIORITY 3: High-quality female voices (Microsoft Aria, Google US English Female, etc.)
+    const qualityFemaleEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return (name.includes("aria") && name.includes("online")) ||
+             (name.includes("google") && name.includes("female")) ||
+             name.includes("zira") || name.includes("susan") ||
+             name.includes("hazel") || name.includes("linda") ||
+             (name.includes("female") && (name.includes("us") || name.includes("uk")));
+    });
+    if (qualityFemaleEn.length) return qualityFemaleEn[0];
+    
+    // PRIORITY 4: Any female English voice
+    const femaleEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("female") || name.includes("f") || 
+             name.includes("woman") ||
+             (v.gender && v.gender.toLowerCase() === "female");
+    });
+    if (femaleEn.length) return femaleEn[0];
+    
+    // PRIORITY 5: Google English voices
+    const googleEn = langGroup.filter(v => 
+      v.name.toLowerCase().includes("google")
+    );
+    if (googleEn.length) return googleEn[0];
+    
+    return langGroup[0];
+  }
+  
+  if (langGroup.length) return langGroup[0];
+  
+  return voices.find(v => v.lang && v.lang.startsWith(langCode)) || voices[0];
+}
+
+function matchesFilter(vocab) {
+  if (currentFilter === "all") return true;
+  
+  const searchLower = searchTerm.toLowerCase();
+  const matchesSearch = !searchTerm || 
+    vocab.vi.toLowerCase().includes(searchLower) ||
+    vocab.en.toLowerCase().includes(searchLower) ||
+    vocab.zh.toLowerCase().includes(searchLower) ||
+    vocab.fr.toLowerCase().includes(searchLower) ||
+    (vocab.zhPinyin && vocab.zhPinyin.toLowerCase().includes(searchLower));
+  
+  if (!matchesSearch) return false;
+  
+  if (currentFilter === "vi") return true;
+  if (currentFilter === "en") return true;
+  if (currentFilter === "zh") return true;
+  if (currentFilter === "fr") return true;
+  
+  return true;
+}
+
+function renderVocab() {
+  const grid = document.getElementById("vocabGrid");
+  const noResults = document.getElementById("noResults");
+  const filtered = VOCABULARY.filter(matchesFilter);
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = "";
+    noResults.style.display = "block";
+    return;
+  }
+  
+  noResults.style.display = "none";
+  grid.innerHTML = filtered.map(vocab => `
+    <div class="vocab-card">
+      <div class="vocab-word">${vocab.vi}</div>
+      <div class="vocab-translations">
+        <div class="translation-row">
+          <span class="lang-label">VI:</span>
+          <span class="lang-content">${vocab.vi}</span>
+          <button class="play-button" onclick="speakWord('${vocab.vi.replace(/'/g, "\\'")}', 'vi')" title="Listen">▶</button>
+        </div>
+        <div class="translation-row">
+          <span class="lang-label">EN:</span>
+          <span class="lang-content">${vocab.en}</span>
+          <button class="play-button" onclick="speakWord('${vocab.en.split(',')[0].trim().replace(/'/g, "\\'")}', 'en')" title="Listen">▶</button>
+        </div>
+        <div class="translation-row">
+          <span class="lang-label">ZH:</span>
+          <div class="lang-content">
+            ${vocab.zh}
+            ${vocab.zhPinyin ? `<div class="pinyin">${vocab.zhPinyin}</div>` : ''}
+          </div>
+          <button class="play-button" onclick="speakWord('${vocab.zh.replace(/'/g, "\\'")}', 'zh')" title="Listen">▶</button>
+        </div>
+        <div class="translation-row">
+          <span class="lang-label">FR:</span>
+          <span class="lang-content">${vocab.fr}</span>
+          <button class="play-button" onclick="speakWord('${vocab.fr.split(',')[0].trim().replace(/'/g, "\\'")}', 'fr')" title="Listen">▶</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+// Language filter buttons
+document.querySelectorAll('.controls button[data-lang]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button[data-lang]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.lang;
+    renderVocab();
+  });
+});
+
+// Search box
+document.getElementById('searchBox').addEventListener('input', (e) => {
+  searchTerm = e.target.value;
+  renderVocab();
+});
+
+// Initial render
+renderVocab();
+</script>
+</body>
+</html>
+

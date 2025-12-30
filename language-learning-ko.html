@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Language Learning - French Vocabulary</title>
+  <title>Language Learning - Korean Vocabulary</title>
   <style>
     :root {
       --primary-color: #fff;
@@ -123,6 +123,23 @@
     .controls button.active {
       background: var(--primary-color);
       color: var(--bg-color);
+    }
+    .game-nav-button {
+      padding: 10px 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 140px;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+    }
+    .game-nav-button:hover {
+      background: var(--hover-color);
     }
     .search-box {
       width: 100%;
@@ -244,9 +261,9 @@
       <a href="index.html" class="nav-button">Math Home</a>
     </div>
     
-    <h1>Language Learning - French Vocabulary</h1>
+    <h1>Language Learning - Korean Vocabulary</h1>
     
-    <a href="language-learning-game-fr.html" class="game-button">🎮 Play French Game</a>
+    <a href="language-learning-game-ko.html" class="game-button">🎮 Play Korean Game</a>
     
     <div class="controls" role="group" aria-label="Game navigation">
       <div class="lang-group">
@@ -309,6 +326,7 @@ const VOCABULARY = [
     en: "positive",
     zh: "积极的",
     zhPinyin: "jī jí de",
+    ko: "긍정적인",
     fr: "positif, positive"
   },
   {
@@ -316,6 +334,7 @@ const VOCABULARY = [
     en: "optimistic",
     zh: "乐观的",
     zhPinyin: "lè guān de",
+    ko: "낙관적인",
     fr: "optimiste"
   },
   {
@@ -323,6 +342,7 @@ const VOCABULARY = [
     en: "long",
     zh: "长的",
     zhPinyin: "cháng de",
+    ko: "긴",
     fr: "long, longue"
   },
   {
@@ -330,6 +350,7 @@ const VOCABULARY = [
     en: "short",
     zh: "短的",
     zhPinyin: "duǎn de",
+    ko: "짧은",
     fr: "court, courte"
   },
   {
@@ -337,6 +358,7 @@ const VOCABULARY = [
     en: "modern",
     zh: "现代的",
     zhPinyin: "xiàn dài de",
+    ko: "현대적인",
     fr: "moderne"
   },
   {
@@ -344,6 +366,7 @@ const VOCABULARY = [
     en: "perfect",
     zh: "完美的",
     zhPinyin: "wán měi de",
+    ko: "완벽한",
     fr: "parfait, parfaite"
   },
   {
@@ -351,6 +374,7 @@ const VOCABULARY = [
     en: "independent, independence",
     zh: "独立的 / 独立",
     zhPinyin: "dú lì de / dú lì",
+    ko: "독립적인 / 독립",
     fr: "indépendant, indépendante / indépendance"
   },
   {
@@ -358,6 +382,7 @@ const VOCABULARY = [
     en: "poor",
     zh: "贫穷的",
     zhPinyin: "pín qióng de",
+    ko: "가난한",
     fr: "pauvre"
   },
   {
@@ -365,6 +390,7 @@ const VOCABULARY = [
     en: "dangerous",
     zh: "危险的",
     zhPinyin: "wēi xiǎn de",
+    ko: "위험한",
     fr: "dangereux, dangereuse"
   },
   {
@@ -372,6 +398,7 @@ const VOCABULARY = [
     en: "luxurious",
     zh: "奢侈的",
     zhPinyin: "shē chǐ de",
+    ko: "사치스러운",
     fr: "luxueux, luxueuse"
   },
   {
@@ -379,6 +406,7 @@ const VOCABULARY = [
     en: "new",
     zh: "新的",
     zhPinyin: "xīn de",
+    ko: "새로운",
     fr: "nouveau, nouvelle"
   },
   {
@@ -386,6 +414,7 @@ const VOCABULARY = [
     en: "are old, old, former",
     zh: "旧的 / 老的",
     zhPinyin: "jiù de / lǎo de",
+    ko: "오래된 / 옛날의",
     fr: "vieux, vieille / ancien, ancienne"
   },
   {
@@ -393,6 +422,7 @@ const VOCABULARY = [
     en: "necessary",
     zh: "必要的",
     zhPinyin: "bì yào de",
+    ko: "필요한",
     fr: "nécessaire"
   },
   {
@@ -400,6 +430,7 @@ const VOCABULARY = [
     en: "patient",
     zh: "耐心的",
     zhPinyin: "nài xīn de",
+    ko: "참을성 있는",
     fr: "patient, patiente"
   },
   {
@@ -407,6 +438,7 @@ const VOCABULARY = [
     en: "expensive",
     zh: "昂贵的",
     zhPinyin: "áng guì de",
+    ko: "비싼",
     fr: "cher, chère"
   },
   {
@@ -414,6 +446,7 @@ const VOCABULARY = [
     en: "honest",
     zh: "诚实的",
     zhPinyin: "chéng shí de",
+    ko: "정직한",
     fr: "honnête"
   },
   {
@@ -421,6 +454,7 @@ const VOCABULARY = [
     en: "is important, important, was important",
     zh: "重要的",
     zhPinyin: "zhòng yào de",
+    ko: "중요한",
     fr: "important, importante"
   },
   {
@@ -428,6 +462,7 @@ const VOCABULARY = [
     en: "humorous, funny",
     zh: "幽默的 / 有趣的",
     zhPinyin: "yōu mò de / yǒu qù de",
+    ko: "유머러스한 / 재미있는",
     fr: "humoristique, drôle"
   },
   {
@@ -435,6 +470,7 @@ const VOCABULARY = [
     en: "slow, slowly (when placed after verb), late",
     zh: "慢的 / 慢",
     zhPinyin: "màn de / màn",
+    ko: "느린 / 천천히",
     fr: "lent, lente / lentement"
   },
   {
@@ -442,6 +478,7 @@ const VOCABULARY = [
     en: "happiness, happy",
     zh: "幸福 / 幸福的",
     zhPinyin: "xìng fú / xìng fú de",
+    ko: "행복 / 행복한",
     fr: "bonheur / heureux, heureuse"
   },
   {
@@ -449,6 +486,7 @@ const VOCABULARY = [
     en: "simple",
     zh: "简单的",
     zhPinyin: "jiǎn dān de",
+    ko: "간단한",
     fr: "simple"
   },
   {
@@ -456,6 +494,7 @@ const VOCABULARY = [
     en: "fast, (can be adjective or adverb)",
     zh: "快的 / 快",
     zhPinyin: "kuài de / kuài",
+    ko: "빠른 / 빠르게",
     fr: "rapide / rapidement"
   },
   {
@@ -463,6 +502,7 @@ const VOCABULARY = [
     en: "complicated",
     zh: "复杂的",
     zhPinyin: "fù zá de",
+    ko: "복잡한",
     fr: "compliqué, compliquée"
   },
   {
@@ -470,6 +510,7 @@ const VOCABULARY = [
     en: "small, little",
     zh: "小的",
     zhPinyin: "xiǎo de",
+    ko: "작은",
     fr: "petit, petite"
   },
   {
@@ -477,6 +518,7 @@ const VOCABULARY = [
     en: "large, big, great",
     zh: "大的",
     zhPinyin: "dà de",
+    ko: "큰",
     fr: "grand, grande"
   },
   {
@@ -484,6 +526,7 @@ const VOCABULARY = [
     en: "easy",
     zh: "容易的",
     zhPinyin: "róng yì de",
+    ko: "쉬운",
     fr: "facile"
   },
   {
@@ -491,6 +534,7 @@ const VOCABULARY = [
     en: "special, especially",
     zh: "特别的 / 特别",
     zhPinyin: "tè bié de / tè bié",
+    ko: "특별한 / 특히",
     fr: "spécial, spéciale / spécialement"
   },
   {
@@ -498,6 +542,7 @@ const VOCABULARY = [
     en: "delicious, deliciously",
     zh: "美味的 / 美味地",
     zhPinyin: "měi wèi de / měi wèi de",
+    ko: "맛있는",
     fr: "délicieux, délicieuse / délicieusement"
   },
   {
@@ -505,6 +550,7 @@ const VOCABULARY = [
     en: "hard, difficult",
     zh: "困难的",
     zhPinyin: "kùn nán de",
+    ko: "어려운",
     fr: "difficile"
   },
   {
@@ -512,6 +558,7 @@ const VOCABULARY = [
     en: "dark, deep",
     zh: "深的 / 暗的",
     zhPinyin: "shēn de / àn de",
+    ko: "어두운 / 깊은",
     fr: "foncé, foncée / profond, profonde"
   },
   {
@@ -519,6 +566,7 @@ const VOCABULARY = [
     en: "pink",
     zh: "粉色的",
     zhPinyin: "fěn sè de",
+    ko: "분홍색",
     fr: "rose"
   },
   {
@@ -526,6 +574,7 @@ const VOCABULARY = [
     en: "yellow, gold",
     zh: "黄色的 / 金色",
     zhPinyin: "huáng sè de / jīn sè",
+    ko: "노란색 / 금색",
     fr: "jaune / or"
   },
   {
@@ -533,6 +582,7 @@ const VOCABULARY = [
     en: "light",
     zh: "浅的",
     zhPinyin: "qiǎn de",
+    ko: "밝은",
     fr: "clair, claire"
   },
   {
@@ -540,6 +590,7 @@ const VOCABULARY = [
     en: "purple, violet",
     zh: "紫色的",
     zhPinyin: "zǐ sè de",
+    ko: "보라색",
     fr: "violet, violette"
   },
   {
@@ -547,6 +598,7 @@ const VOCABULARY = [
     en: "brown",
     zh: "棕色的",
     zhPinyin: "zōng sè de",
+    ko: "갈색",
     fr: "marron"
   },
   {
@@ -554,6 +606,7 @@ const VOCABULARY = [
     en: "gray, grey",
     zh: "灰色的",
     zhPinyin: "huī sè de",
+    ko: "회색",
     fr: "gris, grise"
   },
   {
@@ -561,6 +614,7 @@ const VOCABULARY = [
     en: "green",
     zh: "绿色的",
     zhPinyin: "lǜ sè de",
+    ko: "초록색",
     fr: "vert, verte"
   },
   {
@@ -568,6 +622,7 @@ const VOCABULARY = [
     en: "blue",
     zh: "蓝色的",
     zhPinyin: "lán sè de",
+    ko: "파란색",
     fr: "bleu, bleue"
   },
   {
@@ -575,6 +630,7 @@ const VOCABULARY = [
     en: "red",
     zh: "红色的",
     zhPinyin: "hóng sè de",
+    ko: "빨간색",
     fr: "rouge"
   },
   {
@@ -582,6 +638,7 @@ const VOCABULARY = [
     en: "black",
     zh: "黑色的",
     zhPinyin: "hēi sè de",
+    ko: "검은색",
     fr: "noir, noire"
   },
   {
@@ -589,6 +646,7 @@ const VOCABULARY = [
     en: "white",
     zh: "白色的",
     zhPinyin: "bái sè de",
+    ko: "흰색",
     fr: "blanc, blanche"
   },
   {
@@ -596,6 +654,7 @@ const VOCABULARY = [
     en: "color",
     zh: "颜色",
     zhPinyin: "yán sè",
+    ko: "색깔",
     fr: "couleur"
   },
   {
@@ -603,6 +662,7 @@ const VOCABULARY = [
     en: "ask, asks",
     zh: "问",
     zhPinyin: "wèn",
+    ko: "묻다",
     fr: "demander"
   },
   {
@@ -610,6 +670,7 @@ const VOCABULARY = [
     en: "answer",
     zh: "答案",
     zhPinyin: "dá àn",
+    ko: "답",
     fr: "réponse"
   },
   {
@@ -617,6 +678,7 @@ const VOCABULARY = [
     en: "sentence",
     zh: "句子",
     zhPinyin: "jù zi",
+    ko: "문장",
     fr: "phrase"
   },
   {
@@ -624,6 +686,7 @@ const VOCABULARY = [
     en: "answer, respond, answers",
     zh: "回答",
     zhPinyin: "huí dá",
+    ko: "대답하다",
     fr: "répondre, réponse"
   },
   {
@@ -631,6 +694,7 @@ const VOCABULARY = [
     en: "like, as",
     zh: "像 / 如",
     zhPinyin: "xiàng / rú",
+    ko: "처럼",
     fr: "comme"
   },
   {
@@ -638,6 +702,7 @@ const VOCABULARY = [
     en: "how, how were, how was",
     zh: "怎么样",
     zhPinyin: "zěn me yàng",
+    ko: "어떻게",
     fr: "comment"
   },
   {
@@ -645,6 +710,7 @@ const VOCABULARY = [
     en: "much",
     zh: "多少",
     zhPinyin: "duō shǎo",
+    ko: "얼마나",
     fr: "beaucoup"
   },
   {
@@ -652,6 +718,7 @@ const VOCABULARY = [
     en: "how",
     zh: "怎么",
     zhPinyin: "zěn me",
+    ko: "어떻게",
     fr: "comment"
   }
 ];
@@ -677,6 +744,67 @@ function initVoices() {
   Object.keys(LANGUAGE_HINTS).forEach(lang => {
     const hint = LANGUAGE_HINTS[lang];
     let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
+    
+    if (lang === "ko") {
+      // PRIORITY 1: Female Natural/Neural Korean voices
+      const femaleNaturalKo = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") || name.includes("yuna") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalKo.length) {
+        preferredVoices[lang] = femaleNaturalKo[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural Korean voices
+      const naturalKo = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced");
+      });
+      if (naturalKo.length) {
+        const femaleNatural = naturalKo.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("yuna") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleNatural || naturalKo[0];
+        return;
+      }
+      
+      // PRIORITY 3: Female Korean voices
+      const femaleKo = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("yuna") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleKo.length) {
+        preferredVoices[lang] = femaleKo[0];
+        return;
+      }
+      
+      // PRIORITY 4: Google Korean voices
+      const googleKo = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleKo.length) {
+        preferredVoices[lang] = googleKo[0];
+        return;
+      }
+      
+      // Fallback: any Korean voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
     
     if (lang === "fr") {
       // PRIORITY 1: Female Natural/Neural French voices
@@ -840,8 +968,8 @@ function initVoices() {
     }
   });
   
-  if (preferredVoices.fr) {
-    console.log('Selected French voice:', preferredVoices.fr.name, preferredVoices.fr.lang);
+  if (preferredVoices.ko) {
+    console.log('Selected Korean voice:', preferredVoices.ko.name, preferredVoices.ko.lang);
   }
   if (preferredVoices.en) {
     console.log('Selected English voice:', preferredVoices.en.name, preferredVoices.en.lang);
@@ -911,7 +1039,11 @@ function speakWord(text, lang) {
     
     const utterance = new SpeechSynthesisUtterance(text);
     
-    if (lang === "fr") {
+    if (lang === "ko") {
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+    } else if (lang === "fr") {
       utterance.rate = 0.9;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
@@ -972,20 +1104,20 @@ function matchesFilter(vocab) {
   
   const searchLower = searchTerm.toLowerCase();
   const matchesSearch = !searchTerm || 
-    vocab.fr.toLowerCase().includes(searchLower) ||
+    (vocab.ko && vocab.ko.toLowerCase().includes(searchLower)) ||
     vocab.en.toLowerCase().includes(searchLower) ||
     vocab.vi.toLowerCase().includes(searchLower) ||
     vocab.zh.toLowerCase().includes(searchLower) ||
-    (vocab.ko && vocab.ko.toLowerCase().includes(searchLower)) ||
+    vocab.fr.toLowerCase().includes(searchLower) ||
     (vocab.zhPinyin && vocab.zhPinyin.toLowerCase().includes(searchLower));
   
   if (!matchesSearch) return false;
   
+  if (currentFilter === "ko") return vocab.ko;
   if (currentFilter === "fr") return true;
   if (currentFilter === "en") return true;
   if (currentFilter === "vi") return true;
   if (currentFilter === "zh") return true;
-  if (currentFilter === "ko") return true;
   
   return true;
 }
@@ -1002,14 +1134,16 @@ function renderVocab() {
   }
   
   noResults.style.display = "none";
-  grid.innerHTML = filtered.map(vocab => `
+  grid.innerHTML = filtered.map(vocab => {
+    if (!vocab.ko) return '';
+    return `
     <div class="vocab-card">
-      <div class="vocab-word">${vocab.fr}</div>
+      <div class="vocab-word">${vocab.ko}</div>
       <div class="vocab-translations">
         <div class="translation-row">
-          <span class="lang-label">FR:</span>
-          <span class="lang-content">${vocab.fr}</span>
-          <button class="play-button" onclick="speakWord('${vocab.fr.split(',')[0].trim().split(' / ')[0].trim().replace(/'/g, "\\'")}', 'fr')" title="Listen">▶</button>
+          <span class="lang-label">KO:</span>
+          <span class="lang-content">${vocab.ko}</span>
+          <button class="play-button" onclick="speakWord('${vocab.ko.split(',')[0].trim().replace(/'/g, "\\'")}', 'ko')" title="Listen">▶</button>
         </div>
         <div class="translation-row">
           <span class="lang-label">EN:</span>
@@ -1029,16 +1163,15 @@ function renderVocab() {
           </div>
           <button class="play-button" onclick="speakWord('${vocab.zh.replace(/'/g, "\\'")}', 'zh')" title="Listen">▶</button>
         </div>
-        ${vocab.ko ? `
         <div class="translation-row">
-          <span class="lang-label">KO:</span>
-          <span class="lang-content">${vocab.ko}</span>
-          <button class="play-button" onclick="speakWord('${vocab.ko.split(',')[0].trim().replace(/'/g, "\\'")}', 'ko')" title="Listen">▶</button>
+          <span class="lang-label">FR:</span>
+          <span class="lang-content">${vocab.fr}</span>
+          <button class="play-button" onclick="speakWord('${vocab.fr.split(',')[0].trim().split(' / ')[0].trim().replace(/'/g, "\\'")}', 'fr')" title="Listen">▶</button>
         </div>
-        ` : ''}
       </div>
     </div>
-  `).join("");
+    `;
+  }).filter(html => html).join("");
 }
 
 // Language filter buttons

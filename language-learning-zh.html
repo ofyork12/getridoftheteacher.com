@@ -240,22 +240,50 @@
 <body>
   <div class="container">
     <div class="navigation">
-      <a href="index.html" class="nav-button">Home</a>
-      <a href="language-learning-zh.html" class="nav-button active">Chinese Vocabulary</a>
-      <a href="language-learning-game-zh.html" class="nav-button">Chinese → English Game</a>
-      <a href="language-learning-game-en-zh.html" class="nav-button">English → Chinese Game</a>
+      <a href="language-learning.html" class="nav-button">Language Home</a>
+      <a href="index.html" class="nav-button">Math Home</a>
     </div>
     
     <h1>Language Learning - Chinese Vocabulary</h1>
     
     <a href="language-learning-game-zh.html" class="game-button">🎮 Play Chinese Game</a>
     
-    <div class="controls" role="group" aria-label="Language selector">
+    <div class="controls" role="group" aria-label="Game navigation">
+      <div class="lang-group">
+        <a href="language-learning-game.html" class="game-nav-button">Vietnamese → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-vi.html" class="game-nav-button">English → Vietnamese</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-zh.html" class="game-nav-button">Chinese → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-zh.html" class="game-nav-button">English → Chinese</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-ko.html" class="game-nav-button">Korean → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-ko.html" class="game-nav-button">English → Korean</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-fr.html" class="game-nav-button">French → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-fr.html" class="game-nav-button">English → French</a>
+      </div>
+    </div>
+    
+    <div class="controls" role="group" aria-label="Language selector" style="margin-top: 20px;">
       <div class="lang-group">
         <button data-lang="all" class="active">All Languages</button>
       </div>
       <div class="lang-group">
         <button data-lang="zh">Chinese</button>
+      </div>
+      <div class="lang-group">
+        <button data-lang="ko">Korean</button>
       </div>
       <div class="lang-group">
         <button data-lang="en">English</button>
@@ -277,354 +305,354 @@
 <script>
 const VOCABULARY = [
   {
-    vi: "cuối cùng",
-    en: "finally, last, final",
-    zh: "最后",
-    zhPinyin: "zuì hòu",
-    fr: "finalement, enfin"
+    vi: "tích cực",
+    en: "positive",
+    zh: "积极的",
+    zhPinyin: "jī jí de",
+    fr: "positif, positive"
   },
   {
-    vi: "đầu tiên",
-    en: "first in order",
-    zh: "第一",
-    zhPinyin: "dì yī",
-    fr: "premier / première"
+    vi: "lạc quan",
+    en: "optimistic",
+    zh: "乐观的",
+    zhPinyin: "lè guān de",
+    fr: "optimiste"
   },
   {
-    vi: "thứ",
-    en: "thing, things, ordinal marker",
-    zh: "东西 / 第",
-    zhPinyin: "dōng xi / dì",
-    fr: "chose ; marqueur ordinal"
+    vi: "dài",
+    en: "long",
+    zh: "长的",
+    zhPinyin: "cháng de",
+    fr: "long, longue"
   },
   {
-    vi: "lần",
-    en: "time, times, turns",
-    zh: "次",
-    zhPinyin: "cì",
-    fr: "fois"
+    vi: "ngắn",
+    en: "short",
+    zh: "短的",
+    zhPinyin: "duǎn de",
+    fr: "court, courte"
   },
   {
-    vi: "vào",
-    en: "enter, to go into",
-    zh: "进入",
-    zhPinyin: "jìn rù",
-    fr: "entrer"
+    vi: "hiện đại",
+    en: "modern",
+    zh: "现代的",
+    zhPinyin: "xiàn dài de",
+    fr: "moderne"
   },
   {
-    vi: "dang",
-    en: "is / am / are action in progress",
-    zh: "正在",
-    zhPinyin: "zhèng zài",
-    fr: "être en train de"
+    vi: "hoàn hảo",
+    en: "perfect",
+    zh: "完美的",
+    zhPinyin: "wán měi de",
+    fr: "parfait, parfaite"
   },
   {
-    vi: "lúc này",
-    en: "now, this moment, right now",
-    zh: "此刻",
-    zhPinyin: "cǐ kè",
-    fr: "en ce moment"
+    vi: "độc lập",
+    en: "independent, independence",
+    zh: "独立的 / 独立",
+    zhPinyin: "dú lì de / dú lì",
+    fr: "indépendant, indépendante / indépendance"
   },
   {
-    vi: "bây giờ",
-    en: "now, at the moment",
-    zh: "现在",
-    zhPinyin: "xiàn zài",
-    fr: "maintenant"
+    vi: "nghèo",
+    en: "poor",
+    zh: "贫穷的",
+    zhPinyin: "pín qióng de",
+    fr: "pauvre"
   },
   {
-    vi: "hiện tại",
-    en: "currently, at present",
-    zh: "目前 / 现在",
-    zhPinyin: "mù qián / xiàn zài",
-    fr: "actuellement"
+    vi: "nguy hiểm",
+    en: "dangerous",
+    zh: "危险的",
+    zhPinyin: "wēi xiǎn de",
+    fr: "dangereux, dangereuse"
   },
   {
-    vi: "nên",
-    en: "so, therefore, ought to",
-    zh: "所以 / 应该",
-    zhPinyin: "suǒ yǐ / yīng gāi",
-    fr: "donc, devoir"
+    vi: "xa xỉ",
+    en: "luxurious",
+    zh: "奢侈的",
+    zhPinyin: "shē chǐ de",
+    fr: "luxueux, luxueuse"
   },
   {
-    vi: "trước",
-    en: "before, ago, in front of",
-    zh: "以前 / 前面",
-    zhPinyin: "yǐ qián / qián miàn",
-    fr: "avant, devant"
+    vi: "mới",
+    en: "new",
+    zh: "新的",
+    zhPinyin: "xīn de",
+    fr: "nouveau, nouvelle"
   },
   {
-    vi: "nhưng",
-    en: "but, however",
-    zh: "但是",
-    zhPinyin: "dàn shì",
-    fr: "mais"
+    vi: "cũ",
+    en: "are old, old, former",
+    zh: "旧的 / 老的",
+    zhPinyin: "jiù de / lǎo de",
+    fr: "vieux, vieille / ancien, ancienne"
   },
   {
-    vi: "mà còn",
-    en: "not only, but also",
-    zh: "而且",
-    zhPinyin: "ér qiě",
-    fr: "non seulement… mais aussi"
+    vi: "cần thiết",
+    en: "necessary",
+    zh: "必要的",
+    zhPinyin: "bì yào de",
+    fr: "nécessaire"
   },
   {
-    vi: "đều",
-    en: "all, both",
-    zh: "都",
-    zhPinyin: "dōu",
-    fr: "tous, toutes"
+    vi: "kiên nhẫn",
+    en: "patient",
+    zh: "耐心的",
+    zhPinyin: "nài xīn de",
+    fr: "patient, patiente"
   },
   {
-    vi: "cả",
-    en: "all, whole",
-    zh: "全部",
-    zhPinyin: "quán bù",
-    fr: "tout, toute"
+    vi: "đắt",
+    en: "expensive",
+    zh: "昂贵的",
+    zhPinyin: "áng guì de",
+    fr: "cher, chère"
   },
   {
-    vi: "tuy",
-    en: "although, despite",
-    zh: "虽然",
-    zhPinyin: "suī rán",
-    fr: "bien que"
+    vi: "trung thực",
+    en: "honest",
+    zh: "诚实的",
+    zhPinyin: "chéng shí de",
+    fr: "honnête"
   },
   {
-    vi: "Nếu",
-    en: "If, conditional",
-    zh: "如果",
-    zhPinyin: "rú guǒ",
-    fr: "si"
+    vi: "quan trọng",
+    en: "is important, important, was important",
+    zh: "重要的",
+    zhPinyin: "zhòng yào de",
+    fr: "important, importante"
   },
   {
-    vi: "trong khi",
-    en: "While, at the same time",
-    zh: "当…的时候",
-    zhPinyin: "dāng … de shí hòu",
-    fr: "pendant que"
+    vi: "hài hước",
+    en: "humorous, funny",
+    zh: "幽默的 / 有趣的",
+    zhPinyin: "yōu mò de / yǒu qù de",
+    fr: "humoristique, drôle"
   },
   {
-    vi: "thì",
-    en: "Then, sentence marker",
-    zh: "就",
-    zhPinyin: "jiù",
-    fr: "alors"
+    vi: "chậm",
+    en: "slow, slowly (when placed after verb), late",
+    zh: "慢的 / 慢",
+    zhPinyin: "màn de / màn",
+    fr: "lent, lente / lentement"
   },
   {
-    vi: "khi nào",
-    en: "when, at what time",
-    zh: "什么时候",
-    zhPinyin: "shén me shí hòu",
-    fr: "quand"
+    vi: "hạnh phúc",
+    en: "happiness, happy",
+    zh: "幸福 / 幸福的",
+    zhPinyin: "xìng fú / xìng fú de",
+    fr: "bonheur / heureux, heureuse"
   },
   {
-    vi: "hoặc",
-    en: "or either … or",
-    zh: "或者",
-    zhPinyin: "huò zhě",
-    fr: "ou"
+    vi: "đơn giản",
+    en: "simple",
+    zh: "简单的",
+    zhPinyin: "jiǎn dān de",
+    fr: "simple"
   },
   {
-    vi: "bởi vì",
-    en: "because, reason",
-    zh: "因为",
-    zhPinyin: "yīn wèi",
-    fr: "parce que"
+    vi: "nhanh",
+    en: "fast, (can be adjective or adverb)",
+    zh: "快的 / 快",
+    zhPinyin: "kuài de / kuài",
+    fr: "rapide / rapidement"
   },
   {
-    vi: "tổng cộng",
-    en: "total, in total",
-    zh: "总共",
-    zhPinyin: "zǒng gòng",
-    fr: "au total"
+    vi: "phức tạp",
+    en: "complicated",
+    zh: "复杂的",
+    zhPinyin: "fù zá de",
+    fr: "compliqué, compliquée"
   },
   {
-    vi: "số",
-    en: "number, digit",
-    zh: "数字",
-    zhPinyin: "shù zì",
-    fr: "nombre"
+    vi: "nhỏ",
+    en: "small, little",
+    zh: "小的",
+    zhPinyin: "xiǎo de",
+    fr: "petit, petite"
   },
   {
-    vi: "nửa",
-    en: "half, one half",
-    zh: "一半",
-    zhPinyin: "yí bàn",
-    fr: "moitié"
+    vi: "lớn",
+    en: "large, big, great",
+    zh: "大的",
+    zhPinyin: "dà de",
+    fr: "grand, grande"
   },
   {
-    vi: "đủ",
-    en: "enough, sufficient",
-    zh: "足够",
-    zhPinyin: "zú gòu",
-    fr: "assez"
+    vi: "dễ",
+    en: "easy",
+    zh: "容易的",
+    zhPinyin: "róng yì de",
+    fr: "facile"
   },
   {
-    vi: "tỷ",
-    en: "one billion",
-    zh: "十亿",
-    zhPinyin: "shí yì",
-    fr: "milliard"
+    vi: "đặc biệt",
+    en: "special, especially",
+    zh: "特别的 / 特别",
+    zhPinyin: "tè bié de / tè bié",
+    fr: "spécial, spéciale / spécialement"
   },
   {
-    vi: "triệu",
-    en: "million, millions",
-    zh: "百万",
-    zhPinyin: "bǎi wàn",
-    fr: "million"
+    vi: "ngon",
+    en: "delicious, deliciously",
+    zh: "美味的 / 美味地",
+    zhPinyin: "měi wèi de / měi wèi de",
+    fr: "délicieux, délicieuse / délicieusement"
   },
   {
-    vi: "lẻ",
-    en: "zero",
-    zh: "零",
-    zhPinyin: "líng",
-    fr: "zéro / et"
+    vi: "khó",
+    en: "hard, difficult",
+    zh: "困难的",
+    zhPinyin: "kùn nán de",
+    fr: "difficile"
   },
   {
-    vi: "mốt",
-    en: "one, used after twenty",
-    zh: "一",
-    zhPinyin: "yī",
-    fr: "un (après vingt)"
+    vi: "đậm",
+    en: "dark, deep",
+    zh: "深的 / 暗的",
+    zhPinyin: "shēn de / àn de",
+    fr: "foncé, foncée / profond, profonde"
   },
   {
-    vi: "lăm",
-    en: "five, used after ten",
-    zh: "五",
-    zhPinyin: "wǔ",
-    fr: "cinq (après dix)"
+    vi: "hồng",
+    en: "pink",
+    zh: "粉色的",
+    zhPinyin: "fěn sè de",
+    fr: "rose"
   },
   {
-    vi: "nhiều",
-    en: "many, lots of",
-    zh: "很多",
-    zhPinyin: "hěn duō",
+    vi: "vàng",
+    en: "yellow, gold",
+    zh: "黄色的 / 金色",
+    zhPinyin: "huáng sè de / jīn sè",
+    fr: "jaune / or"
+  },
+  {
+    vi: "nhạt",
+    en: "light",
+    zh: "浅的",
+    zhPinyin: "qiǎn de",
+    fr: "clair, claire"
+  },
+  {
+    vi: "tím",
+    en: "purple, violet",
+    zh: "紫色的",
+    zhPinyin: "zǐ sè de",
+    fr: "violet, violette"
+  },
+  {
+    vi: "nâu",
+    en: "brown",
+    zh: "棕色的",
+    zhPinyin: "zōng sè de",
+    fr: "marron"
+  },
+  {
+    vi: "xám",
+    en: "gray, grey",
+    zh: "灰色的",
+    zhPinyin: "huī sè de",
+    fr: "gris, grise"
+  },
+  {
+    vi: "xanh lá cây",
+    en: "green",
+    zh: "绿色的",
+    zhPinyin: "lǜ sè de",
+    fr: "vert, verte"
+  },
+  {
+    vi: "xanh da trời",
+    en: "blue",
+    zh: "蓝色的",
+    zhPinyin: "lán sè de",
+    fr: "bleu, bleue"
+  },
+  {
+    vi: "đỏ",
+    en: "red",
+    zh: "红色的",
+    zhPinyin: "hóng sè de",
+    fr: "rouge"
+  },
+  {
+    vi: "đen",
+    en: "black",
+    zh: "黑色的",
+    zhPinyin: "hēi sè de",
+    fr: "noir, noire"
+  },
+  {
+    vi: "trắng",
+    en: "white",
+    zh: "白色的",
+    zhPinyin: "bái sè de",
+    fr: "blanc, blanche"
+  },
+  {
+    vi: "màu",
+    en: "color",
+    zh: "颜色",
+    zhPinyin: "yán sè",
+    fr: "couleur"
+  },
+  {
+    vi: "hỏi",
+    en: "ask, asks",
+    zh: "问",
+    zhPinyin: "wèn",
+    fr: "demander"
+  },
+  {
+    vi: "đáp án",
+    en: "answer",
+    zh: "答案",
+    zhPinyin: "dá àn",
+    fr: "réponse"
+  },
+  {
+    vi: "câu",
+    en: "sentence",
+    zh: "句子",
+    zhPinyin: "jù zi",
+    fr: "phrase"
+  },
+  {
+    vi: "trả lời",
+    en: "answer, respond, answers",
+    zh: "回答",
+    zhPinyin: "huí dá",
+    fr: "répondre, réponse"
+  },
+  {
+    vi: "như",
+    en: "like, as",
+    zh: "像 / 如",
+    zhPinyin: "xiàng / rú",
+    fr: "comme"
+  },
+  {
+    vi: "thế nào",
+    en: "how, how were, how was",
+    zh: "怎么样",
+    zhPinyin: "zěn me yàng",
+    fr: "comment"
+  },
+  {
+    vi: "nhiêu",
+    en: "much",
+    zh: "多少",
+    zhPinyin: "duō shǎo",
     fr: "beaucoup"
   },
   {
-    vi: "tư",
-    en: "four, private",
-    zh: "四 / 私人",
-    zhPinyin: "sì / sī rén",
-    fr: "quatre / privé"
-  },
-  {
-    vi: "mười",
-    en: "number ten",
-    zh: "十",
-    zhPinyin: "shí",
-    fr: "dix"
-  },
-  {
-    vi: "chín",
-    en: "number nine",
-    zh: "九",
-    zhPinyin: "jiǔ",
-    fr: "neuf"
-  },
-  {
-    vi: "tám",
-    en: "number eight",
-    zh: "八",
-    zhPinyin: "bā",
-    fr: "huit"
-  },
-  {
-    vi: "bảy",
-    en: "number seven",
-    zh: "七",
-    zhPinyin: "qī",
-    fr: "sept"
-  },
-  {
-    vi: "sáu",
-    en: "number six",
-    zh: "六",
-    zhPinyin: "liù",
-    fr: "six"
-  },
-  {
-    vi: "trưởng thành",
-    en: "mature, adult",
-    zh: "成熟",
-    zhPinyin: "chéng shú",
-    fr: "adulte, mûr"
-  },
-  {
-    vi: "tiện lợi",
-    en: "convenient, easy to use",
-    zh: "方便",
-    zhPinyin: "fāng biàn",
-    fr: "pratique"
-  },
-  {
-    vi: "ích kỷ",
-    en: "selfish, self-centered",
-    zh: "自私",
-    zhPinyin: "zì sī",
-    fr: "égoïste"
-  },
-  {
-    vi: "nặng",
-    en: "heavy, weighty",
-    zh: "重",
-    zhPinyin: "zhòng",
-    fr: "lourd"
-  },
-  {
-    vi: "thân thiện",
-    en: "friendly, kind",
-    zh: "友好",
-    zhPinyin: "yǒu hǎo",
-    fr: "amical"
-  },
-  {
-    vi: "lịch sự",
-    en: "polite, well-mannered",
-    zh: "有礼貌",
-    zhPinyin: "yǒu lǐ mào",
-    fr: "poli"
-  },
-  {
-    vi: "tệ",
-    en: "bad, poor quality",
-    zh: "糟糕",
-    zhPinyin: "zāo gāo",
-    fr: "mauvais"
-  },
-  {
-    vi: "truyền thống",
-    en: "traditional, tradition",
-    zh: "传统",
-    zhPinyin: "chuán tǒng",
-    fr: "traditionnel, tradition"
-  },
-  {
-    vi: "sai",
-    en: "wrong, incorrect",
-    zh: "错误",
-    zhPinyin: "cuò wù",
-    fr: "faux"
-  },
-  {
-    vi: "buồn",
-    en: "sad, sorry",
-    zh: "难过",
-    zhPinyin: "nán guò",
-    fr: "triste"
-  },
-  {
-    vi: "bướng bỉnh",
-    en: "stubborn, not flexible",
-    zh: "固执",
-    zhPinyin: "gù zhí",
-    fr: "têtu"
-  },
-  {
-    vi: "nghiêm túc",
-    en: "serious, not joking",
-    zh: "严肃",
-    zhPinyin: "yán sù",
-    fr: "sérieux"
+    vi: "làm sao",
+    en: "how",
+    zh: "怎么",
+    zhPinyin: "zěn me",
+    fr: "comment"
   }
 ];
 
@@ -632,7 +660,8 @@ const LANGUAGE_HINTS = {
   vi: "vi-VN",
   en: "en-US",
   zh: "zh-CN",
-  fr: "fr-FR"
+  fr: "fr-FR",
+  ko: "ko-KR"
 };
 
 let currentFilter = "all";
@@ -947,6 +976,7 @@ function matchesFilter(vocab) {
     vocab.en.toLowerCase().includes(searchLower) ||
     vocab.vi.toLowerCase().includes(searchLower) ||
     vocab.fr.toLowerCase().includes(searchLower) ||
+    (vocab.ko && vocab.ko.toLowerCase().includes(searchLower)) ||
     (vocab.zhPinyin && vocab.zhPinyin.toLowerCase().includes(searchLower));
   
   if (!matchesSearch) return false;
@@ -954,6 +984,7 @@ function matchesFilter(vocab) {
   if (currentFilter === "zh") return true;
   if (currentFilter === "en") return true;
   if (currentFilter === "vi") return true;
+  if (currentFilter === "ko") return true;
   if (currentFilter === "fr") return true;
   
   return true;
@@ -993,6 +1024,13 @@ function renderVocab() {
           <span class="lang-content">${vocab.vi}</span>
           <button class="play-button" onclick="speakWord('${vocab.vi.replace(/'/g, "\\'")}', 'vi')" title="Listen">▶</button>
         </div>
+        ${vocab.ko ? `
+        <div class="translation-row">
+          <span class="lang-label">KO:</span>
+          <span class="lang-content">${vocab.ko}</span>
+          <button class="play-button" onclick="speakWord('${vocab.ko.split(',')[0].trim().replace(/'/g, "\\'")}', 'ko')" title="Listen">▶</button>
+        </div>
+        ` : ''}
         <div class="translation-row">
           <span class="lang-label">FR:</span>
           <span class="lang-content">${vocab.fr}</span>

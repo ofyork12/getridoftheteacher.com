@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Language Learning Game - English to Vietnamese</title>
+  <title>Language Learning Game - English to Korean</title>
   <style>
     :root {
       --primary-color: #fff;
@@ -324,7 +324,7 @@
     </div>
 
     <h1>Language Learning Game</h1>
-    <p class="subtitle">Match English words with their Vietnamese translations</p>
+    <p class="subtitle">Match English words with their Korean translations</p>
 
     <div class="controls" role="group" aria-label="Game navigation">
       <div class="lang-group">
@@ -377,8 +377,8 @@
     </div>
 
     <div class="game-controls">
-      <button id="modeEnVi" class="active">English → Vietnamese</button>
-      <a href="language-learning-game.html" class="opposite-button">Opposite</a>
+      <button id="modeEnKo" class="active">English → Korean</button>
+      <a href="language-learning-game-ko.html" class="opposite-button">Opposite</a>
     </div>
 
     <div class="pagination-controls" id="paginationControls"></div>
@@ -806,10 +806,11 @@ const LANGUAGE_HINTS = {
   vi: "vi-VN",
   en: "en-US",
   zh: "zh-CN",
-  fr: "fr-FR"
+  fr: "fr-FR",
+  ko: "ko-KR"
 };
 
-let currentMode = "en-vi";
+let currentMode = "en-ko";
 let score = 0;
 let correct = 0;
 let wrong = 0;
@@ -826,7 +827,7 @@ let currentPage = 1;
 const WORDS_PER_PAGE = 10;
 
 const MODES = {
-  "en-vi": { from: "en", to: "vi", fromLabel: "English", toLabel: "Vietnamese" }
+  "en-ko": { from: "en", to: "ko", fromLabel: "English", toLabel: "Korean" }
 };
 
 function initVoices() {
@@ -838,112 +839,125 @@ function initVoices() {
     const hint = LANGUAGE_HINTS[lang];
     let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
     
-    if (lang === "vi") {
-      // PRIORITY 1: Google Vietnamese voices (usually best quality and most natural)
-      // EXCLUDE voices that sound American (avoid "us", "en", "english" in name)
-      const googleVi = langGroup.filter(v => {
+    if (lang === "ko") {
+      // PRIORITY 1: Female Natural/Neural Korean voices
+      const femaleNaturalKo = langGroup.filter(v => {
         const name = v.name.toLowerCase();
-        const isGoogle = name.includes("google") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isGoogle && notAmerican;
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") || name.includes("yuna") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
       });
-      if (googleVi.length) {
-        // Prefer female Google Vietnamese
-        const femaleGoogle = googleVi.find(v => {
+      if (femaleNaturalKo.length) {
+        preferredVoices[lang] = femaleNaturalKo[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural Korean voices
+      const naturalKo = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced");
+      });
+      if (naturalKo.length) {
+        const femaleNatural = naturalKo.find(v => {
           const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("yuna") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
         });
-        preferredVoices[lang] = femaleGoogle || googleVi[0];
+        preferredVoices[lang] = femaleNatural || naturalKo[0];
         return;
       }
       
-      // PRIORITY 2: Microsoft Vietnamese voices (often good quality)
-      // EXCLUDE voices that sound American
-      const msVi = langGroup.filter(v => {
+      // PRIORITY 3: Female Korean voices
+      const femaleKo = langGroup.filter(v => {
         const name = v.name.toLowerCase();
-        const isMs = name.includes("microsoft") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn") || name.includes("vi "));
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isMs && notAmerican;
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("yuna") ||
+               (v.gender && v.gender.toLowerCase() === "female");
       });
-      if (msVi.length) {
-        // Prefer female Microsoft Vietnamese
-        const femaleMs = msVi.find(v => {
+      if (femaleKo.length) {
+        preferredVoices[lang] = femaleKo[0];
+        return;
+      }
+      
+      // PRIORITY 4: Google Korean voices
+      const googleKo = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleKo.length) {
+        preferredVoices[lang] = googleKo[0];
+        return;
+      }
+      
+      // Fallback: any Korean voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
+    
+    if (lang === "fr") {
+      // PRIORITY 1: Female Natural/Neural French voices (best quality, natural sound)
+      const femaleNaturalFr = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") || name.includes("denise") ||
+                        name.includes("hélène") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalFr.length) {
+        preferredVoices[lang] = femaleNaturalFr[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural French voices (preferring female)
+      const naturalFr = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced");
+      });
+      if (naturalFr.length) {
+        const femaleNatural = naturalFr.find(v => {
           const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("denise") ||
+                 name.includes("hélène") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
         });
-        preferredVoices[lang] = femaleMs || msVi[0];
+        preferredVoices[lang] = femaleNatural || naturalFr[0];
         return;
       }
       
-      // PRIORITY 3: Any voice explicitly marked as Vietnamese (exclude American-sounding)
-      const explicitVi = langGroup.filter(v => {
+      // PRIORITY 3: Female French voices
+      const femaleFr = langGroup.filter(v => {
         const name = v.name.toLowerCase();
-        const isVietnamese = name.includes("vietnamese") || name.includes("vi-vn") || name.includes("vi-vietnam");
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isVietnamese && notAmerican;
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("denise") ||
+               name.includes("hélène") ||
+               (v.gender && v.gender.toLowerCase() === "female");
       });
-      if (explicitVi.length) {
-        // Prefer female
-        const femaleExplicit = explicitVi.find(v => {
-          const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
-        });
-        preferredVoices[lang] = femaleExplicit || explicitVi[0];
+      if (femaleFr.length) {
+        preferredVoices[lang] = femaleFr[0];
         return;
       }
       
-      // PRIORITY 4: Female natural/neural Vietnamese voices (exclude American)
-      const femaleNaturalVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        const isFemale = name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
-        const isNatural = name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced");
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isFemale && isNatural && notAmerican;
-      });
-      if (femaleNaturalVi.length) {
-        preferredVoices[lang] = femaleNaturalVi[0];
+      // PRIORITY 4: Google French voices
+      const googleFr = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleFr.length) {
+        preferredVoices[lang] = googleFr[0];
         return;
       }
       
-      // PRIORITY 5: Any natural/neural Vietnamese voices (exclude American)
-      const naturalVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        const isNatural = name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced");
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isNatural && notAmerican;
-      });
-      if (naturalVi.length) {
-        const femaleNatural = naturalVi.find(v => {
-          const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
-        });
-        preferredVoices[lang] = femaleNatural || naturalVi[0];
-        return;
-      }
-      
-      // PRIORITY 6: Any female Vietnamese voice (exclude American)
-      const femaleVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        const isFemale = name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
-        const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-        return isFemale && notAmerican;
-      });
-      if (femaleVi.length) {
-        preferredVoices[lang] = femaleVi[0];
-        return;
-      }
-      
-      // PRIORITY 7: Any Vietnamese voice that doesn't sound American
-      const nonAmericanVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        return !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-      });
-      if (nonAmericanVi.length) {
-        preferredVoices[lang] = nonAmericanVi[0];
-        return;
-      }
-      
-      // Fallback: any Vietnamese voice (last resort)
+      // Fallback: any French voice
       if (langGroup.length) {
         preferredVoices[lang] = langGroup[0];
         return;
@@ -1060,14 +1074,14 @@ function speakWord(text, lang) {
     }
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = lang === "vi" || lang === "en" ? 0.9 : 0.95;
+    utterance.rate = lang === "ko" || lang === "fr" || lang === "en" ? 0.9 : 0.95;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     utterance.lang = LANGUAGE_HINTS[lang] || lang;
     
     let voice = preferredVoices[lang];
     // For Vietnamese and English, always try to get the best voice
-    if (!voice || lang === "vi" || lang === "en") {
+    if (!voice || lang === "ko" || lang === "fr" || lang === "en") {
       const hint = LANGUAGE_HINTS[lang];
       const langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || lang));
       
@@ -1093,53 +1107,24 @@ function speakWord(text, lang) {
           voice = langGroup[0];
         }
         preferredVoices[lang] = voice;
-      } else if (lang === "vi" && langGroup.length > 0) {
-        // Prioritize Google Vietnamese voices (exclude American-sounding)
-        const googleVi = langGroup.filter(v => {
+      } else if (lang === "fr" && langGroup.length > 0) {
+        // Prioritize female French voices
+        const femaleFr = langGroup.filter(v => {
           const name = v.name.toLowerCase();
-          const isGoogle = name.includes("google") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-          const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-          return isGoogle && notAmerican;
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("denise") ||
+                 name.includes("hélène") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
         });
-        if (googleVi.length) {
-          const femaleGoogle = googleVi.find(v => {
+        if (femaleFr.length) {
+          // Prefer natural/neural female voices
+          const femaleNatural = femaleFr.find(v => {
             const name = v.name.toLowerCase();
-            return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+            return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced");
           });
-          voice = femaleGoogle || googleVi[0];
+          voice = femaleNatural || femaleFr[0];
         } else {
-          // Then Microsoft Vietnamese (exclude American-sounding)
-          const msVi = langGroup.filter(v => {
-            const name = v.name.toLowerCase();
-            const isMs = name.includes("microsoft") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-            const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-            return isMs && notAmerican;
-          });
-          if (msVi.length) {
-            const femaleMs = msVi.find(v => {
-              const name = v.name.toLowerCase();
-              return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
-            });
-            voice = femaleMs || msVi[0];
-          } else {
-            // Then any explicitly Vietnamese voice (exclude American-sounding)
-            const explicitVi = langGroup.filter(v => {
-              const name = v.name.toLowerCase();
-              const isVietnamese = name.includes("vietnamese") || name.includes("vi-vn");
-              const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-              return isVietnamese && notAmerican;
-            });
-            if (explicitVi.length) {
-              voice = explicitVi[0];
-            } else {
-              // Last resort: any Vietnamese voice that doesn't sound American
-              const nonAmericanVi = langGroup.filter(v => {
-                const name = v.name.toLowerCase();
-                return !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
-              });
-              voice = nonAmericanVi.length ? nonAmericanVi[0] : langGroup[0];
-            }
-          }
+          voice = langGroup[0];
         }
         preferredVoices[lang] = voice;
       } else if (!voice) {
@@ -1171,13 +1156,16 @@ function speakWord(text, lang) {
 }
 
 function getCurrentPageVocab() {
+  // Filter to only include vocabulary with Korean translations
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
   const startIdx = (currentPage - 1) * WORDS_PER_PAGE;
   const endIdx = startIdx + WORDS_PER_PAGE;
-  return VOCABULARY.slice(startIdx, endIdx);
+  return koreanVocab.slice(startIdx, endIdx);
 }
 
 function getTotalPages() {
-  return Math.ceil(VOCABULARY.length / WORDS_PER_PAGE);
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
+  return Math.ceil(koreanVocab.length / WORDS_PER_PAGE);
 }
 
 function renderPagination() {
@@ -1215,8 +1203,9 @@ function getRandomVocab() {
   }
   
   // Get available words (not used in current round) from current page
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
   const available = pageVocab.filter((v, idx) => {
-    const globalIdx = VOCABULARY.indexOf(v);
+    const globalIdx = koreanVocab.indexOf(v);
     return !usedInRound.has(globalIdx);
   });
   
@@ -1227,7 +1216,8 @@ function getRandomVocab() {
   }
   
   const selected = available[Math.floor(Math.random() * available.length)];
-  const selectedIndex = VOCABULARY.indexOf(selected);
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
+  const selectedIndex = koreanVocab.indexOf(selected);
   usedInRound.add(selectedIndex);
   
   return selected;
@@ -1236,9 +1226,10 @@ function getRandomVocab() {
 function getRandomWrongAnswers(correctAnswer, count) {
   const wrong = [];
   const used = new Set([correctAnswer]);
-  while (wrong.length < count && wrong.length < VOCABULARY.length - 1) {
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
+  while (wrong.length < count && wrong.length < koreanVocab.length - 1) {
     const vocab = getRandomVocab();
-    const answer = vocab[MODES[currentMode].to];
+    const answer = vocab[MODES[currentMode].to].split(',')[0].trim().split(' / ')[0].trim();
     if (!used.has(answer) && answer) {
       wrong.push(answer);
       used.add(answer);
@@ -1264,7 +1255,8 @@ function startNewQuestion() {
   
   // Extract first English word/phrase (before comma if multiple meanings)
   const questionText = vocab[mode.from].split(',')[0].trim();
-  const correctAnswer = vocab[mode.to];
+  // Extract first French word/phrase (before comma or slash if multiple meanings)
+  const correctAnswer = vocab[mode.to].split(',')[0].trim().split(' / ')[0].trim();
   
   document.getElementById("questionText").textContent = questionText;
   document.getElementById("questionHint").textContent = "English";
@@ -1289,7 +1281,8 @@ function showRoundEnd() {
   answerSelected = true;
   const endingRound = currentRound;
   const nextRound = currentRound + 1;
-  const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
+  const totalRounds = Math.ceil(koreanVocab.length / QUESTIONS_PER_ROUND);
   const finalRound = nextRound > totalRounds ? 1 : nextRound;
   
   document.getElementById("questionText").textContent = `Round ${endingRound} Complete!`;
@@ -1316,7 +1309,8 @@ function startNextRound() {
   usedInRound.clear();
   
   // After all rounds, restart from round 1
-  const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
+  const koreanVocab = VOCABULARY.filter(v => v.ko);
+  const totalRounds = Math.ceil(koreanVocab.length / QUESTIONS_PER_ROUND);
   if (currentRound > totalRounds) {
     currentRound = 1;
   }
@@ -1328,12 +1322,12 @@ function startNextRound() {
 }
 
 function selectAnswer(element, isCorrect) {
-  // Always speak the answer when clicked (answers are in Vietnamese for English → Vietnamese game)
+  // Always speak the answer when clicked (answers are in Korean for English → Korean game)
   const answerText = element.textContent.trim();
   
   // If already selected, just speak and return (allow hearing both answers)
   if (answerSelected) {
-    speakWord(answerText, "vi");
+    speakWord(answerText, "ko");
     return;
   }
   
@@ -1354,7 +1348,7 @@ function selectAnswer(element, isCorrect) {
   
   if (isCorrect) {
     // Correct answer - just speak it
-    speakWord(answerText, "vi");
+    speakWord(answerText, "ko");
     score += 10;
     correct++;
     streak++;
@@ -1368,11 +1362,11 @@ function selectAnswer(element, isCorrect) {
     document.getElementById("feedback").className = "feedback incorrect";
     
     // Speak wrong answer first
-    speakWordWithCallback(answerText, "vi", () => {
+    speakWordWithCallback(answerText, "ko", () => {
       // After wrong answer finishes, speak the correct answer
       if (correctAnswerText) {
         setTimeout(() => {
-          speakWord(correctAnswerText, "vi");
+          speakWord(correctAnswerText, "ko");
         }, 300);
       }
     });
@@ -1407,14 +1401,14 @@ function speakWordWithCallback(text, lang, callback) {
     }
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = lang === "vi" || lang === "en" ? 0.9 : 0.95;
+    utterance.rate = lang === "ko" || lang === "fr" || lang === "en" ? 0.9 : 0.95;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     utterance.lang = LANGUAGE_HINTS[lang] || lang;
     
     let voice = preferredVoices[lang];
     // For Vietnamese and English, always try to get the best voice
-    if (!voice || lang === "vi" || lang === "en") {
+    if (!voice || lang === "ko" || lang === "fr" || lang === "en") {
       const hint = LANGUAGE_HINTS[lang];
       const langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || lang));
       
@@ -1436,6 +1430,25 @@ function speakWordWithCallback(text, lang, callback) {
             return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online");
           });
           voice = femaleNatural || femaleEn[0];
+        } else {
+          voice = langGroup[0];
+        }
+        preferredVoices[lang] = voice;
+      } else if (lang === "ko" && langGroup.length > 0) {
+        // Prioritize female Korean voices
+        const femaleKo = langGroup.filter(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("yuna") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        if (femaleKo.length) {
+          // Prefer natural/neural female voices
+          const femaleNatural = femaleKo.find(v => {
+            const name = v.name.toLowerCase();
+            return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online");
+          });
+          voice = femaleNatural || femaleKo[0];
         } else {
           voice = langGroup[0];
         }

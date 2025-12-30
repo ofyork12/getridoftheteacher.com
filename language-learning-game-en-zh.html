@@ -246,6 +246,63 @@
       background: var(--primary-color);
       color: var(--bg-color);
     }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 30px 0;
+      justify-content: center;
+      align-items: center;
+    }
+    .lang-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .game-nav-button {
+      padding: 10px 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 140px;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+    }
+    .game-nav-button:hover {
+      background: var(--hover-color);
+    }
+    .pagination-controls {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .page-button {
+      padding: 8px 16px;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 50px;
+    }
+    .page-button:hover {
+      background: var(--hover-color);
+    }
+    .page-button.active {
+      background: var(--primary-color);
+      color: var(--bg-color);
+    }
     @media (max-width: 768px) {
       .answer-options {
         grid-template-columns: 1fr;
@@ -262,14 +319,39 @@
 <body>
   <div class="container">
     <div class="navigation">
-      <a href="index.html" class="nav-button">Home</a>
-      <a href="language-learning-zh.html" class="nav-button">Chinese Vocabulary</a>
-      <a href="language-learning-game-zh.html" class="nav-button">Chinese → English</a>
-      <a href="language-learning-game-en-zh.html" class="nav-button">English → Chinese</a>
+      <a href="language-learning.html" class="nav-button">Language Home</a>
+      <a href="index.html" class="nav-button">Math Home</a>
     </div>
 
     <h1>Language Learning Game</h1>
     <p class="subtitle">Match English words with their Chinese translations</p>
+
+    <div class="controls" role="group" aria-label="Game navigation">
+      <div class="lang-group">
+        <a href="language-learning-game.html" class="game-nav-button">Vietnamese → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-vi.html" class="game-nav-button">English → Vietnamese</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-zh.html" class="game-nav-button">Chinese → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-zh.html" class="game-nav-button">English → Chinese</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-ko.html" class="game-nav-button">Korean → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-ko.html" class="game-nav-button">English → Korean</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-fr.html" class="game-nav-button">French → English</a>
+      </div>
+      <div class="lang-group">
+        <a href="language-learning-game-en-fr.html" class="game-nav-button">English → French</a>
+      </div>
+    </div>
 
     <div class="game-stats">
       <div class="stat">
@@ -299,6 +381,8 @@
       <a href="language-learning-game-zh.html" class="opposite-button">Opposite</a>
     </div>
 
+    <div class="pagination-controls" id="paginationControls"></div>
+
     <div id="gameArea">
       <div class="question-card">
         <div class="question-text" id="questionText">
@@ -316,56 +400,406 @@
 
 <script>
 const VOCABULARY = [
-  { vi: "cuối cùng", en: "finally, last, final", zh: "最后", zhPinyin: "zuì hòu", fr: "finalement, enfin" },
-  { vi: "đầu tiên", en: "first in order", zh: "第一", zhPinyin: "dì yī", fr: "premier / première" },
-  { vi: "thứ", en: "thing, things, ordinal marker", zh: "东西 / 第", zhPinyin: "dōng xi / dì", fr: "chose ; marqueur ordinal" },
-  { vi: "lần", en: "time, times, turns", zh: "次", zhPinyin: "cì", fr: "fois" },
-  { vi: "vào", en: "enter, to go into", zh: "进入", zhPinyin: "jìn rù", fr: "entrer" },
-  { vi: "dang", en: "is / am / are action in progress", zh: "正在", zhPinyin: "zhèng zài", fr: "être en train de" },
-  { vi: "lúc này", en: "now, this moment, right now", zh: "此刻", zhPinyin: "cǐ kè", fr: "en ce moment" },
-  { vi: "bây giờ", en: "now, at the moment", zh: "现在", zhPinyin: "xiàn zài", fr: "maintenant" },
-  { vi: "hiện tại", en: "currently, at present", zh: "目前 / 现在", zhPinyin: "mù qián / xiàn zài", fr: "actuellement" },
-  { vi: "nên", en: "so, therefore, ought to", zh: "所以 / 应该", zhPinyin: "suǒ yǐ / yīng gāi", fr: "donc, devoir" },
-  { vi: "trước", en: "before, ago, in front of", zh: "以前 / 前面", zhPinyin: "yǐ qián / qián miàn", fr: "avant, devant" },
-  { vi: "nhưng", en: "but, however", zh: "但是", zhPinyin: "dàn shì", fr: "mais" },
-  { vi: "mà còn", en: "not only, but also", zh: "而且", zhPinyin: "ér qiě", fr: "non seulement… mais aussi" },
-  { vi: "đều", en: "all, both", zh: "都", zhPinyin: "dōu", fr: "tous, toutes" },
-  { vi: "cả", en: "all, whole", zh: "全部", zhPinyin: "quán bù", fr: "tout, toute" },
-  { vi: "tuy", en: "although, despite", zh: "虽然", zhPinyin: "suī rán", fr: "bien que" },
-  { vi: "Nếu", en: "If, conditional", zh: "如果", zhPinyin: "rú guǒ", fr: "si" },
-  { vi: "trong khi", en: "While, at the same time", zh: "当…的时候", zhPinyin: "dāng … de shí hòu", fr: "pendant que" },
-  { vi: "thì", en: "Then, sentence marker", zh: "就", zhPinyin: "jiù", fr: "alors" },
-  { vi: "khi nào", en: "when, at what time", zh: "什么时候", zhPinyin: "shén me shí hòu", fr: "quand" },
-  { vi: "hoặc", en: "or either … or", zh: "或者", zhPinyin: "huò zhě", fr: "ou" },
-  { vi: "bởi vì", en: "because, reason", zh: "因为", zhPinyin: "yīn wèi", fr: "parce que" },
-  { vi: "tổng cộng", en: "total, in total", zh: "总共", zhPinyin: "zǒng gòng", fr: "au total" },
-  { vi: "số", en: "number, digit", zh: "数字", zhPinyin: "shù zì", fr: "nombre" },
-  { vi: "nửa", en: "half, one half", zh: "一半", zhPinyin: "yí bàn", fr: "moitié" },
-  { vi: "đủ", en: "enough, sufficient", zh: "足够", zhPinyin: "zú gòu", fr: "assez" },
-  { vi: "tỷ", en: "one billion", zh: "十亿", zhPinyin: "shí yì", fr: "milliard" },
-  { vi: "triệu", en: "million, millions", zh: "百万", zhPinyin: "bǎi wàn", fr: "million" },
-  { vi: "lẻ", en: "zero", zh: "零", zhPinyin: "líng", fr: "zéro / et" },
-  { vi: "mốt", en: "one, used after twenty", zh: "一", zhPinyin: "yī", fr: "un (après vingt)" },
-  { vi: "lăm", en: "five, used after ten", zh: "五", zhPinyin: "wǔ", fr: "cinq (après dix)" },
-  { vi: "nhiều", en: "many, lots of", zh: "很多", zhPinyin: "hěn duō", fr: "beaucoup" },
-  { vi: "tư", en: "four, private", zh: "四 / 私人", zhPinyin: "sì / sī rén", fr: "quatre / privé" },
-  { vi: "mười", en: "number ten", zh: "十", zhPinyin: "shí", fr: "dix" },
-  { vi: "chín", en: "number nine", zh: "九", zhPinyin: "jiǔ", fr: "neuf" },
-  { vi: "tám", en: "number eight", zh: "八", zhPinyin: "bā", fr: "huit" },
-  { vi: "bảy", en: "number seven", zh: "七", zhPinyin: "qī", fr: "sept" },
-  { vi: "sáu", en: "number six", zh: "六", zhPinyin: "liù", fr: "six" },
-  { vi: "trưởng thành", en: "mature, adult", zh: "成熟", zhPinyin: "chéng shú", fr: "adulte, mûr" },
-  { vi: "tiện lợi", en: "convenient, easy to use", zh: "方便", zhPinyin: "fāng biàn", fr: "pratique" },
-  { vi: "ích kỷ", en: "selfish, self-centered", zh: "自私", zhPinyin: "zì sī", fr: "égoïste" },
-  { vi: "nặng", en: "heavy, weighty", zh: "重", zhPinyin: "zhòng", fr: "lourd" },
-  { vi: "thân thiện", en: "friendly, kind", zh: "友好", zhPinyin: "yǒu hǎo", fr: "amical" },
-  { vi: "lịch sự", en: "polite, well-mannered", zh: "有礼貌", zhPinyin: "yǒu lǐ mào", fr: "poli" },
-  { vi: "tệ", en: "bad, poor quality", zh: "糟糕", zhPinyin: "zāo gāo", fr: "mauvais" },
-  { vi: "truyền thống", en: "traditional, tradition", zh: "传统", zhPinyin: "chuán tǒng", fr: "traditionnel, tradition" },
-  { vi: "sai", en: "wrong, incorrect", zh: "错误", zhPinyin: "cuò wù", fr: "faux" },
-  { vi: "buồn", en: "sad, sorry", zh: "难过", zhPinyin: "nán guò", fr: "triste" },
-  { vi: "bướng bỉnh", en: "stubborn, not flexible", zh: "固执", zhPinyin: "gù zhí", fr: "têtu" },
-  { vi: "nghiêm túc", en: "serious, not joking", zh: "严肃", zhPinyin: "yán sù", fr: "sérieux" }
+  { vi: "tích cực", en: "positive", zh: "积极的", zhPinyin: "jī jí de", ko: "긍정적인", fr: "positif, positive" },
+  { vi: "lạc quan", en: "optimistic", zh: "乐观的", zhPinyin: "lè guān de", ko: "낙관적인", fr: "optimiste" },
+  { vi: "dài", en: "long", zh: "长的", zhPinyin: "cháng de", ko: "긴", fr: "long, longue" },
+  { vi: "ngắn", en: "short", zh: "短的", zhPinyin: "duǎn de", ko: "짧은", fr: "court, courte" },
+  { vi: "hiện đại", en: "modern", zh: "现代的", zhPinyin: "xiàn dài de", ko: "현대적인", fr: "moderne" },
+  { vi: "hoàn hảo", en: "perfect", zh: "完美的", zhPinyin: "wán měi de", ko: "완벽한", fr: "parfait, parfaite" },
+  { vi: "độc lập", en: "independent, independence", zh: "独立的 / 独立", zhPinyin: "dú lì de / dú lì", ko: "독립적인 / 독립", fr: "indépendant, indépendante / indépendance" },
+  { vi: "nghèo", en: "poor", zh: "贫穷的", zhPinyin: "pín qióng de", ko: "가난한", fr: "pauvre" },
+  { vi: "nguy hiểm", en: "dangerous", zh: "危险的", zhPinyin: "wēi xiǎn de", ko: "위험한", fr: "dangereux, dangereuse" },
+  { vi: "xa xỉ", en: "luxurious", zh: "奢侈的", zhPinyin: "shē chǐ de", ko: "사치스러운", fr: "luxueux, luxueuse" },
+  { vi: "mới", en: "new", zh: "新的", zhPinyin: "xīn de", ko: "새로운", fr: "nouveau, nouvelle" },
+  { vi: "cũ", en: "are old, old, former", zh: "旧的 / 老的", zhPinyin: "jiù de / lǎo de", ko: "오래된 / 옛날의", fr: "vieux, vieille / ancien, ancienne" },
+  { vi: "cần thiết", en: "necessary", zh: "必要的", zhPinyin: "bì yào de", ko: "필요한", fr: "nécessaire" },
+  { vi: "kiên nhẫn", en: "patient", zh: "耐心的", zhPinyin: "nài xīn de", ko: "인내심 있는", fr: "patient, patiente" },
+  { vi: "đắt", en: "expensive", zh: "昂贵的", zhPinyin: "áng guì de", ko: "비싼", fr: "cher, chère" },
+  { vi: "trung thực", en: "honest", zh: "诚实的", zhPinyin: "chéng shí de", ko: "정직한", fr: "honnête" },
+  { vi: "quan trọng", en: "is important, important, was important", zh: "重要的", zhPinyin: "zhòng yào de", ko: "중요한", fr: "important, importante" },
+  { vi: "hài hước", en: "humorous, funny", zh: "幽默的 / 有趣的", zhPinyin: "yōu mò de / yǒu qù de", ko: "유머러운 / 재미있는", fr: "humoristique, drôle" },
+  { vi: "chậm", en: "slow, slowly (when placed after verb), late", zh: "慢的 / 慢", zhPinyin: "màn de / màn", ko: "느린 / 천천히", fr: "lent, lente / lentement" },
+  { vi: "hạnh phúc", en: "happiness, happy", zh: "幸福 / 幸福的", zhPinyin: "xìng fú / xìng fú de", ko: "행복 / 행복한", fr: "bonheur / heureux, heureuse" },
+  { vi: "đơn giản", en: "simple", zh: "简单的", zhPinyin: "jiǎn dān de", ko: "간단한", fr: "simple" },
+  { vi: "nhanh", en: "fast, (can be adjective or adverb)", zh: "快的 / 快", zhPinyin: "kuài de / kuài", ko: "빠른 / 빠르게", fr: "rapide / rapidement" },
+  { vi: "phức tạp", en: "complicated", zh: "复杂的", zhPinyin: "fù zá de", ko: "복잡한", fr: "compliqué, compliquée" },
+  { vi: "nhỏ", en: "small, little", zh: "小的", zhPinyin: "xiǎo de", ko: "작은", fr: "petit, petite" },
+  { vi: "lớn", en: "large, big, great", zh: "大的", zhPinyin: "dà de", ko: "큰", fr: "grand, grande" },
+  { vi: "dễ", en: "easy", zh: "容易的", zhPinyin: "róng yì de", ko: "쉬운", fr: "facile" },
+  { vi: "đặc biệt", en: "special, especially", zh: "特别的 / 特别", zhPinyin: "tè bié de / tè bié", ko: "특별한 / 특히", fr: "spécial, spéciale / spécialement" },
+  { vi: "ngon", en: "delicious, deliciously", zh: "美味的 / 美味地", zhPinyin: "měi wèi de / měi wèi de", ko: "맛있는 / 맛있게", fr: "délicieux, délicieuse / délicieusement" },
+  { vi: "khó", en: "hard, difficult", zh: "困难的", zhPinyin: "kùn nán de", ko: "어려운", fr: "difficile" },
+  { vi: "đậm", en: "dark, deep", zh: "深的 / 暗的", zhPinyin: "shēn de / àn de", ko: "어두운 / 깊은", fr: "foncé, foncée / profond, profonde" },
+  { vi: "hồng", en: "pink", zh: "粉色的", zhPinyin: "fěn sè de", ko: "분홍색", fr: "rose" },
+  { vi: "vàng", en: "yellow, gold", zh: "黄色的 / 金色", zhPinyin: "huáng sè de / jīn sè", ko: "노란색 / 금색", fr: "jaune / or" },
+  { vi: "nhạt", en: "light", zh: "浅的", zhPinyin: "qiǎn de", ko: "밝은", fr: "clair, claire" },
+  { vi: "tím", en: "purple, violet", zh: "紫色的", zhPinyin: "zǐ sè de", ko: "보라색", fr: "violet, violette" },
+  { vi: "nâu", en: "brown", zh: "棕色的", zhPinyin: "zōng sè de", ko: "갈색", fr: "marron" },
+  { vi: "xám", en: "gray, grey", zh: "灰色的", zhPinyin: "huī sè de", ko: "회색", fr: "gris, grise" },
+  { vi: "xanh lá cây", en: "green", zh: "绿色的", zhPinyin: "lǜ sè de", ko: "초록색", fr: "vert, verte" },
+  { vi: "xanh da trời", en: "blue", zh: "蓝色的", zhPinyin: "lán sè de", ko: "파란색", fr: "bleu, bleue" },
+  { vi: "đỏ", en: "red", zh: "红色的", zhPinyin: "hóng sè de", ko: "빨간색", fr: "rouge" },
+  { vi: "đen", en: "black", zh: "黑色的", zhPinyin: "hēi sè de", ko: "검은색", fr: "noir, noire" },
+  { vi: "trắng", en: "white", zh: "白色的", zhPinyin: "bái sè de", ko: "흰색", fr: "blanc, blanche" },
+  { vi: "màu", en: "color", zh: "颜色", zhPinyin: "yán sè", ko: "색깔", fr: "couleur" },
+  { vi: "hỏi", en: "ask, asks", zh: "问", zhPinyin: "wèn", ko: "묻다", fr: "demander" },
+  { vi: "đáp án", en: "answer", zh: "答案", zhPinyin: "dá àn", ko: "답안", fr: "réponse" },
+  { vi: "câu", en: "sentence", zh: "句子", zhPinyin: "jù zi", ko: "문장", fr: "phrase" },
+  { vi: "trả lời", en: "answer, respond, answers", zh: "回答", zhPinyin: "huí dá", ko: "답하다 / 답변", fr: "répondre, réponse" },
+  { vi: "như", en: "like, as", zh: "像 / 如", zhPinyin: "xiàng / rú", ko: "처럼 / 같이", fr: "comme" },
+  { vi: "thế nào", en: "how, how were, how was", zh: "怎么样", zhPinyin: "zěn me yàng", ko: "어떻게", fr: "comment" },
+  { vi: "nhiêu", en: "much", zh: "多少", zhPinyin: "duō shǎo", ko: "많은", fr: "beaucoup" },
+  { vi: "làm sao", en: "how", zh: "怎么", zhPinyin: "zěn me", ko: "어떻게", fr: "comment" },
+  { vi: "bao", en: "bag", zh: "包", zhPinyin: "bāo", ko: "가방", fr: "sac" },
+  { vi: "ví", en: "wallet, purse", zh: "钱包", zhPinyin: "qián bāo", ko: "지갑", fr: "portefeuille, sac à main" },
+  { vi: "pin", en: "battery", zh: "电池", zhPinyin: "diàn chí", ko: "배터리", fr: "batterie" },
+  { vi: "thuốc lá", en: "tobacco", zh: "烟草", zhPinyin: "yān cǎo", ko: "담배", fr: "tabac" },
+  { vi: "túi", en: "bag", zh: "包", zhPinyin: "bāo", ko: "가방", fr: "sac" },
+  { vi: "đèn", en: "light, lamp", zh: "灯", zhPinyin: "dēng", ko: "불 / 램프", fr: "lumière, lampe" },
+  { vi: "điện thoại", en: "phone, telephone", zh: "电话", zhPinyin: "diàn huà", ko: "전화", fr: "téléphone" },
+  { vi: "tivi", en: "television, televisions, tv", zh: "电视", zhPinyin: "diàn shì", ko: "텔레비전", fr: "télévision" },
+  { vi: "máy tính", en: "computer", zh: "电脑", zhPinyin: "diàn nǎo", ko: "컴퓨터", fr: "ordinateur" },
+  { vi: "gương", en: "mirror, example", zh: "镜子 / 例子", zhPinyin: "jìng zi / lì zi", ko: "거울 / 예", fr: "miroir, exemple" },
+  { vi: "đồng hồ", en: "watch, clock", zh: "手表 / 钟", zhPinyin: "shǒu biǎo / zhōng", ko: "시계", fr: "montre, horloge" },
+  { vi: "cửa sổ", en: "window, windows", zh: "窗户", zhPinyin: "chuāng hù", ko: "창문", fr: "fenêtre" },
+  { vi: "muỗng", en: "spoon", zh: "勺子", zhPinyin: "sháo zi", ko: "숟가락", fr: "cuillère" },
+  { vi: "chai", en: "bottle, bottles", zh: "瓶子", zhPinyin: "píng zi", ko: "병", fr: "bouteille" },
+  { vi: "giường", en: "bed", zh: "床", zhPinyin: "chuáng", ko: "침대", fr: "lit" },
+  { vi: "đứng", en: "stand, stands, stand/stands", zh: "站", zhPinyin: "zhàn", ko: "서다", fr: "se tenir debout" },
+  { vi: "ngồi", en: "sit, sits, sitting", zh: "坐", zhPinyin: "zuò", ko: "앉다", fr: "s'asseoir" },
+  { vi: "để", en: "for, let, lets", zh: "为了 / 让", zhPinyin: "wèi le / ràng", ko: "위해 / 허락하다", fr: "pour, laisser" },
+  { vi: "nhảy", en: "jump, dance, jumps", zh: "跳 / 跳舞", zhPinyin: "tiào / tiào wǔ", ko: "뛰다 / 춤추다", fr: "sauter, danser" },
+  { vi: "bắt đầu", en: "begin, start, starts", zh: "开始", zhPinyin: "kāi shǐ", ko: "시작하다", fr: "commencer" },
+  { vi: "nghĩ", en: "think, thinks", zh: "想", zhPinyin: "xiǎng", ko: "생각하다", fr: "penser" },
+  { vi: "múa", en: "dance, dances, dance/dances (verb)", zh: "跳舞", zhPinyin: "tiào wǔ", ko: "춤추다", fr: "danser" },
+  { vi: "hát", en: "sing, sings, singing", zh: "唱", zhPinyin: "chàng", ko: "노래하다", fr: "chanter" },
+  { vi: "ủng hộ", en: "supports, support", zh: "支持", zhPinyin: "zhī chí", ko: "지지하다", fr: "soutenir" },
+  { vi: "xem", en: "watching, look at, watched", zh: "看", zhPinyin: "kàn", ko: "보다", fr: "regarder" },
+  { vi: "chạy", en: "run, runs, running", zh: "跑", zhPinyin: "pǎo", ko: "달리다", fr: "courir" },
+  { vi: "việc", en: "work, business, job", zh: "工作 / 事情", zhPinyin: "gōng zuò / shì qíng", ko: "일 / 사업", fr: "travail, affaire, emploi" },
+  { vi: "làm", en: "to be, has worked as, do on", zh: "做 / 是", zhPinyin: "zuò / shì", ko: "하다 / 이다", fr: "être, faire" },
+  { vi: "lấy", en: "takes, take, get", zh: "拿 / 取", zhPinyin: "ná / qǔ", ko: "가져가다 / 가져오다", fr: "prendre" },
+  { vi: "tìm", en: "looking for, find, look for", zh: "找", zhPinyin: "zhǎo", ko: "찾다", fr: "chercher" },
+  { vi: "bơi", en: "swim, swims, swimming", zh: "游泳", zhPinyin: "yóu yǒng", ko: "수영하다", fr: "nager" },
+  { vi: "giúp", en: "help, helps", zh: "帮助", zhPinyin: "bāng zhù", ko: "도와주다", fr: "aider" },
+  { vi: "mở", en: "open, opens, turn on", zh: "打开", zhPinyin: "dǎ kāi", ko: "열다 / 켜다", fr: "ouvrir" },
+  { vi: "đỡ", en: "help", zh: "帮助", zhPinyin: "bāng zhù", ko: "도와주다", fr: "aider" },
+  { vi: "chơi", en: "play, plays, playing", zh: "玩", zhPinyin: "wán", ko: "놀다", fr: "jouer" },
+  { vi: "luyện", en: "practices, practice", zh: "练习", zhPinyin: "liàn xí", ko: "연습하다", fr: "pratiquer" },
+  { vi: "bộ", en: "(classifier for clothes), (classifier for sets), board", zh: "套 / 部", zhPinyin: "tào / bù", ko: "세트 / 부", fr: "ensemble, jeu" },
+  { vi: "bán", en: "sell, sells", zh: "卖", zhPinyin: "mài", ko: "팔다", fr: "vendre" },
+  { vi: "lắng nghe", en: "listen, listens, listening", zh: "听", zhPinyin: "tīng", ko: "듣다", fr: "écouter" },
+  { vi: "dùng", en: "use, using, uses", zh: "用", zhPinyin: "yòng", ko: "사용하다", fr: "utiliser" },
+  { vi: "cười", en: "smile, smile/smiles, laugh/laughs", zh: "笑", zhPinyin: "xiào", ko: "웃다", fr: "sourire, rire" },
+  { vi: "khóc", en: "crying, cries, cry/cries", zh: "哭", zhPinyin: "kū", ko: "울다", fr: "pleurer" },
+  { vi: "ngủ", en: "sleep, slept, sleeps", zh: "睡觉", zhPinyin: "shuì jiào", ko: "자다", fr: "dormir" },
+  { vi: "thử", en: "try, tries, try (sth) on", zh: "试", zhPinyin: "shì", ko: "시도하다", fr: "essayer" },
+  { vi: "viết", en: "write, writes", zh: "写", zhPinyin: "xiě", ko: "쓰다", fr: "écrire" },
+  { vi: "nghe", en: "listen, hear/hears, listens", zh: "听", zhPinyin: "tīng", ko: "듣다", fr: "écouter, entendre" },
+  { vi: "thấy", en: "see, find (limited context), sees", zh: "看见 / 看到", zhPinyin: "kàn jiàn / kàn dào", ko: "보다 / 발견하다", fr: "voir" },
+  { vi: "gì", en: "what, what are, what is", zh: "什么", zhPinyin: "shén me", ko: "무엇", fr: "quoi" },
+  { vi: "khi", en: "when, as, on", zh: "当 / 时候", zhPinyin: "dāng / shí hòu", ko: "때 / ~할 때", fr: "quand, lorsque" },
+  { vi: "sao", en: "what, what do, why", zh: "什么 / 为什么", zhPinyin: "shén me / wèi shén me", ko: "무엇 / 왜", fr: "quoi, pourquoi" },
+  { vi: "tại", en: "at, in", zh: "在", zhPinyin: "zài", ko: "~에 / ~에서", fr: "à, dans" },
+  { vi: "vì", en: "because, for, because of", zh: "因为", zhPinyin: "yīn wèi", ko: "~때문에 / 위해", fr: "parce que, pour" },
+  { vi: "nào", en: "let's, any, what kind of", zh: "什么", zhPinyin: "shén me", ko: "어떤", fr: "quel, quelle" },
+  { vi: "ai", en: "whom, who, anyone", zh: "谁", zhPinyin: "shéi", ko: "누구", fr: "qui" },
+  { vi: "trứng", en: "egg", zh: "鸡蛋", zhPinyin: "jī dàn", ko: "계란", fr: "œuf" },
+  { vi: "chay", en: "vegetarian, vegan", zh: "素食", zhPinyin: "sù shí", ko: "채식주의자", fr: "végétarien, végétalien" },
+  { vi: "mì ý", en: "pasta", zh: "意大利面", zhPinyin: "yì dà lì miàn", ko: "파스타", fr: "pâtes" },
+  { vi: "cà chua", en: "tomato, tomatoes", zh: "西红柿", zhPinyin: "xī hóng shì", ko: "토마토", fr: "tomate" },
+  { vi: "khoai tây chiên", en: "chips, French fries", zh: "炸薯条", zhPinyin: "zhá shǔ tiáo", ko: "감자튀김", fr: "frites" },
+  { vi: "thịt", en: "meat", zh: "肉", zhPinyin: "ròu", ko: "고기", fr: "viande" },
+  { vi: "mì ăn liền", en: "instant noodles", zh: "方便面", zhPinyin: "fāng biàn miàn", ko: "라면", fr: "nouilles instantanées" },
+  { vi: "muối", en: "salt, salty", zh: "盐", zhPinyin: "yán", ko: "소금 / 짠", fr: "sel, salé" },
+  { vi: "nấm", en: "mushroom", zh: "蘑菇", zhPinyin: "mó gū", ko: "버섯", fr: "champignon" },
+  { vi: "ớt", en: "chili, peppers, chilli", zh: "辣椒", zhPinyin: "là jiāo", ko: "고추", fr: "piment, poivron" },
+  { vi: "rau", en: "vegetable, vegetables", zh: "蔬菜", zhPinyin: "shū cài", ko: "야채", fr: "légumes" },
+  { vi: "bữa", en: "meals, meal", zh: "餐", zhPinyin: "cān", ko: "식사", fr: "repas" },
+  { vi: "trưa", en: "noon", zh: "中午", zhPinyin: "zhōng wǔ", ko: "정오", fr: "midi" },
+  { vi: "chanh", en: "lemon", zh: "柠檬", zhPinyin: "níng méng", ko: "레몬", fr: "citron" },
+  { vi: "chuối", en: "banana, bananas", zh: "香蕉", zhPinyin: "xiāng jiāo", ko: "바나나", fr: "banane" },
+  { vi: "trái cây", en: "fruit", zh: "水果", zhPinyin: "shuǐ guǒ", ko: "과일", fr: "fruit" },
+  { vi: "tối", en: "dark, evening, night", zh: "晚上", zhPinyin: "wǎn shàng", ko: "어둠 / 저녁 / 밤", fr: "soir, nuit" },
+  { vi: "canh", en: "soup", zh: "汤", zhPinyin: "tāng", ko: "수프", fr: "soupe" },
+  { vi: "thức ăn", en: "food", zh: "食物", zhPinyin: "shí wù", ko: "음식", fr: "nourriture" },
+  { vi: "dầu ăn", en: "cooking oil", zh: "食用油", zhPinyin: "shí yòng yóu", ko: "식용유", fr: "huile de cuisson" },
+  { vi: "rượu", en: "alcohol, wine", zh: "酒", zhPinyin: "jiǔ", ko: "술 / 와인", fr: "alcool, vin" },
+  { vi: "thắt lưng", en: "belt", zh: "腰带", zhPinyin: "yāo dài", ko: "벨트", fr: "ceinture" },
+  { vi: "áo lạnh", en: "sweater", zh: "毛衣", zhPinyin: "máo yī", ko: "스웨터", fr: "pull" },
+  { vi: "khăn quàng", en: "scarf, scarves", zh: "围巾", zhPinyin: "wéi jīn", ko: "스카프", fr: "écharpe" },
+  { vi: "tất", en: "socks", zh: "袜子", zhPinyin: "wà zi", ko: "양말", fr: "chaussettes" },
+  { vi: "ủng", en: "boots", zh: "靴子", zhPinyin: "xuē zi", ko: "부츠", fr: "bottes" },
+  { vi: "đôi", en: "two, pair of, pairs", zh: "双", zhPinyin: "shuāng", ko: "두 / 쌍", fr: "paire" },
+  { vi: "giày", en: "shoes, shoe, the shoes", zh: "鞋子", zhPinyin: "xié zi", ko: "신발", fr: "chaussures" },
+  { vi: "đội", en: "wears, the team, team", zh: "队", zhPinyin: "duì", ko: "팀", fr: "équipe" },
+  { vi: "quần", en: "pants, trousers", zh: "裤子", zhPinyin: "kù zi", ko: "바지", fr: "pantalon" },
+  { vi: "mang", en: "is, wears, carrying", zh: "穿", zhPinyin: "chuān", ko: "신다 / 들고 있다", fr: "porter" },
+  { vi: "mũ", en: "hat", zh: "帽子", zhPinyin: "mào zi", ko: "모자", fr: "chapeau" },
+  { vi: "váy", en: "skirt", zh: "裙子", zhPinyin: "qún zi", ko: "치마", fr: "jupe" },
+  { vi: "cởi", en: "take off", zh: "脱", zhPinyin: "tuō", ko: "벗다", fr: "enlever" },
+  { vi: "khoác", en: "coat, coats", zh: "外套", zhPinyin: "wài tào", ko: "코트", fr: "manteau" },
+  { vi: "mặc", en: "wear, wears", zh: "穿", zhPinyin: "chuān", ko: "입다", fr: "porter" },
+  { vi: "áo", en: "shirt", zh: "衬衫", zhPinyin: "chèn shān", ko: "셔츠", fr: "chemise" },
+  { vi: "đầm", en: "dress", zh: "连衣裙", zhPinyin: "lián yī qún", ko: "드레스", fr: "robe" },
+  { vi: "khỉ", en: "monkey", zh: "猴子", zhPinyin: "hóu zi", ko: "원숭이", fr: "singe" },
+  { vi: "voi", en: "elephant", zh: "大象", zhPinyin: "dà xiàng", ko: "코끼리", fr: "éléphant" },
+  { vi: "chuột", en: "mouse", zh: "老鼠", zhPinyin: "lǎo shǔ", ko: "쥐", fr: "souris" },
+  { vi: "ngựa", en: "horse", zh: "马", zhPinyin: "mǎ", ko: "말", fr: "cheval" },
+  { vi: "trâu", en: "buffalo", zh: "水牛", zhPinyin: "shuǐ niú", ko: "물소", fr: "buffle" },
+  { vi: "heo", en: "pig", zh: "猪", zhPinyin: "zhū", ko: "돼지", fr: "cochon" },
+  { vi: "rùa", en: "turtle, tortoise", zh: "乌龟", zhPinyin: "wū guī", ko: "거북이", fr: "tortue" },
+  { vi: "rồng", en: "dragon", zh: "龙", zhPinyin: "lóng", ko: "용", fr: "dragon" },
+  { vi: "cá sấu", en: "alligator", zh: "鳄鱼", zhPinyin: "è yú", ko: "악어", fr: "alligator" },
+  { vi: "chim", en: "bird", zh: "鸟", zhPinyin: "niǎo", ko: "새", fr: "oiseau" },
+  { vi: "chuồn chuồn", en: "dragonfly", zh: "蜻蜓", zhPinyin: "qīng tíng", ko: "잠자리", fr: "libellule" },
+  { vi: "thỏ", en: "rabbit, rabbits, bunny", zh: "兔子", zhPinyin: "tù zi", ko: "토끼", fr: "lapin" },
+  { vi: "gấu", en: "bear", zh: "熊", zhPinyin: "xióng", ko: "곰", fr: "ours" },
+  { vi: "rắn", en: "snake", zh: "蛇", zhPinyin: "shé", ko: "뱀", fr: "serpent" },
+  { vi: "bò", en: "ox, cow, bull", zh: "牛", zhPinyin: "niú", ko: "소", fr: "bœuf, vache" },
+  { vi: "vịt", en: "duck", zh: "鸭子", zhPinyin: "yā zi", ko: "오리", fr: "canard" },
+  { vi: "động vật", en: "animals, animal", zh: "动物", zhPinyin: "dòng wù", ko: "동물", fr: "animaux, animal" },
+  { vi: "sở thú", en: "zoo", zh: "动物园", zhPinyin: "dòng wù yuán", ko: "동물원", fr: "zoo" },
+  { vi: "trái", en: "(classifier for fruits), the, left", zh: "个 / 左", zhPinyin: "gè / zuǒ", ko: "개 / 왼쪽", fr: "classificateur, gauche" },
+  { vi: "quả", en: "(classifier), fruit", zh: "个 / 水果", zhPinyin: "gè / shuǐ guǒ", ko: "개 / 과일", fr: "classificateur, fruit" },
+  { vi: "tờ", en: "sheet", zh: "张", zhPinyin: "zhāng", ko: "장", fr: "feuille" },
+  { vi: "cuốn", en: "classifier of documents and stories, the, roll", zh: "本 / 卷", zhPinyin: "běn / juǎn", ko: "권 / 책", fr: "classificateur, rouleau" },
+  { vi: "hẹn gặp lại", en: "see you later, see you again, see you", zh: "再见", zhPinyin: "zài jiàn", ko: "나중에 봐요", fr: "à bientôt, à plus tard" },
+  { vi: "lặp lại", en: "repeat, repeats", zh: "重复", zhPinyin: "chóng fù", ko: "반복하다", fr: "répéter" },
+  { vi: "cẩn thận", en: "be careful, look out, carefully", zh: "小心", zhPinyin: "xiǎo xīn", ko: "조심하다 / 조심스럽게", fr: "attention, prudemment" },
+  { vi: "cứ tự nhiên", en: "help yourself", zh: "请自便", zhPinyin: "qǐng zì biàn", ko: "편하게 하세요", fr: "faites comme chez vous" },
+  { vi: "làm ơn", en: "please", zh: "请", zhPinyin: "qǐng", ko: "제발", fr: "s'il vous plaît" },
+  { vi: "việt", en: "Vietnamese", zh: "越南的", zhPinyin: "yuè nán de", ko: "베트남의", fr: "vietnamien" },
+  { vi: "bình thường", en: "normal, usual", zh: "正常 / 通常", zhPinyin: "zhèng cháng / tōng cháng", ko: "정상적인 / 보통", fr: "normal, habituel" },
+  { vi: "buổi", en: "the, session", zh: "次 / 场", zhPinyin: "cì / chǎng", ko: "회 / 세션", fr: "séance" },
+  { vi: "vẫn", en: "yet, still", zh: "仍然", zhPinyin: "réng rán", ko: "여전히", fr: "encore, toujours" },
+  { vi: "ổn", en: "fine", zh: "好的", zhPinyin: "hǎo de", ko: "괜찮은", fr: "bien, d'accord" },
+  { vi: "chào mừng", en: "welcome", zh: "欢迎", zhPinyin: "huān yíng", ko: "환영합니다", fr: "bienvenue" },
+  { vi: "tên", en: "name, first name, title", zh: "名字", zhPinyin: "míng zi", ko: "이름", fr: "nom, prénom" },
+  { vi: "tạm biệt", en: "goodbye, bye", zh: "再见", zhPinyin: "zài jiàn", ko: "안녕히 가세요", fr: "au revoir" },
+  { vi: "không phải là", en: "not, wasn't, am not", zh: "不是", zhPinyin: "bú shì", ko: "아니다", fr: "ne pas être" },
+  { vi: "cam", en: "orange", zh: "橙色 / 橙子", zhPinyin: "chéng sè / chéng zi", ko: "주황색 / 오렌지", fr: "orange" },
+  { vi: "nó", en: "he, it's, it", zh: "他 / 它", zhPinyin: "tā", ko: "그 / 그것", fr: "il, elle, ça" },
+  { vi: "việt nam", en: "Vietnam, Vietnamese", zh: "越南", zhPinyin: "yuè nán", ko: "베트남", fr: "Vietnam, vietnamien" },
+  { vi: "hay", en: "well, in ... or, interesting", zh: "或者 / 有趣", zhPinyin: "huò zhě / yǒu qù", ko: "또는 / 흥미로운", fr: "ou, intéressant" },
+  { vi: "ly", en: "cup, cups, glass", zh: "杯子", zhPinyin: "bēi zi", ko: "컵 / 잔", fr: "tasse, verre" },
+  { vi: "gọi", en: "orders, call, order (food)", zh: "叫 / 点", zhPinyin: "jiào / diǎn", ko: "부르다 / 주문하다", fr: "appeler, commander" },
+  { vi: "cơm", en: "rice", zh: "米饭", zhPinyin: "mǐ fàn", ko: "밥", fr: "riz" },
+  { vi: "tạp chí", en: "magazine", zh: "杂志", zhPinyin: "zá zhì", ko: "잡지", fr: "magazine" },
+  { vi: "đĩa", en: "dish, plate", zh: "盘子", zhPinyin: "pán zi", ko: "접시", fr: "assiette, plat" },
+  { vi: "họ", en: "they, they are, they're", zh: "他们", zhPinyin: "tā men", ko: "그들", fr: "ils, elles" },
+  { vi: "thực đơn", en: "menu", zh: "菜单", zhPinyin: "cài dān", ko: "메뉴", fr: "menu" },
+  { vi: "bánh", en: "cake, cookie, pie", zh: "蛋糕 / 饼干", zhPinyin: "dàn gāo / bǐng gān", ko: "케이크 / 쿠키 / 파이", fr: "gâteau, cookie, tarte" },
+  { vi: "báo", en: "newspaper, journal, paper", zh: "报纸", zhPinyin: "bào zhǐ", ko: "신문 / 종이", fr: "journal, papier" },
+  { vi: "đọc", en: "read, reads", zh: "读", zhPinyin: "dú", ko: "읽다", fr: "lire" },
+  { vi: "tập", en: "practice", zh: "练习", zhPinyin: "liàn xí", ko: "연습하다", fr: "pratiquer" },
+  { vi: "ngã", en: "fall", zh: "跌倒", zhPinyin: "diē dǎo", ko: "넘어지다", fr: "tomber" },
+  { vi: "vĩnh viễn", en: "forever", zh: "永远", zhPinyin: "yǒng yuǎn", ko: "영원히", fr: "pour toujours" },
+  { vi: "vẽ", en: "draw, draws, drawing", zh: "画", zhPinyin: "huà", ko: "그리다", fr: "dessiner" },
+  { vi: "mẫu giáo", en: "kindergarten", zh: "幼儿园", zhPinyin: "yòu ér yuán", ko: "유치원", fr: "maternelle" },
+  { vi: "dũng cảm", en: "brave, courageous", zh: "勇敢", zhPinyin: "yǒng gǎn", ko: "용감한", fr: "brave, courageux" },
+  { vi: "giàu", en: "rich", zh: "富有", zhPinyin: "fù yǒu", ko: "부유한", fr: "riche" },
+  { vi: "sợi dây", en: "string", zh: "绳子", zhPinyin: "shéng zi", fr: "ficelle, corde" },
+  { vi: "thư", en: "letter", zh: "信", zhPinyin: "xìn", fr: "lettre" },
+  { vi: "tờ giấy", en: "paper", zh: "纸", zhPinyin: "zhǐ", fr: "papier" },
+  { vi: "giấu", en: "hide", zh: "藏", zhPinyin: "cáng", fr: "cacher" },
+  { vi: "phòng", en: "room", zh: "房间", zhPinyin: "fáng jiān", fr: "chambre, pièce" },
+  { vi: "ghế", en: "chair", zh: "椅子", zhPinyin: "yǐ zi", fr: "chaise" },
+  { vi: "ghi âm", en: "record, records", zh: "录音", zhPinyin: "lù yīn", fr: "enregistrer" },
+  { vi: "phường", en: "ward", zh: "区", zhPinyin: "qū", fr: "quartier" },
+  { vi: "phà", en: "ferry", zh: "渡轮", zhPinyin: "dù lún", fr: "ferry" },
+  { vi: "mây", en: "cloud", zh: "云", zhPinyin: "yún", fr: "nuage" },
+  { vi: "chim sẻ", en: "sparrow", zh: "麻雀", zhPinyin: "má què", fr: "moineau" },
+  { vi: "chia sẻ", en: "share", zh: "分享", zhPinyin: "fēn xiǎng", fr: "partager" },
+  { vi: "sấm sét", en: "thunder", zh: "雷", zhPinyin: "léi", fr: "tonnerre" },
+  { vi: "đom đóm", en: "firefly", zh: "萤火虫", zhPinyin: "yíng huǒ chóng", fr: "luciole" },
+  { vi: "xe đạp", en: "bike, bicycle", zh: "自行车", zhPinyin: "zì xíng chē", fr: "vélo" },
+  { vi: "cây tre", en: "bamboo", zh: "竹子", zhPinyin: "zhú zi", fr: "bambou" },
+  { vi: "đu đủ", en: "papaya", zh: "木瓜", zhPinyin: "mù guā", fr: "papaye" },
+  { vi: "dì", en: "aunt", zh: "阿姨", zhPinyin: "ā yí", fr: "tante" },
+  { vi: "dê", en: "goat", zh: "山羊", zhPinyin: "shān yáng", fr: "chèvre" },
+  { vi: "đu quay", en: "ferris wheel", zh: "摩天轮", zhPinyin: "mó tiān lún", fr: "grande roue" },
+  { vi: "ô", en: "umbrella", zh: "伞", zhPinyin: "sǎn", fr: "parapluie" },
+  { vi: "nhà ga", en: "train station", zh: "火车站", zhPinyin: "huǒ chē zhàn", fr: "gare" },
+  { vi: "găng tay", en: "glove", zh: "手套", zhPinyin: "shǒu tào", fr: "gant" },
+  { vi: "dơ", en: "dirty", zh: "脏", zhPinyin: "zāng", fr: "sale" },
+  { vi: "dơi", en: "bat", zh: "蝙蝠", zhPinyin: "biān fú", fr: "chauve-souris" },
+  { vi: "an", en: "An (proper name)", zh: "安", zhPinyin: "ān", fr: "An (prénom)" },
+  { vi: "cắn", en: "bite", zh: "咬", zhPinyin: "yǎo", fr: "mordre" },
+  { vi: "gà", en: "chicken", zh: "鸡", zhPinyin: "jī", fr: "poulet" },
+  { vi: "ong", en: "bee", zh: "蜜蜂", zhPinyin: "mì fēng", fr: "abeille" },
+  { vi: "cá", en: "fish", zh: "鱼", zhPinyin: "yú", fr: "poisson" },
+  { vi: "ca", en: "mug, shift", zh: "杯子 / 班", zhPinyin: "bēi zi / bān", fr: "tasse, quart" },
+  { vi: "cái", en: "the, a, (classifier)", zh: "个", zhPinyin: "gè", fr: "le, la, classificateur" },
+  { vi: "các", en: "(indicates plurality)", zh: "各", zhPinyin: "gè", fr: "les, plusieurs" },
+  { vi: "mình", en: "I'm, I, herself", zh: "我 / 自己", zhPinyin: "wǒ / zì jǐ", fr: "je, moi-même" },
+  { vi: "kia", en: "that, those, other", zh: "那个 / 那些", zhPinyin: "nà gè / nà xiē", fr: "ce, ces, autre" },
+  { vi: "cô gái", en: "the girl, girl, girls", zh: "女孩", zhPinyin: "nǚ hái", fr: "fille" },
+  { vi: "cậu bé", en: "boy, The boy", zh: "男孩", zhPinyin: "nán hái", fr: "garçon" },
+  { vi: "bé gái", en: "girl", zh: "女孩", zhPinyin: "nǚ hái", fr: "fille" },
+  { vi: "táo", en: "apple", zh: "苹果", zhPinyin: "píng guǒ", fr: "pomme" },
+  { vi: "uống", en: "drink, has, drinks", zh: "喝", zhPinyin: "hē", fr: "boire" },
+  { vi: "nước ép", en: "juice", zh: "果汁", zhPinyin: "guǒ zhī", fr: "jus" },
+  { vi: "đàn ông", en: "men, man", zh: "男人", zhPinyin: "nán rén", fr: "homme, hommes" },
+  { vi: "phụ nữ", en: "woman, women, female", zh: "女人", zhPinyin: "nǚ rén", fr: "femme, femmes" },
+  { vi: "đứa trẻ", en: "kid, child", zh: "孩子", zhPinyin: "hái zi", fr: "enfant" },
+  { vi: "bánh mì", en: "bread", zh: "面包", zhPinyin: "miàn bāo", fr: "pain" },
+  { vi: "gia đình", en: "family", zh: "家庭", zhPinyin: "jiā tíng", fr: "famille" },
+  { vi: "mèo", en: "cat", zh: "猫", zhPinyin: "māo", fr: "chat" },
+  { vi: "chó", en: "dog", zh: "狗", zhPinyin: "gǒu", fr: "chien" },
+  { vi: "con", en: "little, kid, child", zh: "小 / 孩子", zhPinyin: "xiǎo / hái zi", fr: "petit, enfant" },
+  { vi: "ghét", en: "hate, hates, hated", zh: "恨", zhPinyin: "hèn", fr: "détester" },
+  { vi: "con gái", en: "daughter, girl", zh: "女儿 / 女孩", zhPinyin: "nǚ ér / nǚ hái", fr: "fille, fille (enfant)" },
+  { vi: "vợ", en: "wife, spouse", zh: "妻子", zhPinyin: "qī zi", fr: "épouse" },
+  { vi: "chồng", en: "husband, husbands", zh: "丈夫", zhPinyin: "zhàng fū", fr: "mari" },
+  { vi: "con trai", en: "son, boy", zh: "儿子 / 男孩", zhPinyin: "ér zi / nán hái", fr: "fils, garçon" },
+  { vi: "em gái", en: "younger sister", zh: "妹妹", zhPinyin: "mèi mei", fr: "petite sœur" },
+  { vi: "diễn", en: "show, perform, action", zh: "表演", zhPinyin: "biǎo yǎn", fr: "jouer, montrer" },
+  { vi: "em trai", en: "younger brother", zh: "弟弟", zhPinyin: "dì di", fr: "petit frère" },
+  { vi: "diễn viên hài", en: "comedian", zh: "喜剧演员", zhPinyin: "xǐ jù yǎn yuán", fr: "comédien" },
+  { vi: "yêu", en: "love, loves, loving", zh: "爱", zhPinyin: "ài", fr: "aimer" },
+  { vi: "người mẫu", en: "model, models", zh: "模特", zhPinyin: "mó tè", fr: "mannequin" },
+  { vi: "bố mẹ", en: "parents", zh: "父母", zhPinyin: "fù mǔ", fr: "parents" },
+  { vi: "đứa con", en: "child, children, baby", zh: "孩子", zhPinyin: "hái zi", fr: "enfant, bébé" },
+  { vi: "nấu ăn", en: "cook, cooks, cooking", zh: "做饭", zhPinyin: "zuò fàn", fr: "cuisiner" },
+  { vi: "sinh viên", en: "student, the students, students", zh: "学生", zhPinyin: "xué shēng", fr: "étudiant, étudiants" },
+  { vi: "nấu", en: "to cook, cook, cooking", zh: "煮", zhPinyin: "zhǔ", fr: "cuisiner" },
+  { vi: "trở thành", en: "become, get, becoming", zh: "成为", zhPinyin: "chéng wéi", fr: "devenir" },
+  { vi: "đô", en: "dollar", zh: "美元", zhPinyin: "měi yuán", fr: "dollar" },
+  { vi: "trăm", en: "hundred", zh: "百", zhPinyin: "bǎi", fr: "cent" },
+  { vi: "mua", en: "buy", zh: "买", zhPinyin: "mǎi", fr: "acheter" },
+  { vi: "đi nào", en: "let's go", zh: "走吧", zhPinyin: "zǒu ba", fr: "allons-y" },
+  { vi: "đồng", en: "VND, dong, bronze", zh: "越南盾 / 铜", zhPinyin: "yuè nán dùn / tóng", fr: "dong vietnamien, bronze" },
+  { vi: "mua sắm", en: "shop, shopping", zh: "购物", zhPinyin: "gòu wù", fr: "faire du shopping" },
+  { vi: "mươi", en: "thirty", zh: "三十", zhPinyin: "sān shí", fr: "trente" },
+  { vi: "đi", en: "travel, wear (refers to shoes), to go", zh: "去 / 穿", zhPinyin: "qù / chuān", fr: "aller, porter" },
+  { vi: "nghìn", en: "thousand, thousands, 1000", zh: "千", zhPinyin: "qiān", fr: "mille" },
+  { vi: "chiếc váy", en: "skirt", zh: "裙子", zhPinyin: "qún zi", fr: "jupe" },
+  { vi: "đẹp", en: "beautiful, pretty", zh: "漂亮", zhPinyin: "piào liang", fr: "beau, joli" },
+  { vi: "chiếc áo", en: "shirt", zh: "衬衫", zhPinyin: "chèn shān", fr: "chemise" },
+  { vi: "rẻ", en: "cheap", zh: "便宜", zhPinyin: "pián yi", fr: "bon marché" },
+  { vi: "thật", en: "real, so, really", zh: "真的 / 很", zhPinyin: "zhēn de / hěn", fr: "vrai, vraiment" },
+  { vi: "đắt tiền", en: "expensive", zh: "昂贵", zhPinyin: "áng guì", fr: "cher" },
+  { vi: "cửa hàng", en: "store", zh: "商店", zhPinyin: "shāng diàn", fr: "magasin" },
+  { vi: "quá", en: "too, so, very", zh: "太", zhPinyin: "tài", fr: "trop, très" },
+  { vi: "này", en: "this, these, hey", zh: "这个 / 这些", zhPinyin: "zhè gè / zhè xiē", fr: "ce, ces, hé" },
+  { vi: "ga", en: "station, gas", zh: "站 / 汽油", zhPinyin: "zhàn / qì yóu", fr: "gare, essence" },
+  { vi: "trạm", en: "station, stations", zh: "站", zhPinyin: "zhàn", fr: "station" },
+  { vi: "đặt chỗ", en: "make a reservation, reservation", zh: "预订", zhPinyin: "yù dìng", fr: "réserver" },
+  { vi: "biết", en: "knows, know, knowing", zh: "知道", zhPinyin: "zhī dào", fr: "savoir" },
+  { vi: "không", en: "do not, no, weren't", zh: "不", zhPinyin: "bù", fr: "ne pas, non" },
+  { vi: "xe buýt", en: "bus", zh: "公共汽车", zhPinyin: "gōng gòng qì chē", fr: "bus" },
+  { vi: "cần", en: "need, require/requires (verb), need/needs (verb)", zh: "需要", zhPinyin: "xū yào", fr: "avoir besoin" },
+  { vi: "sân bay", en: "airport, airports", zh: "机场", zhPinyin: "jī chǎng", fr: "aéroport" },
+  { vi: "vé", en: "ticket", zh: "票", zhPinyin: "piào", fr: "billet" },
+  { vi: "xe taxi", en: "taxi, taxis, (a) taxi", zh: "出租车", zhPinyin: "chū zū chē", fr: "taxi" },
+  { vi: "tàu hoả", en: "train", zh: "火车", zhPinyin: "huǒ chē", fr: "train" },
+  { vi: "máy bay", en: "airplane, plane", zh: "飞机", zhPinyin: "fēi jī", fr: "avion" },
+  { vi: "bay", en: "flies, blown, fly", zh: "飞", zhPinyin: "fēi", fr: "voler" },
+  { vi: "bằng", en: "with, as, equals", zh: "用 / 等于", zhPinyin: "yòng / děng yú", fr: "avec, égal" },
+  { vi: "cảm ơn", en: "thanks, thank you", zh: "谢谢", zhPinyin: "xiè xie", fr: "merci" },
+  { vi: "đi du lịch", en: "travelling, traveling, travel", zh: "旅行", zhPinyin: "lǚ xíng", fr: "voyager" },
+  { vi: "từ điển", en: "dictionary, dictionaries", zh: "字典", zhPinyin: "zì diǎn", fr: "dictionnaire" },
+  { vi: "rất", en: "extremely, very much, so", zh: "非常", zhPinyin: "fēi cháng", fr: "très, extrêmement" },
+  { vi: "vở", en: "notebook", zh: "笔记本", zhPinyin: "bǐ jì běn", fr: "cahier" },
+  { vi: "quyển", en: "the, (classifier)", zh: "本", zhPinyin: "běn", fr: "classificateur" },
+  { vi: "sách", en: "book", zh: "书", zhPinyin: "shū", fr: "livre" },
+  { vi: "đúng", en: "right", zh: "对", zhPinyin: "duì", fr: "correct, juste" },
+  { vi: "câu trả lời", en: "answer", zh: "答案", zhPinyin: "dá àn", fr: "réponse" },
+  { vi: "thông minh", en: "smart, intelligent", zh: "聪明", zhPinyin: "cōng míng", fr: "intelligent" },
+  { vi: "tốt", en: "well, fine, great", zh: "好", zhPinyin: "hǎo", fr: "bien, bon" },
+  { vi: "câu hỏi", en: "question", zh: "问题", zhPinyin: "wèn tí", fr: "question" },
+  { vi: "bạn học", en: "classmate", zh: "同学", zhPinyin: "tóng xué", fr: "camarade de classe" },
+  { vi: "những", en: "these, my, the", zh: "这些", zhPinyin: "zhè xiē", fr: "ces, les" },
+  { vi: "bọn họ", en: "they", zh: "他们", zhPinyin: "tā men", fr: "ils, elles" },
+  { vi: "cũng", en: "too, also, as well", zh: "也", zhPinyin: "yě", fr: "aussi, également" },
+  { vi: "học sinh", en: "student", zh: "学生", zhPinyin: "xué shēng", fr: "élève" },
+  { vi: "ngôi trường", en: "school", zh: "学校", zhPinyin: "xué xiào", fr: "école" },
+  { vi: "học", en: "school, take lessons, to learn", zh: "学习", zhPinyin: "xué xí", fr: "étudier, apprendre" },
+  { vi: "khách sạn", en: "hotel, hotels", zh: "酒店", zhPinyin: "jiǔ diàn", fr: "hôtel" },
+  { vi: "làm việc", en: "work, working, works", zh: "工作", zhPinyin: "gōng zuò", fr: "travailler" },
+  { vi: "nhà vệ sinh", en: "bathroom", zh: "卫生间", zhPinyin: "wèi shēng jiān", fr: "salle de bain" },
+  { vi: "món", en: "dish, kind, (indicates item of food)", zh: "道 / 种", zhPinyin: "dào / zhǒng", fr: "plat, sorte" },
+  { vi: "ngân hàng", en: "bank", zh: "银行", zhPinyin: "yín háng", fr: "banque" },
+  { vi: "nổi", en: "famous", zh: "出名", zhPinyin: "chū míng", fr: "célèbre" },
+  { vi: "nổi tiếng", en: "famous, popular", zh: "著名 / 流行", zhPinyin: "zhù míng / liú xíng", fr: "célèbre, populaire" },
+  { vi: "đó", en: "that, those, there", zh: "那个 / 那里", zhPinyin: "nà gè / nà lǐ", fr: "ce, là" },
+  { vi: "cho tôi hỏi", en: "excuse me", zh: "请问", zhPinyin: "qǐng wèn", fr: "excusez-moi" },
+  { vi: "nhà hàng", en: "restaurant", zh: "餐厅", zhPinyin: "cān tīng", fr: "restaurant" },
+  { vi: "đâu", en: "where, where is ... ?, which", zh: "哪里 / 哪个", zhPinyin: "nǎ lǐ / nǎ gè", fr: "où, lequel" },
+  { vi: "ở đâu", en: "where, where does ... ?, where is ... ?", zh: "在哪里", zhPinyin: "zài nǎ lǐ", fr: "où" },
+  { vi: "căn nhà", en: "house", zh: "房子", zhPinyin: "fáng zi", fr: "maison" },
+  { vi: "sống", en: "alive, live, living", zh: "生活 / 活着", zhPinyin: "shēng huó / huó zhe", fr: "vivre, en vie" },
+  { vi: "chiếc", en: "the, ones", zh: "个", zhPinyin: "gè", fr: "le, la, les" },
+  { vi: "ở", en: "stayed, stayed in, has stayed in", zh: "在", zhPinyin: "zài", fr: "être, rester" },
+  { vi: "xe ô tô", en: "car", zh: "汽车", zhPinyin: "qì chē", fr: "voiture" },
+  { vi: "ăn", en: "eats, ate, eating", zh: "吃", zhPinyin: "chī", fr: "manger" },
+  { vi: "súp", en: "soup", zh: "汤", zhPinyin: "tāng", fr: "soupe" },
+  { vi: "bát", en: "bowl", zh: "碗", zhPinyin: "wǎn", fr: "bol" },
+  { vi: "đây", en: "this, is here, these", zh: "这里 / 这个", zhPinyin: "zhè lǐ / zhè gè", fr: "ici, ce" },
+  { vi: "năm", en: "years, 5, year", zh: "年 / 五", zhPinyin: "nián / wǔ", fr: "année, cinq" },
+  { vi: "bốn", en: "four, 4", zh: "四", zhPinyin: "sì", fr: "quatre" },
+  { vi: "mì", en: "noodles", zh: "面条", zhPinyin: "miàn tiáo", fr: "nouilles" },
+  { vi: "có", en: "is, there are, with", zh: "有", zhPinyin: "yǒu", fr: "avoir, il y a" },
+  { vi: "phở", en: "pho, phở", zh: "越南粉", zhPinyin: "yuè nán fěn", fr: "phở" },
+  { vi: "thích", en: "like, likes", zh: "喜欢", zhPinyin: "xǐ huān", fr: "aimer" },
+  { vi: "ba", en: "third, father, dad", zh: "第三 / 爸爸", zhPinyin: "dì sān / bà ba", fr: "troisième, papa" },
+  { vi: "bàn", en: "the table, table, the desk", zh: "桌子", zhPinyin: "zhuō zi", fr: "table" },
+  { vi: "bạn", en: "friends, you, friendship", zh: "朋友 / 你", zhPinyin: "péng yǒu / nǐ", fr: "ami, vous" },
+  { vi: "hai", en: "two", zh: "二", zhPinyin: "èr", fr: "deux" },
+  { vi: "chúng tôi", en: "we, us", zh: "我们", zhPinyin: "wǒ men", fr: "nous" },
+  { vi: "phải không", en: "is there ... ?, do ... ?, were ... ?", zh: "是不是", zhPinyin: "shì bú shì", fr: "n'est-ce pas" },
+  { vi: "đến", en: "is, arrives, go", zh: "到", zhPinyin: "dào", fr: "arriver, aller" },
+  { vi: "đến từ", en: "are from, comes from, come from", zh: "来自", zhPinyin: "lái zì", fr: "venir de" },
+  { vi: "chị gái", en: "older sister", zh: "姐姐", zhPinyin: "jiě jie", fr: "grande sœur" },
+  { vi: "mẹ", en: "mom", zh: "妈妈", zhPinyin: "mā ma", fr: "maman" },
+  { vi: "Nhật", en: "Japan", zh: "日本", zhPinyin: "rì běn", fr: "Japon" },
+  { vi: "không phải", en: "not, is not, are not", zh: "不是", zhPinyin: "bú shì", fr: "ne pas être" },
+  { vi: "anh", en: "English, the United Kingdom, England", zh: "英语 / 英国", zhPinyin: "yīng yǔ / yīng guó", fr: "anglais, Angleterre" },
+  { vi: "anh trai", en: "older brother, elder brother", zh: "哥哥", zhPinyin: "gē ge", fr: "grand frère" },
+  { vi: "bố", en: "dad, father", zh: "爸爸", zhPinyin: "bà ba", fr: "papa, père" },
+  { vi: "của", en: "de, 's, of", zh: "的", zhPinyin: "de", fr: "de" },
+  { vi: "bác sĩ", en: "doctor", zh: "医生", zhPinyin: "yī shēng", fr: "médecin" },
+  { vi: "anh ấy", en: "he, him", zh: "他", zhPinyin: "tā", fr: "il, lui" },
+  { vi: "cô ấy", en: "she, her", zh: "她", zhPinyin: "tā", fr: "elle" },
+  { vi: "tiếng", en: "hour, hours, classifier for languages", zh: "小时 / 语言", zhPinyin: "xiǎo shí / yǔ yán", fr: "heure, langue" },
+  { vi: "nói", en: "spoken, speaks, to say", zh: "说", zhPinyin: "shuō", fr: "parler, dire" },
+  { vi: "giáo viên", en: "teacher", zh: "老师", zhPinyin: "lǎo shī", fr: "enseignant" },
+  { vi: "chúc ngủ ngon", en: "good night", zh: "晚安", zhPinyin: "wǎn ān", fr: "bonne nuit" },
+  { vi: "gặp lại sau", en: "see you later", zh: "再见", zhPinyin: "zài jiàn", fr: "à plus tard" },
+  { vi: "chào tạm biệt", en: "bye, goodbye", zh: "再见", zhPinyin: "zài jiàn", fr: "au revoir" },
+  { vi: "buổi tối", en: "evening, night", zh: "晚上", zhPinyin: "wǎn shàng", fr: "soir, nuit" },
+  { vi: "gặp", en: "encountered, dealing, meeting", zh: "遇见 / 见面", zhPinyin: "yù jiàn / jiàn miàn", fr: "rencontrer" },
+  { vi: "khoẻ", en: "well, strong, fine", zh: "好 / 强壮", zhPinyin: "hǎo / qiáng zhuàng", fr: "bien, fort" },
+  { vi: "dạo này bạn thế nào", en: "what's up, how are you doing", zh: "最近怎么样", zhPinyin: "zuì jìn zěn me yàng", fr: "comment ça va" },
+  { vi: "đói", en: "hungry", zh: "饿", zhPinyin: "è", fr: "avoir faim" },
+  { vi: "mọi người", en: "everybody, everyone, people", zh: "大家 / 每个人", zhPinyin: "dà jiā / měi gè rén", fr: "tout le monde" },
+  { vi: "buổi sáng", en: "morning", zh: "早上", zhPinyin: "zǎo shàng", fr: "matin" },
+  { vi: "sáng", en: "morning, bright, light", zh: "早上 / 明亮", zhPinyin: "zǎo shàng / míng liàng", fr: "matin, lumineux" },
+  { vi: "xin chào", en: "hello, hi", zh: "你好", zhPinyin: "nǐ hǎo", fr: "bonjour, salut" },
+  { vi: "muốn", en: "want", zh: "想要", zhPinyin: "xiǎng yào", fr: "vouloir" },
+  { vi: "đường", en: "sugar", zh: "糖", zhPinyin: "táng", fr: "sucre" },
+  { vi: "với", en: "with, plus, at", zh: "和 / 用", zhPinyin: "hé / yòng", fr: "avec" },
+  { vi: "sữa", en: "milk", zh: "牛奶", zhPinyin: "niú nǎi", fr: "lait" },
+  { vi: "đá", en: "ice", zh: "冰", zhPinyin: "bīng", fr: "glace" },
+  { vi: "nóng", en: "hot", zh: "热", zhPinyin: "rè", fr: "chaud" },
+  { vi: "và", en: "and", zh: "和", zhPinyin: "hé", fr: "et" },
+  { vi: "một", en: "an, a, first", zh: "一个 / 第一", zhPinyin: "yī gè / dì yī", fr: "un, une, premier" },
+  { vi: "tách", en: "cup", zh: "杯子", zhPinyin: "bēi zi", fr: "tasse" },
+  { vi: "trà", en: "tea", zh: "茶", zhPinyin: "chá", fr: "thé" },
+  { vi: "vui lòng cho", en: "please", zh: "请", zhPinyin: "qǐng", fr: "s'il vous plaît" },
+  { vi: "cho", en: "for, let, lets", zh: "给 / 让", zhPinyin: "gěi / ràng", fr: "pour, laisser" },
+  { vi: "cà phê", en: "coffee", zh: "咖啡", zhPinyin: "kā fēi", fr: "café" },
+  { vi: "hay là", en: "or", zh: "或者", zhPinyin: "huò zhě", fr: "ou" },
+  { vi: "xin lỗi", en: "apologize, sorry, excuse me", zh: "对不起", zhPinyin: "duì bù qǐ", fr: "désolé, excusez-moi" },
+  { vi: "vâng", en: "yes, (politely)", zh: "是的", zhPinyin: "shì de", fr: "oui (poli)" },
+  { vi: "xin", en: "beg, ask for, please", zh: "请", zhPinyin: "qǐng", fr: "prier, s'il vous plaît" },
+  { vi: "hộ chiếu", en: "passport", zh: "护照", zhPinyin: "hù zhào", fr: "passeport" },
+  { vi: "nước", en: "water, country, countries", zh: "水 / 国家", zhPinyin: "shuǐ / guó jiā", fr: "eau, pays" },
+  { vi: "người", en: "people, (classifier for human), the", zh: "人", zhPinyin: "rén", fr: "personne, gens" },
+  { vi: "tôi", en: "I", zh: "我", zhPinyin: "wǒ", fr: "je, moi" },
+  { vi: "là", en: "is, am, being", zh: "是", zhPinyin: "shì", fr: "être" },
+  { vi: "chào", en: "greet, hello, greets", zh: "你好", zhPinyin: "nǐ hǎo", fr: "saluer, bonjour" }
 ];
 
 const LANGUAGE_HINTS = {
@@ -388,6 +822,8 @@ let currentRound = 1;
 let questionsInRound = 0;
 const QUESTIONS_PER_ROUND = 15;
 let usedInRound = new Set();
+let currentPage = 1;
+const WORDS_PER_PAGE = 10;
 
 const MODES = {
   "en-zh": { from: "en", to: "zh", fromLabel: "English", toLabel: "Chinese" }
@@ -657,19 +1093,60 @@ function speakWord(text, lang) {
   }, 50);
 }
 
+function getCurrentPageVocab() {
+  const startIdx = (currentPage - 1) * WORDS_PER_PAGE;
+  const endIdx = startIdx + WORDS_PER_PAGE;
+  return VOCABULARY.slice(startIdx, endIdx);
+}
+
+function getTotalPages() {
+  return Math.ceil(VOCABULARY.length / WORDS_PER_PAGE);
+}
+
+function renderPagination() {
+  const paginationControls = document.getElementById("paginationControls");
+  const totalPages = getTotalPages();
+  
+  if (totalPages <= 1) {
+    paginationControls.innerHTML = "";
+    return;
+  }
+  
+  let paginationHTML = "";
+  for (let i = 1; i <= totalPages; i++) {
+    const isActive = i === currentPage;
+    paginationHTML += `<button class="page-button ${isActive ? 'active' : ''}" onclick="goToPage(${i})">Page ${i}</button>`;
+  }
+  
+  paginationControls.innerHTML = paginationHTML;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  usedInRound.clear();
+  questionsInRound = 0;
+  renderPagination();
+  startNewQuestion();
+}
+
 function getRandomVocab() {
+  const pageVocab = getCurrentPageVocab();
+  
   // If we've used all words in this round, reset for next round
-  if (usedInRound.size >= VOCABULARY.length) {
+  if (usedInRound.size >= pageVocab.length) {
     usedInRound.clear();
   }
   
-  // Get available words (not used in current round)
-  const available = VOCABULARY.filter((v, idx) => !usedInRound.has(idx));
+  // Get available words (not used in current round) from current page
+  const available = pageVocab.filter((v, idx) => {
+    const globalIdx = VOCABULARY.indexOf(v);
+    return !usedInRound.has(globalIdx);
+  });
   
   if (available.length === 0) {
     // All words used, reset
     usedInRound.clear();
-    return VOCABULARY[Math.floor(Math.random() * VOCABULARY.length)];
+    return pageVocab[Math.floor(Math.random() * pageVocab.length)];
   }
   
   const selected = available[Math.floor(Math.random() * available.length)];
@@ -1001,6 +1478,7 @@ document.querySelectorAll(".game-controls button").forEach(btn => {
 
 // Initialize
 updateStats();
+renderPagination();
 setTimeout(() => {
   startNewQuestion();
 }, 500);

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Language Learning Game - English to Chinese</title>
+  <style>
+    :root {
+      --primary-color: #fff;
+      --bg-color: #000;
+      --card-bg: #111;
+      --accent-color: #4a9eff;
+      --success-color: #00a12c;
+      --error-color: #ff3f3f;
+      --hover-color: #333;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-color);
+      color: var(--primary-color);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      padding: 20px 12px 40px;
+      overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 16px;
+      opacity: 0.8;
+      margin-bottom: 30px;
+    }
+    .game-stats {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--primary-color);
+      border-radius: 12px;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+    .game-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .game-controls button {
+      padding: 12px 24px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+    .game-controls button:hover {
+      background: var(--hover-color);
+    }
+    .game-controls button.active {
+      background: var(--primary-color);
+      color: var(--bg-color);
+    }
+    .game-controls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .opposite-button {
+      padding: 12px 24px;
+      border: 2px solid var(--accent-color);
+      border-radius: 999px;
+      background: var(--accent-color);
+      color: var(--bg-color);
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .opposite-button:hover {
+      background: #6bb0ff;
+      border-color: #6bb0ff;
+      transform: translateY(-2px);
+    }
+    .question-card {
+      background: var(--card-bg);
+      border: 3px solid var(--primary-color);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    .question-text {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: var(--accent-color);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .question-hint {
+      font-size: 14px;
+      opacity: 0.7;
+      margin-top: 10px;
+      font-style: italic;
+    }
+    .answer-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 30px;
+    }
+    .answer-option {
+      padding: 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--primary-color);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 18px;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .answer-option:hover:not(.disabled) {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
+    }
+    .answer-option.correct {
+      background: var(--success-color);
+      border-color: var(--success-color);
+      color: #000;
+    }
+    .answer-option.incorrect {
+      background: var(--error-color);
+      border-color: var(--error-color);
+      color: #fff;
+    }
+    .answer-option.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .feedback {
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+      min-height: 40px;
+    }
+    .feedback.correct {
+      color: var(--success-color);
+    }
+    .feedback.incorrect {
+      color: var(--error-color);
+    }
+    .play-sound-btn {
+      background: var(--accent-color);
+      border: none;
+      color: var(--bg-color);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      margin-left: 15px;
+      vertical-align: middle;
+    }
+    .play-sound-btn:hover {
+      background: #6bb0ff;
+      transform: scale(1.1);
+    }
+    .play-sound-btn:active {
+      transform: scale(0.95);
+    }
+    .navigation {
+      display: flex;
+      gap: 20px;
+      margin: 20px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .nav-button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      background: transparent;
+      color: var(--primary-color);
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .nav-button:hover {
+      background: var(--primary-color);
+      color: var(--bg-color);
+    }
+    @media (max-width: 768px) {
+      .answer-options {
+        grid-template-columns: 1fr;
+      }
+      .game-stats {
+        padding: 15px;
+      }
+      .stat-value {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="navigation">
+      <a href="index.html" class="nav-button">Home</a>
+      <a href="language-learning-zh.html" class="nav-button">Chinese Vocabulary</a>
+      <a href="language-learning-game-zh.html" class="nav-button">Chinese → English</a>
+      <a href="language-learning-game-en-zh.html" class="nav-button">English → Chinese</a>
+    </div>
+
+    <h1>Language Learning Game</h1>
+    <p class="subtitle">Match English words with their Chinese translations</p>
+
+    <div class="game-stats">
+      <div class="stat">
+        <div class="stat-label">Score</div>
+        <div class="stat-value" id="score">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Correct</div>
+        <div class="stat-value" id="correct">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Wrong</div>
+        <div class="stat-value" id="wrong">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value" id="streak">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Round</div>
+        <div class="stat-value" id="round">1</div>
+      </div>
+    </div>
+
+    <div class="game-controls">
+      <button id="modeEnZh" class="active">English → Chinese</button>
+      <a href="language-learning-game-zh.html" class="opposite-button">Opposite</a>
+    </div>
+
+    <div id="gameArea">
+      <div class="question-card">
+        <div class="question-text" id="questionText">
+          Click "New Question" to start
+        </div>
+        <button class="play-sound-btn" id="playQuestion" onclick="playQuestionSound()" style="display: none;" title="Listen in English">▶</button>
+        <div class="question-hint" id="questionHint"></div>
+        <div class="answer-options" id="answerOptions">
+          <button class="game-controls" onclick="startNewQuestion()" style="margin: 20px auto; display: block;">New Question</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const VOCABULARY = [
+  { vi: "cuối cùng", en: "finally, last, final", zh: "最后", zhPinyin: "zuì hòu", fr: "finalement, enfin" },
+  { vi: "đầu tiên", en: "first in order", zh: "第一", zhPinyin: "dì yī", fr: "premier / première" },
+  { vi: "thứ", en: "thing, things, ordinal marker", zh: "东西 / 第", zhPinyin: "dōng xi / dì", fr: "chose ; marqueur ordinal" },
+  { vi: "lần", en: "time, times, turns", zh: "次", zhPinyin: "cì", fr: "fois" },
+  { vi: "vào", en: "enter, to go into", zh: "进入", zhPinyin: "jìn rù", fr: "entrer" },
+  { vi: "dang", en: "is / am / are action in progress", zh: "正在", zhPinyin: "zhèng zài", fr: "être en train de" },
+  { vi: "lúc này", en: "now, this moment, right now", zh: "此刻", zhPinyin: "cǐ kè", fr: "en ce moment" },
+  { vi: "bây giờ", en: "now, at the moment", zh: "现在", zhPinyin: "xiàn zài", fr: "maintenant" },
+  { vi: "hiện tại", en: "currently, at present", zh: "目前 / 现在", zhPinyin: "mù qián / xiàn zài", fr: "actuellement" },
+  { vi: "nên", en: "so, therefore, ought to", zh: "所以 / 应该", zhPinyin: "suǒ yǐ / yīng gāi", fr: "donc, devoir" },
+  { vi: "trước", en: "before, ago, in front of", zh: "以前 / 前面", zhPinyin: "yǐ qián / qián miàn", fr: "avant, devant" },
+  { vi: "nhưng", en: "but, however", zh: "但是", zhPinyin: "dàn shì", fr: "mais" },
+  { vi: "mà còn", en: "not only, but also", zh: "而且", zhPinyin: "ér qiě", fr: "non seulement… mais aussi" },
+  { vi: "đều", en: "all, both", zh: "都", zhPinyin: "dōu", fr: "tous, toutes" },
+  { vi: "cả", en: "all, whole", zh: "全部", zhPinyin: "quán bù", fr: "tout, toute" },
+  { vi: "tuy", en: "although, despite", zh: "虽然", zhPinyin: "suī rán", fr: "bien que" },
+  { vi: "Nếu", en: "If, conditional", zh: "如果", zhPinyin: "rú guǒ", fr: "si" },
+  { vi: "trong khi", en: "While, at the same time", zh: "当…的时候", zhPinyin: "dāng … de shí hòu", fr: "pendant que" },
+  { vi: "thì", en: "Then, sentence marker", zh: "就", zhPinyin: "jiù", fr: "alors" },
+  { vi: "khi nào", en: "when, at what time", zh: "什么时候", zhPinyin: "shén me shí hòu", fr: "quand" },
+  { vi: "hoặc", en: "or either … or", zh: "或者", zhPinyin: "huò zhě", fr: "ou" },
+  { vi: "bởi vì", en: "because, reason", zh: "因为", zhPinyin: "yīn wèi", fr: "parce que" },
+  { vi: "tổng cộng", en: "total, in total", zh: "总共", zhPinyin: "zǒng gòng", fr: "au total" },
+  { vi: "số", en: "number, digit", zh: "数字", zhPinyin: "shù zì", fr: "nombre" },
+  { vi: "nửa", en: "half, one half", zh: "一半", zhPinyin: "yí bàn", fr: "moitié" },
+  { vi: "đủ", en: "enough, sufficient", zh: "足够", zhPinyin: "zú gòu", fr: "assez" },
+  { vi: "tỷ", en: "one billion", zh: "十亿", zhPinyin: "shí yì", fr: "milliard" },
+  { vi: "triệu", en: "million, millions", zh: "百万", zhPinyin: "bǎi wàn", fr: "million" },
+  { vi: "lẻ", en: "zero", zh: "零", zhPinyin: "líng", fr: "zéro / et" },
+  { vi: "mốt", en: "one, used after twenty", zh: "一", zhPinyin: "yī", fr: "un (après vingt)" },
+  { vi: "lăm", en: "five, used after ten", zh: "五", zhPinyin: "wǔ", fr: "cinq (après dix)" },
+  { vi: "nhiều", en: "many, lots of", zh: "很多", zhPinyin: "hěn duō", fr: "beaucoup" },
+  { vi: "tư", en: "four, private", zh: "四 / 私人", zhPinyin: "sì / sī rén", fr: "quatre / privé" },
+  { vi: "mười", en: "number ten", zh: "十", zhPinyin: "shí", fr: "dix" },
+  { vi: "chín", en: "number nine", zh: "九", zhPinyin: "jiǔ", fr: "neuf" },
+  { vi: "tám", en: "number eight", zh: "八", zhPinyin: "bā", fr: "huit" },
+  { vi: "bảy", en: "number seven", zh: "七", zhPinyin: "qī", fr: "sept" },
+  { vi: "sáu", en: "number six", zh: "六", zhPinyin: "liù", fr: "six" },
+  { vi: "trưởng thành", en: "mature, adult", zh: "成熟", zhPinyin: "chéng shú", fr: "adulte, mûr" },
+  { vi: "tiện lợi", en: "convenient, easy to use", zh: "方便", zhPinyin: "fāng biàn", fr: "pratique" },
+  { vi: "ích kỷ", en: "selfish, self-centered", zh: "自私", zhPinyin: "zì sī", fr: "égoïste" },
+  { vi: "nặng", en: "heavy, weighty", zh: "重", zhPinyin: "zhòng", fr: "lourd" },
+  { vi: "thân thiện", en: "friendly, kind", zh: "友好", zhPinyin: "yǒu hǎo", fr: "amical" },
+  { vi: "lịch sự", en: "polite, well-mannered", zh: "有礼貌", zhPinyin: "yǒu lǐ mào", fr: "poli" },
+  { vi: "tệ", en: "bad, poor quality", zh: "糟糕", zhPinyin: "zāo gāo", fr: "mauvais" },
+  { vi: "truyền thống", en: "traditional, tradition", zh: "传统", zhPinyin: "chuán tǒng", fr: "traditionnel, tradition" },
+  { vi: "sai", en: "wrong, incorrect", zh: "错误", zhPinyin: "cuò wù", fr: "faux" },
+  { vi: "buồn", en: "sad, sorry", zh: "难过", zhPinyin: "nán guò", fr: "triste" },
+  { vi: "bướng bỉnh", en: "stubborn, not flexible", zh: "固执", zhPinyin: "gù zhí", fr: "têtu" },
+  { vi: "nghiêm túc", en: "serious, not joking", zh: "严肃", zhPinyin: "yán sù", fr: "sérieux" }
+];
+
+const LANGUAGE_HINTS = {
+  vi: "vi-VN",
+  en: "en-US",
+  zh: "zh-CN",
+  fr: "fr-FR"
+};
+
+let currentMode = "en-zh";
+let score = 0;
+let correct = 0;
+let wrong = 0;
+let streak = 0;
+let currentQuestion = null;
+let preferredVoices = {};
+let answerSelected = false;
+let currentWrongAnswers = [];
+let currentRound = 1;
+let questionsInRound = 0;
+const QUESTIONS_PER_ROUND = 15;
+let usedInRound = new Set();
+
+const MODES = {
+  "en-zh": { from: "en", to: "zh", fromLabel: "English", toLabel: "Chinese" }
+};
+
+function initVoices() {
+  if (!("speechSynthesis" in window)) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+
+  Object.keys(LANGUAGE_HINTS).forEach(lang => {
+    const hint = LANGUAGE_HINTS[lang];
+    let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
+    
+    if (lang === "zh") {
+      // PRIORITY 1: Female Natural/Neural Chinese voices (best quality, natural sound)
+      const femaleNaturalZh = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || 
+                        name.includes("woman") || name.includes("huihui") ||
+                        name.includes("yaoyao") || name.includes("kangkang") ||
+                        (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || 
+                         name.includes("premium") || name.includes("enhanced");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalZh.length) {
+        preferredVoices[lang] = femaleNaturalZh[0];
+        return;
+      }
+      
+      // PRIORITY 2: Any Natural/Neural Chinese voices (preferring female)
+      const naturalZh = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || 
+               name.includes("premium") || name.includes("enhanced");
+      });
+      if (naturalZh.length) {
+        const femaleNatural = naturalZh.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("huihui") ||
+                 name.includes("yaoyao") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleNatural || naturalZh[0];
+        return;
+      }
+      
+      // PRIORITY 3: Female Chinese voices
+      const femaleZh = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("huihui") ||
+               name.includes("yaoyao") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleZh.length) {
+        preferredVoices[lang] = femaleZh[0];
+        return;
+      }
+      
+      // PRIORITY 4: Google Chinese voices
+      const googleZh = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleZh.length) {
+        preferredVoices[lang] = googleZh[0];
+        return;
+      }
+      
+      // Fallback: any Chinese voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
+    
+    if (lang === "en") {
+      // PRIORITY 1: Female natural/neural voices (best quality female)
+      const femaleNaturalEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        const isFemale = name.includes("female") || name.includes("f") || name.includes("woman") || name.includes("zira") || name.includes("aria") || name.includes("susan") || name.includes("hazel") || name.includes("linda") || name.includes("karen") || name.includes("samantha") || (v.gender && v.gender.toLowerCase() === "female");
+        const isNatural = name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online") || name.includes("aria");
+        return isFemale && isNatural;
+      });
+      if (femaleNaturalEn.length) {
+        preferredVoices[lang] = femaleNaturalEn[0];
+        return;
+      }
+      
+      // PRIORITY 2: High-quality female voices (Microsoft Aria, Google Female, etc.)
+      const qualityFemaleEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return (name.includes("aria") && name.includes("online")) || 
+               (name.includes("google") && name.includes("female")) || 
+               name.includes("zira") || name.includes("susan") || 
+               name.includes("hazel") || name.includes("linda") || 
+               name.includes("karen") || name.includes("samantha") ||
+               (name.includes("female") && (name.includes("us") || name.includes("uk")));
+      });
+      if (qualityFemaleEn.length) {
+        preferredVoices[lang] = qualityFemaleEn[0];
+        return;
+      }
+      
+      // PRIORITY 3: ANY female English voice (prioritize female over natural)
+      const femaleEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("zira") || 
+               name.includes("aria") || name.includes("susan") || 
+               name.includes("hazel") || name.includes("linda") ||
+               name.includes("karen") || name.includes("samantha") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleEn.length) {
+        preferredVoices[lang] = femaleEn[0];
+        return;
+      }
+      
+      // PRIORITY 4: Natural/neural voices (preferring female if available)
+      const naturalEn = langGroup.filter(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online") || name.includes("aria");
+      });
+      if (naturalEn.length) {
+        const femaleNatural = naturalEn.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || name.includes("woman") || name.includes("zira") || name.includes("aria") || name.includes("susan") || name.includes("hazel") || name.includes("linda") || (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleNatural || naturalEn[0];
+        return;
+      }
+      
+      // PRIORITY 5: Google English voices (preferring female)
+      const googleEn = langGroup.filter(v => v.name.toLowerCase().includes("google"));
+      if (googleEn.length) {
+        const femaleGoogle = googleEn.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+        });
+        preferredVoices[lang] = femaleGoogle || googleEn[0];
+        return;
+      }
+      
+      // Fallback: any English voice
+      if (langGroup.length) {
+        preferredVoices[lang] = langGroup[0];
+        return;
+      }
+    }
+    
+    if (langGroup.length) {
+      preferredVoices[lang] = langGroup[0];
+    } else {
+      preferredVoices[lang] = voices.find(v => v.lang && v.lang.startsWith(lang)) || voices[0];
+    }
+  });
+}
+
+if ("speechSynthesis" in window) {
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      initVoices();
+    } else {
+      setTimeout(loadVoices, 100);
+    }
+  };
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+  loadVoices();
+  document.addEventListener('touchstart', () => { const v = window.speechSynthesis.getVoices(); if (v.length > 0) initVoices(); });
+  document.addEventListener('click', () => { const v = window.speechSynthesis.getVoices(); if (v.length > 0) initVoices(); });
+}
+
+function speakWord(text, lang) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  setTimeout(() => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) return;
+    
+    if (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0) {
+      initVoices();
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = lang === "zh" || lang === "en" ? 0.9 : 0.95;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    utterance.lang = LANGUAGE_HINTS[lang] || lang;
+    
+    let voice = preferredVoices[lang];
+    // For Vietnamese and English, always try to get the best voice
+    if (!voice || lang === "zh" || lang === "en") {
+      const hint = LANGUAGE_HINTS[lang];
+      const langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || lang));
+      
+      if (lang === "en" && langGroup.length > 0) {
+        // Prioritize female English voices
+        const femaleEn = langGroup.filter(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("zira") || 
+                 name.includes("aria") || name.includes("susan") || 
+                 name.includes("hazel") || name.includes("linda") ||
+                 name.includes("karen") || name.includes("samantha") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        if (femaleEn.length) {
+          // Prefer natural/neural female voices
+          const femaleNatural = femaleEn.find(v => {
+            const name = v.name.toLowerCase();
+            return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online");
+          });
+          voice = femaleNatural || femaleEn[0];
+        } else {
+          voice = langGroup[0];
+        }
+        preferredVoices[lang] = voice;
+      } else if (lang === "zh" && langGroup.length > 0) {
+        // Prioritize female Chinese voices
+        const femaleZh = langGroup.filter(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("huihui") ||
+                 name.includes("yaoyao") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        if (femaleZh.length) {
+          // Prefer natural/neural female voices
+          const femaleNatural = femaleZh.find(v => {
+            const name = v.name.toLowerCase();
+            return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced");
+          });
+          voice = femaleNatural || femaleZh[0];
+        } else {
+          voice = langGroup[0];
+        }
+        preferredVoices[lang] = voice;
+      } else if (!voice) {
+        voice = langGroup[0] || voices.find(v => v.lang && v.lang.startsWith(lang)) || voices[0];
+      }
+    }
+    
+    if (voice) {
+      try {
+        utterance.voice = voice;
+        utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
+      } catch (e) {}
+    }
+    
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } catch (retryError) {}
+      }, 100);
+    }
+  }, 50);
+}
+
+function getRandomVocab() {
+  // If we've used all words in this round, reset for next round
+  if (usedInRound.size >= VOCABULARY.length) {
+    usedInRound.clear();
+  }
+  
+  // Get available words (not used in current round)
+  const available = VOCABULARY.filter((v, idx) => !usedInRound.has(idx));
+  
+  if (available.length === 0) {
+    // All words used, reset
+    usedInRound.clear();
+    return VOCABULARY[Math.floor(Math.random() * VOCABULARY.length)];
+  }
+  
+  const selected = available[Math.floor(Math.random() * available.length)];
+  const selectedIndex = VOCABULARY.indexOf(selected);
+  usedInRound.add(selectedIndex);
+  
+  return selected;
+}
+
+function getRandomWrongAnswers(correctAnswer, count) {
+  const wrong = [];
+  const used = new Set([correctAnswer]);
+  while (wrong.length < count && wrong.length < VOCABULARY.length - 1) {
+    const vocab = getRandomVocab();
+    const answer = vocab[MODES[currentMode].to].split(',')[0].trim().split(' / ')[0].trim();
+    if (!used.has(answer) && answer) {
+      wrong.push(answer);
+      used.add(answer);
+    }
+  }
+  return wrong;
+}
+
+function startNewQuestion() {
+  // Check if round is complete
+  if (questionsInRound >= QUESTIONS_PER_ROUND) {
+    showRoundEnd();
+    return;
+  }
+  
+  answerSelected = false;
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("feedback").className = "feedback";
+  
+  const mode = MODES[currentMode];
+  const vocab = getRandomVocab();
+  currentQuestion = vocab;
+  
+  // Extract first English word/phrase (before comma if multiple meanings)
+  const questionText = vocab[mode.from].split(',')[0].trim();
+  // Extract first Chinese word/phrase (before comma or slash if multiple meanings)
+  const correctAnswer = vocab[mode.to].split(',')[0].trim().split(' / ')[0].trim();
+  
+  document.getElementById("questionText").textContent = questionText;
+  document.getElementById("questionHint").textContent = "English";
+  document.getElementById("playQuestion").style.display = "inline-flex";
+  
+  currentWrongAnswers = getRandomWrongAnswers(correctAnswer, 1);
+  const allAnswers = [correctAnswer, ...currentWrongAnswers].sort(() => Math.random() - 0.5);
+  
+  const optionsHtml = allAnswers.map(answer => {
+    const isCorrect = answer === correctAnswer;
+    return `
+      <div class="answer-option" data-correct="${isCorrect}" data-answer="${answer.replace(/"/g, '&quot;')}" onclick="selectAnswer(this, ${isCorrect})">
+        ${answer}
+      </div>
+    `;
+  }).join("");
+  
+  document.getElementById("answerOptions").innerHTML = optionsHtml;
+}
+
+function showRoundEnd() {
+  answerSelected = true;
+  const endingRound = currentRound;
+  const nextRound = currentRound + 1;
+  const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
+  const finalRound = nextRound > totalRounds ? 1 : nextRound;
+  
+  document.getElementById("questionText").textContent = `Round ${endingRound} Complete!`;
+  document.getElementById("questionHint").textContent = `Score: ${score} | Correct: ${correct} | Wrong: ${wrong}`;
+  document.getElementById("playQuestion").style.display = "none";
+  
+  // Show button to start next round
+  document.getElementById("answerOptions").innerHTML = `
+    <button class="game-button" onclick="startNextRound()" style="margin: 20px auto; display: block;">
+      Start Round ${finalRound}
+    </button>
+  `;
+  
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("feedback").className = "feedback";
+  
+  updateStats();
+}
+
+function startNextRound() {
+  // Move to next round
+  currentRound++;
+  questionsInRound = 0;
+  usedInRound.clear();
+  
+  // After all rounds, restart from round 1
+  const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
+  if (currentRound > totalRounds) {
+    currentRound = 1;
+  }
+  
+  updateStats();
+  
+  // Start the new round
+  startNewQuestion();
+}
+
+function selectAnswer(element, isCorrect) {
+  // Always speak the answer when clicked (answers are in Chinese for English → Chinese game)
+  const answerText = element.textContent.trim();
+  
+  // If already selected, just speak and return (allow hearing both answers)
+  if (answerSelected) {
+    speakWord(answerText, "zh");
+    return;
+  }
+  
+  answerSelected = true;
+  
+  const options = document.querySelectorAll(".answer-option");
+  const correctOption = Array.from(options).find(opt => opt.dataset.correct === "true");
+  const correctAnswerText = correctOption ? correctOption.textContent.trim() : "";
+  
+  options.forEach(opt => {
+    opt.classList.add("disabled");
+    if (opt.dataset.correct === "true") {
+      opt.classList.add("correct");
+    } else if (opt === element && !isCorrect) {
+      opt.classList.add("incorrect");
+    }
+  });
+  
+  if (isCorrect) {
+    // Correct answer - just speak it
+    speakWord(answerText, "zh");
+    score += 10;
+    correct++;
+    streak++;
+    document.getElementById("feedback").textContent = "✓ Correct!";
+    document.getElementById("feedback").className = "feedback correct";
+  } else {
+    // Wrong answer - speak it first, then speak the correct answer
+    wrong++;
+    streak = 0;
+    document.getElementById("feedback").textContent = "✗ Wrong!";
+    document.getElementById("feedback").className = "feedback incorrect";
+    
+    // Speak wrong answer first
+    speakWordWithCallback(answerText, "zh", () => {
+      // After wrong answer finishes, speak the correct answer
+      if (correctAnswerText) {
+        setTimeout(() => {
+          speakWord(correctAnswerText, "zh");
+        }, 300);
+      }
+    });
+  }
+  
+  updateStats();
+  
+  // Increment questions in round
+  questionsInRound++;
+  
+  // Faster transition - reduced from 2000ms to 800ms
+  setTimeout(() => {
+    startNewQuestion();
+  }, 800);
+}
+
+function speakWordWithCallback(text, lang, callback) {
+  if (!("speechSynthesis" in window)) {
+    if (callback) callback();
+    return;
+  }
+  window.speechSynthesis.cancel();
+  setTimeout(() => {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      if (callback) callback();
+      return;
+    }
+    
+    if (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0) {
+      initVoices();
+    }
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = lang === "zh" || lang === "en" ? 0.9 : 0.95;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    utterance.lang = LANGUAGE_HINTS[lang] || lang;
+    
+    let voice = preferredVoices[lang];
+    // For Vietnamese and English, always try to get the best voice
+    if (!voice || lang === "zh" || lang === "en") {
+      const hint = LANGUAGE_HINTS[lang];
+      const langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || lang));
+      
+      if (lang === "en" && langGroup.length > 0) {
+        // Prioritize female English voices
+        const femaleEn = langGroup.filter(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("female") || name.includes("f") || 
+                 name.includes("woman") || name.includes("zira") || 
+                 name.includes("aria") || name.includes("susan") || 
+                 name.includes("hazel") || name.includes("linda") ||
+                 name.includes("karen") || name.includes("samantha") ||
+                 (v.gender && v.gender.toLowerCase() === "female");
+        });
+        if (femaleEn.length) {
+          // Prefer natural/neural female voices
+          const femaleNatural = femaleEn.find(v => {
+            const name = v.name.toLowerCase();
+            return name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online");
+          });
+          voice = femaleNatural || femaleEn[0];
+        } else {
+          voice = langGroup[0];
+        }
+        preferredVoices[lang] = voice;
+      } else if (lang === "vi" && langGroup.length > 0) {
+        // Prioritize Google Vietnamese voices (exclude American-sounding)
+        const googleVi = langGroup.filter(v => {
+          const name = v.name.toLowerCase();
+          const isGoogle = name.includes("google") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+          const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+          return isGoogle && notAmerican;
+        });
+        if (googleVi.length) {
+          const femaleGoogle = googleVi.find(v => {
+            const name = v.name.toLowerCase();
+            return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+          });
+          voice = femaleGoogle || googleVi[0];
+        } else {
+          // Then Microsoft Vietnamese (exclude American-sounding)
+          const msVi = langGroup.filter(v => {
+            const name = v.name.toLowerCase();
+            const isMs = name.includes("microsoft") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+            const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+            return isMs && notAmerican;
+          });
+          if (msVi.length) {
+            const femaleMs = msVi.find(v => {
+              const name = v.name.toLowerCase();
+              return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+            });
+            voice = femaleMs || msVi[0];
+          } else {
+            // Then any explicitly Vietnamese voice (exclude American-sounding)
+            const explicitVi = langGroup.filter(v => {
+              const name = v.name.toLowerCase();
+              const isVietnamese = name.includes("vietnamese") || name.includes("vi-vn");
+              const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+              return isVietnamese && notAmerican;
+            });
+            if (explicitVi.length) {
+              voice = explicitVi[0];
+            } else {
+              // Last resort: any Vietnamese voice that doesn't sound American
+              const nonAmericanVi = langGroup.filter(v => {
+                const name = v.name.toLowerCase();
+                return !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+              });
+              voice = nonAmericanVi.length ? nonAmericanVi[0] : langGroup[0];
+            }
+          }
+        }
+        preferredVoices[lang] = voice;
+      } else if (!voice) {
+        voice = langGroup[0] || voices.find(v => v.lang && v.lang.startsWith(lang)) || voices[0];
+      }
+    }
+    
+    if (voice) {
+      try {
+        utterance.voice = voice;
+        utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
+      } catch (e) {}
+    }
+    
+    // Add callback when speech ends
+    if (callback) {
+      utterance.onend = callback;
+      utterance.onerror = callback; // Also call callback on error
+    }
+    
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      if (callback) callback();
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        } catch (retryError) {
+          if (callback) callback();
+        }
+      }, 100);
+    }
+  }, 50);
+}
+
+function updateStats() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("correct").textContent = correct;
+  document.getElementById("wrong").textContent = wrong;
+  document.getElementById("streak").textContent = streak;
+  document.getElementById("round").textContent = currentRound;
+}
+
+function playQuestionSound() {
+  if (!currentQuestion) return;
+  // Play the English pronunciation
+  const text = currentQuestion.en.split(',')[0].trim();
+  speakWord(text, "en");
+}
+
+// Mode buttons
+document.querySelectorAll(".game-controls button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.disabled) return;
+    document.querySelectorAll(".game-controls button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentMode = btn.id.replace("mode", "").toLowerCase();
+    startNewQuestion();
+  });
+});
+
+// Initialize
+updateStats();
+setTimeout(() => {
+  startNewQuestion();
+}, 500);
+</script>
+</body>
+</html>
+

@@ -9,7 +9,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Language Learning - Vocabulary</title>
+  <title>Language Learning - Chinese Vocabulary</title>
   <style>
     :root {
       --primary-color: #fff;
@@ -106,7 +106,7 @@
       align-items: center;
       gap: 6px;
     }
-    .game-nav-button {
+    .controls button {
       padding: 10px 20px;
       border: 2px solid var(--primary-color);
       border-radius: 999px;
@@ -115,13 +115,14 @@
       font-size: 16px;
       cursor: pointer;
       transition: all 0.3s ease;
-      min-width: 140px;
-      text-align: center;
-      text-decoration: none;
-      display: block;
+      min-width: 120px;
     }
-    .game-nav-button:hover {
+    .controls button:hover {
       background: var(--hover-color);
+    }
+    .controls button.active {
+      background: var(--primary-color);
+      color: var(--bg-color);
     }
     .search-box {
       width: 100%;
@@ -240,32 +241,30 @@
   <div class="container">
     <div class="navigation">
       <a href="index.html" class="nav-button">Home</a>
-      <a href="language-learning.html" class="nav-button">Vocabulary</a>
-      <a href="language-learning-game.html" class="nav-button">Game</a>
+      <a href="language-learning-zh.html" class="nav-button active">Chinese Vocabulary</a>
+      <a href="language-learning-game-zh.html" class="nav-button">Chinese → English Game</a>
+      <a href="language-learning-game-en-zh.html" class="nav-button">English → Chinese Game</a>
     </div>
     
-    <h1>Language Learning - Vocabulary</h1>
+    <h1>Language Learning - Chinese Vocabulary</h1>
     
-    <a href="language-learning-game.html" class="game-button">🎮 Play Language Game</a>
+    <a href="language-learning-game-zh.html" class="game-button">🎮 Play Chinese Game</a>
     
-    <div class="controls" role="group" aria-label="Game navigation">
+    <div class="controls" role="group" aria-label="Language selector">
       <div class="lang-group">
-        <a href="language-learning-game.html" class="game-nav-button">Vietnamese → English</a>
+        <button data-lang="all" class="active">All Languages</button>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-en-vi.html" class="game-nav-button">English → Vietnamese</a>
+        <button data-lang="zh">Chinese</button>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-zh.html" class="game-nav-button">Chinese → English</a>
+        <button data-lang="en">English</button>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-en-zh.html" class="game-nav-button">English → Chinese</a>
+        <button data-lang="vi">Vietnamese</button>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-fr.html" class="game-nav-button">French → English</a>
-      </div>
-      <div class="lang-group">
-        <a href="language-learning-game-en-fr.html" class="game-nav-button">English → French</a>
+        <button data-lang="fr">French</button>
       </div>
     </div>
 
@@ -636,6 +635,7 @@ const LANGUAGE_HINTS = {
   fr: "fr-FR"
 };
 
+let currentFilter = "all";
 let searchTerm = "";
 let preferredVoices = {};
 
@@ -649,106 +649,64 @@ function initVoices() {
     const hint = LANGUAGE_HINTS[lang];
     let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
     
-    if (lang === "vi") {
-      // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
-      const femaleNaturalVi = langGroup.filter(v => {
+    if (lang === "zh") {
+      // PRIORITY 1: Female Natural/Neural Chinese voices (best quality, natural sound)
+      const femaleNaturalZh = langGroup.filter(v => {
         const name = v.name.toLowerCase();
         const isFemale = name.includes("female") || name.includes("f") || 
-                        name.includes("nữ") || name.includes("woman") ||
+                        name.includes("woman") || name.includes("huihui") ||
+                        name.includes("yaoyao") || name.includes("kangkang") ||
                         (v.gender && v.gender.toLowerCase() === "female");
         const isNatural = name.includes("neural") || name.includes("natural") || 
                          name.includes("premium") || name.includes("enhanced");
         return isFemale && isNatural;
       });
-      if (femaleNaturalVi.length) {
-        preferredVoices[lang] = femaleNaturalVi[0];
+      if (femaleNaturalZh.length) {
+        preferredVoices[lang] = femaleNaturalZh[0];
         return;
       }
       
-      // PRIORITY 2: Any Natural/Neural voices (even if not explicitly female)
-      const naturalVi = langGroup.filter(v => {
+      // PRIORITY 2: Any Natural/Neural Chinese voices (preferring female)
+      const naturalZh = langGroup.filter(v => {
         const name = v.name.toLowerCase();
         return name.includes("neural") || name.includes("natural") || 
                name.includes("premium") || name.includes("enhanced");
       });
-      if (naturalVi.length) {
-        // Still prefer female if available
-        const femaleNatural = naturalVi.find(v => {
+      if (naturalZh.length) {
+        const femaleNatural = naturalZh.find(v => {
           const name = v.name.toLowerCase();
           return name.includes("female") || name.includes("f") || 
-                 name.includes("nữ") || name.includes("woman") ||
+                 name.includes("woman") || name.includes("huihui") ||
+                 name.includes("yaoyao") ||
                  (v.gender && v.gender.toLowerCase() === "female");
         });
-        preferredVoices[lang] = femaleNatural || naturalVi[0];
+        preferredVoices[lang] = femaleNatural || naturalZh[0];
         return;
       }
       
-      // PRIORITY 3: Female voices (any female voice)
-      const femaleVi = langGroup.filter(v => {
+      // PRIORITY 3: Female Chinese voices
+      const femaleZh = langGroup.filter(v => {
         const name = v.name.toLowerCase();
         return name.includes("female") || name.includes("f") || 
-               name.includes("nữ") || name.includes("woman") ||
+               name.includes("woman") || name.includes("huihui") ||
+               name.includes("yaoyao") ||
                (v.gender && v.gender.toLowerCase() === "female");
       });
-      if (femaleVi.length) {
-        preferredVoices[lang] = femaleVi[0];
+      if (femaleZh.length) {
+        preferredVoices[lang] = femaleZh[0];
         return;
       }
       
-      // PRIORITY 4: Google Vietnamese voices (usually good quality)
-      const googleVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("google") && 
-               (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-      });
-      if (googleVi.length) {
-        // Prefer female Google voices
-        const femaleGoogle = googleVi.find(v => {
-          const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || 
-                 name.includes("nữ") || name.includes("woman") ||
-                 (v.gender && v.gender.toLowerCase() === "female");
-        });
-        preferredVoices[lang] = femaleGoogle || googleVi[0];
+      // PRIORITY 4: Google Chinese voices
+      const googleZh = langGroup.filter(v => 
+        v.name.toLowerCase().includes("google")
+      );
+      if (googleZh.length) {
+        preferredVoices[lang] = googleZh[0];
         return;
       }
       
-      // PRIORITY 5: Microsoft Vietnamese voices
-      const msVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("microsoft") && 
-               (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-      });
-      if (msVi.length) {
-        // Prefer female Microsoft voices
-        const femaleMs = msVi.find(v => {
-          const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || 
-                 name.includes("nữ") || name.includes("woman") ||
-                 (v.gender && v.gender.toLowerCase() === "female");
-        });
-        preferredVoices[lang] = femaleMs || msVi[0];
-        return;
-      }
-      
-      // PRIORITY 6: Any voice with "vi" in name (broader search)
-      const anyVi = langGroup.filter(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("vi") || name.includes("viet");
-      });
-      if (anyVi.length) {
-        // Still prefer female
-        const femaleAny = anyVi.find(v => {
-          const name = v.name.toLowerCase();
-          return name.includes("female") || name.includes("f") || 
-                 name.includes("nữ") || name.includes("woman") ||
-                 (v.gender && v.gender.toLowerCase() === "female");
-        });
-        preferredVoices[lang] = femaleAny || anyVi[0];
-        return;
-      }
-      
-      // Fallback: any Vietnamese voice
+      // Fallback: any Chinese voice
       if (langGroup.length) {
         preferredVoices[lang] = langGroup[0];
         return;
@@ -794,7 +752,7 @@ function initVoices() {
         return;
       }
       
-      // PRIORITY 3: High-quality female voices (Microsoft Aria, Google US English Female, etc.)
+      // PRIORITY 3: High-quality female voices
       const qualityFemaleEn = langGroup.filter(v => {
         const name = v.name.toLowerCase();
         return (name.includes("aria") && name.includes("online")) ||
@@ -836,9 +794,8 @@ function initVoices() {
       }
     }
     
-    // For other languages (French, Chinese), prefer female natural voices too
+    // For other languages (Vietnamese, Chinese), prefer female natural voices too
     if (langGroup.length) {
-      // Try to find female natural voices for other languages too
       const femaleNatural = langGroup.find(v => {
         const name = v.name.toLowerCase();
         const isFemale = name.includes("female") || name.includes("f") || 
@@ -854,9 +811,8 @@ function initVoices() {
     }
   });
   
-  // Log selected voices for debugging
-  if (preferredVoices.vi) {
-    console.log('Selected Vietnamese voice:', preferredVoices.vi.name, preferredVoices.vi.lang);
+  if (preferredVoices.zh) {
+    console.log('Selected Chinese voice:', preferredVoices.zh.name, preferredVoices.zh.lang);
   }
   if (preferredVoices.en) {
     console.log('Selected English voice:', preferredVoices.en.name, preferredVoices.en.lang);
@@ -864,31 +820,25 @@ function initVoices() {
 }
 
 if ("speechSynthesis" in window) {
-  // Wait for voices to load (may take time on some browsers)
   const loadVoices = () => {
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       initVoices();
     } else {
-      // Retry after a short delay if voices aren't ready
       setTimeout(loadVoices, 100);
     }
   };
   
   window.speechSynthesis.onvoiceschanged = () => {
-    // Always reload voices when they change
     loadVoices();
   };
   loadVoices();
   
-  // Initialize voices on any interaction (not just once)
   const initializeVoicesOnInteraction = () => {
-    // Force reload voices on interaction (required for some browsers)
     const voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       initVoices();
     } else {
-      // If no voices yet, wait a bit and try again
       setTimeout(() => {
         const retryVoices = window.speechSynthesis.getVoices();
         if (retryVoices.length > 0) {
@@ -898,7 +848,6 @@ if ("speechSynthesis" in window) {
     }
   };
   
-  // Keep listening for interactions (not just once) to ensure voices stay initialized
   document.addEventListener('touchstart', initializeVoicesOnInteraction);
   document.addEventListener('click', initializeVoicesOnInteraction);
   document.addEventListener('mousedown', initializeVoicesOnInteraction);
@@ -910,33 +859,21 @@ function speakWord(text, lang) {
     return;
   }
   
-  // Always cancel any ongoing speech first
   try {
     window.speechSynthesis.cancel();
   } catch (e) {
     console.log('Error canceling speech:', e);
   }
   
-  // Small delay to ensure cancellation completes (critical for rapid clicks)
   setTimeout(() => {
-    // Ensure voices are initialized - reload voices each time to catch new ones
     const voices = window.speechSynthesis.getVoices();
     
-    // Always reinitialize voices if needed
     if (voices.length > 0) {
-      // Re-check voices each time to ensure we have the latest
       if (!preferredVoices[lang] || Object.keys(preferredVoices).length === 0) {
         initVoices();
-      } else {
-        // Still refresh voices to catch any new ones that loaded
-        const currentVoices = window.speechSynthesis.getVoices();
-        if (currentVoices.length > voices.length) {
-          initVoices();
-        }
       }
     }
     
-    // Get fresh voices list
     const freshVoices = window.speechSynthesis.getVoices();
     if (freshVoices.length === 0) {
       console.log('No voices available');
@@ -945,89 +882,43 @@ function speakWord(text, lang) {
     
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Natural-sounding speech parameters (not robotic)
-    // Slower rate for more natural, human-like speech
-    if (lang === "vi") {
-      utterance.rate = 0.9;  // Slightly slower for natural Vietnamese pronunciation
-      utterance.pitch = 1.0;  // Natural pitch
+    if (lang === "zh") {
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
       utterance.volume = 1.0;
     } else if (lang === "en") {
-      utterance.rate = 0.9;  // Slightly slower for natural English pronunciation
-      utterance.pitch = 1.0;  // Natural pitch
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
       utterance.volume = 1.0;
     } else {
-      utterance.rate = 0.95;  // Slightly slower for natural sound
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
     }
     
     utterance.lang = LANGUAGE_HINTS[lang] || lang;
     
-    // Get the best available voice (prioritizing female natural voices)
     let voice = preferredVoices[lang];
     if (!voice) {
-      voice = pickVoice(lang);
-      if (voice) {
-        preferredVoices[lang] = voice;
-      }
-    }
-    
-    // Always re-check for better voice with fresh voices list
-    if (freshVoices.length > 0) {
-      const betterVoice = pickVoice(lang);
-      if (betterVoice) {
-        voice = betterVoice;
-        preferredVoices[lang] = voice;
-      }
+      const hint = LANGUAGE_HINTS[lang];
+      const langGroup = freshVoices.filter(v => v.lang && v.lang.startsWith(hint || lang));
+      voice = langGroup[0] || freshVoices.find(v => v.lang && v.lang.startsWith(lang)) || freshVoices[0];
     }
     
     if (voice) {
       try {
         utterance.voice = voice;
-        // Ensure we're using the correct language code for the voice
         utterance.lang = voice.lang || LANGUAGE_HINTS[lang] || lang;
       } catch (e) {
         console.log('Error setting voice:', e);
-        // Continue without specific voice
-      }
-    } else {
-      // Fallback: find any voice for this language
-      const fallbackVoice = freshVoices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
-      if (fallbackVoice) {
-        try {
-          utterance.voice = fallbackVoice;
-          utterance.lang = fallbackVoice.lang;
-        } catch (e) {
-          console.log('Error setting fallback voice:', e);
-        }
       }
     }
     
-    // Handle errors gracefully with retry
     utterance.onerror = (e) => {
       console.log('Speech error:', e, 'for language:', lang);
-      // Try fallback voice if available
-      if (freshVoices.length > 0) {
-        const fallbackVoice = freshVoices.find(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[lang] || lang));
-        if (fallbackVoice && fallbackVoice !== voice) {
-          try {
-            const retryUtterance = new SpeechSynthesisUtterance(text);
-            retryUtterance.rate = utterance.rate;
-            retryUtterance.pitch = utterance.pitch;
-            retryUtterance.volume = utterance.volume;
-            retryUtterance.lang = fallbackVoice.lang;
-            retryUtterance.voice = fallbackVoice;
-            window.speechSynthesis.speak(retryUtterance);
-          } catch (retryError) {
-            console.log('Retry failed:', retryError);
-          }
-        }
-      }
     };
     
-    // Ensure speech synthesis is ready
     try {
-      // Resume if paused (required for some browsers)
       if (window.speechSynthesis.paused) {
         window.speechSynthesis.resume();
       }
@@ -1035,7 +926,6 @@ function speakWord(text, lang) {
       window.speechSynthesis.speak(utterance);
     } catch (e) {
       console.log('Error speaking:', e);
-      // Try one more time after a brief delay
       setTimeout(() => {
         try {
           window.speechSynthesis.cancel();
@@ -1045,185 +935,28 @@ function speakWord(text, lang) {
         }
       }, 100);
     }
-  }, 50); // Small delay to ensure cancellation completes
-}
-
-function pickVoice(langCode) {
-  if (!("speechSynthesis" in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  
-  const hint = LANGUAGE_HINTS[langCode];
-  let langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint || langCode));
-  
-  if (langCode === "vi" && langGroup.length) {
-    // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
-    const femaleNaturalVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      const isFemale = name.includes("female") || name.includes("f") || 
-                      name.includes("nữ") || name.includes("woman") ||
-                      (v.gender && v.gender.toLowerCase() === "female");
-      const isNatural = name.includes("neural") || name.includes("natural") || 
-                       name.includes("premium") || name.includes("enhanced");
-      return isFemale && isNatural;
-    });
-    if (femaleNaturalVi.length) return femaleNaturalVi[0];
-    
-    // PRIORITY 2: Any Natural/Neural voices
-    const naturalVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("neural") || name.includes("natural") || 
-             name.includes("premium") || name.includes("enhanced");
-    });
-    if (naturalVi.length) {
-      const femaleNatural = naturalVi.find(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") || name.includes("f") || 
-               name.includes("nữ") || name.includes("woman") ||
-               (v.gender && v.gender.toLowerCase() === "female");
-      });
-      return femaleNatural || naturalVi[0];
-    }
-    
-    // PRIORITY 3: Female voices (any female voice)
-    const femaleVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("female") || name.includes("f") || 
-             name.includes("nữ") || name.includes("woman") ||
-             (v.gender && v.gender.toLowerCase() === "female");
-    });
-    if (femaleVi.length) return femaleVi[0];
-    
-    // PRIORITY 4: Google Vietnamese voices
-    const googleVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("google") && 
-             (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-    });
-    if (googleVi.length) {
-      const femaleGoogle = googleVi.find(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") || name.includes("f") || 
-               name.includes("nữ") || name.includes("woman") ||
-               (v.gender && v.gender.toLowerCase() === "female");
-      });
-      return femaleGoogle || googleVi[0];
-    }
-    
-    // PRIORITY 5: Microsoft Vietnamese voices
-    const msVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("microsoft") && 
-             (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
-    });
-    if (msVi.length) {
-      const femaleMs = msVi.find(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") || name.includes("f") || 
-               name.includes("nữ") || name.includes("woman") ||
-               (v.gender && v.gender.toLowerCase() === "female");
-      });
-      return femaleMs || msVi[0];
-    }
-    
-    // PRIORITY 6: Any voice with "vi" in name (broader search)
-    const anyVi = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("vi") || name.includes("viet");
-    });
-    if (anyVi.length) {
-      const femaleAny = anyVi.find(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") || name.includes("f") || 
-               name.includes("nữ") || name.includes("woman") ||
-               (v.gender && v.gender.toLowerCase() === "female");
-      });
-      return femaleAny || anyVi[0];
-    }
-    
-    return langGroup[0];
-  }
-  
-  if (langCode === "en" && langGroup.length) {
-    // PRIORITY 1: Female Natural/Neural voices (best quality, natural sound)
-    const femaleNaturalEn = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      const isFemale = name.includes("female") || name.includes("f") || 
-                      name.includes("woman") || name.includes("zira") ||
-                      name.includes("aria") || name.includes("susan") ||
-                      name.includes("hazel") || name.includes("linda") ||
-                      (v.gender && v.gender.toLowerCase() === "female");
-      const isNatural = name.includes("neural") || name.includes("natural") || 
-                       name.includes("premium") || name.includes("enhanced") ||
-                       name.includes("online") || name.includes("aria");
-      return isFemale && isNatural;
-    });
-    if (femaleNaturalEn.length) return femaleNaturalEn[0];
-    
-    // PRIORITY 2: Any Natural/Neural voices (preferring female)
-    const naturalEn = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("neural") || name.includes("natural") || 
-             name.includes("premium") || name.includes("enhanced") ||
-             name.includes("online") || name.includes("aria");
-    });
-    if (naturalEn.length) {
-      const femaleNatural = naturalEn.find(v => {
-        const name = v.name.toLowerCase();
-        return name.includes("female") || name.includes("f") || 
-               name.includes("woman") || name.includes("zira") ||
-               name.includes("aria") || name.includes("susan") ||
-               name.includes("hazel") || name.includes("linda") ||
-               (v.gender && v.gender.toLowerCase() === "female");
-      });
-      return femaleNatural || naturalEn[0];
-    }
-    
-    // PRIORITY 3: High-quality female voices (Microsoft Aria, Google US English Female, etc.)
-    const qualityFemaleEn = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return (name.includes("aria") && name.includes("online")) ||
-             (name.includes("google") && name.includes("female")) ||
-             name.includes("zira") || name.includes("susan") ||
-             name.includes("hazel") || name.includes("linda") ||
-             (name.includes("female") && (name.includes("us") || name.includes("uk")));
-    });
-    if (qualityFemaleEn.length) return qualityFemaleEn[0];
-    
-    // PRIORITY 4: Any female English voice
-    const femaleEn = langGroup.filter(v => {
-      const name = v.name.toLowerCase();
-      return name.includes("female") || name.includes("f") || 
-             name.includes("woman") ||
-             (v.gender && v.gender.toLowerCase() === "female");
-    });
-    if (femaleEn.length) return femaleEn[0];
-    
-    // PRIORITY 5: Google English voices
-    const googleEn = langGroup.filter(v => 
-      v.name.toLowerCase().includes("google")
-    );
-    if (googleEn.length) return googleEn[0];
-    
-    return langGroup[0];
-  }
-  
-  if (langGroup.length) return langGroup[0];
-  
-  return voices.find(v => v.lang && v.lang.startsWith(langCode)) || voices[0];
+  }, 50);
 }
 
 function matchesFilter(vocab) {
-  // Only filter by search term, show all languages
+  if (currentFilter === "all") return true;
+  
   const searchLower = searchTerm.toLowerCase();
   const matchesSearch = !searchTerm || 
-    vocab.vi.toLowerCase().includes(searchLower) ||
-    vocab.en.toLowerCase().includes(searchLower) ||
     vocab.zh.toLowerCase().includes(searchLower) ||
+    vocab.en.toLowerCase().includes(searchLower) ||
+    vocab.vi.toLowerCase().includes(searchLower) ||
     vocab.fr.toLowerCase().includes(searchLower) ||
     (vocab.zhPinyin && vocab.zhPinyin.toLowerCase().includes(searchLower));
   
-  return matchesSearch;
+  if (!matchesSearch) return false;
+  
+  if (currentFilter === "zh") return true;
+  if (currentFilter === "en") return true;
+  if (currentFilter === "vi") return true;
+  if (currentFilter === "fr") return true;
+  
+  return true;
 }
 
 function renderVocab() {
@@ -1240,18 +973,8 @@ function renderVocab() {
   noResults.style.display = "none";
   grid.innerHTML = filtered.map(vocab => `
     <div class="vocab-card">
-      <div class="vocab-word">${vocab.vi}</div>
+      <div class="vocab-word">${vocab.zh}</div>
       <div class="vocab-translations">
-        <div class="translation-row">
-          <span class="lang-label">VI:</span>
-          <span class="lang-content">${vocab.vi}</span>
-          <button class="play-button" onclick="speakWord('${vocab.vi.replace(/'/g, "\\'")}', 'vi')" title="Listen">▶</button>
-        </div>
-        <div class="translation-row">
-          <span class="lang-label">EN:</span>
-          <span class="lang-content">${vocab.en}</span>
-          <button class="play-button" onclick="speakWord('${vocab.en.split(',')[0].trim().replace(/'/g, "\\'")}', 'en')" title="Listen">▶</button>
-        </div>
         <div class="translation-row">
           <span class="lang-label">ZH:</span>
           <div class="lang-content">
@@ -1261,14 +984,34 @@ function renderVocab() {
           <button class="play-button" onclick="speakWord('${vocab.zh.replace(/'/g, "\\'")}', 'zh')" title="Listen">▶</button>
         </div>
         <div class="translation-row">
+          <span class="lang-label">EN:</span>
+          <span class="lang-content">${vocab.en}</span>
+          <button class="play-button" onclick="speakWord('${vocab.en.split(',')[0].trim().replace(/'/g, "\\'")}', 'en')" title="Listen">▶</button>
+        </div>
+        <div class="translation-row">
+          <span class="lang-label">VI:</span>
+          <span class="lang-content">${vocab.vi}</span>
+          <button class="play-button" onclick="speakWord('${vocab.vi.replace(/'/g, "\\'")}', 'vi')" title="Listen">▶</button>
+        </div>
+        <div class="translation-row">
           <span class="lang-label">FR:</span>
           <span class="lang-content">${vocab.fr}</span>
-          <button class="play-button" onclick="speakWord('${vocab.fr.split(',')[0].trim().replace(/'/g, "\\'")}', 'fr')" title="Listen">▶</button>
+          <button class="play-button" onclick="speakWord('${vocab.fr.split(',')[0].trim().split(' / ')[0].trim().replace(/'/g, "\\'")}', 'fr')" title="Listen">▶</button>
         </div>
       </div>
     </div>
   `).join("");
 }
+
+// Language filter buttons
+document.querySelectorAll('.controls button[data-lang]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.controls button[data-lang]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.lang;
+    renderVocab();
+  });
+});
 
 // Search box
 document.getElementById('searchBox').addEventListener('input', (e) => {
@@ -1279,7 +1022,7 @@ document.getElementById('searchBox').addEventListener('input', (e) => {
   // Initial render
   renderVocab();
   
-  // Make speakWord globally available (it's already robust enough)
+  // Make speakWord globally available
   window.speakWord = speakWord;
 </script>
 </body>

@@ -123,6 +123,33 @@
     .game-nav-button:hover {
       background: var(--hover-color);
     }
+    .controls button {
+      padding: 10px 20px;
+      border: 2px solid var(--primary-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-color);
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 120px;
+      outline: none;
+    }
+    .controls button:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    .controls button:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+    .controls button:hover {
+      background: var(--hover-color);
+    }
+    .controls button.active {
+      background: var(--primary-color);
+      color: var(--bg-color);
+    }
     .search-box {
       width: 100%;
       max-width: 400px;
@@ -241,36 +268,25 @@
     <div class="navigation">
       <a href="language-learning.html" class="nav-button">Language Home</a>
       <a href="index.html" class="nav-button">Math Home</a>
+      <button onclick="downloadPDF()" class="nav-button">📥 Download PDF</button>
     </div>
     
     <h1>Language Learning - Vocabulary</h1>
     
     <a href="language-learning-game.html" class="game-button">🎮 Play Language Game</a>
     
-    <div class="controls" role="group" aria-label="Game navigation">
+    <div class="controls" role="group" aria-label="Vocabulary navigation">
       <div class="lang-group">
-        <a href="language-learning-game.html" class="game-nav-button">Vietnamese → English</a>
+        <a href="language-learning.html" class="game-nav-button">Vietnamese Vocabulary</a>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-en-vi.html" class="game-nav-button">English → Vietnamese</a>
+        <a href="language-learning-zh.html" class="game-nav-button">Chinese Vocabulary</a>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-zh.html" class="game-nav-button">Chinese → English</a>
+        <a href="language-learning-ko.html" class="game-nav-button">Korean Vocabulary</a>
       </div>
       <div class="lang-group">
-        <a href="language-learning-game-en-zh.html" class="game-nav-button">English → Chinese</a>
-      </div>
-      <div class="lang-group">
-        <a href="language-learning-game-ko.html" class="game-nav-button">Korean → English</a>
-      </div>
-      <div class="lang-group">
-        <a href="language-learning-game-en-ko.html" class="game-nav-button">English → Korean</a>
-      </div>
-      <div class="lang-group">
-        <a href="language-learning-game-fr.html" class="game-nav-button">French → English</a>
-      </div>
-      <div class="lang-group">
-        <a href="language-learning-game-en-fr.html" class="game-nav-button">English → French</a>
+        <a href="language-learning-fr.html" class="game-nav-button">French Vocabulary</a>
       </div>
     </div>
 
@@ -1635,16 +1651,158 @@ function renderVocab() {
 }
 
 // Search box
-document.getElementById('searchBox').addEventListener('input', (e) => {
-  searchTerm = e.target.value;
-  renderVocab();
-});
+const searchBox = document.getElementById('searchBox');
+if (searchBox) {
+  searchBox.addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    renderVocab();
+  });
+}
 
-  // Initial render
-  renderVocab();
+// Initial render
+renderVocab();
+
+// Make speakWord globally available (it's already robust enough)
+window.speakWord = speakWord;
+</script>
+
+<!-- html2pdf.js library for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+async function downloadPDF() {
+  // Show loading message
+  const originalText = event.target.textContent;
+  event.target.textContent = "⏳ Generating PDF...";
+  event.target.disabled = true;
   
-  // Make speakWord globally available (it's already robust enough)
-  window.speakWord = speakWord;
+  try {
+    // Create a completely clean HTML structure for PDF (separate from webpage)
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.cssText = `
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      width: 100%;
+    `;
+    
+    // Create clean grid for vocabulary cards
+    const grid = document.createElement('div');
+    grid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+    `;
+    
+    // Build vocabulary cards from data (not from webpage DOM)
+    VOCABULARY.forEach(vocab => {
+      const card = document.createElement('div');
+      card.style.cssText = `
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 15px 0;
+        color: #000000;
+        page-break-inside: avoid;
+      `;
+      
+      // Main word (Vietnamese for this page)
+      const wordDiv = document.createElement('div');
+      wordDiv.style.cssText = `
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #000000;
+      `;
+      wordDiv.textContent = vocab.vi;
+      card.appendChild(wordDiv);
+      
+      // Translations
+      const translationsDiv = document.createElement('div');
+      translationsDiv.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        color: #000000;
+      `;
+      
+      // Vietnamese
+      const viRow = document.createElement('div');
+      viRow.style.cssText = 'color: #000000;';
+      viRow.innerHTML = `<strong>VI:</strong> ${vocab.vi}`;
+      translationsDiv.appendChild(viRow);
+      
+      // English
+      const enRow = document.createElement('div');
+      enRow.style.cssText = 'color: #000000;';
+      enRow.innerHTML = `<strong>EN:</strong> ${vocab.en}`;
+      translationsDiv.appendChild(enRow);
+      
+      // Chinese
+      const zhRow = document.createElement('div');
+      zhRow.style.cssText = 'color: #000000;';
+      zhRow.innerHTML = `<strong>ZH:</strong> ${vocab.zh}${vocab.zhPinyin ? `<br><span style="font-size: 12px; margin-left: 30px;">${vocab.zhPinyin}</span>` : ''}`;
+      translationsDiv.appendChild(zhRow);
+      
+      // French
+      const frRow = document.createElement('div');
+      frRow.style.cssText = 'color: #000000;';
+      frRow.innerHTML = `<strong>FR:</strong> ${vocab.fr}`;
+      translationsDiv.appendChild(frRow);
+      
+      // Korean (if exists)
+      if (vocab.ko) {
+        const koRow = document.createElement('div');
+        koRow.style.cssText = 'color: #000000;';
+        koRow.innerHTML = `<strong>KO:</strong> ${vocab.ko}`;
+        translationsDiv.appendChild(koRow);
+      }
+      
+      card.appendChild(translationsDiv);
+      grid.appendChild(card);
+    });
+    
+    pdfContainer.appendChild(grid);
+    
+    // Temporarily add to body (hidden)
+    pdfContainer.style.position = 'absolute';
+    pdfContainer.style.left = '-9999px';
+    document.body.appendChild(pdfContainer);
+    
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: 'language-learning-vocabulary.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      }
+    };
+    
+    // Generate PDF from clean structure
+    await html2pdf().set(opt).from(pdfContainer).save();
+    
+    // Remove temporary element
+    document.body.removeChild(pdfContainer);
+    
+    // Restore button
+    event.target.textContent = originalText;
+    event.target.disabled = false;
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    alert('Error generating PDF. Please try again.');
+    event.target.textContent = originalText;
+    event.target.disabled = false;
+  }
+}
 </script>
 </body>
 </html>

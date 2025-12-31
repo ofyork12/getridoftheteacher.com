@@ -501,16 +501,214 @@ function pickVoice(langCode) {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
 
-  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(LANGUAGE_HINTS[langCode] || langCode));
+  const hint = LANGUAGE_HINTS[langCode] || langCode;
+  const langGroup = voices.filter(v => v.lang && v.lang.startsWith(hint));
+  
+  if (langCode === "vi") {
+    // PRIORITY 1: Google Vietnamese voices (exclude American-sounding)
+    const googleVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isGoogle = name.includes("google") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+      const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+      return isGoogle && notAmerican;
+    });
+    if (googleVi.length) {
+      const femaleGoogle = googleVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleGoogle) return femaleGoogle;
+      return googleVi[0];
+    }
+    
+    // PRIORITY 2: Microsoft Vietnamese voices (exclude American-sounding)
+    const msVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isMs = name.includes("microsoft") && (name.includes("vietnamese") || name.includes("vi-") || name.includes("vi-vn"));
+      const notAmerican = !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+      return isMs && notAmerican;
+    });
+    if (msVi.length) {
+      const femaleMs = msVi.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || name.includes("nữ") || name.includes("woman") || (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleMs) return femaleMs;
+      return msVi[0];
+    }
+    
+    // PRIORITY 3: Any Vietnamese voice that doesn't sound American
+    const nonAmericanVi = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return !name.includes("us") && !name.includes("en") && !name.includes("english") && !name.includes("united states");
+    });
+    if (nonAmericanVi.length) return nonAmericanVi[0];
+    
+    // Fallback: any Vietnamese voice
+    if (langGroup.length) return langGroup[0];
+  }
+  
+  if (langCode === "en") {
+    // PRIORITY 1: Female natural/neural American voices
+    const femaleNaturalEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isFemale = name.includes("female") || name.includes("f") || name.includes("woman") || name.includes("zira") || name.includes("aria") || name.includes("susan") || name.includes("hazel") || name.includes("linda") || name.includes("karen") || name.includes("samantha") || (v.gender && v.gender.toLowerCase() === "female");
+      const isNatural = name.includes("neural") || name.includes("natural") || name.includes("premium") || name.includes("enhanced") || name.includes("online") || name.includes("aria");
+      const isAmerican = name.includes("us") || name.includes("united states") || name.includes("america");
+      return isFemale && isNatural && isAmerican;
+    });
+    if (femaleNaturalEn.length) return femaleNaturalEn[0];
+    
+    // PRIORITY 2: High-quality female American voices
+    const qualityFemaleEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return ((name.includes("aria") && name.includes("online")) || 
+              (name.includes("google") && name.includes("female")) || 
+              name.includes("zira") || name.includes("susan") || 
+              name.includes("hazel") || name.includes("linda") || 
+              name.includes("karen") || name.includes("samantha")) &&
+             (name.includes("us") || name.includes("united states") || name.includes("america"));
+    });
+    if (qualityFemaleEn.length) return qualityFemaleEn[0];
+    
+    // PRIORITY 3: Any female American voice
+    const femaleEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return (name.includes("female") || name.includes("f") || 
+              name.includes("woman") || name.includes("zira") || 
+              name.includes("aria") || name.includes("susan") || 
+              name.includes("hazel") || name.includes("linda") ||
+              name.includes("karen") || name.includes("samantha") ||
+              (v.gender && v.gender.toLowerCase() === "female")) &&
+             (name.includes("us") || name.includes("united states") || name.includes("america"));
+    });
+    if (femaleEn.length) return femaleEn[0];
+    
+    // Fallback: American English voices
+    const americanEn = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("us") || name.includes("united states") || name.includes("america");
+    });
+    if (americanEn.length) return americanEn[0];
+    
+    // Fallback: any English voice
+    if (langGroup.length) return langGroup[0];
+  }
+  
+  if (langCode === "zh") {
+    // PRIORITY 1: Female Natural/Neural Chinese voices
+    const femaleNaturalZh = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isFemale = name.includes("female") || name.includes("f") || 
+                      name.includes("woman") || name.includes("huihui") ||
+                      name.includes("yaoyao") ||
+                      (v.gender && v.gender.toLowerCase() === "female");
+      const isNatural = name.includes("neural") || name.includes("natural") || 
+                       name.includes("premium") || name.includes("enhanced");
+      return isFemale && isNatural;
+    });
+    if (femaleNaturalZh.length) return femaleNaturalZh[0];
+    
+    // PRIORITY 2: Any Natural/Neural Chinese voices
+    const naturalZh = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("neural") || name.includes("natural") || 
+             name.includes("premium") || name.includes("enhanced");
+    });
+    if (naturalZh.length) {
+      const femaleNatural = naturalZh.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("huihui") ||
+               name.includes("yaoyao") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleNatural) return femaleNatural;
+      return naturalZh[0];
+    }
+    
+    // PRIORITY 3: Female Chinese voices
+    const femaleZh = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("female") || name.includes("f") || 
+             name.includes("woman") || name.includes("huihui") ||
+             name.includes("yaoyao") ||
+             (v.gender && v.gender.toLowerCase() === "female");
+    });
+    if (femaleZh.length) return femaleZh[0];
+    
+    // PRIORITY 4: Google Chinese voices
+    const googleZh = langGroup.filter(v => 
+      v.name.toLowerCase().includes("google")
+    );
+    if (googleZh.length) return googleZh[0];
+    
+    // Fallback: any Chinese voice
+    if (langGroup.length) return langGroup[0];
+  }
+  
+  if (langCode === "fr") {
+    // PRIORITY 1: Female Natural/Neural French voices
+    const femaleNaturalFr = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      const isFemale = name.includes("female") || name.includes("f") || 
+                      name.includes("woman") || name.includes("denise") ||
+                      name.includes("hélène") ||
+                      (v.gender && v.gender.toLowerCase() === "female");
+      const isNatural = name.includes("neural") || name.includes("natural") || 
+                       name.includes("premium") || name.includes("enhanced");
+      return isFemale && isNatural;
+    });
+    if (femaleNaturalFr.length) return femaleNaturalFr[0];
+    
+    // PRIORITY 2: Any Natural/Neural French voices
+    const naturalFr = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("neural") || name.includes("natural") || 
+             name.includes("premium") || name.includes("enhanced");
+    });
+    if (naturalFr.length) {
+      const femaleNatural = naturalFr.find(v => {
+        const name = v.name.toLowerCase();
+        return name.includes("female") || name.includes("f") || 
+               name.includes("woman") || name.includes("denise") ||
+               name.includes("hélène") ||
+               (v.gender && v.gender.toLowerCase() === "female");
+      });
+      if (femaleNatural) return femaleNatural;
+      return naturalFr[0];
+    }
+    
+    // PRIORITY 3: Female French voices
+    const femaleFr = langGroup.filter(v => {
+      const name = v.name.toLowerCase();
+      return name.includes("female") || name.includes("f") || 
+             name.includes("woman") || name.includes("denise") ||
+             name.includes("hélène") ||
+             (v.gender && v.gender.toLowerCase() === "female");
+    });
+    if (femaleFr.length) return femaleFr[0];
+    
+    // PRIORITY 4: Google French voices
+    const googleFr = langGroup.filter(v => 
+      v.name.toLowerCase().includes("google")
+    );
+    if (googleFr.length) return googleFr[0];
+    
+    // Fallback: any French voice
+    if (langGroup.length) return langGroup[0];
+  }
+  
+  // For other languages, use first available voice
   if (langGroup.length) return langGroup[0];
-
+  
+  // Fallback for English
   const fallbacks = [
     "Microsoft Aria Online (Natural) - English (United States)",
     "Google US English",
     "Google UK English Female",
     "Microsoft Zira Desktop - English (United States)"
   ];
-
   for (const name of fallbacks) {
     const voice = voices.find(v => v.name === name);
     if (voice) return voice;

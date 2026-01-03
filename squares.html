@@ -7701,8 +7701,8 @@ if (moreSquaresContainer) {
     existing1369.remove();
   }
 
-  // Generate remaining squares from 6^2 to 36^2
-  for (let n = 6; n <= 36; n++) {
+  // Generate remaining squares from 6^2 to 36^2 (append in reverse so they appear visually as 6, 7, ..., 36)
+  for (let n = 36; n >= 6; n--) {
     moreSquaresContainer.appendChild(generateSquare(n));
   }
 
@@ -8313,8 +8313,9 @@ if (moreSquaresContainer) {
   
   moreSquaresContainer.appendChild(second39Section);
   
-  // Generate remaining squares from 40^2 to 52^2 (skip 39 since we just created it manually)
-  for (let n = 40; n <= 52; n++) {
+  // Generate remaining squares from 40^2 to 52^2 (append in reverse so they appear visually as 40, 41, ..., 52)
+  // Skip 39 since we just created it manually
+  for (let n = 52; n >= 40; n--) {
     moreSquaresContainer.appendChild(generateSquare(n));
   }
   
@@ -16574,6 +16575,42 @@ if (moreSquaresContainer) {
   });
   
   moreSquaresContainer.appendChild(grid100Section);
+  
+  // Ensure squares 53-100 appear in correct order (53, 54, ..., 100) right after 52²
+  // They were appended normally (53 to 100), so they're already in correct order
+  // But we need to ensure they're positioned right after 52², not at the end
+  const squares53to100 = [];
+  const allChildren = Array.from(moreSquaresContainer.children);
+  
+  // Collect squares 53-100 in the order they appear in DOM
+  for (let n = 53; n <= 100; n++) {
+    const section = allChildren.find(child => {
+      const h2 = child.querySelector('h2');
+      return h2 && h2.textContent === `${n}²`;
+    });
+    if (section) {
+      squares53to100.push(section);
+    }
+  }
+  
+  // Find 52² section to insert squares 53-100 right after it
+  const square52Section = allChildren.find(child => {
+    const h2 = child.querySelector('h2');
+    return h2 && h2.textContent === '52²';
+  });
+  
+  // If we found squares 53-100 and 52², reposition them right after 52²
+  if (squares53to100.length > 0 && square52Section) {
+    // Remove squares 53-100 from their current positions
+    squares53to100.forEach(section => section.remove());
+    
+    // Insert them right after 52², maintaining order (53, 54, ..., 100)
+    let insertAfter = square52Section;
+    squares53to100.forEach(section => {
+      insertAfter.parentNode.insertBefore(section, insertAfter.nextSibling);
+      insertAfter = section; // Update reference for next insertion
+    });
+  }
   
   // Debug: Log everything after appending
   setTimeout(() => {

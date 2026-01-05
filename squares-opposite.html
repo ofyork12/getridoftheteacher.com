@@ -108,8 +108,15 @@
       overflow-x: visible;
       position: relative;
     }
-    .set > :last-child {
+    .set > :last-child:not(.answer-display) {
       margin: 0 auto;
+    }
+    /* Answer display should never be centered or visible unless showing */
+    .set > .answer-display {
+      margin: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
     }
     /* Grid wrapper to keep grids centered in viewport */
     .grid-wrapper {
@@ -146,11 +153,49 @@
       font-size: 72px;
       font-weight: bold;
       min-height: 90px;
-      opacity: 0;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      display: none !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
       transition: opacity 0.3s ease;
+      pointer-events: none !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      color: transparent !important;
+      text-shadow: none !important;
+      z-index: -9999 !important;
+      clip: rect(0, 0, 0, 0) !important;
+      clip-path: inset(100%) !important;
+    }
+    /* Completely hide answer display when not showing */
+    .answer-display:not(.show) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      width: 0 !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      font-size: 0 !important;
+      line-height: 0 !important;
+      text-indent: -9999px !important;
     }
     .answer-display.show {
-      opacity: 1;
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+    }
+    /* Prevent any content from showing via CSS pseudo-elements */
+    .answer-display:not(.show)::before,
+    .answer-display:not(.show)::after {
+      content: none !important;
+      display: none !important;
     }
     .controls {
       display: flex;
@@ -228,7 +273,7 @@
     .grid-36 .circle {
       width: var(--circle-total-36) !important;
       height: var(--circle-total-36) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-49 {
       --circle-total-49: calc(var(--circle-total) * 13 / 7);
@@ -240,7 +285,7 @@
     .grid-49 .circle {
       width: var(--circle-total-49) !important;
       height: var(--circle-total-49) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-64 {
       --circle-total-64: calc(var(--circle-total) * 13 / 8);
@@ -252,7 +297,7 @@
     .grid-64 .circle {
       width: var(--circle-total-64) !important;
       height: var(--circle-total-64) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-81 {
       --circle-total-81: calc(var(--circle-total) * 13 / 9);
@@ -264,7 +309,7 @@
     .grid-81 .circle {
       width: var(--circle-total-81) !important;
       height: var(--circle-total-81) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-100 {
       --circle-total-100: calc(var(--circle-total) * 13 / 10);
@@ -276,7 +321,7 @@
     .grid-100 .circle {
       width: var(--circle-total-100) !important;
       height: var(--circle-total-100) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-121 {
       --circle-total-121: calc(var(--circle-total) * 13 / 11);
@@ -288,7 +333,7 @@
     .grid-121 .circle {
       width: var(--circle-total-121) !important;
       height: var(--circle-total-121) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-144 {
       --circle-total-144: calc(var(--circle-total) * 13 / 12);
@@ -300,7 +345,7 @@
     .grid-144 .circle {
       width: var(--circle-total-144) !important;
       height: var(--circle-total-144) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 13×13 (169), 14×14 (196), and 15×15 (225) grids - same size */
     .grid-169 {
@@ -319,7 +364,7 @@
     .grid-196 .circle {
       width: var(--circle-total-196) !important;
       height: var(--circle-total-196) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-225 {
       --circle-total-225: calc(var(--circle-total) * 13 / 15);
@@ -331,7 +376,7 @@
     .grid-225 .circle {
       width: var(--circle-total-225) !important;
       height: var(--circle-total-225) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-256 {
       --circle-total-256: calc(var(--circle-total) * 13 / 16);
@@ -343,7 +388,7 @@
     .grid-256 .circle {
       width: var(--circle-total-256) !important;
       height: var(--circle-total-256) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-289 {
       --circle-total-289: calc(var(--circle-total) * 13 / 17);
@@ -355,7 +400,7 @@
     .grid-289 .circle {
       width: var(--circle-total-289) !important;
       height: var(--circle-total-289) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-324 {
       --circle-total-324: calc(var(--circle-total) * 13 / 18);
@@ -367,7 +412,7 @@
     .grid-324 .circle {
       width: var(--circle-total-324) !important;
       height: var(--circle-total-324) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-361 {
       --circle-total-361: calc(var(--circle-total) * 13 / 19);
@@ -379,7 +424,7 @@
     .grid-361 .circle {
       width: var(--circle-total-361) !important;
       height: var(--circle-total-361) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-400 {
       --circle-total-400: calc(var(--circle-total) * 13 / 20);
@@ -391,7 +436,7 @@
     .grid-400 .circle {
       width: var(--circle-total-400) !important;
       height: var(--circle-total-400) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-441 {
       --circle-total-441: calc(var(--circle-total) * 13 / 21);
@@ -403,7 +448,7 @@
     .grid-441 .circle {
       width: var(--circle-total-441) !important;
       height: var(--circle-total-441) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-484 {
       --circle-total-484: calc(var(--circle-total) * 13 / 22);
@@ -415,7 +460,7 @@
     .grid-484 .circle {
       width: var(--circle-total-484) !important;
       height: var(--circle-total-484) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-529 {
       --circle-total-529: calc(var(--circle-total) * 13 / 23);
@@ -427,7 +472,7 @@
     .grid-529 .circle {
       width: var(--circle-total-529) !important;
       height: var(--circle-total-529) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-576 {
       --circle-total-576: calc(var(--circle-total) * 13 / 24);
@@ -439,7 +484,7 @@
     .grid-576 .circle {
       width: var(--circle-total-576) !important;
       height: var(--circle-total-576) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-625 {
       --circle-total-625: calc(var(--circle-total) * 13 / 25);
@@ -451,7 +496,7 @@
     .grid-625 .circle {
       width: var(--circle-total-625) !important;
       height: var(--circle-total-625) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-676 {
       --circle-total-676: calc(var(--circle-total) * 13 / 26);
@@ -463,7 +508,7 @@
     .grid-676 .circle {
       width: var(--circle-total-676) !important;
       height: var(--circle-total-676) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-729 {
       --circle-total-729: calc(var(--circle-total) * 13 / 27);
@@ -475,7 +520,7 @@
     .grid-729 .circle {
       width: var(--circle-total-729) !important;
       height: var(--circle-total-729) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-784 {
       --circle-total-784: calc(var(--circle-total) * 13 / 28);
@@ -487,7 +532,7 @@
     .grid-784 .circle {
       width: var(--circle-total-784) !important;
       height: var(--circle-total-784) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-841 {
       --circle-total-841: calc(var(--circle-total) * 13 / 29);
@@ -499,7 +544,7 @@
     .grid-841 .circle {
       width: var(--circle-total-841) !important;
       height: var(--circle-total-841) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-900 {
       --circle-total-900: calc(var(--circle-total) * 13 / 30);
@@ -511,7 +556,7 @@
     .grid-900 .circle {
       width: var(--circle-total-900) !important;
       height: var(--circle-total-900) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-961 {
       --circle-total-961: calc(var(--circle-total) * 13 / 31);
@@ -523,7 +568,7 @@
     .grid-961 .circle {
       width: var(--circle-total-961) !important;
       height: var(--circle-total-961) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-1024 {
       --circle-total-1024: calc(var(--circle-total) * 13 / 32);
@@ -535,7 +580,7 @@
     .grid-1024 .circle {
       width: var(--circle-total-1024) !important;
       height: var(--circle-total-1024) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-1089 {
       --circle-total-1089: calc(var(--circle-total) * 13 / 33);
@@ -547,7 +592,7 @@
     .grid-1089 .circle {
       width: var(--circle-total-1089) !important;
       height: var(--circle-total-1089) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* Grids 34×34 through 60×60 - make them bigger */
     .grid-1521, .grid-1600,
@@ -568,7 +613,7 @@
     .grid-1156 .circle {
       width: var(--circle-total-1156) !important;
       height: var(--circle-total-1156) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 35×35 (1225) - same size as 13×13 grid */
     .grid-1225 {
@@ -581,7 +626,7 @@
     .grid-1225 .circle {
       width: var(--circle-total-1225) !important;
       height: var(--circle-total-1225) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 36×36 (1296) - same size as 13×13 grid */
     .grid-1296 {
@@ -594,7 +639,7 @@
     .grid-1296 .circle {
       width: var(--circle-total-1296) !important;
       height: var(--circle-total-1296) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 37×37 (1369) - same size as 13×13 grid */
     .grid-1369 {
@@ -607,7 +652,7 @@
     .grid-1369 .circle {
       width: var(--circle-total-1369) !important;
       height: var(--circle-total-1369) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 38×38 (1444) - same size as 13×13 grid */
     .grid-1444 {
@@ -620,7 +665,7 @@
     .grid-1444 .circle {
       width: var(--circle-total-1444) !important;
       height: var(--circle-total-1444) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 39×39 (1521) - same size as 13×13 grid - MUST come after general rule to override */
     .grid-1521 {
@@ -633,7 +678,7 @@
     .grid-1521 .circle {
       width: var(--circle-total-1521) !important;
       height: var(--circle-total-1521) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 40×40 (1600) - same size as 13×13 grid */
     .grid-1600 {
@@ -646,7 +691,7 @@
     .grid-1600 .circle {
       width: var(--circle-total-1600) !important;
       height: var(--circle-total-1600) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 41×41 (1681) - same size as 13×13 grid */
     .grid-1681 {
@@ -659,7 +704,7 @@
     .grid-1681 .circle {
       width: var(--circle-total-1681) !important;
       height: var(--circle-total-1681) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 42×42 (1764) - same size as 13×13 grid */
     .grid-1764 {
@@ -672,7 +717,7 @@
     .grid-1764 .circle {
       width: var(--circle-total-1764) !important;
       height: var(--circle-total-1764) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 43×43 (1849) - same size as 13×13 grid */
     .grid-1849 {
@@ -685,7 +730,7 @@
     .grid-1849 .circle {
       width: var(--circle-total-1849) !important;
       height: var(--circle-total-1849) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 44×44 (1936) - same size as 13×13 grid */
     .grid-1936 {
@@ -698,7 +743,7 @@
     .grid-1936 .circle {
       width: var(--circle-total-1936) !important;
       height: var(--circle-total-1936) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 45×45 (2025) - same size as 13×13 grid */
     .grid-2025 {
@@ -711,7 +756,7 @@
     .grid-2025 .circle {
       width: var(--circle-total-2025) !important;
       height: var(--circle-total-2025) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 46×46 (2116) - same size as 13×13 grid */
     .grid-2116 {
@@ -724,7 +769,7 @@
     .grid-2116 .circle {
       width: var(--circle-total-2116) !important;
       height: var(--circle-total-2116) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 47×47 (2209) - same size as 13×13 grid */
     .grid-2209 {
@@ -737,7 +782,7 @@
     .grid-2209 .circle {
       width: var(--circle-total-2209) !important;
       height: var(--circle-total-2209) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 48×48 (2304) - same size as 13×13 grid */
     .grid-2304 {
@@ -750,7 +795,7 @@
     .grid-2304 .circle {
       width: var(--circle-total-2304) !important;
       height: var(--circle-total-2304) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 49×49 (2401) - same size as 13×13 grid */
     .grid-2401 {
@@ -763,7 +808,7 @@
     .grid-2401 .circle {
       width: var(--circle-total-2401) !important;
       height: var(--circle-total-2401) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 50×50 (2500) - same size as 13×13 grid */
     .grid-2500 {
@@ -776,7 +821,7 @@
     .grid-2500 .circle {
       width: var(--circle-total-2500) !important;
       height: var(--circle-total-2500) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 51×51 (2601) - same size as 13×13 grid */
     .grid-2601 {
@@ -789,7 +834,7 @@
     .grid-2601 .circle {
       width: var(--circle-total-2601) !important;
       height: var(--circle-total-2601) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 52×52 (2704) - same size as 13×13 grid */
     .grid-2704 {
@@ -802,7 +847,7 @@
     .grid-2704 .circle {
       width: var(--circle-total-2704) !important;
       height: var(--circle-total-2704) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 53×53 (2809) - same size as 13×13 grid */
     .grid-2809 {
@@ -815,7 +860,7 @@
     .grid-2809 .circle {
       width: var(--circle-total-2809) !important;
       height: var(--circle-total-2809) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 54×54 (2916) - same size as 13×13 grid */
     .grid-2916 {
@@ -828,7 +873,7 @@
     .grid-2916 .circle {
       width: var(--circle-total-2916) !important;
       height: var(--circle-total-2916) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 55×55 (3025) - same size as 13×13 grid */
     .grid-3025 {
@@ -841,7 +886,7 @@
     .grid-3025 .circle {
       width: var(--circle-total-3025) !important;
       height: var(--circle-total-3025) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 56×56 (3136) - same size as 13×13 grid */
     .grid-3136 {
@@ -854,7 +899,7 @@
     .grid-3136 .circle {
       width: var(--circle-total-3136) !important;
       height: var(--circle-total-3136) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 57×57 (3249) - same size as 13×13 grid */
     .grid-3249 {
@@ -867,7 +912,7 @@
     .grid-3249 .circle {
       width: var(--circle-total-3249) !important;
       height: var(--circle-total-3249) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 58×58 (3364) - same size as 13×13 grid */
     .grid-3364 {
@@ -880,7 +925,7 @@
     .grid-3364 .circle {
       width: var(--circle-total-3364) !important;
       height: var(--circle-total-3364) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 59×59 (3481) - same size as 13×13 grid */
     .grid-3481 {
@@ -893,7 +938,7 @@
     .grid-3481 .circle {
       width: var(--circle-total-3481) !important;
       height: var(--circle-total-3481) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 60×60 (3600) - same size as 13×13 grid */
     .grid-3600 {
@@ -906,7 +951,7 @@
     .grid-3600 .circle {
       width: var(--circle-total-3600) !important;
       height: var(--circle-total-3600) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* 61×61 (3721) - same size as 13×13 grid */
     .grid-3721 {
@@ -919,7 +964,7 @@
     .grid-3721 .circle {
       width: var(--circle-total-3721) !important;
       height: var(--circle-total-3721) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-3844 {
       --circle-total-3844: calc(var(--circle-total) * 13 / 62);
@@ -931,7 +976,7 @@
     .grid-3844 .circle {
       width: var(--circle-total-3844) !important;
       height: var(--circle-total-3844) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-3969 {
       --circle-total-3969: calc(var(--circle-total) * 13 / 63);
@@ -943,7 +988,7 @@
     .grid-3969 .circle {
       width: var(--circle-total-3969) !important;
       height: var(--circle-total-3969) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4096 {
       --circle-total-4096: calc(var(--circle-total) * 13 / 64);
@@ -955,7 +1000,7 @@
     .grid-4096 .circle {
       width: var(--circle-total-4096) !important;
       height: var(--circle-total-4096) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4225 {
       --circle-total-4225: calc(var(--circle-total) * 13 / 65);
@@ -967,7 +1012,7 @@
     .grid-4225 .circle {
       width: var(--circle-total-4225) !important;
       height: var(--circle-total-4225) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4356 {
       --circle-total-4356: calc(var(--circle-total) * 13 / 66);
@@ -979,7 +1024,7 @@
     .grid-4356 .circle {
       width: var(--circle-total-4356) !important;
       height: var(--circle-total-4356) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4489 {
       --circle-total-4489: calc(var(--circle-total) * 13 / 67);
@@ -991,7 +1036,7 @@
     .grid-4489 .circle {
       width: var(--circle-total-4489) !important;
       height: var(--circle-total-4489) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4624 {
       --circle-total-4624: calc(var(--circle-total) * 13 / 68);
@@ -1003,7 +1048,7 @@
     .grid-4624 .circle {
       width: var(--circle-total-4624) !important;
       height: var(--circle-total-4624) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4761 {
       --circle-total-4761: calc(var(--circle-total) * 13 / 69);
@@ -1015,7 +1060,7 @@
     .grid-4761 .circle {
       width: var(--circle-total-4761) !important;
       height: var(--circle-total-4761) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-4900 {
       --circle-total-4900: calc(var(--circle-total) * 13 / 70);
@@ -1027,7 +1072,7 @@
     .grid-4900 .circle {
       width: var(--circle-total-4900) !important;
       height: var(--circle-total-4900) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* All grids 71×71 through 100×100 - same size as 13×13 grid */
     .grid-5041 {
@@ -1040,7 +1085,7 @@
     .grid-5041 .circle {
       width: var(--circle-total-5041) !important;
       height: var(--circle-total-5041) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5184 {
       --circle-total-5184: calc(var(--circle-total) * 13 / 72);
@@ -1052,7 +1097,7 @@
     .grid-5184 .circle {
       width: var(--circle-total-5184) !important;
       height: var(--circle-total-5184) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5329 {
       --circle-total-5329: calc(var(--circle-total) * 13 / 73);
@@ -1064,7 +1109,7 @@
     .grid-5329 .circle {
       width: var(--circle-total-5329) !important;
       height: var(--circle-total-5329) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5476 {
       --circle-total-5476: calc(var(--circle-total) * 13 / 74);
@@ -1076,7 +1121,7 @@
     .grid-5476 .circle {
       width: var(--circle-total-5476) !important;
       height: var(--circle-total-5476) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5625 {
       --circle-total-5625: calc(var(--circle-total) * 13 / 75);
@@ -1088,7 +1133,7 @@
     .grid-5625 .circle {
       width: var(--circle-total-5625) !important;
       height: var(--circle-total-5625) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5776 {
       --circle-total-5776: calc(var(--circle-total) * 13 / 76);
@@ -1100,7 +1145,7 @@
     .grid-5776 .circle {
       width: var(--circle-total-5776) !important;
       height: var(--circle-total-5776) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-5929 {
       --circle-total-5929: calc(var(--circle-total) * 13 / 77);
@@ -1112,7 +1157,7 @@
     .grid-5929 .circle {
       width: var(--circle-total-5929) !important;
       height: var(--circle-total-5929) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6084 {
       --circle-total-6084: calc(var(--circle-total) * 13 / 78);
@@ -1124,7 +1169,7 @@
     .grid-6084 .circle {
       width: var(--circle-total-6084) !important;
       height: var(--circle-total-6084) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6241 {
       --circle-total-6241: calc(var(--circle-total) * 13 / 79);
@@ -1136,7 +1181,7 @@
     .grid-6241 .circle {
       width: var(--circle-total-6241) !important;
       height: var(--circle-total-6241) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6400 {
       --circle-total-6400: calc(var(--circle-total) * 13 / 80);
@@ -1148,7 +1193,7 @@
     .grid-6400 .circle {
       width: var(--circle-total-6400) !important;
       height: var(--circle-total-6400) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6561 {
       --circle-total-6561: calc(var(--circle-total) * 13 / 81);
@@ -1160,7 +1205,7 @@
     .grid-6561 .circle {
       width: var(--circle-total-6561) !important;
       height: var(--circle-total-6561) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6724 {
       --circle-total-6724: calc(var(--circle-total) * 13 / 82);
@@ -1172,7 +1217,7 @@
     .grid-6724 .circle {
       width: var(--circle-total-6724) !important;
       height: var(--circle-total-6724) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-6889 {
       --circle-total-6889: calc(var(--circle-total) * 13 / 83);
@@ -1184,7 +1229,7 @@
     .grid-6889 .circle {
       width: var(--circle-total-6889) !important;
       height: var(--circle-total-6889) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7056 {
       --circle-total-7056: calc(var(--circle-total) * 13 / 84);
@@ -1196,7 +1241,7 @@
     .grid-7056 .circle {
       width: var(--circle-total-7056) !important;
       height: var(--circle-total-7056) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7225 {
       --circle-total-7225: calc(var(--circle-total) * 13 / 85);
@@ -1208,7 +1253,7 @@
     .grid-7225 .circle {
       width: var(--circle-total-7225) !important;
       height: var(--circle-total-7225) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7396 {
       --circle-total-7396: calc(var(--circle-total) * 13 / 86);
@@ -1220,7 +1265,7 @@
     .grid-7396 .circle {
       width: var(--circle-total-7396) !important;
       height: var(--circle-total-7396) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7569 {
       --circle-total-7569: calc(var(--circle-total) * 13 / 87);
@@ -1232,7 +1277,7 @@
     .grid-7569 .circle {
       width: var(--circle-total-7569) !important;
       height: var(--circle-total-7569) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7744 {
       --circle-total-7744: calc(var(--circle-total) * 13 / 88);
@@ -1244,7 +1289,7 @@
     .grid-7744 .circle {
       width: var(--circle-total-7744) !important;
       height: var(--circle-total-7744) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-7921 {
       --circle-total-7921: calc(var(--circle-total) * 13 / 89);
@@ -1256,7 +1301,7 @@
     .grid-7921 .circle {
       width: var(--circle-total-7921) !important;
       height: var(--circle-total-7921) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-8100 {
       --circle-total-8100: calc(var(--circle-total) * 13 / 90);
@@ -1268,7 +1313,7 @@
     .grid-8100 .circle {
       width: var(--circle-total-8100) !important;
       height: var(--circle-total-8100) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-8281 {
       --circle-total-8281: calc(var(--circle-total) * 13 / 91);
@@ -1280,7 +1325,7 @@
     .grid-8281 .circle {
       width: var(--circle-total-8281) !important;
       height: var(--circle-total-8281) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-8464 {
       --circle-total-8464: calc(var(--circle-total) * 13 / 92);
@@ -1292,7 +1337,7 @@
     .grid-8464 .circle {
       width: var(--circle-total-8464) !important;
       height: var(--circle-total-8464) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-8649 {
       --circle-total-8649: calc(var(--circle-total) * 13 / 93);
@@ -1304,7 +1349,7 @@
     .grid-8649 .circle {
       width: var(--circle-total-8649) !important;
       height: var(--circle-total-8649) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-8836 {
       --circle-total-8836: calc(var(--circle-total) * 13 / 94);
@@ -1316,7 +1361,7 @@
     .grid-8836 .circle {
       width: var(--circle-total-8836) !important;
       height: var(--circle-total-8836) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-9025 {
       --circle-total-9025: calc(var(--circle-total) * 13 / 95);
@@ -1328,7 +1373,7 @@
     .grid-9025 .circle {
       width: var(--circle-total-9025) !important;
       height: var(--circle-total-9025) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-9216 {
       --circle-total-9216: calc(var(--circle-total) * 13 / 96);
@@ -1340,7 +1385,7 @@
     .grid-9216 .circle {
       width: var(--circle-total-9216) !important;
       height: var(--circle-total-9216) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-9409 {
       --circle-total-9409: calc(var(--circle-total) * 13 / 97);
@@ -1352,7 +1397,7 @@
     .grid-9409 .circle {
       width: var(--circle-total-9409) !important;
       height: var(--circle-total-9409) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-9604 {
       --circle-total-9604: calc(var(--circle-total) * 13 / 98);
@@ -1364,7 +1409,7 @@
     .grid-9604 .circle {
       width: var(--circle-total-9604) !important;
       height: var(--circle-total-9604) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-9801 {
       --circle-total-9801: calc(var(--circle-total) * 13 / 99);
@@ -1376,7 +1421,7 @@
     .grid-9801 .circle {
       width: var(--circle-total-9801) !important;
       height: var(--circle-total-9801) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     .grid-10000 {
       --circle-total-10000: calc(var(--circle-total) * 13 / 100);
@@ -1388,7 +1433,7 @@
     .grid-10000 .circle {
       width: var(--circle-total-10000) !important;
       height: var(--circle-total-10000) !important;
-      border-width: clamp(0.25px, 0.15vw, 1.5px) !important;
+      border-width: 0.5px !important;
     }
     /* Removed old circle size rules for 676, 729, 784, 841, 900 - now using grid-specific sizes */
     /* Circle sizes for grids 34×34 through 50×50 */
@@ -2345,15 +2390,38 @@ function setupGroup(selector, palette) {
         // Check if all dots are filled (count equals the total number of dots in this section)
         const section = circles[0].closest('.set');
         const totalDots = circles.length;
-        if (count >= totalDots) {
-          const answer = answerDisplay.dataset.answer;
-          answerDisplay.textContent = answer;
-          answerDisplay.classList.add('show');
+        const squareValue = section && section.dataset.square ? parseInt(section.dataset.square) : null;
+        // Only show answer if at least one click has occurred and all dots are filled
+        // CRITICAL: Never show answer display unless user has clicked
+        if (clickCount > 0 && count >= totalDots && answerDisplay) {
+          // Append to section only when showing
+          if (!answerDisplay.parentNode) {
+            section.appendChild(answerDisplay);
+          }
+          if (squareValue === 2500) {
+            // For 2500, show answer only after second click and all dots filled
+            if (clickCount >= 2) {
+              const answer = answerDisplay.dataset.answer;
+              answerDisplay.dataset.allowShow = 'true';
+              answerDisplay.classList.add('show');
+              answerDisplay.textContent = answer;
+            }
+          } else {
+            // For all other squares, show answer when all dots are filled
+            answerDisplay.dataset.allowShow = 'true';
+            answerDisplay.classList.add('show');
+            const answer = answerDisplay.dataset.answer;
+            answerDisplay.textContent = answer;
+          }
         }
       } else if (answerDisplay && count === 0) {
         clickCount = 0;
         answerDisplay.textContent = '';
         answerDisplay.classList.remove('show');
+        // Remove from DOM when hiding
+        if (answerDisplay.parentNode) {
+          answerDisplay.parentNode.removeChild(answerDisplay);
+        }
       }
     });
   });
@@ -3151,6 +3219,14 @@ function generateSquare(n, label = null) {
       
       // Store dot number in data attribute (used by some special patterns)
       circle.dataset.dotNumber = dotNumber.toString();
+      
+      // Create and add visible number span (but not for 36×36 / 1296, or 40×40 through 55×55 / 1600-3025)
+      if (square !== 1296 && (square < 1600 || square > 3025)) {
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'circle-number';
+        numberSpan.textContent = dotNumber.toString();
+        circle.appendChild(numberSpan);
+      }
     }
     grid.appendChild(circle);
   }
@@ -3169,11 +3245,31 @@ function generateSquare(n, label = null) {
   
   section.appendChild(grid);
   
+  // Check if answer display already exists - remove it first to prevent duplicates
+  // Use try-catch to prevent errors from breaking script execution
+  try {
+    const existingAnswerDisplay = section.querySelector('.answer-display');
+    if (existingAnswerDisplay) {
+      existingAnswerDisplay.remove();
+    }
+  } catch (e) {
+    console.error('Error checking for existing answer display:', e);
+  }
+  
   // Add answer display
   const answerDisplay = document.createElement('div');
   answerDisplay.className = 'answer-display';
   answerDisplay.dataset.answer = square;
-  section.appendChild(answerDisplay);
+  answerDisplay.textContent = ''; // Ensure it starts empty
+  answerDisplay.innerHTML = ''; // Also clear innerHTML
+  // Explicitly ensure it's hidden - no show class and force hidden state
+  answerDisplay.classList.remove('show');
+  // Use setAttribute to force hide with inline styles
+  answerDisplay.setAttribute('style', 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0 !important; width: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; color: transparent !important; z-index: -9999 !important;');
+  // Don't append to DOM at all - store reference only
+  // Answer display will be created and appended only when needed (when show class is added)
+  section._answerDisplay = answerDisplay;
+  // Don't append anywhere - keep it completely out of the DOM
   
   // Setup click handlers
   const circles = Array.from(grid.querySelectorAll('.circle'));
@@ -3886,11 +3982,15 @@ function generateSquare(n, label = null) {
           
           // Show answer when all components are processed
           // For numbers like 100 where components are [100, 0, 0], show answer after processing non-zero components
-          const nonZeroComponentsEarly = components.filter(c => c > 0);
-          const processedNonZeroEarly = components.slice(0, clickCount).filter(c => c > 0).length;
-          if ((clickCount >= totalClicks || processedNonZeroEarly >= nonZeroComponentsEarly.length) && answerDisplay) {
-            answerDisplay.textContent = square;
+          // CRITICAL: Only show if clickCount is actually > 0 (user has clicked) AND all components processed
+          if (clickCount > 0 && answerDisplay && clickCount >= totalClicks) {
+            // Append to section only when showing
+            if (!answerDisplay.parentNode) {
+              section.appendChild(answerDisplay);
+            }
+            answerDisplay.dataset.allowShow = 'true';
             answerDisplay.classList.add('show');
+            answerDisplay.textContent = square;
           }
           return; // Exit early, don't try to fill 0 dots
         }
@@ -4051,66 +4151,8 @@ function generateSquare(n, label = null) {
         const colorKey = firstDigit || 10;
         let color = COLOR_MAP[colorKey] || "red";
         
-        // Special: 625 and 676 first click (hundreds) should be purple, not yellow
-        if ((square === 625 || square === 676) && isHundredsPlace && components.length === 3) {
-          color = "purple";
-        }
-        
-        // Special: 729 and 784 first click (700) should be brown (following pattern of 7s being brown)
-        if ((square === 729 || square === 784) && isHundredsPlace && components.length === 3) {
-          color = "brown";
-        }
-        
-        // Special: 625 and 729 second click (tens) should be orange
-        if ((square === 625 || square === 729) && isTensPlace && components.length === 3) {
-          color = "orange";
-        }
-        
-        // Special: 784 second click (80) should be pink
-        if (square === 784 && isTensPlace && components.length === 3) {
-          color = "pink";
-        }
-        
-        // Special: 676 second click should be brown
-        if (square === 676 && isTensPlace && components.length === 3) {
-          color = "brown";
-        }
-        
-        // Special: 729 third click (ones) should be sky blue, matching 529 pattern
-        if (square === 729 && isOnesPlace && components.length === 3) {
-          color = "sky";
-        }
-        
-        // Special: 784 third click (ones) should be green (2×2 square)
-        if (square === 784 && isOnesPlace && components.length === 3) {
-          color = "green";
-        }
-        
-        // Special: 841 first click (800) should be pink (following pattern of 8s being pink)
-        if (square === 841 && isHundredsPlace && components.length === 3) {
-          color = "pink";
-        }
-        
-        // Special: 841 second click (40) should be green (following pattern of 4s being green)
-        if (square === 841 && isTensPlace && components.length === 3) {
-          color = "green";
-        }
-        
-        // Special: 841 third click (ones) should be red (1 red dot)
-        if (square === 841 && isOnesPlace && components.length === 3) {
-          color = "red";
-        }
-        
-        // Special: 900 - all 900 dots should be sky blue on first (and only) click
-        if (square === 900) {
-          color = "sky";
-        }
-        
-        // Special: 1600 second click - 600 dots should be purple (CHECK THIS LAST, after all other overrides)
-        if (square === 1600 && clickCount === 1) {
-          color = "purple";
-          console.log('1600 second click - color FINALLY set to purple');
-        }
+        // All colors are now based on first digit:
+        // 1 = red, 2 = orange, 3 = yellow, 4 = green, 5 = blue, 6 = purple, 7 = brown, 8 = pink, 9 = sky blue
         
         // REPLICA: Handle color assignment independently (before other checks)
         if (isReplica) {
@@ -4219,11 +4261,13 @@ function generateSquare(n, label = null) {
                 color = "purple"; // 6 purple dots (triangle pattern)
               }
             } else {
-              // Other squares mapping to 196: 1200 (hundreds), 90 purple (tens), 6 purple (ones)
+              // Other squares mapping to 196: 1200 (hundreds), 90 sky blue (tens), 6 purple (ones)
             if (isHundredsPlace) {
                 color = COLOR_MAP[1] || "red"; // 1200 starts with 1
-            } else if (isTensPlace || isOnesPlace) {
-                color = "purple"; // 90 purple and 6 purple
+            } else if (isTensPlace) {
+                color = COLOR_MAP[9] || "sky"; // 90 starts with 9 = sky blue
+            } else if (isOnesPlace) {
+                color = COLOR_MAP[6] || "purple"; // 6 starts with 6 = purple
               }
             }
           } else if (sourceSquare === 169) {
@@ -4390,9 +4434,13 @@ function generateSquare(n, label = null) {
               color = "red"; // 1 red
             }
           } else if (sourceSquare === 0 || sourceN === 0) {
-            // 50×50 (2500) maps to 0×0 (0): 2500 (all filled on first click)
-            if (isHundredsPlace) {
-              color = COLOR_MAP[2] || "orange"; // 2500 starts with 2
+            // 50×50 (2500): Color each circle based on first digit of its number
+            // First click: Numbers starting with 2 (2000-2499) = orange
+            // Second click: Numbers starting with 5 (500-599) = blue
+            if (clickCount === 0) {
+              color = COLOR_MAP[2] || "orange"; // 2000 starts with 2 = orange
+            } else if (clickCount === 1) {
+              color = COLOR_MAP[5] || "blue"; // 500 starts with 5 = blue
             }
           }
         }
@@ -4522,6 +4570,44 @@ function generateSquare(n, label = null) {
           });
           
           indicesToFill = blackDots;
+        } else if (square === 2500) {
+          // Special handling for 2500 - color each circle based on first digit of its number
+          // First click: Numbers starting with 2 (2000-2499) = orange
+          // Second click: Numbers starting with 5 (500-599) = blue
+          const indicesToColor = [];
+          circles.forEach((circle, idx) => {
+            // Get the number from the circle
+            let dotNumber;
+            const numberSpan = circle.querySelector('.circle-number');
+            if (numberSpan) {
+              dotNumber = parseInt(numberSpan.textContent, 10);
+            } else if (circle.dataset.dotNumber) {
+              dotNumber = parseInt(circle.dataset.dotNumber, 10);
+            } else {
+              // Calculate from index (right to left, row by row)
+              const row = Math.floor(idx / gridSize);
+              const col = idx % gridSize;
+              dotNumber = row * gridSize + (gridSize - col);
+            }
+            
+            if (dotNumber) {
+              const dotNumberStr = dotNumber.toString();
+              const firstDigit = parseInt(dotNumberStr[0]);
+              
+              // Determine color based on first digit and which click we're on
+              // First click (clickCount === 0): componentValue = 2000, color numbers starting with 2
+              // Second click (clickCount === 1): componentValue = 500, color numbers starting with 5
+              if (clickCount === 0 && firstDigit === 2 && dotNumber >= 2000 && dotNumber <= 2499) {
+                // Numbers starting with 2 (2000-2499) should be orange on first click
+                indicesToColor.push(idx);
+              } else if (clickCount === 1 && firstDigit === 5 && dotNumber >= 500 && dotNumber <= 599) {
+                // Numbers starting with 5 (500-599) should be blue on second click
+                indicesToColor.push(idx);
+              }
+            }
+          });
+          
+          indicesToFill = indicesToColor.filter(i => !alreadyFilled.has(i));
         } else if (square === 900) {
           // Special handling for 900 - fill all 900 dots with sky blue on first (and only) click
           const allIndices = [];
@@ -4892,8 +4978,8 @@ function generateSquare(n, label = null) {
             .slice(0, componentValue);
         } else if (isHundredsPlace) {
           // Hundreds place: start from bottom left, fill all the way to top
-          // Skip if indicesToFill already set by special case (e.g., 1369 first click, 1600 first click, 1600 second click)
-          if (indicesToFill.length > 0) {
+          // Skip if indicesToFill already set by special case (e.g., 1369 first click, 1600 first click, 1600 second click, 2500)
+          if (indicesToFill.length > 0 || square === 2500) {
             // Already handled by special case, skip
           } else if (square === 1600 && clickCount === 0) {
             // Special: 1600 first click - fill 1000 dots from bottom-left corner
@@ -7023,6 +7109,7 @@ function generateSquare(n, label = null) {
         }
 
         const indicesToProcess = (square === 1156 && clickCount === 1) ? indicesToFill : 
+                                  (square === 2500 ? indicesToFill :
                                   ((square === 441 && isTensPlace) ? indicesToFill :
                                   ((square === 1225 && clickCount === 2) ? indicesToFill :
                                   ((square === 1600 && clickCount === 1) ? indicesToFill :
@@ -7043,7 +7130,7 @@ function generateSquare(n, label = null) {
                                   ((square === 2116 && clickCount === 3) ? indicesToFill :
                                   ((square === 2209 && clickCount === 1) ? indicesToFill :
                                   ((square === 2209 && clickCount === 2) ? indicesToFill :
-                                  ((is1296SpecialClick || is1369SpecialClick) ? indicesToFill : (indicesToFill || []).slice(0, componentValue))))))))))))))))))))));
+                                  ((is1296SpecialClick || is1369SpecialClick) ? indicesToFill : (indicesToFill || []).slice(0, componentValue)))))))))))))))))))))));
         
         if (square === 1600 && clickCount === 1) {
           console.log('1600 second click - indicesToFill length:', indicesToFill.length, 'indicesToProcess length:', indicesToProcess.length, 'componentValue:', componentValue);
@@ -7683,8 +7770,10 @@ function generateSquare(n, label = null) {
               // Offset to the RIGHT and UP (moves with the other 40) - diagonal movement
               // RIGHT: positive left value = col + 1.2
               // UP: negative top value = row - 1.2
-              separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 1.2 * var(--circle-total))`;
-              separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1.2 * var(--circle-total))`;
+              // Use scaled circle size variable for 441 grid
+              const circleSizeVar441 = 'var(--circle-total-441)';
+              separatedCircle.style.left = `calc(${circleSizeVar441} * ${col} + 1.2 * ${circleSizeVar441})`;
+              separatedCircle.style.top = `calc(${circleSizeVar441} * ${row} - 1.2 * ${circleSizeVar441})`;
               
               // Copy the number span if it exists (for numbered grids)
               const originalNumber = c.querySelector('.circle-number');
@@ -7907,8 +7996,10 @@ function generateSquare(n, label = null) {
                 });
                 
                 // Move up 1 dot distance (same as orange dots)
-                separatedCircle.style.left = `calc(var(--circle-total) * ${gridSize - 1})`;
-                separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 1 * var(--circle-total))`;
+                // Use scaled circle size variable for 1225 grid
+                const circleSizeVar1225 = 'var(--circle-total-1225)';
+                separatedCircle.style.left = `calc(${circleSizeVar1225} * ${gridSize - 1})`;
+                separatedCircle.style.top = `calc(${circleSizeVar1225} * ${row} - 1 * ${circleSizeVar1225})`;
                 separatedCircle.style.transform = 'none';
                 separatedCircle.style.margin = '0';
                 separatedCircle.style.padding = '0';
@@ -8010,12 +8101,20 @@ function generateSquare(n, label = null) {
         const allDotsFilled = filledCount.count >= square;
         
         // Special handling for second 39×39 grid - show answer on 4th click
-        const isSecond39Grid = grid.id === 'square-1521-2';
-        if (isSecond39Grid && clickCount === 4 && answerDisplay) {
-          answerDisplay.classList.add('show');
-        } else if ((clickCount >= totalClicks || processedNonZero >= nonZeroComponents.length || allDotsFilled) && answerDisplay) {
-          answerDisplay.textContent = square;
-          answerDisplay.classList.add('show');
+        // Only show if at least one click has occurred
+        if (clickCount > 0 && answerDisplay) {
+          const isSecond39Grid = grid.id === 'square-1521-2';
+          if (isSecond39Grid && clickCount === 4) {
+            answerDisplay.classList.add('show');
+          } else if (clickCount > 0 && (clickCount >= totalClicks || processedNonZero >= nonZeroComponents.length || allDotsFilled)) {
+            // Append to section only when showing
+            if (!answerDisplay.parentNode) {
+              section.appendChild(answerDisplay);
+            }
+            answerDisplay.dataset.allowShow = 'true';
+            answerDisplay.classList.add('show');
+            answerDisplay.textContent = square;
+          }
         }
       }
   });
@@ -8696,10 +8795,19 @@ if (moreSquaresContainer) {
   const totalDots53 = 2809;
   const grid53Circles = [];
   
-  // Create all 2809 circles
+  // Create all 2809 circles with numbers
   for (let i = 0; i < totalDots53; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-2809';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize53);
+    const col = i % gridSize53;
+    const dotNumber = row * gridSize53 + (gridSize53 - col);
+    
+    // Store dot number in data attribute (no visible number displayed)
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid53.appendChild(circle);
     grid53Circles.push(circle);
   }
@@ -8817,10 +8925,19 @@ if (moreSquaresContainer) {
   const totalDots54 = 2916;
   const grid54Circles = [];
   
-  // Create all 2916 circles
+  // Create all 2916 circles with numbers
   for (let i = 0; i < totalDots54; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-2916';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize54);
+    const col = i % gridSize54;
+    const dotNumber = row * gridSize54 + (gridSize54 - col);
+    
+    // Store dot number in data attribute (no visible number displayed)
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid54.appendChild(circle);
     grid54Circles.push(circle);
   }
@@ -9009,10 +9126,19 @@ if (moreSquaresContainer) {
   const totalDots55 = 3025;
   const grid55Circles = [];
   
-  // Create all 3025 circles
+  // Create all 3025 circles with numbers
   for (let i = 0; i < totalDots55; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-3025';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize55);
+    const col = i % gridSize55;
+    const dotNumber = row * gridSize55 + (gridSize55 - col);
+    
+    // Store dot number in data attribute (no visible number displayed)
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid55.appendChild(circle);
     grid55Circles.push(circle);
   }
@@ -9132,10 +9258,19 @@ if (moreSquaresContainer) {
   const totalDots56 = 3136;
   const grid56Circles = [];
   
-  // Create all 3136 circles
+  // Create all 3136 circles with numbers
   for (let i = 0; i < totalDots56; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-3136';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize56);
+    const col = i % gridSize56;
+    const dotNumber = row * gridSize56 + (gridSize56 - col);
+    
+    // Store dot number in data attribute (no visible number displayed)
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid56.appendChild(circle);
     grid56Circles.push(circle);
   }
@@ -10217,8 +10352,9 @@ if (moreSquaresContainer) {
           });
           
           // Move 1/2 dot right and 1/2 dot up
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.5 * var(--circle-total))`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.5 * var(--circle-total))`;
+          // Use scaled circle size variable for 62×62 grid
+          separatedCircle.style.left = `calc(var(--circle-total-3844) * ${col} + 0.5 * var(--circle-total-3844))`;
+          separatedCircle.style.top = `calc(var(--circle-total-3844) * ${row} - 0.5 * var(--circle-total-3844))`;
           separatedCircle.style.transform = 'none';
           
           grid62.appendChild(separatedCircle);
@@ -10732,8 +10868,9 @@ if (moreSquaresContainer) {
         });
         
         // Move right and up a little bit (similar to other grids)
-        separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.6 * var(--circle-total))`;
-        separatedCircle.style.top = `calc(var(--circle-total) * ${row} - 0.6 * var(--circle-total))`;
+        // Use scaled circle size variable for 65×65 grid
+        separatedCircle.style.left = `calc(var(--circle-total-4225) * ${col} + 0.6 * var(--circle-total-4225))`;
+        separatedCircle.style.top = `calc(var(--circle-total-4225) * ${row} - 0.6 * var(--circle-total-4225))`;
         
         separatedCircle.style.display = 'block';
         separatedCircle.style.visibility = 'visible';
@@ -11097,8 +11234,9 @@ if (moreSquaresContainer) {
           });
           
           // Move up by 1 dot diameter (straight up)
-          separatedCircle.style.left = `calc(var(--circle-total) * ${col})`;
-          separatedCircle.style.top = `calc(var(--circle-total) * ${row} - var(--circle-total))`;
+          // Use scaled circle size variable for 67×67 grid
+          separatedCircle.style.left = `calc(var(--circle-total-4489) * ${col})`;
+          separatedCircle.style.top = `calc(var(--circle-total-4489) * ${row} - var(--circle-total-4489))`;
           separatedCircle.style.transform = 'none';
           
           grid67.appendChild(separatedCircle);
@@ -13394,8 +13532,9 @@ if (moreSquaresContainer) {
         // Move up by 1 dot distance and slightly to the right (diagonal movement like 441's 41 dots)
         // UP: negative top value = row - 1 (move up by exactly 1 dot distance)
         // RIGHT: positive left value = col + small offset (move right slightly)
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col} + 0.3 * var(--circle-total))`;
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row} - 1 * var(--circle-total))`;
+        // Use scaled circle size variable for 81×81 grid
+        separatedCircle.style.left = `calc(var(--circle-total-6561) * ${dot.col} + 0.3 * var(--circle-total-6561))`;
+        separatedCircle.style.top = `calc(var(--circle-total-6561) * ${dot.row} - 1 * var(--circle-total-6561))`;
         separatedCircle.style.transform = 'none';
         separatedCircle.style.margin = '0';
         separatedCircle.style.padding = '0';
@@ -13795,8 +13934,9 @@ if (moreSquaresContainer) {
         
         // Move to the right only (twice as far as before, no up movement)
         // Move right by 0.6 dot diameters (double the previous 0.3)
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col} + 0.6 * var(--circle-total))`;
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row})`; // No vertical movement
+        // Use scaled circle size variable for 83×83 grid
+        separatedCircle.style.left = `calc(var(--circle-total-6889) * ${dot.col} + 0.6 * var(--circle-total-6889))`;
+        separatedCircle.style.top = `calc(var(--circle-total-6889) * ${dot.row})`; // No vertical movement
         separatedCircle.style.transform = 'none';
         separatedCircle.style.margin = '0';
         separatedCircle.style.padding = '0';
@@ -14162,8 +14302,9 @@ if (moreSquaresContainer) {
         });
         
         // Move only to the right (no upward movement)
-        separatedCircle.style.left = `calc(var(--circle-total) * ${col} + 0.6 * var(--circle-total))`;
-        separatedCircle.style.top = `calc(var(--circle-total) * ${row})`;
+        // Use scaled circle size variable for 85×85 grid
+        separatedCircle.style.left = `calc(var(--circle-total-7225) * ${col} + 0.6 * var(--circle-total-7225))`;
+        separatedCircle.style.top = `calc(var(--circle-total-7225) * ${row})`;
         
         separatedCircle.style.display = 'block';
         separatedCircle.style.visibility = 'visible';
@@ -14874,8 +15015,9 @@ if (moreSquaresContainer) {
         separatedCircle.dataset.originalIdx = dot.idx;
         
         // Position half a dot distance up (subtract half a dot diameter from top)
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row} - var(--circle-total) * 0.5)`;
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col})`;
+        // Use scaled circle size variable for 88×88 grid
+        separatedCircle.style.top = `calc(var(--circle-total-7744) * ${dot.row} - var(--circle-total-7744) * 0.5)`;
+        separatedCircle.style.left = `calc(var(--circle-total-7744) * ${dot.col})`;
         
         grid88.appendChild(separatedCircle);
       }
@@ -14939,8 +15081,9 @@ if (moreSquaresContainer) {
         separatedCircle.dataset.originalIdx = dot.idx;
         
         // Position half a dot distance to the right (add half a dot diameter to left)
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row})`;
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col} + var(--circle-total) * 0.5)`;
+        // Use scaled circle size variable for 88×88 grid
+        separatedCircle.style.top = `calc(var(--circle-total-7744) * ${dot.row})`;
+        separatedCircle.style.left = `calc(var(--circle-total-7744) * ${dot.col} + var(--circle-total-7744) * 0.5)`;
         
         grid88.appendChild(separatedCircle);
       }
@@ -15427,8 +15570,9 @@ if (moreSquaresContainer) {
         separatedCircle.dataset.originalIdx = dot.idx;
         
         // Position half a dot distance up (no rightward movement)
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row} - var(--circle-total) * 0.5)`;
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col})`;
+        // Use scaled circle size variable for 91×91 grid
+        separatedCircle.style.top = `calc(var(--circle-total-8281) * ${dot.row} - var(--circle-total-8281) * 0.5)`;
+        separatedCircle.style.left = `calc(var(--circle-total-8281) * ${dot.col})`;
         
         // Fill with pink except for the top right corner
         if (dot.idx !== topRightIndex && pinkFilled < 80) {
@@ -15985,8 +16129,9 @@ if (moreSquaresContainer) {
         separatedCircle.dataset.originalIdx = dot.idx;
         
         // Position half a dot distance up (no rightward movement)
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row} - var(--circle-total) * 0.5)`;
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col})`;
+        // Use scaled circle size variable for 94×94 grid
+        separatedCircle.style.top = `calc(var(--circle-total-8836) * ${dot.row} - var(--circle-total-8836) * 0.5)`;
+        separatedCircle.style.left = `calc(var(--circle-total-8836) * ${dot.col})`;
         
         grid94.appendChild(separatedCircle);
       }
@@ -16562,8 +16707,9 @@ if (moreSquaresContainer) {
         separatedCircle.dataset.originalIdx = dot.idx;
         
         // Position half a dot distance up (no rightward movement)
-        separatedCircle.style.top = `calc(var(--circle-total) * ${dot.row} - var(--circle-total) * 0.5)`;
-        separatedCircle.style.left = `calc(var(--circle-total) * ${dot.col})`;
+        // Use scaled circle size variable for 97×97 grid
+        separatedCircle.style.top = `calc(var(--circle-total-9409) * ${dot.row} - var(--circle-total-9409) * 0.5)`;
+        separatedCircle.style.left = `calc(var(--circle-total-9409) * ${dot.col})`;
         
         grid97.appendChild(separatedCircle);
       }
@@ -16627,10 +16773,23 @@ if (moreSquaresContainer) {
   const totalDots98 = 9604;
   const grid98Circles = [];
   
-  // Create all 9604 circles
+  // Create all 9604 circles with numbers
   for (let i = 0; i < totalDots98; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-9604';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize98);
+    const col = i % gridSize98;
+    const dotNumber = row * gridSize98 + (gridSize98 - col);
+    
+    // Create and add number span
+    const numberSpan = document.createElement('span');
+    numberSpan.className = 'circle-number';
+    numberSpan.textContent = dotNumber.toString();
+    circle.appendChild(numberSpan);
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid98.appendChild(circle);
     grid98Circles.push(circle);
   }
@@ -16779,10 +16938,23 @@ if (moreSquaresContainer) {
   const totalDots99 = 9801;
   const grid99Circles = [];
   
-  // Create all 9801 circles
+  // Create all 9801 circles with numbers
   for (let i = 0; i < totalDots99; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-9801';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize99);
+    const col = i % gridSize99;
+    const dotNumber = row * gridSize99 + (gridSize99 - col);
+    
+    // Create and add number span
+    const numberSpan = document.createElement('span');
+    numberSpan.className = 'circle-number';
+    numberSpan.textContent = dotNumber.toString();
+    circle.appendChild(numberSpan);
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid99.appendChild(circle);
     grid99Circles.push(circle);
   }
@@ -16920,10 +17092,23 @@ if (moreSquaresContainer) {
   const totalDots100 = 10000;
   const grid100Circles = [];
   
-  // Create all 10000 circles
+  // Create all 10000 circles with numbers
   for (let i = 0; i < totalDots100; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-10000';
+    
+    // Calculate dot number (right to left, row by row)
+    const row = Math.floor(i / gridSize100);
+    const col = i % gridSize100;
+    const dotNumber = row * gridSize100 + (gridSize100 - col);
+    
+    // Create and add number span
+    const numberSpan = document.createElement('span');
+    numberSpan.className = 'circle-number';
+    numberSpan.textContent = dotNumber.toString();
+    circle.appendChild(numberSpan);
+    circle.dataset.dotNumber = dotNumber.toString();
+    
     grid100.appendChild(circle);
     grid100Circles.push(circle);
   }
@@ -17010,10 +17195,14 @@ if (moreSquaresContainer) {
   
   // Remove all and re-append in REVERSE order (100, 99, ..., 6) so 6² is last
   console.log('Found squares 6-100:', allSquares6to100.length, 'squares');
-  allSquares6to100.reverse().forEach(section => {
-    section.remove();
-    moreSquaresContainer.appendChild(section);
-  });
+  if (allSquares6to100.length > 0) {
+    allSquares6to100.reverse().forEach(section => {
+      if (section && section.parentNode) {
+        section.remove();
+        moreSquaresContainer.appendChild(section);
+      }
+    });
+  }
   
   // Verify all squares are present
   const finalSquares = Array.from(moreSquaresContainer.querySelectorAll('section.set')).map(s => {
@@ -17021,6 +17210,125 @@ if (moreSquaresContainer) {
     return h2 ? h2.textContent : 'unknown';
   });
   console.log('Final squares in moreSquares:', finalSquares.slice(0, 10), '...', finalSquares.slice(-10));
+  
+  // CRITICAL: Clean up answer displays AFTER all squares are generated
+  // Use setTimeout to ensure this runs after all squares are created
+  setTimeout(() => {
+    try {
+      // Remove duplicate answer displays first
+      const allSections = document.querySelectorAll('section.set');
+      allSections.forEach(section => {
+        try {
+          const answerDisplays = section.querySelectorAll('.answer-display');
+          // If there are multiple, remove all but the first one
+          if (answerDisplays.length > 1) {
+            for (let i = 1; i < answerDisplays.length; i++) {
+              answerDisplays[i].remove();
+            }
+          }
+        } catch (e) {
+          // Silently continue if there's an error
+        }
+      });
+      
+      // Ensure ALL answer displays are completely hidden and removed from view
+      // First, move any answer displays that are in sections to hidden containers
+      const allSections2 = document.querySelectorAll('section.set');
+      allSections2.forEach(section => {
+        try {
+          const answerDisplay = section.querySelector('.answer-display');
+          if (answerDisplay && answerDisplay.parentNode === section) {
+            // Move to hidden container
+            section.removeChild(answerDisplay);
+            const hiddenContainer = section._hiddenContainer || document.createElement('div');
+            hiddenContainer.style.cssText = 'display: none !important; position: absolute !important; left: -9999px !important; top: -9999px !important; visibility: hidden !important;';
+            hiddenContainer.appendChild(answerDisplay);
+            if (!hiddenContainer.parentNode) {
+              document.body.appendChild(hiddenContainer);
+            }
+            section._hiddenContainer = hiddenContainer;
+            section._answerDisplay = answerDisplay;
+          }
+        } catch (e) {
+          // Silently continue if there's an error
+        }
+      });
+      
+      const allAnswerDisplays = document.querySelectorAll('.answer-display');
+      allAnswerDisplays.forEach(display => {
+        try {
+          // Remove show class
+          display.classList.remove('show');
+          // Clear all content
+          display.textContent = '';
+          display.innerHTML = '';
+          // Force hide with inline styles that override everything
+          display.setAttribute('style', 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0 !important; width: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; color: transparent !important; z-index: -9999 !important;');
+          // Ensure parent is hidden container, not section
+          if (display.parentNode && display.parentNode.classList && display.parentNode.classList.contains('set')) {
+            const section = display.parentNode;
+            section.removeChild(display);
+            const hiddenContainer = section._hiddenContainer || document.createElement('div');
+            hiddenContainer.style.cssText = 'display: none !important; position: absolute !important; left: -9999px !important; top: -9999px !important; visibility: hidden !important;';
+            hiddenContainer.appendChild(display);
+            if (!hiddenContainer.parentNode) {
+              document.body.appendChild(hiddenContainer);
+            }
+            section._hiddenContainer = hiddenContainer;
+          }
+          
+          // Prevent show class from being added unless explicitly allowed
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          // Check if show class was added
+          if (display.classList.contains('show') && !display.dataset.allowShow) {
+            // Remove show class if not explicitly allowed
+            display.classList.remove('show');
+            display.setAttribute('style', 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0 !important; width: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; color: transparent !important;');
+          }
+        }
+        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+          // If textContent is set and show class is not present, clear it
+          if (!display.classList.contains('show') && display.textContent.trim() !== '') {
+            display.textContent = '';
+            display.innerHTML = '';
+            display.setAttribute('style', 'display: none !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important; top: -9999px !important; height: 0 !important; width: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; font-size: 0 !important; line-height: 0 !important; pointer-events: none !important; color: transparent !important;');
+          }
+        }
+      });
+    });
+    observer.observe(display, {
+      attributes: true,
+      attributeFilter: ['class'],
+      childList: true,
+      characterData: true,
+      subtree: true
+    });
+    
+    // Also check periodically to ensure it stays hidden
+    setInterval(() => {
+      if (!display.dataset.allowShow && (display.classList.contains('show') || display.textContent.trim() !== '')) {
+        display.classList.remove('show');
+        display.textContent = '';
+        display.innerHTML = '';
+        display.style.display = 'none';
+        display.style.visibility = 'hidden';
+        display.style.opacity = '0';
+        display.style.position = 'absolute';
+        display.style.left = '-9999px';
+        display.style.top = '-9999px';
+      }
+    }, 100);
+        } catch (e) {
+          // Silently continue if there's an error
+        }
+      });
+    } catch (e) {
+      // Silently continue if there's an error - don't break script execution
+      console.error('Error in answer display cleanup:', e);
+    }
+  }, 100); // Run after a short delay to ensure all squares are generated
   
   // Now that moreSquares is BEFORE 5² in DOM, with column-reverse:
   // Visual order: [5², moreSquares content]
@@ -17036,6 +17344,15 @@ if (moreSquaresContainer) {
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: 'instant'
+    });
+    // Double-check all answer displays are still hidden after scroll
+    document.querySelectorAll('.answer-display').forEach(display => {
+      if (!display.classList.contains('show')) {
+        display.style.display = 'none';
+        display.style.visibility = 'hidden';
+        display.style.opacity = '0';
+        display.textContent = '';
+      }
     });
   }, 300);
   

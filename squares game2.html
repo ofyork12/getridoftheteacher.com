@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Squares Game - Opposite</title>
+  <title>Squares Game 2 - Type Answers</title>
   <style>
     :root {
       --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
@@ -96,6 +96,76 @@
     .game-nav-button.active {
       background: #fff;
       color: #000;
+    }
+    /* Answer input field styling */
+    .answer-input-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid #fff;
+    }
+    .answer-input-container label {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .answer-input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #answerInput {
+      font-size: 32px;
+      padding: 15px 20px;
+      border: 3px solid #fff;
+      border-radius: 8px;
+      background: #000;
+      color: #fff;
+      text-align: center;
+      width: 200px;
+      font-weight: bold;
+    }
+    #answerInput:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+    #answerInput.correct {
+      border-color: #00ff00;
+      background: rgba(0, 255, 0, 0.2);
+    }
+    #answerInput.incorrect {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.2);
+    }
+    #submitAnswer {
+      font-size: 24px;
+      padding: 15px 30px;
+      border: 3px solid #fff;
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    #submitAnswer:hover {
+      background: #fff;
+      color: #000;
+    }
+    .next-square-hint {
+      font-size: 18px;
+      color: #aaa;
+      margin-top: 5px;
     }
     .set {
       display: flex;
@@ -1650,9 +1720,9 @@
     <a href="index.html" class="game-nav-button">← Go Back</a>
     <a href="bigger-smaller.html" class="game-nav-button">Bigger/Smaller</a>
     <a href="squares.html" class="game-nav-button">Squares</a>
-    <a href="squares-opposite.html" class="game-nav-button active">Squares Opposite</a>
+    <a href="squares-opposite.html" class="game-nav-button">Squares Opposite</a>
     <a href="squares - game.html" class="game-nav-button">Squares Game</a>
-    <a href="squares game2.html" class="game-nav-button">Squares Game 2</a>
+    <a href="squares game2.html" class="game-nav-button active">Squares Game 2</a>
   </div>
 
   <div class="controls" role="group" aria-label="Language selector">
@@ -1684,6 +1754,16 @@
       <button data-lang="hi">हिन्दी</button>
       <button class="dual" data-dual="hi">हिन्दी + English</button>
     </div>
+  </div>
+
+  <!-- Answer Input Field -->
+  <div class="answer-input-container">
+    <label for="answerInput">Type the square number:</label>
+    <div class="answer-input-wrapper">
+      <input type="number" id="answerInput" placeholder="?" min="1" autocomplete="off">
+      <button id="submitAnswer">Submit</button>
+    </div>
+    <div class="next-square-hint" id="nextSquareHint">Next: 1² = 1</div>
   </div>
 
   <section class="set" data-square="1" data-base="1">
@@ -17447,6 +17527,117 @@ async function downloadPDF() {
     event.target.disabled = false;
   }
 }
+
+// Squares Game 2: Type answers in order
+let currentSquareIndex = 0;
+const squares = [1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225, 256, 289, 324, 361, 400, 441, 484, 529, 576, 625, 676, 729, 784, 841, 900, 961, 1024, 1089, 1156, 1225, 1296, 1369, 1444, 1521, 1600, 1681, 1764, 1849, 1936, 2025, 2116, 2209, 2304, 2401, 2500, 2601, 2704, 2809, 2916, 3025, 3136, 3249, 3364, 3481, 3600, 3721, 3844, 3969, 4096, 4225, 4356, 4489, 4624, 4761, 4900, 5041, 5184, 5329, 5476, 5625, 5776, 5929, 6084, 6241, 6400, 6561, 6724, 6889, 7056, 7225, 7396, 7569, 7744, 7921, 8100, 8281, 8464, 8649, 8836, 9025, 9216, 9409, 9604, 9801, 10000];
+
+function updateNextSquareHint() {
+  const hintElement = document.getElementById('nextSquareHint');
+  if (currentSquareIndex < squares.length) {
+    const nextSquare = squares[currentSquareIndex];
+    const base = Math.sqrt(nextSquare);
+    hintElement.textContent = `Next: ${base}² = ${nextSquare}`;
+  } else {
+    hintElement.textContent = 'All squares completed!';
+  }
+}
+
+function scrollToSquare(squareValue) {
+  // Find the section with matching data-square attribute
+  const section = document.querySelector(`section[data-square="${squareValue}"]`);
+  if (section) {
+    // Scroll to the section smoothly
+    section.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center',
+      inline: 'center'
+    });
+    
+    // Add a highlight effect
+    section.style.transition = 'box-shadow 0.5s ease';
+    section.style.boxShadow = '0 0 30px rgba(0, 255, 0, 0.8)';
+    setTimeout(() => {
+      section.style.boxShadow = '';
+    }, 2000);
+  }
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answerInput');
+  const answer = parseInt(input.value);
+  
+  if (isNaN(answer) || answer < 1) {
+    input.classList.add('incorrect');
+    setTimeout(() => {
+      input.classList.remove('incorrect');
+    }, 1000);
+    return;
+  }
+  
+  if (currentSquareIndex >= squares.length) {
+    alert('Congratulations! You\'ve completed all squares!');
+    input.value = '';
+    return;
+  }
+  
+  const expectedSquare = squares[currentSquareIndex];
+  
+  if (answer === expectedSquare) {
+    // Correct answer!
+    input.classList.add('correct');
+    input.value = '';
+    
+    // Scroll to the square
+    scrollToSquare(expectedSquare);
+    
+    // Move to next square
+    currentSquareIndex++;
+    updateNextSquareHint();
+    
+    // Remove correct class after a delay
+    setTimeout(() => {
+      input.classList.remove('correct');
+      input.focus();
+    }, 1000);
+  } else {
+    // Incorrect answer
+    input.classList.add('incorrect');
+    setTimeout(() => {
+      input.classList.remove('incorrect');
+      input.value = '';
+      input.focus();
+    }, 1000);
+  }
+}
+
+// Initialize the game
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('answerInput');
+  const submitButton = document.getElementById('submitAnswer');
+  
+  updateNextSquareHint();
+  
+  // Focus on input when page loads
+  setTimeout(() => {
+    input.focus();
+  }, 100);
+  
+  // Submit on button click
+  submitButton.addEventListener('click', checkAnswer);
+  
+  // Submit on Enter key
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      checkAnswer();
+    }
+  });
+  
+  // Clear input classes when typing
+  input.addEventListener('input', () => {
+    input.classList.remove('correct', 'incorrect');
+  });
+});
 </script>
 
 </body>

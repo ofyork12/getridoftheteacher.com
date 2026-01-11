@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Squares Game 2 - Type Answers</title>
+  <title>Squares Game 3 - One Click Reveal</title>
   <style>
     :root {
       --circle-size: clamp(10px, 6vw, 60px); /* Allow much smaller when zoomed out */
@@ -1823,8 +1823,8 @@
     <a href="squares.html" class="game-nav-button">Squares</a>
     <a href="squares-opposite.html" class="game-nav-button">Squares Opposite</a>
     <a href="squares - game.html" class="game-nav-button">Squares Game</a>
-    <a href="squares game2.html" class="game-nav-button active">Squares Game 2</a>
-    <a href="Game3.HTML" class="game-nav-button">Squares Game 3</a>
+    <a href="squares game2.html" class="game-nav-button">Squares Game 2</a>
+    <a href="Game3.HTML" class="game-nav-button active">Squares Game 3</a>
   </div>
 
   <div class="controls" role="group" aria-label="Language selector">
@@ -3793,6 +3793,80 @@ function generateSquare(n, label = null) {
     }
     
     // Process clicks on the grid itself or on regular circles
+    // GAME 3 MODIFICATION: On first click, fill all components and show answer immediately
+    if (clickCount === 0 && totalClicks > 1) {
+      // Fill all components at once
+      const alreadyFilled = new Set();
+      
+      // Process all components sequentially
+      for (let compIdx = 0; compIdx < totalClicks; compIdx++) {
+        const componentValue = components[compIdx];
+        
+        // Skip zero components (except special cases)
+        if (componentValue === 0 && !(square === 1225 && compIdx === 1) && !(isReplica && compIdx === 1) && !(square === 1296 && compIdx === 1)) {
+          continue;
+        }
+        
+        // Determine place and color
+        const isOnesPlace = (compIdx === totalClicks - 1);
+        const isHundredsPlace = (compIdx === 0 && components.length >= 3) || (square === 1600 && compIdx === 1);
+        const isTensPlace = (compIdx === 1 && components.length >= 3) || (compIdx === 0 && components.length === 2);
+        
+        let color = "red";
+        if (isHundredsPlace) {
+          // Get the first digit of the number (e.g., 2000 -> 2, 3000 -> 3)
+          const firstDigit = parseInt(componentValue.toString()[0]);
+          color = COLOR_MAP[firstDigit] || "red";
+        } else if (isTensPlace) {
+          // Get the first digit of the number (e.g., 20 -> 2, 30 -> 3)
+          const firstDigit = parseInt(componentValue.toString()[0]);
+          color = COLOR_MAP[firstDigit] || "pink";
+        } else if (isOnesPlace) {
+          color = COLOR_MAP[componentValue] || "red";
+        }
+        
+        // Fill indices for this component
+        let indicesToFill = [];
+        if (isOnesPlace && topRightIndices.length > 0) {
+          indicesToFill = topRightIndices.filter(i => !alreadyFilled.has(i)).slice(0, componentValue);
+        } else {
+          const allIndices = [];
+          for (let row = gridSize - 1; row >= 0 && allIndices.length < componentValue; row--) {
+            for (let col = 0; col < gridSize && allIndices.length < componentValue; col++) {
+              const idx = row * gridSize + col;
+              if (!alreadyFilled.has(idx) && !topRightIndices.includes(idx)) {
+                allIndices.push(idx);
+              }
+            }
+          }
+          indicesToFill = allIndices.slice(0, componentValue);
+        }
+        
+        // Fill the indices
+        indicesToFill.forEach(idx => {
+          const circle = circles[idx];
+          if (circle) {
+            circle.classList.add(color);
+            circle.classList.add("red");
+            alreadyFilled.add(idx);
+          }
+        });
+      }
+      
+      // Show answer immediately
+      clickCount = totalClicks;
+      if (answerDisplay) {
+        if (!answerDisplay.parentNode) {
+          section.appendChild(answerDisplay);
+        }
+        answerDisplay.dataset.allowShow = 'true';
+        answerDisplay.classList.add('show');
+        answerDisplay.textContent = square;
+      }
+      speakNumber(square);
+      return;
+    }
+    
     if (clickCount < totalClicks) {
         const componentValue = components[clickCount];
         const isOnesPlace = (clickCount === totalClicks - 1);
@@ -8211,6 +8285,136 @@ function generateSquare(n, label = null) {
           }
         }
         
+        // GAME 3 MODIFICATION: If processing all components, check if we need to continue
+        if (originalClickCount === 0 && totalClicks > 1) {
+          // We're processing all components in a loop
+          // After processing this component, continue to the next one
+          componentsProcessed++;
+          if (componentsProcessed < totalClicks) {
+            // Process next component by setting clickCount and re-executing
+            clickCount = componentsProcessed;
+            const nextComponentValue = components[componentsProcessed];
+            // Skip zero components
+            if (nextComponentValue === 0 && !(square === 1225 && componentsProcessed === 1) && !(isReplica && componentsProcessed === 1) && !(square === 1296 && componentsProcessed === 1)) {
+              componentsProcessed++;
+              if (componentsProcessed < totalClicks) {
+                clickCount = componentsProcessed;
+              } else {
+                // All components processed
+                clickCount = totalClicks;
+                if (answerDisplay) {
+                  if (!answerDisplay.parentNode) {
+                    section.appendChild(answerDisplay);
+                  }
+                  answerDisplay.dataset.allowShow = 'true';
+                  answerDisplay.classList.add('show');
+                  answerDisplay.textContent = square;
+                }
+                speakNumber(square);
+                return;
+              }
+            }
+            // Continue processing next component by restarting the logic
+            // We'll use setTimeout to process the next component after this one completes
+            setTimeout(() => {
+              // Set clickCount to next component and process it
+              clickCount = componentsProcessed;
+              // Trigger the processing logic again by calling the click handler recursively
+              // Actually, we need to process it inline - let's use a different approach
+              // We'll process all components in a single pass by executing the logic for each
+              // For now, let's just continue - the existing logic will handle the next component
+              // But we need to make sure we process all components
+              // Let's use a flag to track that we're processing all components
+              if (componentsProcessed < totalClicks) {
+                // Process next component - we'll need to execute the logic again
+                // For simplicity, let's just fill all remaining components at once
+                // Actually, let's process them sequentially by calling a helper function
+                // But for now, let's just show the answer after processing all components
+                // We'll process the remaining components in a simplified way
+                for (let i = componentsProcessed; i < totalClicks; i++) {
+                  const compValue = components[i];
+                  if (compValue > 0) {
+                    // Fill this component - simplified approach
+                    const alreadyFilled = new Set();
+                    circles.forEach((c, idx) => {
+                      if (c.classList.contains("red") || c.classList.contains("orange") || 
+                          c.classList.contains("yellow") || c.classList.contains("green") ||
+                          c.classList.contains("blue") || c.classList.contains("purple") ||
+                          c.classList.contains("brown") || c.classList.contains("pink") ||
+                          c.classList.contains("sky") || c.classList.contains("red-final")) {
+                        alreadyFilled.add(idx);
+                      }
+                    });
+                    
+                    // Fill remaining dots for this component
+                    const isOnesPlace = (i === totalClicks - 1);
+                    let indicesToFill = [];
+                    if (isOnesPlace && topRightIndices.length > 0) {
+                      indicesToFill = topRightIndices.filter(idx => !alreadyFilled.has(idx)).slice(0, compValue);
+                    } else {
+                      const allIndices = [];
+                      for (let row = gridSize - 1; row >= 0 && allIndices.length < compValue; row--) {
+                        for (let col = 0; col < gridSize && allIndices.length < compValue; col++) {
+                          const idx = row * gridSize + col;
+                          if (!alreadyFilled.has(idx) && !topRightIndices.includes(idx)) {
+                            allIndices.push(idx);
+                          }
+                        }
+                      }
+                      indicesToFill = allIndices.slice(0, compValue);
+                    }
+                    
+                    // Determine color
+                    let color = "red";
+                    if (i === 0 && components.length >= 3) {
+                      // Get the first digit of the number (e.g., 2000 -> 2, 3000 -> 3)
+                      const firstDigit = parseInt(compValue.toString()[0]);
+                      color = COLOR_MAP[firstDigit] || "red";
+                    } else if (i === totalClicks - 1) {
+                      color = COLOR_MAP[compValue] || "red";
+                    }
+                    
+                    // Fill indices
+                    indicesToFill.forEach(idx => {
+                      const circle = circles[idx];
+                      if (circle) {
+                        circle.classList.add(color);
+                        circle.classList.add("red");
+                      }
+                    });
+                  }
+                }
+                
+                // All components processed - show answer
+                clickCount = totalClicks;
+                if (answerDisplay) {
+                  if (!answerDisplay.parentNode) {
+                    section.appendChild(answerDisplay);
+                  }
+                  answerDisplay.dataset.allowShow = 'true';
+                  answerDisplay.classList.add('show');
+                  answerDisplay.textContent = square;
+                }
+                speakNumber(square);
+              }
+            }, 0);
+            return; // Exit and let setTimeout process remaining components
+          } else {
+            // All components processed - show answer
+            clickCount = totalClicks;
+            if (answerDisplay) {
+              if (!answerDisplay.parentNode) {
+                section.appendChild(answerDisplay);
+              }
+              answerDisplay.dataset.allowShow = 'true';
+              answerDisplay.classList.add('show');
+              answerDisplay.textContent = square;
+            }
+            speakNumber(square);
+            return;
+          }
+        }
+        
         clickCount++;
         
         // Check if we've exceeded totalClicks - if so, don't speak (reset will happen on next click)
@@ -8282,6 +8486,22 @@ function generateSquare(n, label = null) {
         const nonZeroComponents = components.filter(c => c > 0);
         const processedNonZero = components.slice(0, clickCount).filter(c => c > 0).length;
         const allDotsFilled = filledCount.count >= square;
+        
+        // GAME 3 MODIFICATION: If processing all components, check if we're done
+        if (isProcessingAllComponents && componentsProcessed >= totalClicks) {
+          // All components processed - show answer
+          clickCount = totalClicks;
+          if (answerDisplay) {
+            if (!answerDisplay.parentNode) {
+              section.appendChild(answerDisplay);
+            }
+            answerDisplay.dataset.allowShow = 'true';
+            answerDisplay.classList.add('show');
+            answerDisplay.textContent = square;
+          }
+          speakNumber(square);
+          return;
+        }
         
         // Special handling for second 39×39 grid - show answer on 4th click
         // Only show if at least one click has occurred

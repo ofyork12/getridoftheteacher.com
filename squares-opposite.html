@@ -1653,6 +1653,7 @@
     <a href="squares-opposite.html" class="game-nav-button active">Squares Opposite</a>
     <a href="squares - game.html" class="game-nav-button">Squares Game</a>
     <a href="squares game2.html" class="game-nav-button">Squares Game 2</a>
+    <a href="Game3.HTML" class="game-nav-button">Squares Game 3</a>
   </div>
 
   <div class="controls" role="group" aria-label="Language selector">
@@ -3221,8 +3222,8 @@ function generateSquare(n, label = null) {
       // Store dot number in data attribute (used by some special patterns)
       circle.dataset.dotNumber = dotNumber.toString();
       
-      // Create and add visible number span (but not for 36×36 / 1296, or 40×40 through 55×55 / 1600-3025)
-      if (square !== 1296 && (square < 1600 || square > 3025)) {
+      // Create and add visible number span (but not for 36×36 / 1296, or 40×40 through 55×55 / 1600-3025, or 56×56 and above / 3136+)
+      if (square !== 1296 && (square < 1600 || (square > 3025 && square < 3136))) {
         const numberSpan = document.createElement('span');
         numberSpan.className = 'circle-number';
         numberSpan.textContent = dotNumber.toString();
@@ -16774,7 +16775,7 @@ if (moreSquaresContainer) {
   const totalDots98 = 9604;
   const grid98Circles = [];
   
-  // Create all 9604 circles with numbers
+  // Create all 9604 circles (no visible numbers)
   for (let i = 0; i < totalDots98; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-9604';
@@ -16784,11 +16785,7 @@ if (moreSquaresContainer) {
     const col = i % gridSize98;
     const dotNumber = row * gridSize98 + (gridSize98 - col);
     
-    // Create and add number span
-    const numberSpan = document.createElement('span');
-    numberSpan.className = 'circle-number';
-    numberSpan.textContent = dotNumber.toString();
-    circle.appendChild(numberSpan);
+    // Store dot number in data attribute (used by some special patterns)
     circle.dataset.dotNumber = dotNumber.toString();
     
     grid98.appendChild(circle);
@@ -16939,7 +16936,7 @@ if (moreSquaresContainer) {
   const totalDots99 = 9801;
   const grid99Circles = [];
   
-  // Create all 9801 circles with numbers
+  // Create all 9801 circles (no visible numbers)
   for (let i = 0; i < totalDots99; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-9801';
@@ -16949,11 +16946,7 @@ if (moreSquaresContainer) {
     const col = i % gridSize99;
     const dotNumber = row * gridSize99 + (gridSize99 - col);
     
-    // Create and add number span
-    const numberSpan = document.createElement('span');
-    numberSpan.className = 'circle-number';
-    numberSpan.textContent = dotNumber.toString();
-    circle.appendChild(numberSpan);
+    // Store dot number in data attribute (used by some special patterns)
     circle.dataset.dotNumber = dotNumber.toString();
     
     grid99.appendChild(circle);
@@ -17093,7 +17086,7 @@ if (moreSquaresContainer) {
   const totalDots100 = 10000;
   const grid100Circles = [];
   
-  // Create all 10000 circles with numbers
+  // Create all 10000 circles (no visible numbers)
   for (let i = 0; i < totalDots100; i++) {
     const circle = document.createElement('div');
     circle.className = 'circle circle-10000';
@@ -17103,11 +17096,7 @@ if (moreSquaresContainer) {
     const col = i % gridSize100;
     const dotNumber = row * gridSize100 + (gridSize100 - col);
     
-    // Create and add number span
-    const numberSpan = document.createElement('span');
-    numberSpan.className = 'circle-number';
-    numberSpan.textContent = dotNumber.toString();
-    circle.appendChild(numberSpan);
+    // Store dot number in data attribute (used by some special patterns)
     circle.dataset.dotNumber = dotNumber.toString();
     
     grid100.appendChild(circle);

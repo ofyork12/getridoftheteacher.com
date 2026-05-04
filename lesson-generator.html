@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language Lesson Page Generator</title>
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --ink: #222;
+    --muted: #666;
+    --brown: #5a3c1f;
+    --green: #4a9b5e;
+    --blue:  #4a7ab8;
+    --purple:#7a5ab5;
+    --line: #ddd;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    padding: 16px 12px 80px;
+    min-height: 100vh;
+  }
+  h1 {
+    text-align: center;
+    margin: 8px 0 4px;
+    font-size: 26px;
+    color: var(--brown);
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    margin: 0 0 24px;
+    font-size: 14px;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 1000px) {
+    .container { grid-template-columns: 1fr 1fr; }
+  }
+
+  .panel {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .panel h2 {
+    margin: 0 0 14px;
+    font-size: 18px;
+    color: var(--brown);
+    border-bottom: 2px solid var(--line);
+    padding-bottom: 8px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin: 12px 0 4px;
+  }
+  input[type="text"], input[type="url"], textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+  }
+  input[type="text"]:focus, input[type="url"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--brown);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  small.hint { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; line-height: 1.4; }
+
+  .lang-input-wrap { position: relative; }
+  .lang-suggestions {
+    position: absolute;
+    left: 0; right: 0; top: 100%;
+    background: #fff;
+    border: 1.5px solid var(--brown);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: none;
+  }
+  .lang-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+  }
+  .lang-suggestion:hover, .lang-suggestion.highlighted {
+    background: #f3efe6;
+    color: var(--brown);
+  }
+  .lang-suggestion:last-child { border-bottom: none; }
+  .lang-suggestion .native {
+    color: var(--muted);
+    font-size: 12px;
+    margin-left: 6px;
+  }
+
+  .pair-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: start;
+  }
+  .pair-row .arrow { font-size: 18px; color: var(--muted); text-align: center; padding-top: 10px; }
+
+  .lang-pairs-list { margin-top: 8px; }
+  .lang-pair-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f3efe6;
+    border: 1px solid #d8cfbf;
+    border-radius: 999px;
+    padding: 4px 6px 4px 12px;
+    margin: 4px 4px 0 0;
+    font-size: 13px;
+    color: var(--brown);
+    font-weight: 600;
+  }
+  .lang-pair-chip button {
+    background: #fff;
+    border: 1px solid #c8b9a2;
+    color: var(--brown);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--brown); color: #fff; }
+  .btn-secondary { background: #fff; color: var(--brown); border: 2px solid var(--brown); }
+  .btn-danger { background: #fff; color: #b03a2e; border: 1.5px solid #b03a2e; padding: 6px 12px; font-size: 13px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
+  .lesson-editor {
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: #fbfaf5;
+  }
+  .lesson-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .lesson-editor-header h3 { margin: 0; font-size: 15px; color: var(--brown); }
+
+  .sentence-editor {
+    border: 1px solid #d8cfbf;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+    background: #fff;
+  }
+  .sentence-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .sentence-editor-header strong { color: var(--brown); font-size: 13px; }
+
+  .translation-block {
+    border-left: 3px solid var(--green);
+    padding-left: 10px;
+    margin-top: 10px;
+  }
+
+  .image-area {
+    border: 2px dashed #c8b9a2;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    background: #fbf8f1;
+  }
+  .image-area img {
+    max-width: 100%;
+    max-height: 160px;
+    border-radius: 6px;
+    margin-top: 8px;
+    display: block;
+  }
+  .image-area input[type="file"] { display: none; }
+  .image-area .upload-label {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--brown);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .image-area .or {
+    display: inline-block;
+    color: var(--muted);
+    font-size: 12px;
+    margin: 0 6px;
+  }
+  .image-area .url-input { margin-top: 8px; }
+
+  .instructions {
+    background: #fff7e0;
+    border-left: 4px solid #d4a73e;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #5a3c1f;
+  }
+  .instructions h3 { margin: 0 0 8px; font-size: 14px; }
+  .instructions ol { margin: 6px 0 0 18px; padding: 0; }
+  .instructions li { margin: 4px 0; }
+  .instructions code {
+    background: #fff;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #e0d4a8;
+    font-size: 12px;
+  }
+
+  .preview-frame {
+    width: 100%;
+    height: 600px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  .status {
+    text-align: center;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Language Lesson Page Generator</h1>
+<p class="subtitle">Build your own multi-language flashcard pages — like the Vietnamese sample, for any language pair.</p>
+
+<div class="container">
+
+  <div class="panel">
+    <h2>1. Page settings</h2>
+
+    <label for="pageTitle">Page title</label>
+    <input type="text" id="pageTitle" value="My Language Lessons" />
+
+    <label>Language pairs (learners will see a tab for each pair)</label>
+    <div class="pair-row">
+      <div class="lang-input-wrap">
+        <input type="text" id="newLangFrom" placeholder="enter language" autocomplete="off" />
+        <div class="lang-suggestions" id="newLangFromSugg"></div>
+      </div>
+      <span class="arrow">→</span>
+      <div class="lang-input-wrap">
+        <input type="text" id="newLangTo" placeholder="enter language" autocomplete="off" />
+        <div class="lang-suggestions" id="newLangToSugg"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top: 8px;">
+      <button class="btn btn-secondary" type="button" onclick="addLangPair()">+ Add language pair</button>
+    </div>
+    <small class="hint">Start typing a language and pick from the suggestions. Add as many pairs as you want — each becomes a tab in the generated page.</small>
+    <div class="lang-pairs-list" id="langPairsList"></div>
+
+    <h2 style="margin-top: 24px;">2. Lessons & sentences</h2>
+    <div id="lessonsContainer"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" type="button" onclick="addLesson()">+ Add lesson</button>
+    </div>
+
+    <h2 style="margin-top: 24px;">3. How to get pictures (optional)</h2>
+    <div class="instructions">
+      <h3>🎨 Generate images on a separate AI</h3>
+      <p>Pictures help learners remember sentences. Here's how to make them on another tool, then bring them back here:</p>
+      <ol>
+        <li>Open an image generator: <strong>ChatGPT (DALL·E)</strong>, <strong>Google Gemini</strong>, <strong>Midjourney</strong>, <strong>Bing Image Creator</strong>, or <strong>Leonardo.ai</strong> (most have a free tier).</li>
+        <li>For each sentence, ask for an image with a prompt like:<br>
+          <code>A simple, friendly cartoon illustration of: "[your sentence here]". Bright colors, clear subject, no text in the image.</code></li>
+        <li>Either: <strong>(a)</strong> download the image and use the <strong>Choose image</strong> button below each sentence, OR <strong>(b)</strong> right-click the generated image, copy the image address, and paste it into the <strong>Image URL</strong> field.</li>
+        <li>Tip: uploaded images make a bigger HTML file but always work offline. URLs keep the file small but need internet to view.</li>
+      </ol>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" type="button" onclick="generateAndPreview()">🔄 Update preview</button>
+      <button class="btn btn-primary" type="button" onclick="downloadHTML()">⬇ Download HTML page</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Live preview</h2>
+    <iframe id="preview" class="preview-frame" title="Preview"></iframe>
+    <small class="hint">The preview updates when you click <strong>Update preview</strong>. Download saves a full standalone HTML file you can open on any phone or computer.</small>
+  </div>
+</div>
+
+<script>
+const LANGUAGES = [
+  { name: 'English', native: 'English', code: 'en-US' },
+  { name: 'Vietnamese', native: 'Tiếng Việt', code: 'vi-VN' },
+  { name: 'Chinese (Simplified)', native: '简体中文', code: 'zh-CN' },
+  { name: 'Chinese (Traditional)', native: '繁體中文', code: 'zh-TW' },
+  { name: 'Cantonese', native: '廣東話', code: 'zh-HK' },
+  { name: 'Mandarin', native: '普通话', code: 'zh-CN' },
+  { name: 'Mongolian', native: 'Монгол', code: 'mn-MN' },
+  { name: 'Spanish', native: 'Español', code: 'es-ES' },
+  { name: 'Spanish (Mexico)', native: 'Español (México)', code: 'es-MX' },
+  { name: 'French', native: 'Français', code: 'fr-FR' },
+  { name: 'German', native: 'Deutsch', code: 'de-DE' },
+  { name: 'Italian', native: 'Italiano', code: 'it-IT' },
+  { name: 'Portuguese', native: 'Português', code: 'pt-PT' },
+  { name: 'Portuguese (Brazil)', native: 'Português (Brasil)', code: 'pt-BR' },
+  { name: 'Japanese', native: '日本語', code: 'ja-JP' },
+  { name: 'Korean', native: '한국어', code: 'ko-KR' },
+  { name: 'Thai', native: 'ไทย', code: 'th-TH' },
+  { name: 'Russian', native: 'Русский', code: 'ru-RU' },
+  { name: 'Arabic', native: 'العربية', code: 'ar-SA' },
+  { name: 'Hindi', native: 'हिन्दी', code: 'hi-IN' },
+  { name: 'Bengali', native: 'বাংলা', code: 'bn-IN' },
+  { name: 'Urdu', native: 'اُردُو', code: 'ur-PK' },
+  { name: 'Punjabi', native: 'ਪੰਜਾਬੀ', code: 'pa-IN' },
+  { name: 'Tamil', native: 'தமிழ்', code: 'ta-IN' },
+  { name: 'Telugu', native: 'తెలుగు', code: 'te-IN' },
+  { name: 'Marathi', native: 'मराठी', code: 'mr-IN' },
+  { name: 'Gujarati', native: 'ગુજરાતી', code: 'gu-IN' },
+  { name: 'Dutch', native: 'Nederlands', code: 'nl-NL' },
+  { name: 'Turkish', native: 'Türkçe', code: 'tr-TR' },
+  { name: 'Polish', native: 'Polski', code: 'pl-PL' },
+  { name: 'Indonesian', native: 'Bahasa Indonesia', code: 'id-ID' },
+  { name: 'Malay', native: 'Bahasa Melayu', code: 'ms-MY' },
+  { name: 'Tagalog (Filipino)', native: 'Filipino', code: 'fil-PH' },
+  { name: 'Swedish', native: 'Svenska', code: 'sv-SE' },
+  { name: 'Norwegian', native: 'Norsk', code: 'nb-NO' },
+  { name: 'Danish', native: 'Dansk', code: 'da-DK' },
+  { name: 'Finnish', native: 'Suomi', code: 'fi-FI' },
+  { name: 'Czech', native: 'Čeština', code: 'cs-CZ' },
+  { name: 'Greek', native: 'Ελληνικά', code: 'el-GR' },
+  { name: 'Hebrew', native: 'עברית', code: 'he-IL' },
+  { name: 'Hungarian', native: 'Magyar', code: 'hu-HU' },
+  { name: 'Romanian', native: 'Română', code: 'ro-RO' },
+  { name: 'Ukrainian', native: 'Українська', code: 'uk-UA' },
+  { name: 'Khmer', native: 'ភាសាខ្មែរ', code: 'km-KH' },
+  { name: 'Lao', native: 'ລາວ', code: 'lo-LA' },
+  { name: 'Burmese', native: 'မြန်မာ', code: 'my-MM' },
+  { name: 'Swahili', native: 'Kiswahili', code: 'sw-KE' },
+  { name: 'Persian (Farsi)', native: 'فارسی', code: 'fa-IR' }
+];
+
+function langCode(name) {
+  if (!name) return 'en-US';
+  const exact = LANGUAGES.find(l => l.name.toLowerCase() === name.toLowerCase());
+  if (exact) return exact.code;
+  const partial = LANGUAGES.find(l => l.name.toLowerCase().includes(name.toLowerCase()));
+  return partial ? partial.code : 'en-US';
+}
+
+function attachAutocomplete(inputId, suggBoxId) {
+  const input = document.getElementById(inputId);
+  const box = document.getElementById(suggBoxId);
+  let highlighted = -1;
+
+  function renderSuggestions(q) {
+    const query = q.trim().toLowerCase();
+    if (!query) { box.style.display = 'none'; return; }
+    const matches = LANGUAGES.filter(l =>
+      l.name.toLowerCase().includes(query) ||
+      l.native.toLowerCase().includes(query)
+    ).slice(0, 12);
+    if (matches.length === 0) { box.style.display = 'none'; return; }
+    box.innerHTML = matches.map((l, i) =>
+      `<div class="lang-suggestion${i === highlighted ? ' highlighted' : ''}" data-name="${escapeHtml(l.name)}">${escapeHtml(l.name)}<span class="native">${escapeHtml(l.native)}</span></div>`
+    ).join('');
+    box.style.display = 'block';
+    box.querySelectorAll('.lang-suggestion').forEach(el => {
+      el.onmousedown = (e) => {
+        e.preventDefault();
+        input.value = el.dataset.name;
+        box.style.display = 'none';
+        highlighted = -1;
+      };
+    });
+  }
+
+  input.addEventListener('input', () => { highlighted = -1; renderSuggestions(input.value); });
+  input.addEventListener('focus', () => { if (input.value) renderSuggestions(input.value); });
+  input.addEventListener('blur', () => { setTimeout(() => box.style.display = 'none', 150); });
+  input.addEventListener('keydown', (e) => {
+    const items = box.querySelectorAll('.lang-suggestion');
+    if (e.key === 'ArrowDown') { e.preventDefault(); highlighted = Math.min(items.length - 1, highlighted + 1); renderSuggestions(input.value); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); highlighted = Math.max(-1, highlighted - 1); renderSuggestions(input.value); }
+    else if (e.key === 'Enter' && highlighted >= 0) {
+      e.preventDefault();
+      input.value = items[highlighted].dataset.name;
+      box.style.display = 'none';
+      highlighted = -1;
+    } else if (e.key === 'Escape') { box.style.display = 'none'; highlighted = -1; }
+  });
+}
+
+let langPairs = [];
+let lessons = [];
+let nextId = 1;
+const uid = () => "id" + (nextId++);
+const DEFAULT_SENTENCE_COUNT = 8;
+
+function pairKey(p) { return p.from + '__' + p.to; }
+function emptySentence() { return { id: uid(), translations: {}, imageData: null, imageUrl: '' }; }
+
+function renderLangPairs() {
+  const list = document.getElementById('langPairsList');
+  list.innerHTML = '';
+  if (langPairs.length === 0) {
+    list.innerHTML = '<small class="hint" style="font-style:italic;">No language pairs yet. Add one above.</small>';
+  } else {
+    langPairs.forEach((p, i) => {
+      const chip = document.createElement('span');
+      chip.className = 'lang-pair-chip';
+      chip.innerHTML = `${escapeHtml(p.from)} → ${escapeHtml(p.to)} <button type="button" title="Remove" onclick="removeLangPair(${i})">×</button>`;
+      list.appendChild(chip);
+    });
+  }
+  renderLessons();
+}
+
+function addLangPair() {
+  const fromInput = document.getElementById('newLangFrom');
+  const toInput = document.getElementById('newLangTo');
+  const from = fromInput.value.trim();
+  const to = toInput.value.trim();
+  if (!from || !to) { alert('Please pick both a "from" and "to" language.'); return; }
+  if (from.toLowerCase() === to.toLowerCase()) { alert('From and To languages should be different.'); return; }
+  if (langPairs.some(p => p.from === from && p.to === to)) { alert('That pair is already added.'); return; }
+  langPairs.push({ from, to });
+  fromInput.value = '';
+  toInput.value = '';
+  fromInput.focus();
+  renderLangPairs();
+}
+
+function removeLangPair(i) {
+  const removed = langPairs[i];
+  langPairs.splice(i, 1);
+  lessons.forEach(les => les.sentences.forEach(s => {
+    delete s.translations[pairKey(removed)];
+  }));
+  renderLangPairs();
+}
+
+function addLesson() {
+  const lesson = {
+    id: uid(),
+    title: 'Lesson ' + (lessons.length + 1),
+    sentences: []
+  };
+  for (let i = 0; i < DEFAULT_SENTENCE_COUNT; i++) lesson.sentences.push(emptySentence());
+  lessons.push(lesson);
+  renderLessons();
+}
+
+function removeLesson(id) {
+  if (!confirm('Remove this whole lesson?')) return;
+  lessons = lessons.filter(l => l.id !== id);
+  renderLessons();
+}
+
+function addSentence(lessonId) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  lesson.sentences.push(emptySentence());
+  renderLessons();
+}
+
+function removeSentence(lessonId, sentenceId) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  lesson.sentences = lesson.sentences.filter(s => s.id !== sentenceId);
+  renderLessons();
+}
+
+function bindSentenceField(lessonId, sentenceId, pkey, field, value) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
+  if (!s) return;
+  if (!s.translations[pkey]) s.translations[pkey] = { fromText: '', toText: '', pronunciation: '' };
+  s.translations[pkey][field] = value;
+}
+function bindLessonTitle(lessonId, value) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (lesson) lesson.title = value;
+}
+function bindImageUrl(lessonId, sentenceId, value) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
+  if (s) s.imageUrl = value;
+}
+
+function handleImageUpload(lessonId, sentenceId, fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const lesson = lessons.find(l => l.id === lessonId);
+    const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
+    if (s) { s.imageData = e.target.result; renderLessons(); }
+  };
+  reader.readAsDataURL(file);
+}
+function clearImage(lessonId, sentenceId) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
+  if (s) { s.imageData = null; s.imageUrl = ''; renderLessons(); }
+}
+
+function renderLessons() {
+  const container = document.getElementById('lessonsContainer');
+  container.innerHTML = '';
+
+  if (lessons.length === 0) {
+    container.innerHTML = '<p style="color:#888;font-style:italic;">No lessons yet — click "Add lesson" to start. Each new lesson comes with 8 sentence boxes.</p>';
+    return;
+  }
+
+  lessons.forEach(lesson => {
+    const editor = document.createElement('div');
+    editor.className = 'lesson-editor';
+
+    const header = document.createElement('div');
+    header.className = 'lesson-editor-header';
+    header.innerHTML = `
+      <h3>📚 Lesson</h3>
+      <button class="btn btn-danger" type="button" onclick="removeLesson('${lesson.id}')">Remove lesson</button>
+    `;
+    editor.appendChild(header);
+
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = lesson.title;
+    titleInput.placeholder = 'Lesson title (e.g. "At the market")';
+    titleInput.oninput = (e) => bindLessonTitle(lesson.id, e.target.value);
+    editor.appendChild(titleInput);
+
+    lesson.sentences.forEach((s, idx) => {
+      const sEd = document.createElement('div');
+      sEd.className = 'sentence-editor';
+
+      const sHead = document.createElement('div');
+      sHead.className = 'sentence-editor-header';
+      sHead.innerHTML = `
+        <strong>Sentence ${idx + 1}</strong>
+        <button class="btn btn-danger" type="button" onclick="removeSentence('${lesson.id}', '${s.id}')">Remove</button>
+      `;
+      sEd.appendChild(sHead);
+
+      if (langPairs.length === 0) {
+        const note = document.createElement('p');
+        note.style.cssText = 'color:#888;font-style:italic;font-size:13px;margin:8px 0;';
+        note.textContent = '👆 Add a language pair above first, then translation boxes will appear here.';
+        sEd.appendChild(note);
+      } else {
+        langPairs.forEach(p => {
+          const pkey = pairKey(p);
+          const t = s.translations[pkey] || { fromText: '', toText: '', pronunciation: '' };
+          const block = document.createElement('div');
+          block.className = 'translation-block';
+          block.innerHTML = `
+            <label>${escapeHtml(p.from)} sentence</label>
+            <textarea placeholder="Type the ${escapeHtml(p.from)} sentence">${escapeHtml(t.fromText)}</textarea>
+            <label>${escapeHtml(p.to)} translation</label>
+            <textarea placeholder="Type the ${escapeHtml(p.to)} translation">${escapeHtml(t.toText)}</textarea>
+            <label>Pronunciation guide (optional)</label>
+            <input type="text" placeholder="How to say it phonetically" value="${escapeHtml(t.pronunciation)}" />
+          `;
+          const [fromTa, toTa] = block.querySelectorAll('textarea');
+          const proInput = block.querySelector('input[type="text"]');
+          fromTa.oninput = (e) => bindSentenceField(lesson.id, s.id, pkey, 'fromText', e.target.value);
+          toTa.oninput   = (e) => bindSentenceField(lesson.id, s.id, pkey, 'toText', e.target.value);
+          proInput.oninput = (e) => bindSentenceField(lesson.id, s.id, pkey, 'pronunciation', e.target.value);
+          sEd.appendChild(block);
+        });
+      }
+
+      const imgArea = document.createElement('div');
+      imgArea.className = 'image-area';
+      const fileInputId = 'file_' + s.id;
+      const hasImage = !!(s.imageData || (s.imageUrl && s.imageUrl.trim()));
+      imgArea.innerHTML = `
+        <label class="upload-label" for="${fileInputId}">📷 ${s.imageData ? 'Replace upload' : 'Choose image'}</label>
+        <span class="or">or paste a URL</span>
+        <input type="file" id="${fileInputId}" accept="image/*" />
+        <div class="url-input">
+          <input type="url" placeholder="Paste an image URL (https://...)" value="${escapeHtml(s.imageUrl || '')}" />
+        </div>
+        ${hasImage
+          ? `<img src="${escapeHtml(s.imageData || s.imageUrl)}" alt="preview" onerror="this.style.display='none'"/>
+             <button class="btn btn-danger" type="button" style="margin-top:8px;" onclick="clearImage('${lesson.id}','${s.id}')">Remove image</button>`
+          : '<small class="hint" style="margin-top:8px;">Optional. Upload from your device, or paste a URL from an image generator.</small>'}
+      `;
+      const fileInput = imgArea.querySelector('input[type="file"]');
+      fileInput.onchange = () => handleImageUpload(lesson.id, s.id, fileInput);
+      const urlInput = imgArea.querySelector('input[type="url"]');
+      urlInput.oninput = (e) => bindImageUrl(lesson.id, s.id, e.target.value);
+      sEd.appendChild(imgArea);
+
+      editor.appendChild(sEd);
+    });
+
+    const addSBtn = document.createElement('button');
+    addSBtn.className = 'btn btn-secondary';
+    addSBtn.type = 'button';
+    addSBtn.style.marginTop = '12px';
+    addSBtn.textContent = '+ Add another sentence';
+    addSBtn.onclick = () => addSentence(lesson.id);
+    editor.appendChild(addSBtn);
+
+    container.appendChild(editor);
+  });
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(s) {
+  if (s == null) return '';
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ').replace(/\r/g, '');
+}
+
+function buildGeneratedHTML() {
+  const pageTitle = document.getElementById('pageTitle').value || 'Language Lessons';
+
+  if (langPairs.length === 0) {
+    return `<!DOCTYPE html><html><body style="font-family:sans-serif;padding:40px;text-align:center;color:#666;">
+      <h2>No language pairs yet</h2>
+      <p>Add at least one language pair (e.g. English → Vietnamese), then click Update preview.</p>
+      </body></html>`;
+  }
+
+  const tabsHtml = langPairs.map((p, i) => {
+    const pkey = pairKey(p);
+    return `<button class="tab-btn ${i === 0 ? 'active' : ''}" data-pair="${escapeHtml(pkey)}" onclick="switchPair('${escapeAttr(pkey)}', this)">${escapeHtml(p.from)} → ${escapeHtml(p.to)}</button>`;
+  }).join('');
+
+  const pairSections = langPairs.map((p, i) => {
+    const pkey = pairKey(p);
+    const lessonHtml = lessons.map(lesson => {
+      const filledSentences = lesson.sentences.filter(s => {
+        const t = s.translations[pkey];
+        return t && (t.fromText.trim() || t.toText.trim());
+      });
+      if (filledSentences.length === 0) return '';
+      const cardsHtml = filledSentences.map((s, idx) => {
+        const t = s.translations[pkey];
+        const colorClass = ['', 'present', 'past'][idx % 3];
+        const imgSrc = s.imageData || (s.imageUrl && s.imageUrl.trim()) || '';
+        const imgHtml = imgSrc ? `<img class="scene" src="${escapeHtml(imgSrc)}" alt="" onerror="this.style.display='none'">` : '';
+        return `
+          <div class="card ${colorClass}">
+            <span class="tense-label">SENTENCE ${idx + 1}</span>
+            ${imgHtml}
+            <div class="english-row">
+              <span class="english">${escapeHtml(t.fromText)}</span>
+              <button class="en-mini-btn" onclick="speakText(this, '${escapeAttr(t.fromText)}', '${langCode(p.from)}')" title="Hear ${escapeAttr(p.from)}">🔊</button>
+            </div>
+            <div class="vietnamese">${escapeHtml(t.toText)}</div>
+            ${t.pronunciation ? `<div class="pronunciation">(${escapeHtml(t.pronunciation)})</div>` : ''}
+            <div class="audio-row">
+              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.85)">
+                <span class="icon">🔊</span>Hear ${escapeHtml(p.to)}
+              </button>
+              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.6)">
+                <span class="icon">🐢</span>Slow
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="lesson">
+          <h2 class="lesson-title">${escapeHtml(lesson.title)}</h2>
+          <div class="cards">${cardsHtml}</div>
+        </div>
+      `;
+    }).filter(Boolean).join('');
+    const body = lessonHtml || '<p style="text-align:center;color:#888;padding:40px;">No sentences filled in yet for this language pair.</p>';
+    return `<div class="pair-section ${i === 0 ? 'active' : ''}" data-pair="${escapeHtml(pkey)}">${body}</div>`;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(pageTitle)}</title>
+<style>
+  :root {
+    --green: #4a9b5e;
+    --blue:  #4a7ab8;
+    --purple:#7a5ab5;
+    --bg:    #f7f5f0;
+    --card:  #ffffff;
+    --ink:   #222;
+    --muted: #666;
+    --brown: #5a3c1f;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    padding: 16px 12px 80px;
+    min-height: 100vh;
+  }
+  h1.page-title {
+    text-align: center;
+    margin: 8px 0 20px;
+    font-size: 30px;
+    color: var(--brown);
+    letter-spacing: 1px;
+  }
+  .tabs {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(247,245,240,0.96);
+    backdrop-filter: blur(6px);
+    padding: 10px 8px;
+    margin: 0 -12px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+  .tab-btn {
+    padding: 8px 14px;
+    background: #fff;
+    border: 1.5px solid #ccc;
+    border-radius: 999px;
+    font-size: 13px;
+    color: #444;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    background: var(--brown);
+    color: #fff;
+    border-color: var(--brown);
+  }
+  .pair-section { display: none; }
+  .pair-section.active { display: block; }
+
+  .lesson { max-width: 1100px; margin: 0 auto 50px; padding-top: 10px; }
+  .lesson-title {
+    text-align: center; margin: 0 0 18px; font-size: 26px;
+    color: var(--brown); letter-spacing: 0.5px;
+    border-bottom: 2px solid #ddd; padding-bottom: 10px;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-top: 6px solid var(--green);
+  }
+  .card.present { border-top-color: var(--blue); }
+  .card.past    { border-top-color: var(--purple); }
+
+  .tense-label {
+    display: inline-block;
+    font-weight: 700; font-size: 13px;
+    letter-spacing: 1.2px; color: #fff;
+    background: var(--green);
+    padding: 4px 12px; border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .card.present .tense-label { background: var(--blue); }
+  .card.past    .tense-label { background: var(--purple); }
+
+  .english { font-size: 16px; color: var(--ink); margin: 0; line-height: 1.4; flex: 1; }
+  .english-row { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0 14px; }
+  .en-mini-btn {
+    flex-shrink: 0; width: 36px; height: 36px;
+    border-radius: 8px; border: 1.5px solid #ccc;
+    background: #fff; color: #555;
+    font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
+  }
+  .en-mini-btn.playing { background: var(--brown); color: #fff; border-color: var(--brown); }
+
+  .vietnamese {
+    font-size: 22px; font-weight: 700;
+    color: var(--green); margin: 12px 0 6px; line-height: 1.35;
+  }
+  .card.present .vietnamese { color: var(--blue); }
+  .card.past    .vietnamese { color: var(--purple); }
+
+  .pronunciation {
+    font-style: italic; font-size: 14px;
+    color: var(--muted); margin-bottom: 16px;
+  }
+
+  .audio-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .audio-btn {
+    flex: 1 1 0; min-width: 70px;
+    padding: 10px 8px;
+    border: 2px solid var(--green);
+    border-radius: 10px;
+    background: #fff; color: var(--green);
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+  }
+  .card.present .audio-btn { border-color: var(--blue); color: var(--blue); }
+  .card.past    .audio-btn { border-color: var(--purple); color: var(--purple); }
+  .audio-btn.playing { background: var(--green); color: #fff; }
+  .card.present .audio-btn.playing { background: var(--blue); color: #fff; }
+  .card.past    .audio-btn.playing { background: var(--purple); color: #fff; }
+  .audio-btn .icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  .scene {
+    display: block; width: 100%;
+    border-radius: 10px;
+    margin: -8px 0 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">${escapeHtml(pageTitle)}</h1>
+
+<div class="tabs">${tabsHtml}</div>
+
+${pairSections}
+
+<script>
+function switchPair(pkey, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.pair-section').forEach(s => {
+    s.classList.toggle('active', s.dataset.pair === pkey);
+  });
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.playing').forEach(el => el.classList.remove('playing'));
+}
+
+let currentBtn = null;
+function speakText(btn, text, lang, rate) {
+  if (!text) return;
+  if (currentBtn === btn && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    btn.classList.remove('playing');
+    currentBtn = null;
+    return;
+  }
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.playing').forEach(el => el.classList.remove('playing'));
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = lang || 'en-US';
+  u.rate = rate || 1.0;
+  btn.classList.add('playing');
+  currentBtn = btn;
+  u.onend = u.onerror = () => { btn.classList.remove('playing'); if (currentBtn === btn) currentBtn = null; };
+  window.speechSynthesis.speak(u);
+}
+<\/script>
+</body>
+</html>`;
+}
+
+function generateAndPreview() {
+  const html = buildGeneratedHTML();
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  document.getElementById('preview').src = url;
+  setStatus('Preview updated.');
+}
+
+function downloadHTML() {
+  const html = buildGeneratedHTML();
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (document.getElementById('pageTitle').value || 'lessons')
+    .replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_+|_+$/g, '') || 'lessons';
+  a.href = url;
+  a.download = safeName + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setStatus('Downloaded ' + safeName + '.html');
+}
+
+function setStatus(msg) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+}
+
+attachAutocomplete('newLangFrom', 'newLangFromSugg');
+attachAutocomplete('newLangTo', 'newLangToSugg');
+renderLangPairs();
+generateAndPreview();
+</script>
+
+</body>
+</html>

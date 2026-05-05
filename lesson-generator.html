@@ -237,6 +237,130 @@
   }
   .image-area .url-input { margin-top: 8px; }
 
+  /* Vietnamese pronoun panel */
+  .vn-pronoun-panel {
+    background: #fff5f5;
+    border: 1.5px solid #e8a5a5;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+  }
+  .vn-panel-head {
+    font-weight: 700;
+    color: #b03a2e;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .vn-panel-note {
+    font-size: 12px;
+    color: #6a3a3a;
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+  .vn-panel-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .vn-panel-row label {
+    margin: 0;
+    font-size: 12px;
+  }
+  .vn-panel-row select {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .vn-pron-result {
+    background: #fff;
+    border: 1px solid #e8a5a5;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-top: 8px;
+    font-size: 13px;
+  }
+  .vn-pron-result .vn-i, .vn-pron-result .vn-you {
+    color: #b03a2e;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .vn-pron-result .vn-note {
+    font-size: 12px;
+    color: #6a3a3a;
+    margin-top: 4px;
+    font-style: italic;
+  }
+  .vn-pron-empty {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #888;
+    font-style: italic;
+  }
+
+  /* AI helper buttons (translate, word-by-word) */
+  .ai-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 4px;
+  }
+  .btn-ai {
+    background: #fff;
+    color: var(--brown);
+    border: 1.5px solid var(--brown);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-ai:hover { background: #f3efe6; }
+  .btn-ai:disabled { opacity: 0.6; cursor: wait; }
+  .btn-ai-clear {
+    border-color: #aaa;
+    color: #666;
+  }
+  .ai-note {
+    color: var(--muted);
+    font-size: 11px;
+    flex: 1;
+    min-width: 100px;
+  }
+  .vn-apply-row { margin: 6px 0; }
+
+  /* Word-by-word display */
+  .wbw-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px;
+    background: #f7f5f0;
+    border-radius: 6px;
+    border: 1px solid #e0d8c8;
+  }
+  .wbw-pair {
+    text-align: center;
+    min-width: 40px;
+    padding: 4px 6px;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #d8cfbf;
+  }
+  .wbw-word {
+    font-weight: 700;
+    color: var(--brown);
+    font-size: 13px;
+  }
+  .wbw-gloss {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
   .instructions {
     background: #fff7e0;
     border-left: 4px solid #d4a73e;
@@ -441,6 +565,177 @@ function attachAutocomplete(inputId, suggBoxId) {
   });
 }
 
+// ============================================================
+// VIETNAMESE PRONOUN HELPER
+// ============================================================
+// "Tôi" is technically correct but feels cold/formal in everyday Vietnamese.
+// The right pronoun depends on speaker age/gender and listener age/gender.
+// This table covers the common cases for casual conversation.
+const VN_PRONOUNS = {
+  // [speakerKey][listenerKey] -> { I, you, notes }
+  young_male: {
+    older_male:    { I: 'em', you: 'anh', note: 'Younger man speaking to older brother (older man)' },
+    older_female:  { I: 'em', you: 'chị', note: 'Younger man speaking to older sister (older woman)' },
+    same_male:     { I: 'mình / tớ', you: 'bạn / cậu', note: 'Two male peers, friendly' },
+    same_female:   { I: 'mình / tớ', you: 'bạn / cậu', note: 'Friendly peer-to-peer' },
+    younger_male:  { I: 'anh', you: 'em', note: 'Older brother to younger boy/man' },
+    younger_female: { I: 'anh', you: 'em', note: 'Older brother to younger woman' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother (much older man)' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister (much older woman)' }
+  },
+  young_female: {
+    older_male:    { I: 'em', you: 'anh', note: 'Younger woman to older brother' },
+    older_female:  { I: 'em', you: 'chị', note: 'Younger woman to older sister' },
+    same_male:     { I: 'mình / tớ', you: 'bạn / cậu', note: 'Friendly peer-to-peer' },
+    same_female:   { I: 'mình / tớ', you: 'bạn / cậu', note: 'Friendly peer-to-peer' },
+    younger_male:  { I: 'chị', you: 'em', note: 'Older sister to younger boy' },
+    younger_female: { I: 'chị', you: 'em', note: 'Older sister to younger girl' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother (much older man)' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister (much older woman)' }
+  },
+  middle_male: {
+    older_male:    { I: 'em', you: 'anh', note: 'To older brother (clearly older man)' },
+    older_female:  { I: 'em', you: 'chị', note: 'To older sister (clearly older woman)' },
+    same_male:     { I: 'tôi / mình', you: 'anh / bạn', note: 'Adult peers' },
+    same_female:   { I: 'tôi / mình', you: 'chị / bạn', note: 'Adult peers' },
+    younger_male:  { I: 'anh', you: 'em', note: 'Older brother to younger man' },
+    younger_female: { I: 'anh', you: 'em', note: 'Older brother to younger woman' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother (much older man)' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister (much older woman)' }
+  },
+  middle_female: {
+    older_male:    { I: 'em', you: 'anh', note: 'To older brother (clearly older man)' },
+    older_female:  { I: 'em', you: 'chị', note: 'To older sister (clearly older woman)' },
+    same_male:     { I: 'tôi / mình', you: 'anh / bạn', note: 'Adult peers' },
+    same_female:   { I: 'tôi / mình', you: 'chị / bạn', note: 'Adult peers' },
+    younger_male:  { I: 'chị', you: 'em', note: 'Older sister to younger man' },
+    younger_female: { I: 'chị', you: 'em', note: 'Older sister to younger woman' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother (much older man)' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister (much older woman)' }
+  },
+  elder_male: {
+    older_male:    { I: 'em', you: 'anh', note: 'To older brother' },
+    older_female:  { I: 'em', you: 'chị', note: 'To older sister' },
+    same_male:     { I: 'tôi', you: 'anh', note: 'Adult peers, formal' },
+    same_female:   { I: 'tôi', you: 'chị', note: 'Adult peers, formal' },
+    younger_male:  { I: 'anh', you: 'em', note: 'Older brother to younger man' },
+    younger_female: { I: 'anh', you: 'em', note: 'Older brother to younger woman' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister' }
+  },
+  elder_female: {
+    older_male:    { I: 'em', you: 'anh', note: 'To older brother' },
+    older_female:  { I: 'em', you: 'chị', note: 'To older sister' },
+    same_male:     { I: 'tôi', you: 'anh', note: 'Adult peers, formal' },
+    same_female:   { I: 'tôi', you: 'chị', note: 'Adult peers, formal' },
+    younger_male:  { I: 'chị', you: 'em', note: 'Older sister to younger man' },
+    younger_female: { I: 'chị', you: 'em', note: 'Older sister to younger woman' },
+    elder_male:    { I: 'em', you: 'anh', note: 'To older brother' },
+    elder_female:  { I: 'em', you: 'chị', note: 'To older sister' }
+  }
+};
+
+const VN_SPEAKER_OPTIONS = [
+  { key: '', label: '— pick speaker —' },
+  { key: 'young_male', label: 'Young man (under ~25)' },
+  { key: 'young_female', label: 'Young woman (under ~25)' },
+  { key: 'middle_male', label: 'Adult man (~25–55)' },
+  { key: 'middle_female', label: 'Adult woman (~25–55)' },
+  { key: 'elder_male', label: 'Elder man (55+)' },
+  { key: 'elder_female', label: 'Elder woman (55+)' }
+];
+const VN_LISTENER_OPTIONS = [
+  { key: '', label: '— pick listener —' },
+  { key: 'younger_male', label: 'Younger boy/man' },
+  { key: 'younger_female', label: 'Younger girl/woman' },
+  { key: 'same_male', label: 'Male peer (similar age)' },
+  { key: 'same_female', label: 'Female peer (similar age)' },
+  { key: 'older_male', label: 'Older brother (older man)' },
+  { key: 'older_female', label: 'Older sister (older woman)' },
+  { key: 'elder_male', label: 'Older brother (much older man)' },
+  { key: 'elder_female', label: 'Older sister (much older woman)' }
+];
+
+function vnPronounsFor(speakerKey, listenerKey) {
+  if (!speakerKey || !listenerKey) return null;
+  return (VN_PRONOUNS[speakerKey] && VN_PRONOUNS[speakerKey][listenerKey]) || null;
+}
+
+function isVietnamese(name) {
+  return name && name.toLowerCase().trim() === 'vietnamese';
+}
+
+// Replace standalone "tôi" / "Tôi" in a text with the chosen pronoun (preserves case).
+// Note: JS \b is ASCII-only, so we can't use \btôi\b. Instead we look for non-letter boundaries
+// using Unicode property escapes.
+function replaceVnPronoun(text, replacement) {
+  if (!text || !replacement) return text;
+  // Take the first option from "em / cháu" -> "em"
+  const choice = replacement.split('/')[0].trim();
+  return text.replace(/(^|[^\p{L}])(t[ôÔ]i|T[ôÔ]i)(?![\p{L}])/gu, (match, before, word) => {
+    const isUpper = word[0] === word[0].toUpperCase();
+    const out = isUpper ? choice.charAt(0).toUpperCase() + choice.slice(1) : choice;
+    return before + out;
+  });
+}
+
+// ============================================================
+// TRANSLATION API HELPERS (free Google Translate web endpoint)
+// ============================================================
+// Returns ISO-639-1 code from a language name, or null
+function gtCode(name) {
+  if (!name) return null;
+  const map = {
+    'english': 'en', 'vietnamese': 'vi', 'chinese (simplified)': 'zh-CN',
+    'chinese (traditional)': 'zh-TW', 'cantonese': 'zh-TW', 'mandarin': 'zh-CN',
+    'mongolian': 'mn', 'spanish': 'es', 'spanish (mexico)': 'es', 'french': 'fr',
+    'german': 'de', 'italian': 'it', 'portuguese': 'pt', 'portuguese (brazil)': 'pt',
+    'japanese': 'ja', 'korean': 'ko', 'thai': 'th', 'russian': 'ru', 'arabic': 'ar',
+    'hindi': 'hi', 'bengali': 'bn', 'urdu': 'ur', 'punjabi': 'pa', 'tamil': 'ta',
+    'telugu': 'te', 'marathi': 'mr', 'gujarati': 'gu', 'dutch': 'nl', 'turkish': 'tr',
+    'polish': 'pl', 'indonesian': 'id', 'malay': 'ms', 'tagalog (filipino)': 'tl',
+    'swedish': 'sv', 'norwegian': 'no', 'danish': 'da', 'finnish': 'fi', 'czech': 'cs',
+    'greek': 'el', 'hebrew': 'iw', 'hungarian': 'hu', 'romanian': 'ro', 'ukrainian': 'uk',
+    'khmer': 'km', 'lao': 'lo', 'burmese': 'my', 'swahili': 'sw', 'persian (farsi)': 'fa'
+  };
+  return map[name.toLowerCase()] || null;
+}
+
+// Free Google Translate endpoint. Not officially supported, but widely used.
+// May rate-limit; that's why this is a manual button, not automatic.
+async function translateOne(text, fromCode, toCode) {
+  if (!text || !text.trim()) return '';
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(fromCode)}&tl=${encodeURIComponent(toCode)}&dt=t&q=${encodeURIComponent(text)}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Translation request failed (HTTP ' + r.status + ')');
+  const data = await r.json();
+  // Response shape: [[[translated, original, ...], ...], ...]
+  if (!Array.isArray(data) || !Array.isArray(data[0])) throw new Error('Unexpected translation response');
+  return data[0].map(seg => (seg && seg[0]) ? seg[0] : '').join('');
+}
+
+// Word-by-word: split source into words, translate each individually.
+// Works best for spaced languages (English, Vietnamese, Spanish, etc.).
+async function translateWordByWord(text, fromCode, toCode) {
+  if (!text || !text.trim()) return [];
+  // Split keeping punctuation attached to the previous word, so "hello," becomes one token.
+  const tokens = text.match(/[\p{L}\p{N}'-]+|[^\s\p{L}\p{N}]+/gu) || [];
+  const wordTokens = tokens.filter(t => /[\p{L}]/u.test(t));
+  // Translate each word in parallel (but throttle a bit)
+  const results = [];
+  for (let i = 0; i < wordTokens.length; i++) {
+    try {
+      const gloss = await translateOne(wordTokens[i], fromCode, toCode);
+      results.push({ word: wordTokens[i], gloss: gloss });
+    } catch (e) {
+      results.push({ word: wordTokens[i], gloss: '?' });
+    }
+    // Small pause to avoid hammering the endpoint
+    if (i < wordTokens.length - 1) await new Promise(r => setTimeout(r, 80));
+  }
+  return results;
+}
+
 let langPairs = [];
 let lessons = [];
 let nextId = 1;
@@ -448,7 +743,7 @@ const uid = () => "id" + (nextId++);
 const DEFAULT_SENTENCE_COUNT = 8;
 
 function pairKey(p) { return p.from + '__' + p.to; }
-function emptySentence() { return { id: uid(), translations: {}, imageData: null, imageUrl: '' }; }
+function emptySentence() { return { id: uid(), translations: {}, wordByWord: {}, imageData: null, imageUrl: '' }; }
 
 function renderLangPairs() {
   const list = document.getElementById('langPairsList');
@@ -494,6 +789,8 @@ function addLesson() {
   const lesson = {
     id: uid(),
     title: 'Lesson ' + (lessons.length + 1),
+    vnSpeaker: '',
+    vnListener: '',
     sentences: []
   };
   for (let i = 0; i < DEFAULT_SENTENCE_COUNT; i++) lesson.sentences.push(emptySentence());
@@ -536,6 +833,100 @@ function bindImageUrl(lessonId, sentenceId, value) {
   const lesson = lessons.find(l => l.id === lessonId);
   const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
   if (s) s.imageUrl = value;
+}
+
+function bindLessonPronoun(lessonId, which, value) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  if (which === 'speaker') lesson.vnSpeaker = value;
+  else lesson.vnListener = value;
+  renderLessons();
+}
+
+function applyVnPronoun(lessonId, sentenceId, pkey) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  const s = lesson.sentences.find(x => x.id === sentenceId);
+  if (!s) return;
+  const pron = vnPronounsFor(lesson.vnSpeaker, lesson.vnListener);
+  if (!pron) { alert('Pick a speaker and listener for this lesson first.'); return; }
+  if (!s.translations[pkey]) return;
+  const old = s.translations[pkey].toText || '';
+  if (!old.includes('tôi') && !old.includes('Tôi')) {
+    alert('No "tôi" found in the Vietnamese sentence to replace.');
+    return;
+  }
+  s.translations[pkey].toText = replaceVnPronoun(old, pron.I);
+  renderLessons();
+}
+
+async function suggestTranslation(lessonId, sentenceId, pkey, fromLang, toLang) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  const s = lesson.sentences.find(x => x.id === sentenceId);
+  if (!s) return;
+  if (!s.translations[pkey]) s.translations[pkey] = { fromText: '', toText: '', pronunciation: '' };
+  const sourceText = s.translations[pkey].fromText.trim();
+  if (!sourceText) { alert('Type the source sentence first, then click Suggest.'); return; }
+  const fromCode = gtCode(fromLang);
+  const toCode = gtCode(toLang);
+  if (!fromCode || !toCode) {
+    alert('Sorry, automatic translation is not available for this language pair. Please type the translation manually.');
+    return;
+  }
+  const btn = document.querySelector(`[data-translate-btn="${lessonId}|${sentenceId}|${pkey}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Translating…'; }
+  try {
+    const out = await translateOne(sourceText, fromCode, toCode);
+    s.translations[pkey].toText = out;
+    // For Vietnamese: if a pronoun preference is set, apply it automatically
+    if (isVietnamese(toLang)) {
+      const pron = vnPronounsFor(lesson.vnSpeaker, lesson.vnListener);
+      if (pron) s.translations[pkey].toText = replaceVnPronoun(s.translations[pkey].toText, pron.I);
+    }
+    renderLessons();
+  } catch (e) {
+    alert('Translation failed: ' + e.message + '\n\nThis service is unofficial and may rate-limit. Please type the translation manually, or try again in a moment.');
+    if (btn) { btn.disabled = false; btn.textContent = '💡 Suggest translation'; }
+  }
+}
+
+async function generateWordByWord(lessonId, sentenceId, pkey, fromLang, toLang) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  if (!lesson) return;
+  const s = lesson.sentences.find(x => x.id === sentenceId);
+  if (!s) return;
+  const t = s.translations[pkey];
+  if (!t || !t.toText.trim()) { alert('Fill in the translation first, then generate word-by-word.'); return; }
+  const fromCode = gtCode(toLang);    // word-by-word source = the target language (Vietnamese, etc.)
+  const toCode = gtCode(fromLang);    // gloss target = the speaker's language (English, etc.)
+  if (!fromCode || !toCode) {
+    alert('Word-by-word is not available for this language pair.');
+    return;
+  }
+  // Warn about un-spaced languages
+  const lname = (toLang || '').toLowerCase();
+  if (lname.includes('chinese') || lname.includes('mandarin') || lname.includes('cantonese') ||
+      lname.includes('japanese') || lname.includes('thai') || lname.includes('khmer') ||
+      lname.includes('lao') || lname.includes('burmese')) {
+    if (!confirm(`${toLang} doesn\\u2019t use spaces between words, so word-by-word splitting may be inaccurate. Continue anyway?`)) return;
+  }
+  const btn = document.querySelector(`[data-wbw-btn="${lessonId}|${sentenceId}|${pkey}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Working…'; }
+  try {
+    const pairs = await translateWordByWord(t.toText, fromCode, toCode);
+    s.wordByWord[pkey] = pairs;
+    renderLessons();
+  } catch (e) {
+    alert('Word-by-word failed: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🔤 Word-by-word'; }
+  }
+}
+
+function clearWordByWord(lessonId, sentenceId, pkey) {
+  const lesson = lessons.find(l => l.id === lessonId);
+  const s = lesson && lesson.sentences.find(x => x.id === sentenceId);
+  if (s && s.wordByWord) { delete s.wordByWord[pkey]; renderLessons(); }
 }
 
 function handleImageUpload(lessonId, sentenceId, fileInput) {
@@ -583,6 +974,46 @@ function renderLessons() {
     titleInput.oninput = (e) => bindLessonTitle(lesson.id, e.target.value);
     editor.appendChild(titleInput);
 
+    // Vietnamese pronoun helper — only show if any pair has Vietnamese as the target
+    const lessonHasVietnamese = langPairs.some(p => isVietnamese(p.to));
+    if (lessonHasVietnamese) {
+      const vnPanel = document.createElement('div');
+      vnPanel.className = 'vn-pronoun-panel';
+      const speakerOpts = VN_SPEAKER_OPTIONS.map(o =>
+        `<option value="${escapeHtml(o.key)}"${o.key === lesson.vnSpeaker ? ' selected' : ''}>${escapeHtml(o.label)}</option>`
+      ).join('');
+      const listenerOpts = VN_LISTENER_OPTIONS.map(o =>
+        `<option value="${escapeHtml(o.key)}"${o.key === lesson.vnListener ? ' selected' : ''}>${escapeHtml(o.label)}</option>`
+      ).join('');
+      const pron = vnPronounsFor(lesson.vnSpeaker, lesson.vnListener);
+      vnPanel.innerHTML = `
+        <div class="vn-panel-head">🇻🇳 Vietnamese pronoun helper</div>
+        <p class="vn-panel-note">Vietnamese rarely uses "tôi" in everyday speech. The right pronoun depends on who is speaking and who is listening. Pick both below to see the appropriate pair.</p>
+        <div class="vn-panel-row">
+          <label>Speaker (the "I")</label>
+          <select data-vn-which="speaker"></select>
+        </div>
+        <div class="vn-panel-row">
+          <label>Listener (the "you")</label>
+          <select data-vn-which="listener"></select>
+        </div>
+        ${pron ? `
+          <div class="vn-pron-result">
+            <div><strong>I →</strong> <span class="vn-i">${escapeHtml(pron.I)}</span></div>
+            <div><strong>You →</strong> <span class="vn-you">${escapeHtml(pron.you)}</span></div>
+            <div class="vn-note">${escapeHtml(pron.note)}</div>
+          </div>
+        ` : '<div class="vn-pron-empty">Pick speaker and listener to see the right pronouns.</div>'}
+      `;
+      const speakerSel = vnPanel.querySelector('[data-vn-which="speaker"]');
+      const listenerSel = vnPanel.querySelector('[data-vn-which="listener"]');
+      speakerSel.innerHTML = speakerOpts;
+      listenerSel.innerHTML = listenerOpts;
+      speakerSel.onchange = (e) => bindLessonPronoun(lesson.id, 'speaker', e.target.value);
+      listenerSel.onchange = (e) => bindLessonPronoun(lesson.id, 'listener', e.target.value);
+      editor.appendChild(vnPanel);
+    }
+
     lesson.sentences.forEach((s, idx) => {
       const sEd = document.createElement('div');
       sEd.className = 'sentence-editor';
@@ -606,13 +1037,39 @@ function renderLessons() {
           const t = s.translations[pkey] || { fromText: '', toText: '', pronunciation: '' };
           const block = document.createElement('div');
           block.className = 'translation-block';
+          const wbw = (s.wordByWord && s.wordByWord[pkey]) || null;
+          const isVnTarget = isVietnamese(p.to);
+          const pronForLesson = isVnTarget ? vnPronounsFor(lesson.vnSpeaker, lesson.vnListener) : null;
           block.innerHTML = `
             <label>${escapeHtml(p.from)} sentence</label>
             <textarea placeholder="Type the ${escapeHtml(p.from)} sentence">${escapeHtml(t.fromText)}</textarea>
+            <div class="ai-row">
+              <button class="btn-ai" type="button"
+                data-translate-btn="${lesson.id}|${s.id}|${escapeHtml(pkey)}"
+                onclick="suggestTranslation('${lesson.id}','${s.id}','${escapeAttr(pkey)}','${escapeAttr(p.from)}','${escapeAttr(p.to)}')">💡 Suggest translation</button>
+              <small class="ai-note">Calls Google Translate (needs internet). Always review the result.</small>
+            </div>
             <label>${escapeHtml(p.to)} translation</label>
             <textarea placeholder="Type the ${escapeHtml(p.to)} translation">${escapeHtml(t.toText)}</textarea>
+            ${isVnTarget && pronForLesson ? `
+              <div class="vn-apply-row">
+                <button class="btn-ai" type="button" onclick="applyVnPronoun('${lesson.id}','${s.id}','${escapeAttr(pkey)}')">🔁 Replace "tôi" with "${escapeHtml(pronForLesson.I.split('/')[0].trim())}"</button>
+              </div>
+            ` : ''}
             <label>Pronunciation guide (optional)</label>
             <input type="text" placeholder="How to say it phonetically" value="${escapeHtml(t.pronunciation)}" />
+            <div class="ai-row">
+              <button class="btn-ai" type="button"
+                data-wbw-btn="${lesson.id}|${s.id}|${escapeHtml(pkey)}"
+                onclick="generateWordByWord('${lesson.id}','${s.id}','${escapeAttr(pkey)}','${escapeAttr(p.from)}','${escapeAttr(p.to)}')">🔤 Word-by-word</button>
+              ${wbw ? `<button class="btn-ai btn-ai-clear" type="button" onclick="clearWordByWord('${lesson.id}','${s.id}','${escapeAttr(pkey)}')">Clear</button>` : ''}
+              <small class="ai-note">Generates a literal gloss under each word.</small>
+            </div>
+            ${wbw && wbw.length ? `
+              <div class="wbw-display">
+                ${wbw.map(w => `<div class="wbw-pair"><div class="wbw-word">${escapeHtml(w.word)}</div><div class="wbw-gloss">${escapeHtml(w.gloss)}</div></div>`).join('')}
+              </div>
+            ` : ''}
           `;
           const [fromTa, toTa] = block.querySelectorAll('textarea');
           const proInput = block.querySelector('input[type="text"]');
@@ -703,6 +1160,15 @@ function buildGeneratedHTML() {
         const colorClass = ['', 'present', 'past'][idx % 3];
         const imgSrc = s.imageData || (s.imageUrl && s.imageUrl.trim()) || '';
         const imgHtml = imgSrc ? `<img class="scene" src="${escapeHtml(imgSrc)}" alt="" onerror="this.style.display='none'">` : '';
+        const wbw = (s.wordByWord && s.wordByWord[pkey]) || null;
+        const wbwHtml = (wbw && wbw.length) ? `
+          <div class="wbw-card">
+            <div class="wbw-card-label">Word by word</div>
+            <div class="wbw-card-grid">
+              ${wbw.map(w => `<div class="wbw-card-pair"><div class="wbw-card-word">${escapeHtml(w.word)}</div><div class="wbw-card-gloss">${escapeHtml(w.gloss)}</div></div>`).join('')}
+            </div>
+          </div>
+        ` : '';
         return `
           <div class="card ${colorClass}">
             <span class="tense-label">SENTENCE ${idx + 1}</span>
@@ -713,12 +1179,19 @@ function buildGeneratedHTML() {
             </div>
             <div class="vietnamese">${escapeHtml(t.toText)}</div>
             ${t.pronunciation ? `<div class="pronunciation">(${escapeHtml(t.pronunciation)})</div>` : ''}
+            ${wbwHtml}
             <div class="audio-row">
-              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.85)">
-                <span class="icon">🔊</span>Hear ${escapeHtml(p.to)}
-              </button>
-              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.6)">
+              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.55)">
                 <span class="icon">🐢</span>Slow
+              </button>
+              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.9)">
+                <span class="icon">🔊</span>Normal
+              </button>
+              <button class="audio-btn" onclick="speakText(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 1.25)">
+                <span class="icon">⚡</span>Fast
+              </button>
+              <button class="audio-btn loop-btn" data-loop="off" onclick="toggleLoop(this, '${escapeAttr(t.toText)}', '${langCode(p.to)}', 0.9)">
+                <span class="icon">🔁</span>Loop
               </button>
             </div>
           </div>
@@ -875,6 +1348,53 @@ function buildGeneratedHTML() {
     margin: -8px 0 14px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
+
+  .wbw-card {
+    margin: 8px 0 14px;
+    padding: 10px;
+    background: #faf6ed;
+    border-radius: 8px;
+    border: 1px solid #e0d8c8;
+  }
+  .wbw-card-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .wbw-card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .wbw-card-pair {
+    text-align: center;
+    min-width: 44px;
+    padding: 4px 6px;
+    background: #fff;
+    border-radius: 4px;
+    border: 1px solid #d8cfbf;
+  }
+  .wbw-card-word {
+    font-weight: 700;
+    color: var(--brown);
+    font-size: 14px;
+  }
+  .wbw-card-gloss {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  /* Loop button active state */
+  .audio-btn.loop-btn[data-loop="on"] {
+    background: var(--brown) !important;
+    color: #fff !important;
+    border-color: var(--brown) !important;
+  }
 </style>
 </head>
 <body>
@@ -894,11 +1414,26 @@ function switchPair(pkey, btn) {
   });
   window.speechSynthesis.cancel();
   document.querySelectorAll('.playing').forEach(el => el.classList.remove('playing'));
+  stopLoop();
 }
 
 let currentBtn = null;
+let loopActive = false;
+let loopBtn = null;
+
+function stopLoop() {
+  loopActive = false;
+  if (loopBtn) {
+    loopBtn.dataset.loop = 'off';
+    loopBtn.classList.remove('playing');
+  }
+  loopBtn = null;
+}
+
 function speakText(btn, text, lang, rate) {
   if (!text) return;
+  // Pressing any speed button cancels an active loop
+  stopLoop();
   if (currentBtn === btn && window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
     btn.classList.remove('playing');
@@ -914,6 +1449,39 @@ function speakText(btn, text, lang, rate) {
   currentBtn = btn;
   u.onend = u.onerror = () => { btn.classList.remove('playing'); if (currentBtn === btn) currentBtn = null; };
   window.speechSynthesis.speak(u);
+}
+
+function toggleLoop(btn, text, lang, rate) {
+  if (!text) return;
+  // If this loop button is already active, stop
+  if (loopActive && loopBtn === btn) {
+    window.speechSynthesis.cancel();
+    stopLoop();
+    return;
+  }
+  // Stop any existing loop or speech
+  window.speechSynthesis.cancel();
+  document.querySelectorAll('.playing').forEach(el => el.classList.remove('playing'));
+  stopLoop();
+  loopActive = true;
+  loopBtn = btn;
+  btn.dataset.loop = 'on';
+  btn.classList.add('playing');
+  function speakOnce() {
+    if (!loopActive || loopBtn !== btn) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || 'en-US';
+    u.rate = rate || 1.0;
+    u.onend = () => {
+      if (loopActive && loopBtn === btn) {
+        // Pause briefly between repeats so it doesn't run together
+        setTimeout(speakOnce, 600);
+      }
+    };
+    u.onerror = () => stopLoop();
+    window.speechSynthesis.speak(u);
+  }
+  speakOnce();
 }
 <\/script>
 </body>

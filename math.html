@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Math — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 40px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .sub {
+      text-align: center;
+      color: #aaa;
+      margin: 0 0 40px;
+      font-size: 16px;
+    }
+    .top-nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .top-nav a {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+
+    .section-heading {
+      font-size: clamp(18px, 3vw, 22px);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin: 50px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
+    }
+    .section-heading:first-of-type { margin-top: 30px; }
+    .section-note {
+      color: #888;
+      font-size: 14px;
+      margin: -8px 0 18px;
+      font-style: italic;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 22px 24px;
+      font-size: 17px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      min-height: 92px;
+    }
+    .card.start {
+      border-width: 4px;
+      background: rgba(255,255,255,0.04);
+    }
+    .card:hover {
+      background: #fff;
+      color: #000;
+      transform: translateY(-2px);
+    }
+    .card .filename {
+      font-size: 12px;
+      font-weight: normal;
+      opacity: 0.6;
+      font-family: 'SF Mono', Menlo, Consolas, monospace;
+      word-break: break-all;
+    }
+    .card:hover .filename { opacity: 1; }
+    .card .step {
+      font-size: 12px;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav">
+      <a href="index.html">← Back to Home</a>
+    </div>
+
+    <h1>Math</h1>
+    <p class="sub">Start at the top and work down — each section builds on the last.</p>
+
+    <h2 class="section-heading">Start Here</h2>
+    <p class="section-note">Foundations — learn the numbers, then learn to compare them.</p>
+    <div class="grid">
+      <a href="number-practice.html" class="card start">
+        <span class="step">Step 1</span>
+        Counting (Numbers 1–10)
+        <span class="filename">number-practice.html</span>
+      </a>
+      <a href="bigger-smaller.html" class="card start">
+        <span class="step">Step 2</span>
+        Bigger / Smaller
+        <span class="filename">bigger-smaller.html</span>
+      </a>
+    </div>
+
+    <h2 class="section-heading">Squares</h2>
+    <p class="section-note">Multiplication and squared numbers.</p>
+    <div class="grid">
+      <a href="squares.html" class="card">
+        Squares
+        <span class="filename">squares.html</span>
+      </a>
+      <a href="squares-opposite.html" class="card">
+        Squares Opposite
+        <span class="filename">squares-opposite.html</span>
+      </a>
+      <a href="squares - game.html" class="card">
+        Squares Game
+        <span class="filename">squares - game.html</span>
+      </a>
+      <a href="squares game2.html" class="card">
+        Squares Game 2
+        <span class="filename">squares game2.html</span>
+      </a>
+      <a href="Game3.HTML" class="card">
+        Squares Game 3
+        <span class="filename">Game3.HTML</span>
+      </a>
+      <a href="squares - game - mobile.html" class="card">
+        Squares Game (Mobile)
+        <span class="filename">squares - game - mobile.html</span>
+      </a>
+      <a href="squares reference.html" class="card">
+        Squares Reference
+        <span class="filename">squares reference.html</span>
+      </a>
+      <a href="SquaresCubegame.html" class="card">
+        Squares Cube Game
+        <span class="filename">SquaresCubegame.html</span>
+      </a>
+      <a href="claudesquaresgame.html" class="card">
+        Claude Squares Game
+        <span class="filename">claudesquaresgame.html</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

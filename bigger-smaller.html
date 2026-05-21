@@ -102,11 +102,12 @@
       outline: none;
     }
     .circle.red        { background: #ff0000; }
+    .circle.red        { background: #ff0000; }
     .circle.orange     { background: #ff6200; }
     .circle.yellow     { background: #ffe600; }
     .circle.green      { background: #00a12c; }
     .circle.blue       { background: #0030ff; }
-    .circle.purple     { background: #8b3dff; }
+    .circle.purple     { background: #6a1b9a; }
     .circle.brown      { background: #7a3b00; }
     .circle.pink       { background: #ff3fa6; }
     .circle.sky        { background: #38c7ff; }
@@ -417,33 +418,38 @@
       margin: 0 auto;
       position: relative;
       overflow: visible;
-      padding: 50px 0;
+      padding: 90px 0 50px;
     }
-    .game-questions-group.slide-out-left {
-      animation: slideOutLeft 0.5s ease-in-out forwards;
+    .game-questions-group.slide-out-up {
+      animation: slideOutUp 0.5s ease-in forwards;
     }
-    .game-questions-group.slide-in-right {
-      animation: slideInRight 0.5s ease-in-out forwards;
+    .game-questions-group.slide-in-from-bottom {
+      animation: slideInFromBottom 0.5s ease-out forwards;
     }
-    @keyframes slideOutLeft {
+    @keyframes slideOutUp {
       from {
-        transform: translateX(0);
+        transform: translateY(0);
         opacity: 1;
       }
       to {
-        transform: translateX(-100%);
+        transform: translateY(-100vh);
         opacity: 0;
       }
     }
-    @keyframes slideInRight {
+    @keyframes slideInFromBottom {
       from {
-        transform: translateX(100%);
+        transform: translateY(100vh);
         opacity: 0;
       }
       to {
-        transform: translateX(0);
+        transform: translateY(0);
         opacity: 1;
       }
+    }
+    @keyframes pulseCorrect {
+      0%, 100% { transform: scale(1); }
+      30% { transform: scale(1.18); }
+      60% { transform: scale(0.95); }
     }
 
     .game-question-row {
@@ -466,22 +472,26 @@
     }
 
     .game-comparison-symbol {
-      font-size: clamp(25px, 5vw, 50px);
-      font-weight: bold;
-      color: #fff;
-      width: clamp(40px, 8vw, 80px);
-      min-width: clamp(40px, 8vw, 80px);
-      max-width: clamp(40px, 8vw, 80px);
-      text-align: center;
+      width: clamp(110px, 18vw, 200px);
+      min-width: clamp(110px, 18vw, 200px);
+      max-width: clamp(110px, 18vw, 200px);
+      height: clamp(132px, 22vw, 240px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       opacity: 0;
       visibility: hidden;
       align-self: center;
-      z-index: 20; /* Above the green circle */
+      z-index: 20;
       position: relative;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
       flex-shrink: 0;
       flex-grow: 0;
       transition: none !important;
+    }
+    .game-comparison-symbol svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.8));
     }
     .game-comparison-symbol.show {
       opacity: 1;
@@ -574,8 +584,8 @@
       cursor: pointer;
       transition: none !important;
       transform: none !important;
-      --game-circle-size: clamp(12px, 2.5vw, 25px);
-      --game-circle-border: clamp(1px, 0.2vw, 2px); /* Thinner border */
+      --game-circle-size: clamp(36px, 7vw, 80px);
+      --game-circle-border: clamp(1px, 0.25vw, 2.5px);
       --game-circle-total: calc(var(--game-circle-size) + var(--game-circle-border) * 2);
       --game-triangle-rise: calc(var(--game-circle-total) * 0.8660254);
       display: flex;
@@ -859,60 +869,28 @@
       transform: none; /* No scaling on hover */
     }
     .game-option.selected {
-      transform: none; /* No scaling when selected */
+      transform: none;
     }
-    .game-option.correct::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      /* Use fixed size to ensure perfect circle */
-      width: 120px;
-      height: 120px;
-      min-width: 120px;
-      min-height: 120px;
-      max-width: 120px;
-      max-height: 120px;
-      /* Force perfect circle */
-      aspect-ratio: 1;
-      border: 6px solid #00ff00;
-      border-radius: 50%;
-      opacity: 1;
-      z-index: 3; /* Above triangle, below comparison symbol */
-      pointer-events: none; /* Don't interfere with layout */
-      transition: none !important;
-      box-sizing: border-box;
+    /* Correct pick: pulse a couple of times with a soft green glow. */
+    .game-option.correct {
+      animation: pulseCorrect 0.5s ease-in-out 2;
+      filter: drop-shadow(0 0 14px #00ff00);
     }
-    /* For 6, adjust circle position - it's too low */
-    .game-option.stack-six.correct::before {
-      transform: translate(-50%, -45%); /* Move up slightly */
+    /* The non-picked option fades out when the correct one is chosen. */
+    .game-option.faded {
+      opacity: 0;
+      transition: opacity 0.5s ease-out;
+      pointer-events: none;
     }
-    /* For 10, use a larger circle border (like other numbers) - no fill, no text */
-    .game-option.stack-ten.correct::before {
-      width: 150px;
-      height: 150px;
-      min-width: 150px;
-      min-height: 150px;
-      max-width: 150px;
-      max-height: 150px;
-      border: 6px solid #00ff00;
-      background: transparent; /* No fill */
-      border-radius: 50% !important;
-      z-index: 3; /* Above triangle, below comparison symbol */
+    /* Wrong pick: flash a red ring; user can retry. */
+    .game-option.incorrect {
+      animation: shakeWrong 0.4s ease-in-out 1;
+      filter: drop-shadow(0 0 10px #ff0000);
     }
-    .game-option.incorrect::before {
-      content: '';
-      position: absolute;
-      top: -20px;
-      left: -20px;
-      right: -20px;
-      bottom: -20px;
-      border: 8px solid #ff0000;
-      border-radius: 50%;
-      pointer-events: none; /* Don't interfere with layout */
-      transform: none !important;
-      transition: none !important;
+    @keyframes shakeWrong {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
     }
 
     .game-controls {
@@ -1612,7 +1590,7 @@ const GAME_QUESTIONS = {
   hi: "कौन सा बड़ा है?"
 };
 
-let gameMode = false;
+let gameMode = true;
 let allQuestions = [];
 let currentQuestionIndex = 0;
 let currentGroupStart = 0;
@@ -1620,6 +1598,30 @@ let scoreCorrect = 0;
 let scoreTotal = 0;
 let answeredInGroup = 0;
 let autoAdvanceTimeout = null;
+let answeredQuestions = [];
+
+function showGameSummary(groupEl) {
+  const rows = answeredQuestions.map((a, i) => {
+    const left = a.q.num1, right = a.q.num2;
+    const pickedLeft = a.picked === left;
+    const style = (isPicked) => isPicked
+      ? 'font-weight:900;color:#ffeb3b;font-size:1.15em;text-decoration:underline;'
+      : 'opacity:0.55;';
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 0;border-bottom:1px solid #222;font-size:1.6em;">
+      <span style="opacity:0.5;font-size:0.6em;width:32px;text-align:right;">${i + 1}.</span>
+      <span style="${style(pickedLeft)}">${left}</span>
+      <span style="opacity:0.6;">vs</span>
+      <span style="${style(!pickedLeft)}">${right}</span>
+    </div>`;
+  }).join('');
+  groupEl.innerHTML = `
+    <div style="text-align:center;max-width:560px;margin:0 auto;">
+      <h2 style="font-size:2em;margin:20px 0 10px;">All done! 🎉</h2>
+      <p style="opacity:0.7;margin:0 0 24px;">The bigger number you picked is highlighted.</p>
+      ${rows}
+      <button onclick="location.reload()" style="margin-top:30px;padding:14px 28px;font-size:18px;background:#fff;color:#000;border:none;border-radius:999px;cursor:pointer;font-weight:bold;">Play again</button>
+    </div>`;
+}
 
 function getColorClassForNumber(num) {
   const colorMap = {
@@ -1735,21 +1737,15 @@ function createNumberGroup(num) {
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.setAttribute('overflow', 'visible');
     
-    // Triangle points - made bigger (coordinates in viewBox space):
-    // Top point: higher up to make triangle bigger
-    //   - X: 35 (37.5% of 100, adjusted for viewBox)
-    //   - Y: 4 (8% of 100, adjusted for viewBox, moved up from 14% to make triangle bigger)
-    // Bottom left: extend beyond left edge
-    //   - X: -6 (extend beyond left edge)
-    //   - Y: 116 (extend below bottom)
-    // Bottom right: extend beyond right edge
-    //   - X: 116 (extend beyond right edge)
-    //   - Y: 116 (extend below bottom)
+    // Triangle points (viewBox is "-10 -5 120 115", so x=-10..110 maps to 0..100% of width, y=-5..110 maps to 0..100% of height).
+    // Symmetric triangle that wraps the 4-3-2-1 dot pyramid:
+    //   - Apex centered horizontally (x=50), slightly above the top dot
+    //   - Bottom corners at the bottom-left/bottom-right of the container, slightly outside
     const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('points', '35,4 -6,116 116,116');
+    polygon.setAttribute('points', '50,-14 -25,110 125,110');
     polygon.setAttribute('fill', 'none');
     polygon.setAttribute('stroke', '#fff');
-    polygon.setAttribute('stroke-width', '4');
+    polygon.setAttribute('stroke-width', '2');
     polygon.setAttribute('stroke-linejoin', 'round');
     polygon.setAttribute('stroke-linecap', 'round');
     svg.appendChild(polygon);
@@ -1814,7 +1810,7 @@ function displayQuestionGroup() {
   }
   
   answeredInGroup = 0;
-  const questionsToShow = allQuestions.slice(currentGroupStart, currentGroupStart + 10);
+  const questionsToShow = allQuestions.slice(currentGroupStart, currentGroupStart + 1);
   
   questionsToShow.forEach((q, index) => {
     const row = document.createElement('div');
@@ -1852,6 +1848,25 @@ const ENCOURAGING_MESSAGES = [
 ];
 
 let usedMessages = [];
+
+// Pick the most natural-sounding English voice the browser has available.
+// Priority: Microsoft "Online (Natural)" / Aria / Jenny → Google → Samantha → Female fallback.
+function pickNaturalVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith('en'));
+  if (!voices.length) return null;
+  const tiers = [
+    /Online \(Natural\)|Aria|Jenny|Davis|Guy|Andrew|Emma|Brian|Ava/i,  // MS Edge "Online (Natural)" voices
+    /^Google /i,                                                       // Chrome's Google voices
+    /Samantha|Karen|Victoria|Allison|Susan/i,                          // macOS / iOS premium voices
+    /Female|Woman|Zira/i                                               // last-resort Windows desktop
+  ];
+  for (const re of tiers) {
+    const match = voices.find(v => re.test(v.name));
+    if (match) return match;
+  }
+  return voices[0];
+}
 
 function getRandomEncouragement() {
   if (usedMessages.length >= ENCOURAGING_MESSAGES.length) {
@@ -1898,11 +1913,10 @@ function handleAnswer(answer, question, rowIndex) {
     // Show comparison symbol
     const symbolEl = document.getElementById(`symbol-${rowIndex}`);
     if (symbolEl) {
-      if (question.num1 > question.num2) {
-        symbolEl.textContent = '>';
-      } else {
-        symbolEl.textContent = '<';
-      }
+      const points = (question.num1 > question.num2)
+        ? '30,25 75,60 30,95'    // ">" — normal glyph proportions
+        : '70,25 25,60 70,95';   // "<"
+      symbolEl.innerHTML = `<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMid meet"><polyline points="${points}" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
       symbolEl.classList.add('show');
     }
     
@@ -1910,7 +1924,7 @@ function handleAnswer(answer, question, rowIndex) {
     const feedbackEl = document.getElementById(`feedback-${rowIndex}`);
     if (feedbackEl) {
       const message = getRandomEncouragement();
-      feedbackEl.textContent = message + " ✓";
+      feedbackEl.textContent = message;
       feedbackEl.classList.add('show', 'correct');
       
       // Speak the encouragement - softer, more pleasing voice
@@ -1920,14 +1934,9 @@ function handleAnswer(answer, question, rowIndex) {
         utterance.pitch = 0.95; // Lower pitch, less forceful
         utterance.volume = 0.8; // Slightly quieter
         // Try to find a more pleasant voice
-        const voices = window.speechSynthesis.getVoices();
-        const pleasantVoices = voices.filter(v => 
-          (v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Samantha') || 
-           v.name.includes('Karen') || v.name.includes('Victoria') || v.name.includes('Zira')) &&
-          v.lang.startsWith('en')
-        );
-        if (pleasantVoices.length > 0) {
-          utterance.voice = pleasantVoices[0];
+        const naturalVoice = pickNaturalVoice();
+        if (naturalVoice) {
+          utterance.voice = naturalVoice;
         } else if (preferredVoice) {
           utterance.voice = preferredVoice;
         }
@@ -1935,52 +1944,48 @@ function handleAnswer(answer, question, rowIndex) {
       }
     }
     
-    // Mark options
+    // Mark options: correct one pulses, the other fades away.
     const options = row.querySelectorAll('.game-option');
     options.forEach(opt => {
       const num = parseInt(opt.dataset.number);
       opt.classList.add('selected');
       if (num === question.correct) {
         opt.classList.add('correct');
+      } else {
+        opt.classList.add('faded');
       }
     });
-    
+
+    // Record answer for the end-of-game summary.
+    answeredQuestions.push({ q: question, picked: answer });
+
     answeredInGroup++;
     updateScore();
-    
-    // Auto-advance to next group after 10 questions
-    if (answeredInGroup >= 10) {
+
+    // Auto-advance: slide current question UP, slide next one in from BOTTOM.
+    if (answeredInGroup >= 1) {
       setTimeout(() => {
-        const groupCompleteEl = document.getElementById('groupComplete');
-        if (groupCompleteEl) {
-          groupCompleteEl.classList.add('show');
-        }
-        setTimeout(() => {
-          const groupEl = document.getElementById('gameQuestionsGroup');
-          if (groupEl) {
-            // Slide out to left
-            groupEl.classList.add('slide-out-left');
-            setTimeout(() => {
-              currentGroupStart += 10;
-              if (currentGroupStart < allQuestions.length) {
-                displayQuestionGroup();
-                // Slide in from right
+        const groupEl = document.getElementById('gameQuestionsGroup');
+        if (groupEl) {
+          groupEl.classList.add('slide-out-up');
+          setTimeout(() => {
+            currentGroupStart += 1;
+            if (currentGroupStart < allQuestions.length) {
+              displayQuestionGroup();
+              setTimeout(() => {
+                groupEl.classList.remove('slide-out-up');
+                groupEl.classList.add('slide-in-from-bottom');
                 setTimeout(() => {
-                  groupEl.classList.remove('slide-out-left');
-                  groupEl.classList.add('slide-in-right');
-                  setTimeout(() => {
-                    groupEl.classList.remove('slide-in-right');
-                  }, 500);
-                }, 50);
-              } else {
-                // Game complete
-                groupEl.classList.remove('slide-out-left');
-                groupEl.innerHTML = '<div style="text-align:center;font-size:2em;margin:50px 0;">Game Complete! 🎉</div>';
-              }
-            }, 500);
-          }
-        }, 2000);
-      }, 1000);
+                  groupEl.classList.remove('slide-in-from-bottom');
+                }, 500);
+              }, 50);
+            } else {
+              groupEl.classList.remove('slide-out-up');
+              showGameSummary(groupEl);
+            }
+          }, 500);
+        }
+      }, 1200);
     }
   } else {
     // Wrong answer - allow retry
@@ -1997,14 +2002,9 @@ function handleAnswer(answer, question, rowIndex) {
         utterance.rate = 0.9;
         utterance.pitch = 0.95;
         utterance.volume = 0.8;
-        const voices = window.speechSynthesis.getVoices();
-        const pleasantVoices = voices.filter(v => 
-          (v.name.includes('Female') || v.name.includes('Woman') || v.name.includes('Samantha') || 
-           v.name.includes('Karen') || v.name.includes('Victoria') || v.name.includes('Zira')) &&
-          v.lang.startsWith('en')
-        );
-        if (pleasantVoices.length > 0) {
-          utterance.voice = pleasantVoices[0];
+        const naturalVoice = pickNaturalVoice();
+        if (naturalVoice) {
+          utterance.voice = naturalVoice;
         } else if (preferredVoice) {
           utterance.voice = preferredVoice;
         }
@@ -2044,90 +2044,58 @@ function updateScore() {
 }
 
 function createScoreWithDots(num) {
+  // Each digit is rendered as the corresponding ColorMyMath shape (line drawing).
   const colorMap = {
-    0: '#222', 1: '#ff0000', 2: '#ff6200', 3: '#ffe600', 4: '#00a12c',
-    5: '#0030ff', 6: '#8b3dff', 7: '#7a3b00', 8: '#ff3fa6', 9: '#38c7ff'
+    0: '#666', 1: '#ff0000', 2: '#ff6200', 3: '#ffe600', 4: '#00a12c',
+    5: '#0030ff', 6: '#6a1b9a', 7: '#7a3b00', 8: '#ff3fa6', 9: '#38c7ff', 10: '#ff0000'
   };
-  
-  // Convert number to string to get each digit
   const numStr = num.toString();
   let result = '';
-  
-  // Process each digit separately
   for (let i = 0; i < numStr.length; i++) {
     const digit = parseInt(numStr[i]);
-    
-    if (digit === 0) {
-      // Show empty circle for 0
-      const dotRep = createDotRepresentation(0, '#222');
-      result += `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
-        ${dotRep}
-        <span style="color:#222;font-weight:bold;font-size:1.2em;">0</span>
-        <span style="font-size:0.5em;color:#888;">0</span>
-      </div>`;
-    } else if (digit === 1 && i < numStr.length - 1 && numStr[i + 1] === '0') {
-      // Handle "10" - show triangle
-      const triangleRep = createDotRepresentation(10, '#fff');
-      result += `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
-        ${triangleRep}
-        <span style="color:#fff;font-weight:bold;font-size:1.2em;">10</span>
-        <span style="font-size:0.5em;color:#888;">10</span>
-      </div>`;
-      i++; // Skip the next digit (0)
+    let shape, color;
+    if (digit === 1 && i < numStr.length - 1 && numStr[i + 1] === '0') {
+      shape = createShapeRep(10, colorMap[10]);
+      color = colorMap[10];
+      i++; // consumed the trailing 0
     } else {
-      // Show dots for this digit
-      const dotRep = createDotRepresentation(digit, colorMap[digit]);
-      result += `<div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 3px;">
-        ${dotRep}
-        <span style="color:${colorMap[digit]};font-weight:bold;font-size:1.2em;">${digit}</span>
-        <span style="font-size:0.5em;color:#888;">${digit}</span>
-      </div>`;
+      shape = createShapeRep(digit, colorMap[digit]);
+      color = colorMap[digit];
     }
+    result += `<span style="display:inline-block;margin:0 4px;vertical-align:middle;">${shape}</span>`;
   }
-  
   return result;
 }
 
-function createDotRepresentation(num, color) {
+// Each digit drawn as the actual dot quantity in its ColorMyMath shape, with
+// close-packed (touching) dots like the counting page. Larger digits get smaller
+// dots so they still fit and touch within the same SVG viewBox (0 0 24 24).
+function createShapeRep(num, color) {
+  const size = 38;
+  // Each layout: { r: dot radius, dots: [[cx,cy],...] }. Centers are spaced by
+  // exactly 2*r so adjacent dots touch.
+  const layouts = {
+    1:  { r: 6, dots: [[12,12]] },
+    2:  { r: 6, dots: [[6,12],[18,12]] },
+    3:  { r: 6, dots: [[12,7.6],[6,18],[18,18]] },
+    4:  { r: 6, dots: [[6,6],[18,6],[6,18],[18,18]] },
+    5:  { r: 4, dots: [[8,13.07],[16,13.07],[4,20],[12,20],[20,20]] },
+    6:  { r: 4, dots: [[12,6.14],[8,13.07],[16,13.07],[4,20],[12,20],[20,20]] },
+    7:  { r: 4, dots: [[8,5.07],[16,5.07],[4,12],[12,12],[20,12],[8,18.93],[16,18.93]] },
+    8:  { r: 4, dots: [[4,4],[12,4],[20,4],[4,12],[20,12],[4,20],[12,20],[20,20]] },
+    9:  { r: 4, dots: [[4,4],[12,4],[20,4],[4,12],[12,12],[20,12],[4,20],[12,20],[20,20]] },
+    10: { r: 3, dots: [[12,5.4],[9,10.6],[15,10.6],[6,15.8],[12,15.8],[18,15.8],[3,21],[9,21],[15,21],[21,21]] }
+  };
+  let body;
   if (num === 0) {
-    return '<div style="width:12px;height:12px;border:1px solid #fff;border-radius:50%;background:transparent;margin:2px 0;"></div>';
-  }
-  if (num === 10) {
-    // Triangle for 10 - white border outline
-    const size = 20;
-    return `<div style="position:relative;width:${size}px;height:${size * 0.866}px;margin:2px auto;">
-      <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:${size * 0.5 + 2}px solid transparent;border-right:${size * 0.5 + 2}px solid transparent;border-bottom:${size * 0.866 + 2}px solid #fff;border-bottom-width:2px;"></div>
-      <div style="position:absolute;top:1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:${size * 0.5}px solid transparent;border-right:${size * 0.5}px solid transparent;border-bottom:${size * 0.866}px solid transparent;"></div>
-    </div>`;
-  }
-  // For numbers 1-9, show the actual number of dots
-  let dots = '';
-  const dotSize = 6;
-  const dotSpacing = 2;
-  
-  if (num === 1) {
-    dots = `<div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;margin:2px auto;"></div>`;
-  } else if (num === 2) {
-    dots = `<div style="display:flex;gap:${dotSpacing}px;justify-content:center;">
-      <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>
-      <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>
-    </div>`;
-  } else if (num === 3) {
-    dots = `<div style="display:flex;flex-direction:column;align-items:center;gap:${dotSpacing}px;">
-      <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>
-      <div style="display:flex;gap:${dotSpacing}px;">
-        <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>
-        <div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>
-      </div>
-    </div>`;
+    body = `<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/>`;
   } else {
-    // For 4-9, show simplified representation (small dots in a row)
-    dots = `<div style="display:flex;gap:${dotSpacing}px;justify-content:center;flex-wrap:wrap;max-width:${dotSize * 3 + dotSpacing * 2}px;">
-      ${Array(num).fill(0).map(() => `<div style="width:${dotSize}px;height:${dotSize}px;border-radius:50%;background:${color};border:1px solid #fff;"></div>`).join('')}
-    </div>`;
+    const cfg = layouts[num];
+    body = cfg.dots.map(([x, y]) =>
+      `<circle cx="${x}" cy="${y}" r="${cfg.r}" fill="${color}"/>`
+    ).join('');
   }
-  
-  return dots;
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="display:block;">${body}</svg>`;
 }
 
 function updateInstructionsLanguage() {
@@ -2160,7 +2128,8 @@ if (gameToggle) {
       scoreTotal = 0;
       answeredInGroup = 0;
       usedMessages = []; // Reset encouraging messages
-      
+      answeredQuestions = [];
+
       displayQuestionGroup();
       updateInstructionsLanguage();
     } else {
@@ -2190,6 +2159,30 @@ if (backToPracticeBtn) {
     if (gameToggle) gameToggle.textContent = '🎮 Play Game';
   });
 }
+
+// Auto-start in game mode on page load (skip practice screen)
+(function autoStartGame() {
+  const practiceMode = document.getElementById('practiceMode');
+  const gameArea = document.getElementById('gameArea');
+  const instructions = document.getElementById('instructions');
+
+  if (practiceMode) practiceMode.classList.add('hide');
+  if (gameArea) gameArea.classList.add('show');
+  if (instructions) instructions.classList.add('show');
+  if (gameToggle) gameToggle.textContent = '← Back to Practice';
+
+  allQuestions = generateAllQuestions();
+  currentQuestionIndex = 0;
+  currentGroupStart = 0;
+  scoreCorrect = 0;
+  scoreTotal = 0;
+  answeredInGroup = 0;
+  usedMessages = [];
+  answeredQuestions = [];
+
+  displayQuestionGroup();
+  updateInstructionsLanguage();
+})();
 </script>
 
 <!-- html2pdf.js library for PDF generation -->

@@ -83,15 +83,23 @@
     50%      { stroke-width: 2.8; }
   }
   /* ~3-sec cycle = about half resting heart rate. Subtle swell + breathing
-     border. No red ever. */
+     border. No red ever. Used for dot 1. */
   @keyframes dotBreatheFirst {
     0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.55; }
     50%      { r: 23.5; stroke-width: 2.2; stroke-opacity: 1.0;  }
+  }
+  /* Slower breathe (3.6 sec cycle) with a slightly subtler swell. Used for
+     dots 2-4 — "thinking to itself, I want to be someone". No red ever, no
+     escalation, waits forever until tap. */
+  @keyframes dotBreatheSlow {
+    0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.5;  }
+    50%      { r: 23.2; stroke-width: 1.9; stroke-opacity: 1.0;  }
   }
   .wait-dot         { stroke: #000;    animation: dotGlowBlack    1.8s ease-in-out infinite; }
   .wait-dot-warn    {                  animation: dotGlowFlash    1.2s ease-in-out infinite; }
   .wait-dot-urgent  { stroke: #d92525; animation: dotGlowRed      0.9s ease-in-out infinite; }
   .wait-dot-first   { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
+  .wait-dot-slow    { stroke: #000;    animation: dotBreatheSlow  3.6s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -995,7 +1003,7 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, stopX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = stopX; dot.cy = DOT_REST_Y;
 
-    await waitForTapOnDot(dot);
+    await waitForTapOnDotSlow(dot);
     dot.el.setAttribute('fill', origFill);
     dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '2');
@@ -1037,7 +1045,7 @@
                            finalLandX, finalLandY, 900, angleRef, peakLift);
     dot.cx = finalLandX; dot.cy = finalLandY;
 
-    await waitForTapOnDot(dot);
+    await waitForTapOnDotSlow(dot);
     dot.el.setAttribute('fill', origFill);
     dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '2');
@@ -1162,6 +1170,13 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot4 = addDot('d4', startX, startY, NUMBER_COLOR[4]);
+    // GAME MODE: dot4 enters white with a black border; it'll recolor to
+    // green only after the kid taps (handled below by waitForTapOnDotSlow
+    // + the existing recolorAll).
+    const dot4OrigFill = dot4.el.getAttribute('fill');
+    dot4.el.setAttribute('fill', '#ffffff');
+    dot4.el.setAttribute('stroke', '#000');
+    dot4.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot4.angleRef;
 
@@ -1199,6 +1214,13 @@
     await Promise.all([dot4FinalArc, dot3Roll]);
     dot4.cx = sqTopLeft.x; dot4.cy = sqTopLeft.y;
     dot3.cx = sqTopRight.x; dot3.cy = sqTopRight.y;
+
+    // GAME MODE: dot4 is sitting white at top-left. Wait for the kid to
+    // tap, then the recolorAll below paints all four dots green together.
+    await waitForTapOnDotSlow(dot4);
+    dot4.el.setAttribute('fill', dot4OrigFill);
+    dot4.el.setAttribute('stroke', '#000');
+    dot4.el.setAttribute('stroke-width', '2');
 
     recolorAll([dot1.el, dot2.el, dot3.el, dot4.el], NUMBER_COLOR[4]);
     setNum(4);
@@ -2023,10 +2045,28 @@
     }
   });
 
+  // Used for dots 2-4: slow breathe, no red, no escalation, waits forever.
+  async function waitForTapOnDotSlow(dot) {
+    const el = dot.el;
+    let cleared = false;
+    const t1 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.add('wait-dot-slow');
+    }, 3000);
+    try {
+      await waitForTap();
+    } finally {
+      cleared = true;
+      clearTimeout(t1);
+      el.classList.remove('wait-dot-slow');
+    }
+  }
+
   // Wait for a tap while the given dot is glowing. The outline starts as a
   // pulsing black "bold/not bold" glow; after 10s it flashes between black and
   // red; after 20s it stays solid red, still pulsing — keeps challenging the
-  // kid to tap until they do. Used for dots 2-10 (current behavior).
+  // kid to tap until they do. Now only used for dots 5-10 (steps 2-4 use the
+  // slower no-red version above).
   async function waitForTapOnDot(dot) {
     const el = dot.el;
     el.removeAttribute('stroke');

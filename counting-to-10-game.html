@@ -65,41 +65,8 @@
     text-align: center; font-size: 2.2vh; font-weight: 600;
     color: #888; letter-spacing: 0.25em;
   }
-  /* Wait states. Dots 2-10 still use the old black-breathe / black-red-flash
-     / red-wall escalation. The first dot (rollNewDotIn) uses wait-dot-first
-     instead — a slow gentle "baby breathing" pulse that never escalates,
-     because while the dot is white it is still "zero". */
-  @keyframes dotGlowBlack {
-    0%, 100% { stroke-width: 1.0; stroke-opacity: 0.55; }
-    50%      { stroke-width: 2.6; stroke-opacity: 1.0;  }
-  }
-  @keyframes dotGlowFlash {
-    0%   { stroke: #000;    stroke-width: 1.0; stroke-opacity: 0.65; }
-    50%  { stroke: #d92525; stroke-width: 2.6; stroke-opacity: 1.0;  }
-    100% { stroke: #000;    stroke-width: 1.0; stroke-opacity: 0.65; }
-  }
-  @keyframes dotGlowRed {
-    0%, 100% { stroke-width: 2.2; }
-    50%      { stroke-width: 2.8; }
-  }
-  /* ~3-sec cycle = about half resting heart rate. Subtle swell + breathing
-     border. No red ever. Used for dot 1. */
-  @keyframes dotBreatheFirst {
-    0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.55; }
-    50%      { r: 23.5; stroke-width: 2.2; stroke-opacity: 1.0;  }
-  }
-  /* Slower breathe (3.6 sec cycle) with a slightly subtler swell. Used for
-     dots 2-4 — "thinking to itself, I want to be someone". No red ever, no
-     escalation, waits forever until tap. */
-  @keyframes dotBreatheSlow {
-    0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.5;  }
-    50%      { r: 23.2; stroke-width: 1.9; stroke-opacity: 1.0;  }
-  }
-  .wait-dot         { stroke: #000;    animation: dotGlowBlack    1.8s ease-in-out infinite; }
-  .wait-dot-warn    {                  animation: dotGlowFlash    1.2s ease-in-out infinite; }
-  .wait-dot-urgent  { stroke: #d92525; animation: dotGlowRed      0.9s ease-in-out infinite; }
-  .wait-dot-first   { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
-  .wait-dot-slow    { stroke: #000;    animation: dotBreatheSlow  3.6s ease-in-out infinite; }
+  /* No wait-state animation — every white dot just sits with a black border
+     until the kid taps (or the 18-sec auto-fill in waitForDotTap fires). */
 </style>
 </head>
 <body>
@@ -651,10 +618,9 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, targetX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = targetX; dot.cy = DOT_REST_Y;
 
-    await waitForFirstTap(dot);
-    // Kid tapped — restore the dot's real color. Keep the default black
-    // border (stroke='#000', stroke-width='2') that makeDot gave it, just
-    // like all the other dots in the animation.
+    await waitForDotTap(dot);
+    // Tapped (or 18s timeout) — restore the dot's real color and the
+    // default black border that makeDot gave it.
     dot.el.setAttribute('fill', origFill);
     dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '2');
@@ -974,12 +940,17 @@
   }
 
   // Roll new dot in from the LEFT, stopping at stopX on the floor.
-  // Robot mode (dots 2-10): rolls in with its natural color, no wait.
+  // Game mode: rolls in white with a black border, sits until the kid taps
+  // (or 18 sec timeout). The caller's recolorAll then paints it the cluster
+  // color along with the existing dots.
   async function rollDotInToStopX(id, stopX, colorName) {
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot = addDot(id, startX, startY, colorName);
+    dot.el.setAttribute('fill', '#ffffff');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -999,6 +970,9 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, stopX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = stopX; dot.cy = DOT_REST_Y;
 
+    await waitForDotTap(dot);
+    dot.el.setAttribute('stroke-width', '2');
+
     return dot;
   }
 
@@ -1016,6 +990,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot = addDot(id, startX, startY, colorName);
+    dot.el.setAttribute('fill', '#ffffff');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -1031,6 +1008,9 @@
     await animateBallistic(dot.el, firstBounceX, DOT_REST_Y,
                            finalLandX, finalLandY, 900, angleRef, peakLift);
     dot.cx = finalLandX; dot.cy = finalLandY;
+
+    await waitForDotTap(dot);
+    dot.el.setAttribute('stroke-width', '2');
 
     return dot;
   }
@@ -1152,6 +1132,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot4 = addDot('d4', startX, startY, NUMBER_COLOR[4]);
+    dot4.el.setAttribute('fill', '#ffffff');
+    dot4.el.setAttribute('stroke', '#000');
+    dot4.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot4.angleRef;
 
@@ -1190,6 +1173,8 @@
     dot4.cx = sqTopLeft.x; dot4.cy = sqTopLeft.y;
     dot3.cx = sqTopRight.x; dot3.cy = sqTopRight.y;
 
+    await waitForDotTap(dot4);
+    dot4.el.setAttribute('stroke-width', '2');
     recolorAll([dot1.el, dot2.el, dot3.el, dot4.el], NUMBER_COLOR[4]);
     setNum(4);
     highlightCell(4);
@@ -1249,6 +1234,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const d5 = addDot('d5', startX, startY, NUMBER_COLOR[5]);
+    d5.el.setAttribute('fill', '#ffffff');
+    d5.el.setAttribute('stroke', '#000');
+    d5.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = d5.angleRef;
 
@@ -1331,6 +1319,8 @@
       fallTop(topR, topR_final_x, valleyY, topFallDur),
     ]);
 
+    await waitForDotTap(d5);
+    d5.el.setAttribute('stroke-width', '2');
     recolorAll([dot1.el, dot2.el, dot3.el, dot4.el, d5.el], NUMBER_COLOR[5]);
     setNum(5);
     highlightCell(5);
@@ -1376,6 +1366,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot = addDot('d6', startX, startY, NUMBER_COLOR[6]);
+    dot.el.setAttribute('fill', '#ffffff');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -1407,6 +1400,8 @@
 
     const allEls = [];
     for (let i = 1; i <= 6; i++) if (dotsById['d' + i]) allEls.push(dotsById['d' + i].el);
+    await waitForDotTap(dot);
+    dot.el.setAttribute('stroke-width', '2');
     recolorAll(allEls, NUMBER_COLOR[6]);
     setNum(6);
     highlightCell(6);
@@ -1453,6 +1448,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const newDot = addDot('d7', startX, startY, NUMBER_COLOR[7]);
+    newDot.el.setAttribute('fill', '#ffffff');
+    newDot.el.setAttribute('stroke', '#000');
+    newDot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const d7AngleRef = newDot.angleRef;
 
@@ -1511,6 +1509,8 @@
 
     const allEls = [];
     for (let i = 1; i <= 7; i++) if (dotsById['d' + i]) allEls.push(dotsById['d' + i].el);
+    await waitForDotTap(newDot);
+    newDot.el.setAttribute('stroke-width', '2');
     recolorAll(allEls, NUMBER_COLOR[7]);
     setNum(7);
     highlightCell(7);
@@ -1551,6 +1551,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const newDot = addDot('d8', startX, startY, NUMBER_COLOR[8]);
+    newDot.el.setAttribute('fill', '#ffffff');
+    newDot.el.setAttribute('stroke', '#000');
+    newDot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const d8AngleRef = newDot.angleRef;
 
@@ -1622,6 +1625,8 @@
 
     const allEls = [];
     for (let i = 1; i <= 8; i++) if (dotsById['d' + i]) allEls.push(dotsById['d' + i].el);
+    await waitForDotTap(newDot);
+    newDot.el.setAttribute('stroke-width', '2');
     recolorAll(allEls, NUMBER_COLOR[8]);
     setNum(8);
     highlightCell(8);
@@ -1671,6 +1676,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot9 = addDot('d9', startX, startY, NUMBER_COLOR[9]);
+    dot9.el.setAttribute('fill', '#ffffff');
+    dot9.el.setAttribute('stroke', '#000');
+    dot9.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot9.angleRef;
 
@@ -1719,6 +1727,8 @@
 
     const allEls = [];
     for (let i = 1; i <= 9; i++) if (dotsById['d' + i]) allEls.push(dotsById['d' + i].el);
+    await waitForDotTap(dot9);
+    dot9.el.setAttribute('stroke-width', '2');
     recolorAll(allEls, NUMBER_COLOR[9]);
     setNum(9);
     highlightCell(9);
@@ -1778,6 +1788,9 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const newDot = addDot('d10', startX, startY, NUMBER_COLOR[10]);
+    newDot.el.setAttribute('fill', '#ffffff');
+    newDot.el.setAttribute('stroke', '#000');
+    newDot.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const d10AngleRef = newDot.angleRef;
 
@@ -1839,6 +1852,8 @@
 
     const allEls = [];
     for (let i = 1; i <= 10; i++) if (dotsById['d' + i]) allEls.push(dotsById['d' + i].el);
+    await waitForDotTap(newDot);
+    newDot.el.setAttribute('stroke-width', '2');
     recolorAll(allEls, NUMBER_COLOR[10]);
     setNum(10);
     highlightCell(10);
@@ -2013,181 +2028,21 @@
     }
   });
 
-  // Used for dots 2-4: slow breathe, no red, no escalation, waits forever.
-  async function waitForTapOnDotSlow(dot) {
-    const el = dot.el;
+  // Wait for the kid to tap a white dot, or auto-resolve after 18 seconds.
+  // No breathing, no hopping, no animation — the dot just sits white until
+  // it's tapped or the timeout fires. Same rule for every dot.
+  async function waitForDotTap(dot) {
     let cleared = false;
-    const t1 = setTimeout(() => {
+    const t = setTimeout(() => {
       if (cleared) return;
-      el.classList.add('wait-dot-slow');
-    }, 3000);
-    try {
-      await waitForTap();
-    } finally {
-      cleared = true;
-      clearTimeout(t1);
-      el.classList.remove('wait-dot-slow');
-    }
-  }
-
-  // Wait for a tap while the given dot is glowing. The outline starts as a
-  // pulsing black "bold/not bold" glow; after 10s it flashes between black and
-  // red; after 20s it stays solid red, still pulsing — keeps challenging the
-  // kid to tap until they do. Now only used for dots 5-10 (steps 2-4 use the
-  // slower no-red version above).
-  async function waitForTapOnDot(dot) {
-    const el = dot.el;
-    el.removeAttribute('stroke');
-    el.removeAttribute('stroke-width');
-    el.classList.add('wait-dot');
-    let cleared = false;
-    const t1 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.remove('wait-dot');
-      el.classList.add('wait-dot-warn');
-    }, 10000);
-    const t2 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.remove('wait-dot-warn');
-      el.classList.add('wait-dot-urgent');
-    }, 20000);
-    try {
-      await waitForTap();
-    } finally {
-      cleared = true;
-      clearTimeout(t1); clearTimeout(t2);
-      el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
-    }
-  }
-
-  // Straight-up hop with physics decay. Dot jumps up, falls, bounces, falls,
-  // bounces, falls — three impacts total — then settles, pauses, jumps again.
-  // CRITICAL: clear the transform attribute first. The roll/spin leaves a
-  // rotate(angle, x, oldCy) on the element. For a circle the rotation itself
-  // is invisible, but the stale pivot turns subsequent cy changes into
-  // sideways motion. Clearing the transform makes vertical actually vertical.
-  function startHopping(dot) {
-    const el = dot.el;
-    el.removeAttribute('transform');
-    const restCy = parseFloat(el.getAttribute('cy'));
-    const gravity        = 0.4;
-    const initVelocity   = -5.5;   // peak 1 ~ 38 viewBox units up
-    const velocityRetain = 0.7;    // each bounce: 70% of impact velocity
-    const maxImpacts     = 3;      // 3 ground hits then settle
-    const pauseFrames    = 55;     // ~900ms rest before next jump cycle
-    let running = true;
-    let velocityY = initVelocity;
-    let offsetY = 0;
-    let impactCount = 0;
-    let pauseCount = 0;
-    let inPause = false;
-    function step() {
-      if (!running) return;
-      if (!inPause) {
-        velocityY += gravity;
-        offsetY += velocityY;
-        if (offsetY >= 0) {
-          offsetY = 0;
-          impactCount++;
-          if (impactCount >= maxImpacts) {
-            velocityY = 0;
-            inPause = true;
-            pauseCount = 0;
-          } else {
-            velocityY = -velocityY * velocityRetain;
-          }
-        }
-      } else {
-        pauseCount++;
-        if (pauseCount >= pauseFrames) {
-          inPause = false;
-          impactCount = 0;
-          velocityY = initVelocity;
-          offsetY = 0;
-        }
-      }
-      el.setAttribute('cy', restCy + offsetY);
-      requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-    return () => {
-      running = false;
-      el.setAttribute('cy', restCy);
-    };
-  }
-
-  // One big final jump for the 18-second auto-path. The dot leaves rest,
-  // rises in a smooth parabolic arc to a higher peak than the normal hops,
-  // turns red at the apex, falls straight back down (no bounce), and sits
-  // for 500ms before signalling done.
-  function finalJumpToRed(dot, onComplete) {
-    const el = dot.el;
-    el.removeAttribute('transform');  // defensive — straight up/down
-    const restCy = parseFloat(el.getAttribute('cy'));
-    const peakHeight   = 70;    // ~2x the normal hop peak (38)
-    const jumpDuration = 700;   // single up-and-down arc, no bounces
-    const sitMs        = 500;   // half-second hold red before continuing
-    const startTime = performance.now();
-    let colorChanged = false;
-    function step(now) {
-      const elapsed = now - startTime;
-      if (elapsed >= jumpDuration) {
-        el.setAttribute('cy', restCy);
-        setTimeout(onComplete, sitMs);
-        return;
-      }
-      const t = elapsed / jumpDuration;
-      el.setAttribute('cy', restCy + (-4 * peakHeight * t * (1 - t)));
-      if (!colorChanged && t >= 0.5) {
-        // Apex — stop breathing and snap red.
-        colorChanged = true;
-        el.classList.remove('wait-dot-first');
-        el.setAttribute('fill', '#d92525');
-      }
-      requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  // First-dot wait.
-  // 0-3s:   nothing — dot sits still with its black border.
-  // 3-10s:  slow gentle breathing pulse only.
-  // 10-18s: breathing + single hop with rest between (look-at-me).
-  // 18s:    if still not tapped, stops + drops + fades red and continues.
-  // Tap any time → snaps red immediately and step continues.
-  async function waitForFirstTap(dot) {
-    const el = dot.el;
-    let cleared = false;
-    let stopHopping = null;
-    const t1 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.add('wait-dot-first');
-    }, 3000);
-    const t2 = setTimeout(() => {
-      if (cleared) return;
-      stopHopping = startHopping(dot);
-    }, 10000);
-    const t3 = setTimeout(() => {
-      if (cleared) return;
-      // Stop the regular hopping cycle (snaps cy to rest if mid-jump),
-      // then do one big final jump that turns red at the apex and sits
-      // half a second before signalling done.
-      if (stopHopping) { stopHopping(); stopHopping = null; }
-      finalJumpToRed(dot, () => {
-        if (cleared) return;
-        if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
-        else { tapsPending++; }
-      });
+      if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
+      else { tapsPending++; }
     }, 18000);
     try {
       await waitForTap();
     } finally {
       cleared = true;
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-      el.classList.remove('wait-dot-first');
-      if (stopHopping) stopHopping();
-      el.style.transition = '';
-      el.style.fill = '';
+      clearTimeout(t);
     }
   }
 

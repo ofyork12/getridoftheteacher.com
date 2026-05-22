@@ -2130,14 +2130,18 @@
               const newColor = COLORS[NUMBER_COLOR[newCount]];
               for (const c of newlyColored) c.el.setAttribute('fill', newColor);
             }
-            setNum(newCount);
+            // Skip setNum at the completing count — the caller's own setNum
+            // will fire right after this resolves, so calling it here too
+            // would say the number twice (e.g. "two two" at step 2).
+            const stepComplete = (newCount === allDots.length);
+            if (!stepComplete) setNum(newCount);
             // Stop the breathing once the active dot becomes colored.
             if (activeBreathing && !isWhite(activeEl)) {
               activeBreathing = false;
               activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
             }
             // Step done when every dot in the cluster is colored.
-            if (newCount === allDots.length) {
+            if (stepComplete) {
               resolved = true; cleanup(); resolve();
             }
             return;

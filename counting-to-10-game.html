@@ -2052,30 +2052,51 @@
     }
   }
 
-  // Single jump-and-settle hopping for the waiting white dot. One parabolic
-  // arc up and down (about 3/4 of a dot diameter high), then a rest pause,
-  // then another single jump. No physics bouncing. Animates the `cy`
-  // attribute so it doesn't clobber the existing `transform="rotate(...)"`
-  // left over from the roll/spin.
+  // Straight-up hop with physics decay. Dot jumps up, falls, bounces, falls,
+  // bounces, falls — three impacts total — then settles, pauses, jumps again.
+  // CRITICAL: clear the transform attribute first. The roll/spin leaves a
+  // rotate(angle, x, oldCy) on the element. For a circle the rotation itself
+  // is invisible, but the stale pivot turns subsequent cy changes into
+  // sideways motion. Clearing the transform makes vertical actually vertical.
   function startHopping(dot) {
     const el = dot.el;
+    el.removeAttribute('transform');
     const restCy = parseFloat(el.getAttribute('cy'));
-    const peakHeight   = 30;    // ~3/4 of dot diameter (DOT_R=22, so D=44)
-    const jumpMs       = 650;   // single up-and-down arc
-    const pauseMs      = 850;   // rest between jumps
+    const gravity        = 0.4;
+    const initVelocity   = -5.5;   // peak 1 ~ 38 viewBox units up
+    const velocityRetain = 0.7;    // each bounce: 70% of impact velocity
+    const maxImpacts     = 3;      // 3 ground hits then settle
+    const pauseFrames    = 55;     // ~900ms rest before next jump cycle
     let running = true;
-    let phase = 'rest';
-    let phaseStart = performance.now();
-    function step(now) {
+    let velocityY = initVelocity;
+    let offsetY = 0;
+    let impactCount = 0;
+    let pauseCount = 0;
+    let inPause = false;
+    function step() {
       if (!running) return;
-      const elapsed = now - phaseStart;
-      let offsetY = 0;
-      if (phase === 'rest') {
-        if (elapsed >= pauseMs) { phase = 'jump'; phaseStart = now; }
+      if (!inPause) {
+        velocityY += gravity;
+        offsetY += velocityY;
+        if (offsetY >= 0) {
+          offsetY = 0;
+          impactCount++;
+          if (impactCount >= maxImpacts) {
+            velocityY = 0;
+            inPause = true;
+            pauseCount = 0;
+          } else {
+            velocityY = -velocityY * velocityRetain;
+          }
+        }
       } else {
-        const t = elapsed / jumpMs;
-        if (t >= 1) { phase = 'rest'; phaseStart = now; offsetY = 0; }
-        else        { offsetY = -4 * peakHeight * t * (1 - t); }
+        pauseCount++;
+        if (pauseCount >= pauseFrames) {
+          inPause = false;
+          impactCount = 0;
+          velocityY = initVelocity;
+          offsetY = 0;
+        }
       }
       el.setAttribute('cy', restCy + offsetY);
       requestAnimationFrame(step);

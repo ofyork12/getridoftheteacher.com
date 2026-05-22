@@ -230,29 +230,17 @@
 
   function getStairCorners() {
     const stairX = LAST_STAIR_X;
-    const lineX = LAST_STAIR_X - DOT_R;   // visual vertical drops here (left of where dot falls off)
     const y0 = STAIR_TOP_Y;
     return [
-      // Top step extends all the way to LAST_STAIR_X (where the dot rolls off).
       { x: -180, y: y0 },
       { x: stairX, y: y0 },
-      // Jump back left to LAST_STAIR_X - DOT_R for the cliff's vertical line.
-      // The dot's left edge during its fall sits at LAST_STAIR_X - DOT_R, so a
-      // line drawn there is exactly tangent to the dot at the start of the fall
-      // and the dot never crosses it.
-      { x: lineX, y: y0, move: true },
-      { x: lineX, y: FLOOR_Y },
+      { x: stairX, y: FLOOR_Y },
       { x: 380, y: FLOOR_Y }
     ];
   }
 
   function pathFromCorners(corners) {
-    // 'move: true' on a corner starts a new subpath (SVG 'M' command) so the
-    // path can be discontinuous — used by the stair shape to draw the top
-    // step's right edge separate from the cliff's vertical line.
-    return corners.map((c, i) =>
-      (i === 0 || c.move ? 'M ' : 'L ') + c.x + ',' + c.y
-    ).join(' ');
+    return 'M ' + corners.map(c => `${c.x},${c.y}`).join(' L ');
   }
 
   function stairLandings() {
@@ -1969,7 +1957,7 @@
     const playArea = document.getElementById('playArea');
     if (playArea) playArea.style.top = '30%';     // push the SVG (and floor) further down
     const nlw = document.querySelector('.number-line-wrap');
-    if (nlw) nlw.style.bottom = '22%';            // move number line down with it (closer to the floor)
+    if (nlw) nlw.style.bottom = '8%';             // number line pushed close to the bottom of the page
     lockedDigitX = 80;   // viewBox horizontal center, so setNum recenters
     const eq = document.querySelector('.equation');
     if (eq) eq.style.left = '50%';
@@ -2002,36 +1990,20 @@
     }
     await sleep(900);
 
-    // Track number-text elements so we can remove them on back-up.
-    const texts = new Array(dots.length).fill(null);
-    let i = 0;
-
-    while (i < dots.length) {
+    // Linear fill: each iteration fills the next-in-reading-order dot. The
+    // kid can tap ANY dot to advance — the active dot (dots[i]) is always
+    // the next one to be filled. No wrong-tap back-up.
+    for (let i = 0; i < dots.length; i++) {
       const dt = dots[i];
       const n = i + 1;
       const color = COLORS[NUMBER_COLOR[n]];
 
-      const result = await waitForCountAction(dt, dots);
+      await waitForCountAction(dt, dots);
 
-      if (result.type === 'wrong') {
-        if (i === 0) continue;   // nothing to back up from, just keep waiting
-        // Back up one count: undo iteration i-1.
-        const prev = dots[i - 1];
-        prev.el.setAttribute('fill', '#ffffff');
-        if (texts[i - 1]) { texts[i - 1].remove(); texts[i - 1] = null; }
-        if (i > 1) {
-          const prevColor = COLORS[NUMBER_COLOR[i - 1]];
-          for (let j = 0; j < i - 1; j++) dots[j].el.setAttribute('fill', prevColor);
-        }
-        i--;
-        // Speak (and show) the new count — "i" is now the count of colored dots.
-        setNum(i);
-        continue;
-      }
-
-      // Correct tap (or 5-sec timeout) — fill in this dot and announce.
+      // Recolor all counted-so-far dots to the current count's color.
       for (let j = 0; j <= i; j++) dots[j].el.setAttribute('fill', color);
 
+      // Inscribe the count numeral inside the just-filled dot.
       const t = document.createElementNS(SVG_NS, 'text');
       t.setAttribute('x', dt.cx);
       t.setAttribute('y', dt.cy);
@@ -2051,12 +2023,10 @@
       t.style.transition = 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)';
       t.textContent = String(n);
       dotGroup.appendChild(t);
-      texts[i] = t;
       requestAnimationFrame(() => { t.style.transform = 'scale(1)'; });
 
       setNum(n);
-      await sleep(500);   // brief beat for the audio; kid is pacing now
-      i++;
+      await sleep(500);
     }
   }
 
@@ -2271,10 +2241,11 @@
     requestAnimationFrame(step);
   }
 
-  // Count-up phase: each white dot breathes gently. Only the active dot is
-  // tappable; tapping a different dot in the cluster is "wrong" — the caller
-  // backs up one count. 5-sec timeout auto-advances ("correct").
-  // Returns { type: 'correct' } or { type: 'wrong' }.
+  // Count-up phase: the "active" dot (next in reading order) breathes gently.
+  // Tap on ANY dot in the cluster advances the count — the active dot (NOT
+  // necessarily the one tapped) gets filled. The cluster always fills top
+  // -> bottom, left -> right regardless of which dot the kid touched.
+  // 5-sec timeout also advances. Background clicks are ignored.
   function waitForCountAction(activeDot, allDots) {
     const el = activeDot.el;
     el.classList.add('wait-dot-first');
@@ -2288,15 +2259,10 @@
       function onClick(ev) {
         if (resolved) return;
         const target = ev.target;
-        if (target === el) {
-          resolved = true; cleanup();
-          resolve({ type: 'correct' });
-          return;
-        }
         for (let i = 0; i < allDots.length; i++) {
           if (allDots[i].el === target) {
             resolved = true; cleanup();
-            resolve({ type: 'wrong' });
+            resolve();
             return;
           }
         }
@@ -2305,7 +2271,7 @@
       const timer = setTimeout(() => {
         if (resolved) return;
         resolved = true; cleanup();
-        resolve({ type: 'correct' });
+        resolve();
       }, 5000);
       // Capture phase so we beat the global click handler.
       document.addEventListener('click', onClick, true);

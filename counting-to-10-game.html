@@ -2116,6 +2116,39 @@
     };
   }
 
+  // One big final jump for the 18-second auto-path. The dot leaves rest,
+  // rises in a smooth parabolic arc to a higher peak than the normal hops,
+  // turns red at the apex, falls straight back down (no bounce), and sits
+  // for 500ms before signalling done.
+  function finalJumpToRed(dot, onComplete) {
+    const el = dot.el;
+    el.removeAttribute('transform');  // defensive — straight up/down
+    const restCy = parseFloat(el.getAttribute('cy'));
+    const peakHeight   = 70;    // ~2x the normal hop peak (38)
+    const jumpDuration = 700;   // single up-and-down arc, no bounces
+    const sitMs        = 500;   // half-second hold red before continuing
+    const startTime = performance.now();
+    let colorChanged = false;
+    function step(now) {
+      const elapsed = now - startTime;
+      if (elapsed >= jumpDuration) {
+        el.setAttribute('cy', restCy);
+        setTimeout(onComplete, sitMs);
+        return;
+      }
+      const t = elapsed / jumpDuration;
+      el.setAttribute('cy', restCy + (-4 * peakHeight * t * (1 - t)));
+      if (!colorChanged && t >= 0.5) {
+        // Apex — stop breathing and snap red.
+        colorChanged = true;
+        el.classList.remove('wait-dot-first');
+        el.setAttribute('fill', '#d92525');
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
   // First-dot wait.
   // 0-3s:   nothing — dot sits still with its black border.
   // 3-10s:  slow gentle breathing pulse only.
@@ -2136,18 +2169,15 @@
     }, 10000);
     const t3 = setTimeout(() => {
       if (cleared) return;
-      // Stop hopping (snap back to rest), drop the breathing pulse,
-      // fade fill to red, then resolve as if the kid had tapped.
+      // Stop the regular hopping cycle (snaps cy to rest if mid-jump),
+      // then do one big final jump that turns red at the apex and sits
+      // half a second before signalling done.
       if (stopHopping) { stopHopping(); stopHopping = null; }
-      el.classList.remove('wait-dot-first');
-      el.style.transition = 'fill 0.5s ease-out';
-      el.style.fill = '#d92525';
-      setTimeout(() => {
+      finalJumpToRed(dot, () => {
         if (cleared) return;
-        el.setAttribute('fill', '#d92525');   // bake in so cleanup doesn't flash
         if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
         else { tapsPending++; }
-      }, 550);
+      });
     }, 18000);
     try {
       await waitForTap();

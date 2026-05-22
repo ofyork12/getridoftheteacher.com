@@ -2052,20 +2052,64 @@
     }
   }
 
+  // Small "look at me" bouncing physics for the waiting white dot. Mirrors
+  // the canvas demo: dot has an upward initial velocity, gravity pulls it
+  // back down, it bounces off its resting cy with energy retention. When
+  // the bounce settles, we pause briefly and kick it back up for another
+  // round. Animates the `cy` attribute (not CSS transform) so it doesn't
+  // clobber the existing `transform="rotate(...)"` set by the roll/spin.
+  function startBouncing(dot) {
+    const el = dot.el;
+    const restCy = parseFloat(el.getAttribute('cy'));
+    const gravity      = 0.4;
+    const initVelocity = -2.8;   // small kid-like jump (~10 viewBox units high)
+    const bounceRetain = 0.78;
+    const restPauseFrames = 50;  // ~830ms before relaunching
+    let velocityY = initVelocity;
+    let offsetY = 0;             // negative = above rest
+    let running = true;
+    let restPause = 0;
+    function step() {
+      if (!running) return;
+      velocityY += gravity;
+      offsetY += velocityY;
+      if (offsetY >= 0) {
+        offsetY = 0;
+        velocityY = -velocityY * bounceRetain;
+        if (Math.abs(velocityY) < 0.4) {
+          // Settled. Sit a moment, then jump again.
+          velocityY = 0;
+          restPause++;
+          if (restPause > restPauseFrames) {
+            velocityY = initVelocity;
+            restPause = 0;
+          }
+        } else {
+          restPause = 0;
+        }
+      }
+      el.setAttribute('cy', restCy + offsetY);
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    return () => {
+      running = false;
+      el.setAttribute('cy', restCy);  // snap back to rest
+    };
+  }
+
   // First-dot wait.
-  // 0-3s:  dot sits still with its black border, no animation. Grace period
-  //        — the kid can tap right away if they like.
-  // 3s+:   slow gentle breathing pulse (wait-dot-first). The dot stays
-  //        "zero" forever until the kid taps — no red escalation.
+  // 0-3s:  dot sits still with its black border. Grace period.
+  // 3s+:   slow gentle breathing pulse + small kid-like bouncing. The dot
+  //        stays "zero" forever until the kid taps — no red escalation.
   async function waitForFirstTap(dot) {
     const el = dot.el;
-    // Inline stroke (#000) from rollNewDotIn stays so the dot is visible
-    // during the grace period. CSS animation overrides stroke-width when
-    // the class is added.
     let cleared = false;
+    let stopBouncing = null;
     const t1 = setTimeout(() => {
       if (cleared) return;
       el.classList.add('wait-dot-first');
+      stopBouncing = startBouncing(dot);
     }, 3000);
     try {
       await waitForTap();
@@ -2073,6 +2117,7 @@
       cleared = true;
       clearTimeout(t1);
       el.classList.remove('wait-dot-first');
+      if (stopBouncing) stopBouncing();
     }
   }
 

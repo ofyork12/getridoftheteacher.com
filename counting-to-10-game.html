@@ -1993,15 +1993,16 @@
     // Toggle-based fill (matches placement behavior). Each click on any dot
     // toggles its colored/white state. The count is the total of currently
     // colored dots. The cluster recolors to NUMBER_COLOR[count]. The number
-    // labels (1, 2, 3, ...) are reassigned in reading order over the
-    // currently colored dots — they are not bound to specific dots. The kid
-    // can fill any dots in any order; the topmost colored one always shows
-    // "1", the next "2", and so on.
+    // labels follow CLICK ORDER, not reading order: the dot you tap first
+    // shows "1", the dot you tap second shows "2", etc. If a colored dot is
+    // un-tapped, it's removed from the sequence and the remaining numbers
+    // shift down to stay contiguous (1..count).
     function isWhite(dot) {
       const f = dot.el.getAttribute('fill');
       return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
     }
     const numTexts = new Array(dots.length).fill(null);
+    const clickOrder = [];   // dot indices in the order they were filled
 
     function makeNumberText(dot, number) {
       const t = document.createElementNS(SVG_NS, 'text');
@@ -2028,10 +2029,8 @@
     }
 
     function redrawCluster() {
-      const colored = [];
-      for (let i = 0; i < dots.length; i++) {
-        if (!isWhite(dots[i])) colored.push(i);
-      }
+      // Numbers follow click order: clickOrder[0] gets "1", [1] gets "2", etc.
+      const colored = clickOrder.slice();
       const count = colored.length;
       // Recolor all currently colored dots to NUMBER_COLOR[count].
       if (count > 0) {
@@ -2045,9 +2044,7 @@
           numTexts[i] = null;
         }
       }
-      // Assign numbers 1..count to the colored dots in reading order. Update
-      // existing text elements where possible so they don't pop in/out on
-      // every toggle.
+      // Assign numbers 1..count to the colored dots in CLICK order.
       colored.forEach((dotIdx, k) => {
         const number = k + 1;
         if (numTexts[dotIdx]) {
@@ -2070,13 +2067,20 @@
       if (!activeDot) break;   // all colored, done
 
       const tapped = await waitForCountAction(activeDot, dots);
+      const tappedIdx = dots.indexOf(tapped);
 
       // Toggle the tapped dot. Placeholder fill — redrawCluster overwrites
-      // it with the new cluster color.
+      // it with the new cluster color. Maintain clickOrder so the displayed
+      // number on each dot equals its click rank (1st click = "1", etc.).
       if (isWhite(tapped)) {
         tapped.el.setAttribute('fill', '#cccccc');
+        if (tappedIdx >= 0 && clickOrder.indexOf(tappedIdx) === -1) {
+          clickOrder.push(tappedIdx);
+        }
       } else {
         tapped.el.setAttribute('fill', '#ffffff');
+        const pos = clickOrder.indexOf(tappedIdx);
+        if (pos >= 0) clickOrder.splice(pos, 1);
       }
 
       redrawCluster();

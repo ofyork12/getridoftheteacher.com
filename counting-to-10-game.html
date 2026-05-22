@@ -244,8 +244,11 @@
   }
 
   function stairLandings() {
+    // Roll ends DOT_R past the visual edge so the subsequent fall's
+    // trajectory keeps the dot's left edge to the right of the cliff line
+    // — no more overlap between the falling dot and the vertical line.
     return [
-      { x: LAST_STAIR_X, y: STAIR_TOP_Y - DOT_R - 1.25 }
+      { x: LAST_STAIR_X + DOT_R, y: STAIR_TOP_Y - DOT_R - 1.25 }
     ];
   }
 
@@ -1955,9 +1958,9 @@
     const ramp = document.getElementById('rampPath');
     if (ramp) ramp.setAttribute('d', 'M -120,200 L 380,200');
     const playArea = document.getElementById('playArea');
-    if (playArea) playArea.style.top = '22%';
+    if (playArea) playArea.style.top = '30%';     // push the SVG (and floor) further down
     const nlw = document.querySelector('.number-line-wrap');
-    if (nlw) nlw.style.bottom = '12%';
+    if (nlw) nlw.style.bottom = '22%';            // move number line down with it (closer to the floor)
     lockedDigitX = 80;   // viewBox horizontal center, so setNum recenters
     const eq = document.querySelector('.equation');
     if (eq) eq.style.left = '50%';

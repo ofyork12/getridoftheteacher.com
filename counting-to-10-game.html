@@ -230,25 +230,34 @@
 
   function getStairCorners() {
     const stairX = LAST_STAIR_X;
+    const lineX = LAST_STAIR_X - DOT_R;   // visual vertical drops here (left of where dot falls off)
     const y0 = STAIR_TOP_Y;
     return [
+      // Top step extends all the way to LAST_STAIR_X (where the dot rolls off).
       { x: -180, y: y0 },
       { x: stairX, y: y0 },
-      { x: stairX, y: FLOOR_Y },
+      // Jump back left to LAST_STAIR_X - DOT_R for the cliff's vertical line.
+      // The dot's left edge during its fall sits at LAST_STAIR_X - DOT_R, so a
+      // line drawn there is exactly tangent to the dot at the start of the fall
+      // and the dot never crosses it.
+      { x: lineX, y: y0, move: true },
+      { x: lineX, y: FLOOR_Y },
       { x: 380, y: FLOOR_Y }
     ];
   }
 
   function pathFromCorners(corners) {
-    return 'M ' + corners.map(c => `${c.x},${c.y}`).join(' L ');
+    // 'move: true' on a corner starts a new subpath (SVG 'M' command) so the
+    // path can be discontinuous — used by the stair shape to draw the top
+    // step's right edge separate from the cliff's vertical line.
+    return corners.map((c, i) =>
+      (i === 0 || c.move ? 'M ' : 'L ') + c.x + ',' + c.y
+    ).join(' ');
   }
 
   function stairLandings() {
-    // Roll ends DOT_R past the visual edge so the subsequent fall's
-    // trajectory keeps the dot's left edge to the right of the cliff line
-    // — no more overlap between the falling dot and the vertical line.
     return [
-      { x: LAST_STAIR_X + DOT_R, y: STAIR_TOP_Y - DOT_R - 1.25 }
+      { x: LAST_STAIR_X, y: STAIR_TOP_Y - DOT_R - 1.25 }
     ];
   }
 

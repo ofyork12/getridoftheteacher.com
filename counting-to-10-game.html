@@ -644,10 +644,12 @@
     dot.cx = targetX; dot.cy = DOT_REST_Y;
 
     await waitForFirstTap(dot);
-    // Kid tapped — restore the dot's real color, no border.
+    // Kid tapped — restore the dot's real color. Keep the default black
+    // border (stroke='#000', stroke-width='2') that makeDot gave it, just
+    // like all the other dots in the animation.
     dot.el.setAttribute('fill', origFill);
-    dot.el.removeAttribute('stroke');
-    dot.el.removeAttribute('stroke-width');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '2');
 
     return dot;
   }
@@ -995,8 +997,8 @@
 
     await waitForTapOnDot(dot);
     dot.el.setAttribute('fill', origFill);
-    dot.el.removeAttribute('stroke');
-    dot.el.removeAttribute('stroke-width');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '2');
 
     return dot;
   }
@@ -1037,8 +1039,8 @@
 
     await waitForTapOnDot(dot);
     dot.el.setAttribute('fill', origFill);
-    dot.el.removeAttribute('stroke');
-    dot.el.removeAttribute('stroke-width');
+    dot.el.setAttribute('stroke', '#000');
+    dot.el.setAttribute('stroke-width', '2');
 
     return dot;
   }

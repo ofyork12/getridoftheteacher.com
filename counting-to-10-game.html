@@ -2052,41 +2052,30 @@
     }
   }
 
-  // Small "look at me" bouncing physics for the waiting white dot. Mirrors
-  // the canvas demo: dot has an upward initial velocity, gravity pulls it
-  // back down, it bounces off its resting cy with energy retention. When
-  // the bounce settles, we pause briefly and kick it back up for another
-  // round. Animates the `cy` attribute (not CSS transform) so it doesn't
-  // clobber the existing `transform="rotate(...)"` set by the roll/spin.
-  function startBouncing(dot) {
+  // Single jump-and-settle hopping for the waiting white dot. One parabolic
+  // arc up and down (about 3/4 of a dot diameter high), then a rest pause,
+  // then another single jump. No physics bouncing. Animates the `cy`
+  // attribute so it doesn't clobber the existing `transform="rotate(...)"`
+  // left over from the roll/spin.
+  function startHopping(dot) {
     const el = dot.el;
     const restCy = parseFloat(el.getAttribute('cy'));
-    const gravity      = 0.4;
-    const initVelocity = -2.8;   // small kid-like jump (~10 viewBox units high)
-    const bounceRetain = 0.78;
-    const restPauseFrames = 50;  // ~830ms before relaunching
-    let velocityY = initVelocity;
-    let offsetY = 0;             // negative = above rest
+    const peakHeight   = 30;    // ~3/4 of dot diameter (DOT_R=22, so D=44)
+    const jumpMs       = 650;   // single up-and-down arc
+    const pauseMs      = 850;   // rest between jumps
     let running = true;
-    let restPause = 0;
-    function step() {
+    let phase = 'rest';
+    let phaseStart = performance.now();
+    function step(now) {
       if (!running) return;
-      velocityY += gravity;
-      offsetY += velocityY;
-      if (offsetY >= 0) {
-        offsetY = 0;
-        velocityY = -velocityY * bounceRetain;
-        if (Math.abs(velocityY) < 0.4) {
-          // Settled. Sit a moment, then jump again.
-          velocityY = 0;
-          restPause++;
-          if (restPause > restPauseFrames) {
-            velocityY = initVelocity;
-            restPause = 0;
-          }
-        } else {
-          restPause = 0;
-        }
+      const elapsed = now - phaseStart;
+      let offsetY = 0;
+      if (phase === 'rest') {
+        if (elapsed >= pauseMs) { phase = 'jump'; phaseStart = now; }
+      } else {
+        const t = elapsed / jumpMs;
+        if (t >= 1) { phase = 'rest'; phaseStart = now; offsetY = 0; }
+        else        { offsetY = -4 * peakHeight * t * (1 - t); }
       }
       el.setAttribute('cy', restCy + offsetY);
       requestAnimationFrame(step);
@@ -2094,30 +2083,52 @@
     requestAnimationFrame(step);
     return () => {
       running = false;
-      el.setAttribute('cy', restCy);  // snap back to rest
+      el.setAttribute('cy', restCy);
     };
   }
 
   // First-dot wait.
-  // 0-3s:  dot sits still with its black border. Grace period.
-  // 3s+:   slow gentle breathing pulse + small kid-like bouncing. The dot
-  //        stays "zero" forever until the kid taps — no red escalation.
+  // 0-3s:   nothing — dot sits still with its black border.
+  // 3-10s:  slow gentle breathing pulse only.
+  // 10-18s: breathing + single hop with rest between (look-at-me).
+  // 18s:    if still not tapped, stops + drops + fades red and continues.
+  // Tap any time → snaps red immediately and step continues.
   async function waitForFirstTap(dot) {
     const el = dot.el;
     let cleared = false;
-    let stopBouncing = null;
+    let stopHopping = null;
     const t1 = setTimeout(() => {
       if (cleared) return;
       el.classList.add('wait-dot-first');
-      stopBouncing = startBouncing(dot);
     }, 3000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
+      stopHopping = startHopping(dot);
+    }, 10000);
+    const t3 = setTimeout(() => {
+      if (cleared) return;
+      // Stop hopping (snap back to rest), drop the breathing pulse,
+      // fade fill to red, then resolve as if the kid had tapped.
+      if (stopHopping) { stopHopping(); stopHopping = null; }
+      el.classList.remove('wait-dot-first');
+      el.style.transition = 'fill 0.5s ease-out';
+      el.style.fill = '#d92525';
+      setTimeout(() => {
+        if (cleared) return;
+        el.setAttribute('fill', '#d92525');   // bake in so cleanup doesn't flash
+        if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
+        else { tapsPending++; }
+      }, 550);
+    }, 18000);
     try {
       await waitForTap();
     } finally {
       cleared = true;
-      clearTimeout(t1);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
       el.classList.remove('wait-dot-first');
-      if (stopBouncing) stopBouncing();
+      if (stopHopping) stopHopping();
+      el.style.transition = '';
+      el.style.fill = '';
     }
   }
 

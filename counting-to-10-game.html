@@ -2071,25 +2071,24 @@
   });
 
   // Dots 2-10 placement wait.
-  //   0-3s:  grace, sits still with thin black border
-  //   3-8s:  slow black breathing (3.6-sec cycle)
-  //   8-13s: black/red flash
-  //   13-18s: solid red wall
-  //   18s:   auto-resolve — caller's recolorAll paints the cluster the new
-  //          count's color
   //
-  // Click on the active (breathing) dot → resolve, step advances.
-  // Click on any OTHER dot in the cluster → toggle that dot's state. If it
-  //   was colored, it goes white (uncounted). If it was white (and not the
-  //   active breathing one), it gets added back to the count. Either way,
-  //   the remaining colored dots recount and recolor to the new count's
-  //   color, and the digit/audio updates. The active breathing dot itself
-  //   never changes — only the OTHER dots toggle.
+  // ANY dot in the cluster (including the new "active" one that just rolled
+  // in) is a toggle button — click it to flip between colored and white.
+  // After every toggle, the cluster recounts (= number of currently colored
+  // dots) and recolors to NUMBER_COLOR[count]. The equation digit/audio
+  // updates to the new count.
+  //
+  // The step completes when ALL dots in the cluster are colored (count =
+  // total dots), OR when the 18-sec timer fires. The active dot has the
+  // breathing/flash/red-wall escalation while it's still white; once it
+  // becomes colored, the breathing visual stops.
+  //
   // Background clicks are ignored.
   function waitForDotTap(dot) {
     return new Promise((resolve) => {
       const activeEl = dot.el;
       let resolved = false;
+      let activeBreathing = true;  // false once the active dot is first colored
       function isWhite(el) {
         const f = el.getAttribute('fill');
         return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
@@ -2103,45 +2102,47 @@
       function onClick(ev) {
         if (resolved) return;
         const target = ev.target;
-        if (target === activeEl) {
-          ev.stopPropagation();
-          resolved = true; cleanup(); resolve();
-          return;
-        }
-        const otherDots = Object.values(dotsById).filter(d => d.el !== activeEl);
-        for (const od of otherDots) {
+        const allDots = Object.values(dotsById);
+        for (const od of allDots) {
           if (od.el === target) {
             ev.stopPropagation();
-            // Toggle the clicked dot. After the toggle, recount all NON-active
-            // dots that are colored, and paint them the new count's color.
             const wasColored = !isWhite(od.el);
-            const stillColored = otherDots.filter(d =>
-              wasColored ? (d.el !== od.el && !isWhite(d.el))
-                         : (d.el === od.el || !isWhite(d.el))
-            );
-            const newCount = stillColored.length;
+            const newlyColored = allDots.filter(d => {
+              if (d.el === od.el) return !wasColored;
+              return !isWhite(d.el);
+            });
+            const newCount = newlyColored.length;
             if (wasColored) od.el.setAttribute('fill', '#ffffff');
             if (newCount > 0) {
               const newColor = COLORS[NUMBER_COLOR[newCount]];
-              for (const c of stillColored) c.el.setAttribute('fill', newColor);
+              for (const c of newlyColored) c.el.setAttribute('fill', newColor);
             }
             setNum(newCount);
+            // Stop the breathing once the active dot becomes colored.
+            if (activeBreathing && !isWhite(activeEl)) {
+              activeBreathing = false;
+              activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+            }
+            // Step done when every dot in the cluster is colored.
+            if (newCount === allDots.length) {
+              resolved = true; cleanup(); resolve();
+            }
             return;
           }
         }
         // Background / equation / other elements — ignore.
       }
       const t1 = setTimeout(() => {
-        if (resolved) return;
+        if (resolved || !activeBreathing) return;
         activeEl.classList.add('wait-dot');
       }, 3000);
       const t2 = setTimeout(() => {
-        if (resolved) return;
+        if (resolved || !activeBreathing) return;
         activeEl.classList.remove('wait-dot');
         activeEl.classList.add('wait-dot-warn');
       }, 8000);
       const t3 = setTimeout(() => {
-        if (resolved) return;
+        if (resolved || !activeBreathing) return;
         activeEl.classList.remove('wait-dot-warn');
         activeEl.classList.add('wait-dot-urgent');
       }, 13000);

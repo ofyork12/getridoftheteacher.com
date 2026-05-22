@@ -628,10 +628,14 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, targetX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = targetX; dot.cy = DOT_REST_Y;
 
-    await waitForTapOnDot(dot);
-    dot.el.setAttribute('fill', origFill);
-    dot.el.removeAttribute('stroke');
-    dot.el.removeAttribute('stroke-width');
+    const autoFilled = await waitForFirstTap(dot);
+    if (!autoFilled) {
+      // Kid tapped — restore the dot to its real color, no border.
+      dot.el.setAttribute('fill', origFill);
+      dot.el.removeAttribute('stroke');
+      dot.el.removeAttribute('stroke-width');
+    }
+    // If autoFilled, waitForFirstTap leaves the dot red with a black border.
 
     return dot;
   }
@@ -2008,10 +2012,9 @@
   // Wait for a tap while the given dot is glowing. The outline starts as a
   // pulsing black "bold/not bold" glow; after 10s it flashes between black and
   // red; after 20s it stays solid red, still pulsing — keeps challenging the
-  // kid to tap until they do.
+  // kid to tap until they do. Used for dots 2-10 (current behavior).
   async function waitForTapOnDot(dot) {
     const el = dot.el;
-    // Strip any inline stroke that would override the CSS animation.
     el.removeAttribute('stroke');
     el.removeAttribute('stroke-width');
     el.classList.add('wait-dot');
@@ -2033,6 +2036,67 @@
       clearTimeout(t1); clearTimeout(t2);
       el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
     }
+  }
+
+  // First-dot wait — refined timing.
+  // 0-3s:  no animation, white dot sits still with a thin black border
+  // 3-10s: black bold/not-bold pulse
+  // 10-20s: black/red flash pulse
+  // 20s:   dot auto-fills solid red with a black border and the step continues
+  //        (a real tap at any time short-circuits all of this and recolors red)
+  // Returns true if the 20s auto-fill happened, false if the kid tapped.
+  async function waitForFirstTap(dot) {
+    const el = dot.el;
+    el.removeAttribute('stroke');
+    el.removeAttribute('stroke-width');
+    let cleared = false;
+    let autoFilled = false;
+    const t1 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.add('wait-dot');
+    }, 3000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot');
+      el.classList.add('wait-dot-warn');
+    }, 10000);
+    const t3 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot-warn');
+      el.style.transition = 'fill 0.5s ease-out, stroke 0.5s ease-out, stroke-width 0.5s ease-out';
+      el.style.fill = '#d92525';
+      el.style.stroke = '#000';
+      el.style.strokeWidth = '1.4';
+      setTimeout(() => {
+        if (cleared) return;
+        autoFilled = true;
+        if (tapResolve) {
+          const r = tapResolve; tapResolve = null;
+          r();
+        } else {
+          tapsPending++;
+        }
+      }, 550);
+    }, 20000);
+    try {
+      await waitForTap();
+    } finally {
+      cleared = true;
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+      if (autoFilled) {
+        // Bake the final state into attributes so clearing inline style
+        // doesn't flash back to white.
+        el.setAttribute('fill', '#d92525');
+        el.setAttribute('stroke', '#000');
+        el.setAttribute('stroke-width', '1.4');
+      }
+      el.style.transition = '';
+      el.style.fill = '';
+      el.style.stroke = '';
+      el.style.strokeWidth = '';
+    }
+    return autoFilled;
   }
 
   async function play() {

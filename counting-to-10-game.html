@@ -80,7 +80,7 @@
     0%, 100% { stroke-width: 2.2; }
     50%      { stroke-width: 2.8; }
   }
-  .wait-dot        { stroke: #000;    animation: dotGlowBlack 1.8s ease-in-out infinite; }
+  .wait-dot        { stroke: #000;    animation: dotGlowBlack 3.6s ease-in-out infinite; }
   .wait-dot-warn   {                  animation: dotGlowFlash 1.2s ease-in-out infinite; }
   .wait-dot-urgent { stroke: #d92525; animation: dotGlowRed   0.9s ease-in-out infinite; }
   /* Dot 1 wait animation: slow gentle breathing only (no red), ~3-sec cycle. */
@@ -2050,25 +2050,32 @@
     }
   });
 
-  // Dots 2-10: white dot breathes black for 6 sec, then black/red flash for
-  // 6 sec, then red wall for 6 sec, then auto-resolves at 18 sec total.
-  // A tap any time short-circuits everything and the caller recolors the
-  // whole cluster (recolorAll) to the new count's color with a black border.
+  // Dots 2-10:
+  //   0-3s:  grace, sits still with thin black border
+  //   3-8s:  slow black breathing (3.6-sec cycle, half the old speed)
+  //   8-13s: black/red flash
+  //   13-18s: solid red wall
+  //   18s:   auto-resolve — caller's recolorAll paints the cluster the new
+  //          count's color with a black border
+  // Tap any time short-circuits and the recolor happens immediately.
   async function waitForDotTap(dot) {
     const el = dot.el;
-    el.classList.add('wait-dot');
     let cleared = false;
     const t1 = setTimeout(() => {
       if (cleared) return;
+      el.classList.add('wait-dot');
+    }, 3000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
       el.classList.remove('wait-dot');
       el.classList.add('wait-dot-warn');
-    }, 6000);
-    const t2 = setTimeout(() => {
+    }, 8000);
+    const t3 = setTimeout(() => {
       if (cleared) return;
       el.classList.remove('wait-dot-warn');
       el.classList.add('wait-dot-urgent');
-    }, 12000);
-    const t3 = setTimeout(() => {
+    }, 13000);
+    const t4 = setTimeout(() => {
       if (cleared) return;
       if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
       else { tapsPending++; }
@@ -2077,7 +2084,7 @@
       await waitForTap();
     } finally {
       cleared = true;
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
       el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
     }
   }

@@ -2076,56 +2076,75 @@
   //   8-13s: black/red flash
   //   13-18s: solid red wall
   //   18s:   auto-resolve — caller's recolorAll paints the cluster the new
-  //          count's color with a black border
+  //          count's color
   //
-  // Click on the active (breathing) dot → resolve. Click on any OTHER
-  // existing dot (the wrong target) → whiten all currently-colored dots,
-  // set count display to 0, say "zero" — the kid has to actually find the
-  // breathing dot. Background clicks are ignored.
+  // Click on the active (breathing) dot → resolve, step advances.
+  // Click on a different already-colored dot → SWAP roles: the clicked
+  //   dot becomes the new white-breathing one, and the previously-active
+  //   dot takes on the clicked dot's color. The count stays the same.
+  // Background clicks are ignored.
   function waitForDotTap(dot) {
     return new Promise((resolve) => {
-      const el = dot.el;
+      let activeEl = dot.el;
       let resolved = false;
+      function currentPhaseClass() {
+        if (activeEl.classList.contains('wait-dot-urgent')) return 'wait-dot-urgent';
+        if (activeEl.classList.contains('wait-dot-warn'))   return 'wait-dot-warn';
+        if (activeEl.classList.contains('wait-dot'))        return 'wait-dot';
+        return null;
+      }
       function cleanup() {
-        el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+        activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+        activeEl.setAttribute('stroke-width', '2');
         document.removeEventListener('click', onClick, true);
         clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
       }
       function onClick(ev) {
         if (resolved) return;
         const target = ev.target;
-        if (target === el) {
+        if (target === activeEl) {
           ev.stopPropagation();
           resolved = true; cleanup(); resolve();
           return;
         }
-        // Tap on another dot in the cluster — wrong target. Whiten the
-        // other (already-colored) dots, announce "zero". The active dot
-        // keeps breathing; the kid has to find it.
-        const otherDots = Object.values(dotsById).filter(d => d.el !== el);
+        // Wrong dot in cluster — swap: clicked dot becomes new active,
+        // previously-active becomes a counted dot with the clicked dot's color.
+        const otherDots = Object.values(dotsById).filter(d => d.el !== activeEl);
         for (const od of otherDots) {
           if (od.el === target) {
             ev.stopPropagation();
-            for (const w of otherDots) w.el.setAttribute('fill', '#ffffff');
-            setNum(0);
+            const clickedColor = od.el.getAttribute('fill');
+            // Previously-active inherits the clicked dot's color and full border.
+            activeEl.setAttribute('fill', clickedColor);
+            activeEl.setAttribute('stroke', '#000');
+            activeEl.setAttribute('stroke-width', '2');
+            // Clicked dot becomes the new white-breathing active.
+            od.el.setAttribute('fill', '#ffffff');
+            od.el.setAttribute('stroke', '#000');
+            od.el.setAttribute('stroke-width', '1.5');
+            // Move the current wait phase class over so visual state is preserved.
+            const phase = currentPhaseClass();
+            activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+            if (phase) od.el.classList.add(phase);
+            activeEl = od.el;
             return;
           }
         }
-        // Click on the background, equation digit, etc. — ignore.
+        // Background / equation / other elements — ignore.
       }
       const t1 = setTimeout(() => {
         if (resolved) return;
-        el.classList.add('wait-dot');
+        activeEl.classList.add('wait-dot');
       }, 3000);
       const t2 = setTimeout(() => {
         if (resolved) return;
-        el.classList.remove('wait-dot');
-        el.classList.add('wait-dot-warn');
+        activeEl.classList.remove('wait-dot');
+        activeEl.classList.add('wait-dot-warn');
       }, 8000);
       const t3 = setTimeout(() => {
         if (resolved) return;
-        el.classList.remove('wait-dot-warn');
-        el.classList.add('wait-dot-urgent');
+        activeEl.classList.remove('wait-dot-warn');
+        activeEl.classList.add('wait-dot-urgent');
       }, 13000);
       const t4 = setTimeout(() => {
         if (resolved) return;

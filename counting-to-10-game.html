@@ -1961,6 +1961,10 @@
       const n = i + 1;
       const color = COLORS[NUMBER_COLOR[n]];
 
+      // GAME MODE: this dot breathes white until the kid taps it (or 5 sec
+      // passes). Only then do we fill it in and announce the number.
+      await waitForCountTap(dt);
+
       // Recolor all counted-so-far dots to the current count's color.
       // (Transitions are already set on each dot's style.)
       for (let j = 0; j <= i; j++) {
@@ -2161,6 +2165,27 @@
       requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
+  }
+
+  // Count-up phase (the final triangle): each white dot breathes gently
+  // until the kid taps it, or 5 sec passes — then the dot fills in and the
+  // number is spoken. No grace, no escalation, no red phase.
+  async function waitForCountTap(dot) {
+    const el = dot.el;
+    el.classList.add('wait-dot-first');
+    let cleared = false;
+    const t = setTimeout(() => {
+      if (cleared) return;
+      if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
+      else { tapsPending++; }
+    }, 5000);
+    try {
+      await waitForTap();
+    } finally {
+      cleared = true;
+      clearTimeout(t);
+      el.classList.remove('wait-dot-first');
+    }
   }
 
   // Dot 1 only — full personality:

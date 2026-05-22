@@ -85,8 +85,8 @@
   .wait-dot-urgent { stroke: #d92525; animation: dotGlowRed   0.9s ease-in-out infinite; }
   /* Dot 1 wait animation: slow gentle breathing only (no red), ~3-sec cycle. */
   @keyframes dotBreatheFirst {
-    0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.55; }
-    50%      { r: 23.5; stroke-width: 2.2; stroke-opacity: 1.0;  }
+    0%, 100% { r: 28;   stroke-width: 1.2; stroke-opacity: 0.55; }
+    50%      { r: 30;   stroke-width: 2.2; stroke-opacity: 1.0;  }
   }
   .wait-dot-first  { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
 </style>
@@ -215,7 +215,7 @@
     6: 'magenta', 7: 'brown', 8: 'pink', 9: 'cyan', 10: 'red'
   };
 
-  const DOT_R = 22;
+  const DOT_R = 28;
   const FLOOR_Y = 185;
   const DOT_REST_Y = FLOOR_Y - DOT_R - 1.25;
 
@@ -1973,7 +1973,7 @@
       if (dt.cy > bottomCy) bottomCy = dt.cy;
     }
     centroidX /= dots.length;
-    const SCALE = 1.5;
+    const SCALE = 1.3;
     const NEW_FLOOR_Y = 200;
     const NEW_CENTER_X = 80;
     const tx = NEW_CENTER_X - SCALE * centroidX;

@@ -65,8 +65,30 @@
     text-align: center; font-size: 2.2vh; font-weight: 600;
     color: #888; letter-spacing: 0.25em;
   }
-  /* No wait-state animation — every white dot just sits with a black border
-     until the kid taps (or the 18-sec auto-fill in waitForDotTap fires). */
+  /* Dots 2-10 wait animation: 6-sec breathing → 6-sec black/red flash →
+     6-sec red wall, totalling 18 sec before the auto-fill fires. */
+  @keyframes dotGlowBlack {
+    0%, 100% { stroke-width: 1.0; stroke-opacity: 0.55; }
+    50%      { stroke-width: 2.6; stroke-opacity: 1.0;  }
+  }
+  @keyframes dotGlowFlash {
+    0%   { stroke: #000;    stroke-width: 1.0; stroke-opacity: 0.65; }
+    50%  { stroke: #d92525; stroke-width: 2.6; stroke-opacity: 1.0;  }
+    100% { stroke: #000;    stroke-width: 1.0; stroke-opacity: 0.65; }
+  }
+  @keyframes dotGlowRed {
+    0%, 100% { stroke-width: 2.2; }
+    50%      { stroke-width: 2.8; }
+  }
+  .wait-dot        { stroke: #000;    animation: dotGlowBlack 1.8s ease-in-out infinite; }
+  .wait-dot-warn   {                  animation: dotGlowFlash 1.2s ease-in-out infinite; }
+  .wait-dot-urgent { stroke: #d92525; animation: dotGlowRed   0.9s ease-in-out infinite; }
+  /* Dot 1 wait animation: slow gentle breathing only (no red), ~3-sec cycle. */
+  @keyframes dotBreatheFirst {
+    0%, 100% { r: 22;   stroke-width: 1.2; stroke-opacity: 0.55; }
+    50%      { r: 23.5; stroke-width: 2.2; stroke-opacity: 1.0;  }
+  }
+  .wait-dot-first  { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -618,9 +640,9 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, targetX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = targetX; dot.cy = DOT_REST_Y;
 
-    await waitForDotTap(dot);
-    // Tapped (or 18s timeout) — restore the dot's real color and the
-    // default black border that makeDot gave it.
+    await waitForFirstTap(dot);
+    // Tapped (or 18s final jump auto-fill) — restore the dot's real color
+    // and the default black border that makeDot gave it.
     dot.el.setAttribute('fill', origFill);
     dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '2');
@@ -2028,12 +2050,25 @@
     }
   });
 
-  // Wait for the kid to tap a white dot, or auto-resolve after 18 seconds.
-  // No breathing, no hopping, no animation — the dot just sits white until
-  // it's tapped or the timeout fires. Same rule for every dot.
+  // Dots 2-10: white dot breathes black for 6 sec, then black/red flash for
+  // 6 sec, then red wall for 6 sec, then auto-resolves at 18 sec total.
+  // A tap any time short-circuits everything and the caller recolors the
+  // whole cluster (recolorAll) to the new count's color with a black border.
   async function waitForDotTap(dot) {
+    const el = dot.el;
+    el.classList.add('wait-dot');
     let cleared = false;
-    const t = setTimeout(() => {
+    const t1 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot');
+      el.classList.add('wait-dot-warn');
+    }, 6000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot-warn');
+      el.classList.add('wait-dot-urgent');
+    }, 12000);
+    const t3 = setTimeout(() => {
       if (cleared) return;
       if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
       else { tapsPending++; }
@@ -2042,7 +2077,119 @@
       await waitForTap();
     } finally {
       cleared = true;
-      clearTimeout(t);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+    }
+  }
+
+  // Straight-up hop with physics decay — three impacts then settle, pause,
+  // jump again. Used by dot 1's wait. Animates cy (not transform) so it
+  // doesn't conflict with the rotate(...) transform left by the roll/spin.
+  function startHopping(dot) {
+    const el = dot.el;
+    el.removeAttribute('transform');
+    const restCy = parseFloat(el.getAttribute('cy'));
+    const gravity        = 0.4;
+    const initVelocity   = -5.5;
+    const velocityRetain = 0.7;
+    const maxImpacts     = 3;
+    const pauseFrames    = 55;
+    let running = true;
+    let velocityY = initVelocity;
+    let offsetY = 0;
+    let impactCount = 0;
+    let pauseCount = 0;
+    let inPause = false;
+    function step() {
+      if (!running) return;
+      if (!inPause) {
+        velocityY += gravity;
+        offsetY += velocityY;
+        if (offsetY >= 0) {
+          offsetY = 0;
+          impactCount++;
+          if (impactCount >= maxImpacts) { velocityY = 0; inPause = true; pauseCount = 0; }
+          else { velocityY = -velocityY * velocityRetain; }
+        }
+      } else {
+        pauseCount++;
+        if (pauseCount >= pauseFrames) {
+          inPause = false; impactCount = 0;
+          velocityY = initVelocity; offsetY = 0;
+        }
+      }
+      el.setAttribute('cy', restCy + offsetY);
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    return () => { running = false; el.setAttribute('cy', restCy); };
+  }
+
+  // One big final jump for dot 1's 18-sec auto-path. Rises to peak ~70
+  // viewBox units, snaps red at the apex, falls back to rest (no bounce),
+  // sits 500ms, then signals done.
+  function finalJumpToRed(dot, onComplete) {
+    const el = dot.el;
+    el.removeAttribute('transform');
+    const restCy = parseFloat(el.getAttribute('cy'));
+    const peakHeight = 70;
+    const jumpDuration = 700;
+    const sitMs = 500;
+    const startTime = performance.now();
+    let colorChanged = false;
+    function step(now) {
+      const elapsed = now - startTime;
+      if (elapsed >= jumpDuration) {
+        el.setAttribute('cy', restCy);
+        setTimeout(onComplete, sitMs);
+        return;
+      }
+      const t = elapsed / jumpDuration;
+      el.setAttribute('cy', restCy + (-4 * peakHeight * t * (1 - t)));
+      if (!colorChanged && t >= 0.5) {
+        colorChanged = true;
+        el.classList.remove('wait-dot-first');
+        el.setAttribute('fill', '#d92525');
+      }
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // Dot 1 only — full personality:
+  //   0-3s:  grace, sits white with thin black border
+  //   3-10s: slow gentle breathing (wait-dot-first)
+  //   10-18s: breathing + hopping (three-impact decay, pause, repeat)
+  //   18s:   one big final jump, snaps red at the apex, sits red, then continues
+  //   Tap any time → snaps red immediately and step continues.
+  async function waitForFirstTap(dot) {
+    const el = dot.el;
+    let cleared = false;
+    let stopHopping = null;
+    const t1 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.add('wait-dot-first');
+    }, 3000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
+      stopHopping = startHopping(dot);
+    }, 10000);
+    const t3 = setTimeout(() => {
+      if (cleared) return;
+      if (stopHopping) { stopHopping(); stopHopping = null; }
+      finalJumpToRed(dot, () => {
+        if (cleared) return;
+        if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
+        else { tapsPending++; }
+      });
+    }, 18000);
+    try {
+      await waitForTap();
+    } finally {
+      cleared = true;
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      el.classList.remove('wait-dot-first');
+      if (stopHopping) stopHopping();
     }
   }
 

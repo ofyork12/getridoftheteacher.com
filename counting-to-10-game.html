@@ -1944,35 +1944,55 @@
     for (let i = 1; i <= 10; i++) if (dotsById['d' + i]) dots.push(dotsById['d' + i]);
     dots.sort((a, b) => a.cy - b.cy || a.cx - b.cx);
 
-    // Pause before counting begins — give the eye time to register the
-    // finished triangle.
     await sleep(900);
 
-    // Recolor every dot to WHITE first. Slow gentle transition so kids see
-    // the colors fade out and understand the triangle is "ready to count".
+    // Scale the whole cluster up around its centroid so the kid can poke
+    // the dots more easily. 1.3x = roughly 30% bigger.
+    let centroidX = 0, centroidY = 0;
+    for (const dt of dots) { centroidX += dt.cx; centroidY += dt.cy; }
+    centroidX /= dots.length;
+    centroidY /= dots.length;
+    const SCALE = 1.3;
+    dotGroup.setAttribute('transform',
+      `translate(${(centroidX * (1 - SCALE)).toFixed(2)},${(centroidY * (1 - SCALE)).toFixed(2)}) scale(${SCALE})`);
+
+    // Recolor every dot to WHITE first.
     for (const dt of dots) {
       dt.el.style.transition = 'fill 0.7s ease-in-out';
       dt.el.setAttribute('fill', '#ffffff');
     }
     await sleep(900);
 
-    for (let i = 0; i < dots.length; i++) {
+    // Track number-text elements so we can remove them on back-up.
+    const texts = new Array(dots.length).fill(null);
+    let i = 0;
+
+    while (i < dots.length) {
       const dt = dots[i];
       const n = i + 1;
       const color = COLORS[NUMBER_COLOR[n]];
 
-      // GAME MODE: this dot breathes white until the kid taps it (or 5 sec
-      // passes). Only then do we fill it in and announce the number.
-      await waitForCountTap(dt);
+      const result = await waitForCountAction(dt, dots);
 
-      // Recolor all counted-so-far dots to the current count's color.
-      // (Transitions are already set on each dot's style.)
-      for (let j = 0; j <= i; j++) {
-        dots[j].el.setAttribute('fill', color);
+      if (result.type === 'wrong') {
+        if (i === 0) continue;   // nothing to back up from, just keep waiting
+        // Back up one count: undo iteration i-1.
+        const prev = dots[i - 1];
+        prev.el.setAttribute('fill', '#ffffff');
+        if (texts[i - 1]) { texts[i - 1].remove(); texts[i - 1] = null; }
+        if (i > 1) {
+          const prevColor = COLORS[NUMBER_COLOR[i - 1]];
+          for (let j = 0; j < i - 1; j++) dots[j].el.setAttribute('fill', prevColor);
+        }
+        i--;
+        // Speak (and show) the new count — "i" is now the count of colored dots.
+        setNum(i);
+        continue;
       }
 
-      // Inscribe the count numeral inside the just-counted dot. White text
-      // with a thin black stroke reads against every color.
+      // Correct tap (or 5-sec timeout) — fill in this dot and announce.
+      for (let j = 0; j <= i; j++) dots[j].el.setAttribute('fill', color);
+
       const t = document.createElementNS(SVG_NS, 'text');
       t.setAttribute('x', dt.cx);
       t.setAttribute('y', dt.cy);
@@ -1992,17 +2012,13 @@
       t.style.transition = 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)';
       t.textContent = String(n);
       dotGroup.appendChild(t);
+      texts[i] = t;
       requestAnimationFrame(() => { t.style.transform = 'scale(1)'; });
 
-      // Update the big digit at the top (stays at lockedDigitX).
       setNum(n);
-
-      // Pause between dots — DELIBERATE teacher pace so kids can absorb
-      // each count. The audio is only ~0.5s; the rest is breathing room.
-      await sleep(1400);
+      await sleep(500);   // brief beat for the audio; kid is pacing now
+      i++;
     }
-
-    // Numerals stay drawn; dots stay red. End of animation.
   }
 
   // Top-level dispatcher (replaces the old generic stepN).
@@ -2167,25 +2183,45 @@
     requestAnimationFrame(step);
   }
 
-  // Count-up phase (the final triangle): each white dot breathes gently
-  // until the kid taps it, or 5 sec passes — then the dot fills in and the
-  // number is spoken. No grace, no escalation, no red phase.
-  async function waitForCountTap(dot) {
-    const el = dot.el;
+  // Count-up phase: each white dot breathes gently. Only the active dot is
+  // tappable; tapping a different dot in the cluster is "wrong" — the caller
+  // backs up one count. 5-sec timeout auto-advances ("correct").
+  // Returns { type: 'correct' } or { type: 'wrong' }.
+  function waitForCountAction(activeDot, allDots) {
+    const el = activeDot.el;
     el.classList.add('wait-dot-first');
-    let cleared = false;
-    const t = setTimeout(() => {
-      if (cleared) return;
-      if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
-      else { tapsPending++; }
-    }, 5000);
-    try {
-      await waitForTap();
-    } finally {
-      cleared = true;
-      clearTimeout(t);
-      el.classList.remove('wait-dot-first');
-    }
+    return new Promise((resolve) => {
+      let resolved = false;
+      function cleanup() {
+        el.classList.remove('wait-dot-first');
+        document.removeEventListener('click', onClick, true);
+        clearTimeout(timer);
+      }
+      function onClick(ev) {
+        if (resolved) return;
+        const target = ev.target;
+        if (target === el) {
+          resolved = true; cleanup();
+          resolve({ type: 'correct' });
+          return;
+        }
+        for (let i = 0; i < allDots.length; i++) {
+          if (allDots[i].el === target) {
+            resolved = true; cleanup();
+            resolve({ type: 'wrong' });
+            return;
+          }
+        }
+        // Click on background or non-dot — ignore.
+      }
+      const timer = setTimeout(() => {
+        if (resolved) return;
+        resolved = true; cleanup();
+        resolve({ type: 'correct' });
+      }, 5000);
+      // Capture phase so we beat the global click handler.
+      document.addEventListener('click', onClick, true);
+    });
   }
 
   // Dot 1 only — full personality:

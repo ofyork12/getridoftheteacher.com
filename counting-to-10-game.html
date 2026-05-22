@@ -2070,43 +2070,69 @@
     }
   });
 
-  // Dots 2-10:
+  // Dots 2-10 placement wait.
   //   0-3s:  grace, sits still with thin black border
-  //   3-8s:  slow black breathing (3.6-sec cycle, half the old speed)
+  //   3-8s:  slow black breathing (3.6-sec cycle)
   //   8-13s: black/red flash
   //   13-18s: solid red wall
   //   18s:   auto-resolve — caller's recolorAll paints the cluster the new
   //          count's color with a black border
-  // Tap any time short-circuits and the recolor happens immediately.
-  async function waitForDotTap(dot) {
-    const el = dot.el;
-    let cleared = false;
-    const t1 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.add('wait-dot');
-    }, 3000);
-    const t2 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.remove('wait-dot');
-      el.classList.add('wait-dot-warn');
-    }, 8000);
-    const t3 = setTimeout(() => {
-      if (cleared) return;
-      el.classList.remove('wait-dot-warn');
-      el.classList.add('wait-dot-urgent');
-    }, 13000);
-    const t4 = setTimeout(() => {
-      if (cleared) return;
-      if (tapResolve) { const r = tapResolve; tapResolve = null; r(); }
-      else { tapsPending++; }
-    }, 18000);
-    try {
-      await waitForTap();
-    } finally {
-      cleared = true;
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
-      el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
-    }
+  //
+  // Click on the active (breathing) dot → resolve. Click on any OTHER
+  // existing dot (the wrong target) → whiten all currently-colored dots,
+  // set count display to 0, say "zero" — the kid has to actually find the
+  // breathing dot. Background clicks are ignored.
+  function waitForDotTap(dot) {
+    return new Promise((resolve) => {
+      const el = dot.el;
+      let resolved = false;
+      function cleanup() {
+        el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+        document.removeEventListener('click', onClick, true);
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4);
+      }
+      function onClick(ev) {
+        if (resolved) return;
+        const target = ev.target;
+        if (target === el) {
+          ev.stopPropagation();
+          resolved = true; cleanup(); resolve();
+          return;
+        }
+        // Tap on another dot in the cluster — wrong target. Whiten the
+        // other (already-colored) dots, announce "zero". The active dot
+        // keeps breathing; the kid has to find it.
+        const otherDots = Object.values(dotsById).filter(d => d.el !== el);
+        for (const od of otherDots) {
+          if (od.el === target) {
+            ev.stopPropagation();
+            for (const w of otherDots) w.el.setAttribute('fill', '#ffffff');
+            setNum(0);
+            return;
+          }
+        }
+        // Click on the background, equation digit, etc. — ignore.
+      }
+      const t1 = setTimeout(() => {
+        if (resolved) return;
+        el.classList.add('wait-dot');
+      }, 3000);
+      const t2 = setTimeout(() => {
+        if (resolved) return;
+        el.classList.remove('wait-dot');
+        el.classList.add('wait-dot-warn');
+      }, 8000);
+      const t3 = setTimeout(() => {
+        if (resolved) return;
+        el.classList.remove('wait-dot-warn');
+        el.classList.add('wait-dot-urgent');
+      }, 13000);
+      const t4 = setTimeout(() => {
+        if (resolved) return;
+        resolved = true; cleanup(); resolve();
+      }, 18000);
+      document.addEventListener('click', onClick, true);
+    });
   }
 
   // Straight-up hop with physics decay — three impacts then settle, pause,

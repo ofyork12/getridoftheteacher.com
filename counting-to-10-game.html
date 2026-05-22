@@ -1946,15 +1946,28 @@
 
     await sleep(900);
 
-    // Scale the whole cluster up around its centroid so the kid can poke
-    // the dots more easily. 1.3x = roughly 30% bigger.
-    let centroidX = 0, centroidY = 0;
-    for (const dt of dots) { centroidX += dt.cx; centroidY += dt.cy; }
+    // Scale the cluster up for easier poking. Anchor the scale at the
+    // BOTTOM of the bottom row so the dots stay sitting on the floor (the
+    // horizontal line). Apply the same transform to the tenTriangle
+    // polygon outline so it scales with the dots instead of staying small.
+    // Allow the SVG to render outside its viewBox so the top of the
+    // bigger cluster can extend up toward the digit at the top of the page.
+    let centroidX = 0, bottomCy = -Infinity;
+    for (const dt of dots) {
+      centroidX += dt.cx;
+      if (dt.cy > bottomCy) bottomCy = dt.cy;
+    }
     centroidX /= dots.length;
-    centroidY /= dots.length;
-    const SCALE = 1.3;
-    dotGroup.setAttribute('transform',
-      `translate(${(centroidX * (1 - SCALE)).toFixed(2)},${(centroidY * (1 - SCALE)).toFixed(2)}) scale(${SCALE})`);
+    const anchorY = bottomCy + DOT_R;   // bottom edge of bottom row
+    const SCALE = 1.5;
+    const transform =
+      `translate(${(centroidX * (1 - SCALE)).toFixed(2)},${(anchorY * (1 - SCALE)).toFixed(2)}) scale(${SCALE})`;
+    dotGroup.setAttribute('transform', transform);
+    const tri = document.getElementById('tenTriangle');
+    if (tri) tri.setAttribute('transform', transform);
+    // Let the cluster reach up beyond the SVG's viewBox.
+    const svg = document.getElementById('playSvg');
+    if (svg) svg.style.overflow = 'visible';
 
     // Recolor every dot to WHITE first.
     for (const dt of dots) {

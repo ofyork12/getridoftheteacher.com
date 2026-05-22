@@ -65,33 +65,30 @@
     text-align: center; font-size: 2.2vh; font-weight: 600;
     color: #888; letter-spacing: 0.25em;
   }
-  #tapPrompt {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 191, 73, 0.95);
-    color: #222;
-    font-family: 'Nunito', sans-serif;
-    font-weight: 800;
-    font-size: 3.2vh;
-    padding: 14px 28px;
-    border-radius: 999px;
-    box-shadow: 0 6px 0 #c89432, 0 12px 24px rgba(0,0,0,0.2);
-    z-index: 200;
-    display: none;
-    pointer-events: none;
-    animation: tapPulse 1.1s ease-in-out infinite;
+  /* Wait states for the white dot. Pulses the stroke width "bold / not bold"
+     in three escalating phases: black glow (0-10s), black/red flash (10-20s),
+     solid red urgent pulse (20s+). The kid taps anywhere to advance. */
+  @keyframes dotGlowBlack {
+    0%, 100% { stroke-width: 0.8; }
+    50%      { stroke-width: 3.2; }
   }
-  @keyframes tapPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50%      { transform: translate(-50%, -50%) scale(1.08); }
+  @keyframes dotGlowFlash {
+    0%   { stroke: #000;    stroke-width: 0.8; }
+    50%  { stroke: #d92525; stroke-width: 3.2; }
+    100% { stroke: #000;    stroke-width: 0.8; }
   }
+  @keyframes dotGlowRed {
+    0%, 100% { stroke-width: 1.0; }
+    50%      { stroke-width: 3.8; }
+  }
+  .wait-dot         { stroke: #000;    animation: dotGlowBlack 1.4s ease-in-out infinite; }
+  .wait-dot-warn    {                  animation: dotGlowFlash 0.95s ease-in-out infinite; }
+  .wait-dot-urgent  { stroke: #d92525; animation: dotGlowRed   0.7s  ease-in-out infinite; }
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage">
-  <div id="tapPrompt">Tap to count!</div>
   <div class="brand">✦ ColorMyMath ✦</div>
 
   <div class="equation">
@@ -610,7 +607,7 @@
     const dot = addDot(id, startX, startY, colorName);
     const origFill = dot.el.getAttribute('fill');
     dot.el.setAttribute('fill', '#ffffff');
-    dot.el.setAttribute('stroke', '#999');
+    dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '1.2');
     await sleep(150);
     const angleRef = dot.angleRef;
@@ -631,8 +628,7 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, targetX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = targetX; dot.cy = DOT_REST_Y;
 
-    showTapPrompt('Tap the white dot!');
-    await waitForTap();
+    await waitForTapOnDot(dot);
     dot.el.setAttribute('fill', origFill);
     dot.el.removeAttribute('stroke');
     dot.el.removeAttribute('stroke-width');
@@ -960,7 +956,7 @@
     const dot = addDot(id, startX, startY, colorName);
     const origFill = dot.el.getAttribute('fill');
     dot.el.setAttribute('fill', '#ffffff');
-    dot.el.setAttribute('stroke', '#999');
+    dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '1.2');
     await sleep(150);
     const angleRef = dot.angleRef;
@@ -981,8 +977,7 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, stopX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = stopX; dot.cy = DOT_REST_Y;
 
-    showTapPrompt('Tap the white dot!');
-    await waitForTap();
+    await waitForTapOnDot(dot);
     dot.el.setAttribute('fill', origFill);
     dot.el.removeAttribute('stroke');
     dot.el.removeAttribute('stroke-width');
@@ -1006,7 +1001,7 @@
     const dot = addDot(id, startX, startY, colorName);
     const origFill = dot.el.getAttribute('fill');
     dot.el.setAttribute('fill', '#ffffff');
-    dot.el.setAttribute('stroke', '#999');
+    dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '1.2');
     await sleep(150);
     const angleRef = dot.angleRef;
@@ -1024,8 +1019,7 @@
                            finalLandX, finalLandY, 900, angleRef, peakLift);
     dot.cx = finalLandX; dot.cy = finalLandY;
 
-    showTapPrompt('Tap the white dot!');
-    await waitForTap();
+    await waitForTapOnDot(dot);
     dot.el.setAttribute('fill', origFill);
     dot.el.removeAttribute('stroke');
     dot.el.removeAttribute('stroke-width');
@@ -2005,21 +1999,40 @@
     }
     if (tapResolve) {
       const r = tapResolve; tapResolve = null;
-      hideTapPrompt();
       r();
     } else {
       tapsPending++;
     }
   });
-  function showTapPrompt(msg) {
-    const el = document.getElementById('tapPrompt');
-    if (!el) return;
-    el.textContent = msg || 'Tap!';
-    el.style.display = 'block';
-  }
-  function hideTapPrompt() {
-    const el = document.getElementById('tapPrompt');
-    if (el) el.style.display = 'none';
+
+  // Wait for a tap while the given dot is glowing. The outline starts as a
+  // pulsing black "bold/not bold" glow; after 10s it flashes between black and
+  // red; after 20s it stays solid red, still pulsing — keeps challenging the
+  // kid to tap until they do.
+  async function waitForTapOnDot(dot) {
+    const el = dot.el;
+    // Strip any inline stroke that would override the CSS animation.
+    el.removeAttribute('stroke');
+    el.removeAttribute('stroke-width');
+    el.classList.add('wait-dot');
+    let cleared = false;
+    const t1 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot');
+      el.classList.add('wait-dot-warn');
+    }, 10000);
+    const t2 = setTimeout(() => {
+      if (cleared) return;
+      el.classList.remove('wait-dot-warn');
+      el.classList.add('wait-dot-urgent');
+    }, 20000);
+    try {
+      await waitForTap();
+    } finally {
+      cleared = true;
+      clearTimeout(t1); clearTimeout(t2);
+      el.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+    }
   }
 
   async function play() {
@@ -2034,18 +2047,13 @@
       setInitialStairs();
       await sleep(400);
 
-      // Each step's roll-in pauses for a tap to recolor the white dot,
-      // so play() runs straight through without extra waits.
+      // Each step's roll-in pauses (with the glowing-outline prompt) for a
+      // tap to recolor the white dot, so play() runs straight through.
       await step1();
       for (let n = 2; n <= 10; n++) {
         await stepN(n);
       }
-
-      // Pause once more before the final count-up.
-      showTapPrompt('Tap to count them all!');
-      await waitForTap();
       await countUp10();
-      showTapPrompt('Great job!');
     } catch (err) {
       console.error('ERROR:', err);
       const errDiv = document.createElement('div');

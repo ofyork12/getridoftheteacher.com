@@ -1990,43 +1990,97 @@
     }
     await sleep(900);
 
-    // Linear fill: each iteration fills the next-in-reading-order dot. The
-    // kid can tap ANY dot to advance — the active dot (dots[i]) is always
-    // the next one to be filled. No wrong-tap back-up.
-    for (let i = 0; i < dots.length; i++) {
-      const dt = dots[i];
-      const n = i + 1;
-      const color = COLORS[NUMBER_COLOR[n]];
+    // Toggle-based fill (matches placement behavior). Each click on any dot
+    // toggles its colored/white state. The count is the total of currently
+    // colored dots. The cluster recolors to NUMBER_COLOR[count]. The number
+    // labels (1, 2, 3, ...) are reassigned in reading order over the
+    // currently colored dots — they are not bound to specific dots. The kid
+    // can fill any dots in any order; the topmost colored one always shows
+    // "1", the next "2", and so on.
+    function isWhite(dot) {
+      const f = dot.el.getAttribute('fill');
+      return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
+    }
+    const numTexts = new Array(dots.length).fill(null);
 
-      await waitForCountAction(dt, dots);
-
-      // Recolor all counted-so-far dots to the current count's color.
-      for (let j = 0; j <= i; j++) dots[j].el.setAttribute('fill', color);
-
-      // Inscribe the count numeral inside the just-filled dot.
+    function makeNumberText(dot, number) {
       const t = document.createElementNS(SVG_NS, 'text');
-      t.setAttribute('x', dt.cx);
-      t.setAttribute('y', dt.cy);
+      t.setAttribute('x', dot.cx);
+      t.setAttribute('y', dot.cy);
       t.setAttribute('text-anchor', 'middle');
       t.setAttribute('dominant-baseline', 'central');
       t.setAttribute('font-family', 'Nunito, sans-serif');
       t.setAttribute('font-weight', '800');
-      t.setAttribute('font-size', n === 10 ? '20' : '26');
+      t.setAttribute('font-size', number === 10 ? '20' : '26');
       t.setAttribute('fill', '#ffffff');
       t.setAttribute('stroke', '#000');
       t.setAttribute('stroke-width', '0.8');
       t.setAttribute('paint-order', 'stroke');
       t.style.pointerEvents = 'none';
-      t.style.transformOrigin = `${dt.cx}px ${dt.cy}px`;
+      t.style.transformOrigin = `${dot.cx}px ${dot.cy}px`;
       t.style.transformBox = 'fill-box';
       t.style.transform = 'scale(0)';
       t.style.transition = 'transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      t.textContent = String(n);
+      t.textContent = String(number);
       dotGroup.appendChild(t);
       requestAnimationFrame(() => { t.style.transform = 'scale(1)'; });
+      return t;
+    }
 
-      setNum(n);
-      await sleep(500);
+    function redrawCluster() {
+      const colored = [];
+      for (let i = 0; i < dots.length; i++) {
+        if (!isWhite(dots[i])) colored.push(i);
+      }
+      const count = colored.length;
+      // Recolor all currently colored dots to NUMBER_COLOR[count].
+      if (count > 0) {
+        const newColor = COLORS[NUMBER_COLOR[count]];
+        for (const idx of colored) dots[idx].el.setAttribute('fill', newColor);
+      }
+      // Remove number texts from any dot that no longer should have one.
+      for (let i = 0; i < dots.length; i++) {
+        if (isWhite(dots[i]) && numTexts[i]) {
+          numTexts[i].remove();
+          numTexts[i] = null;
+        }
+      }
+      // Assign numbers 1..count to the colored dots in reading order. Update
+      // existing text elements where possible so they don't pop in/out on
+      // every toggle.
+      colored.forEach((dotIdx, k) => {
+        const number = k + 1;
+        if (numTexts[dotIdx]) {
+          numTexts[dotIdx].textContent = String(number);
+          numTexts[dotIdx].setAttribute('font-size', number === 10 ? '20' : '26');
+        } else {
+          numTexts[dotIdx] = makeNumberText(dots[dotIdx], number);
+        }
+      });
+      setNum(count);
+      return count;
+    }
+
+    while (true) {
+      // Active = next-in-reading-order unfilled dot (the one that breathes).
+      let activeDot = null;
+      for (let i = 0; i < dots.length; i++) {
+        if (isWhite(dots[i])) { activeDot = dots[i]; break; }
+      }
+      if (!activeDot) break;   // all colored, done
+
+      const tapped = await waitForCountAction(activeDot, dots);
+
+      // Toggle the tapped dot. Placeholder fill — redrawCluster overwrites
+      // it with the new cluster color.
+      if (isWhite(tapped)) {
+        tapped.el.setAttribute('fill', '#cccccc');
+      } else {
+        tapped.el.setAttribute('fill', '#ffffff');
+      }
+
+      redrawCluster();
+      await sleep(300);
     }
   }
 
@@ -2241,11 +2295,12 @@
     requestAnimationFrame(step);
   }
 
-  // Count-up phase: the "active" dot (next in reading order) breathes gently.
-  // Tap on ANY dot in the cluster advances the count — the active dot (NOT
-  // necessarily the one tapped) gets filled. The cluster always fills top
-  // -> bottom, left -> right regardless of which dot the kid touched.
-  // 5-sec timeout also advances. Background clicks are ignored.
+  // Count-up phase: the "active" dot (next unfilled in reading order) breathes.
+  // Tap on ANY dot in the cluster resolves with that dot — the caller toggles
+  // it (colored <-> white). The cluster recolors to NUMBER_COLOR[count] and
+  // the number labels reshuffle so the topmost colored dot is "1", next "2",
+  // etc. 5-sec timeout resolves with the active dot (default forward step).
+  // Background clicks are ignored.
   function waitForCountAction(activeDot, allDots) {
     const el = activeDot.el;
     el.classList.add('wait-dot-first');
@@ -2262,7 +2317,7 @@
         for (let i = 0; i < allDots.length; i++) {
           if (allDots[i].el === target) {
             resolved = true; cleanup();
-            resolve();
+            resolve(allDots[i]);
             return;
           }
         }
@@ -2271,7 +2326,7 @@
       const timer = setTimeout(() => {
         if (resolved) return;
         resolved = true; cleanup();
-        resolve();
+        resolve(activeDot);   // timeout toggles the active dot (forward fill)
       }, 5000);
       // Capture phase so we beat the global click handler.
       document.addEventListener('click', onClick, true);

@@ -2079,19 +2079,20 @@
   //          count's color
   //
   // Click on the active (breathing) dot → resolve, step advances.
-  // Click on a different already-colored dot → SWAP roles: the clicked
-  //   dot becomes the new white-breathing one, and the previously-active
-  //   dot takes on the clicked dot's color. The count stays the same.
+  // Click on any OTHER dot in the cluster → toggle that dot's state. If it
+  //   was colored, it goes white (uncounted). If it was white (and not the
+  //   active breathing one), it gets added back to the count. Either way,
+  //   the remaining colored dots recount and recolor to the new count's
+  //   color, and the digit/audio updates. The active breathing dot itself
+  //   never changes — only the OTHER dots toggle.
   // Background clicks are ignored.
   function waitForDotTap(dot) {
     return new Promise((resolve) => {
-      let activeEl = dot.el;
+      const activeEl = dot.el;
       let resolved = false;
-      function currentPhaseClass() {
-        if (activeEl.classList.contains('wait-dot-urgent')) return 'wait-dot-urgent';
-        if (activeEl.classList.contains('wait-dot-warn'))   return 'wait-dot-warn';
-        if (activeEl.classList.contains('wait-dot'))        return 'wait-dot';
-        return null;
+      function isWhite(el) {
+        const f = el.getAttribute('fill');
+        return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
       }
       function cleanup() {
         activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
@@ -2107,26 +2108,24 @@
           resolved = true; cleanup(); resolve();
           return;
         }
-        // Wrong dot in cluster — swap: clicked dot becomes new active,
-        // previously-active becomes a counted dot with the clicked dot's color.
         const otherDots = Object.values(dotsById).filter(d => d.el !== activeEl);
         for (const od of otherDots) {
           if (od.el === target) {
             ev.stopPropagation();
-            const clickedColor = od.el.getAttribute('fill');
-            // Previously-active inherits the clicked dot's color and full border.
-            activeEl.setAttribute('fill', clickedColor);
-            activeEl.setAttribute('stroke', '#000');
-            activeEl.setAttribute('stroke-width', '2');
-            // Clicked dot becomes the new white-breathing active.
-            od.el.setAttribute('fill', '#ffffff');
-            od.el.setAttribute('stroke', '#000');
-            od.el.setAttribute('stroke-width', '1.5');
-            // Move the current wait phase class over so visual state is preserved.
-            const phase = currentPhaseClass();
-            activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
-            if (phase) od.el.classList.add(phase);
-            activeEl = od.el;
+            // Toggle the clicked dot. After the toggle, recount all NON-active
+            // dots that are colored, and paint them the new count's color.
+            const wasColored = !isWhite(od.el);
+            const stillColored = otherDots.filter(d =>
+              wasColored ? (d.el !== od.el && !isWhite(d.el))
+                         : (d.el === od.el || !isWhite(d.el))
+            );
+            const newCount = stillColored.length;
+            if (wasColored) od.el.setAttribute('fill', '#ffffff');
+            if (newCount > 0) {
+              const newColor = COLORS[NUMBER_COLOR[newCount]];
+              for (const c of stillColored) c.el.setAttribute('fill', newColor);
+            }
+            setNum(newCount);
             return;
           }
         }

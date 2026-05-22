@@ -1946,28 +1946,42 @@
 
     await sleep(900);
 
-    // Scale the cluster up for easier poking. Anchor the scale at the
-    // BOTTOM of the bottom row so the dots stay sitting on the floor (the
-    // horizontal line). Apply the same transform to the tenTriangle
-    // polygon outline so it scales with the dots instead of staying small.
-    // Allow the SVG to render outside its viewBox so the top of the
-    // bigger cluster can extend up toward the digit at the top of the page.
+    // Reflow the page layout for the count-up phase:
+    //   - Flatten the ramp (no step on the left).
+    //   - Move the floor to the very bottom of the viewBox.
+    //   - Move the play-area down so the big triangle doesn't reach the digit.
+    //   - Move the number line down (closer to the floor).
+    //   - Center the equation digit horizontally.
+    const ramp = document.getElementById('rampPath');
+    if (ramp) ramp.setAttribute('d', 'M -120,200 L 380,200');
+    const playArea = document.getElementById('playArea');
+    if (playArea) playArea.style.top = '22%';
+    const nlw = document.querySelector('.number-line-wrap');
+    if (nlw) nlw.style.bottom = '12%';
+    lockedDigitX = 80;   // viewBox horizontal center, so setNum recenters
+    const eq = document.querySelector('.equation');
+    if (eq) eq.style.left = '50%';
+
+    // Scale + center the cluster:
+    //   - bottom row sits on the new floor (y = 200) with 1.25 clearance
+    //   - cluster centered at viewBox x = 80 (horizontal middle)
+    //   - SCALE = 1.5
+    // Apply the same transform to tenTriangle so the polygon outline scales.
     let centroidX = 0, bottomCy = -Infinity;
     for (const dt of dots) {
       centroidX += dt.cx;
       if (dt.cy > bottomCy) bottomCy = dt.cy;
     }
     centroidX /= dots.length;
-    const anchorY = bottomCy + DOT_R;   // bottom edge of bottom row
     const SCALE = 1.5;
-    const transform =
-      `translate(${(centroidX * (1 - SCALE)).toFixed(2)},${(anchorY * (1 - SCALE)).toFixed(2)}) scale(${SCALE})`;
+    const NEW_FLOOR_Y = 200;
+    const NEW_CENTER_X = 80;
+    const tx = NEW_CENTER_X - SCALE * centroidX;
+    const ty = (NEW_FLOOR_Y - 1.25) - SCALE * (bottomCy + DOT_R);
+    const transform = `translate(${tx.toFixed(2)},${ty.toFixed(2)}) scale(${SCALE})`;
     dotGroup.setAttribute('transform', transform);
     const tri = document.getElementById('tenTriangle');
     if (tri) tri.setAttribute('transform', transform);
-    // Let the cluster reach up beyond the SVG's viewBox.
-    const svg = document.getElementById('playSvg');
-    if (svg) svg.style.overflow = 'visible';
 
     // Recolor every dot to WHITE first.
     for (const dt of dots) {

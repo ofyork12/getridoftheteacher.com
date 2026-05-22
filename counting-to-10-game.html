@@ -974,16 +974,12 @@
   }
 
   // Roll new dot in from the LEFT, stopping at stopX on the floor.
-  // GAME MODE: white roll-in, tap to recolor, then return.
+  // Robot mode (dots 2-10): rolls in with its natural color, no wait.
   async function rollDotInToStopX(id, stopX, colorName) {
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot = addDot(id, startX, startY, colorName);
-    const origFill = dot.el.getAttribute('fill');
-    dot.el.setAttribute('fill', '#ffffff');
-    dot.el.setAttribute('stroke', '#000');
-    dot.el.setAttribute('stroke-width', '1.2');
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -1003,11 +999,6 @@
     await animateBallistic(dot.el, secondBounceX, DOT_REST_Y, stopX, DOT_REST_Y, 240, angleRef, 18);
     dot.cx = stopX; dot.cy = DOT_REST_Y;
 
-    await waitForTapOnDotSlow(dot);
-    dot.el.setAttribute('fill', origFill);
-    dot.el.setAttribute('stroke', '#000');
-    dot.el.setAttribute('stroke-width', '2');
-
     return dot;
   }
 
@@ -1025,10 +1016,6 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot = addDot(id, startX, startY, colorName);
-    const origFill = dot.el.getAttribute('fill');
-    dot.el.setAttribute('fill', '#ffffff');
-    dot.el.setAttribute('stroke', '#000');
-    dot.el.setAttribute('stroke-width', '1.2');
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -1044,11 +1031,6 @@
     await animateBallistic(dot.el, firstBounceX, DOT_REST_Y,
                            finalLandX, finalLandY, 900, angleRef, peakLift);
     dot.cx = finalLandX; dot.cy = finalLandY;
-
-    await waitForTapOnDotSlow(dot);
-    dot.el.setAttribute('fill', origFill);
-    dot.el.setAttribute('stroke', '#000');
-    dot.el.setAttribute('stroke-width', '2');
 
     return dot;
   }
@@ -1170,13 +1152,6 @@
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
     const dot4 = addDot('d4', startX, startY, NUMBER_COLOR[4]);
-    // GAME MODE: dot4 enters white with a black border; it'll recolor to
-    // green only after the kid taps (handled below by waitForTapOnDotSlow
-    // + the existing recolorAll).
-    const dot4OrigFill = dot4.el.getAttribute('fill');
-    dot4.el.setAttribute('fill', '#ffffff');
-    dot4.el.setAttribute('stroke', '#000');
-    dot4.el.setAttribute('stroke-width', '1.5');
     await sleep(150);
     const angleRef = dot4.angleRef;
 
@@ -1214,13 +1189,6 @@
     await Promise.all([dot4FinalArc, dot3Roll]);
     dot4.cx = sqTopLeft.x; dot4.cy = sqTopLeft.y;
     dot3.cx = sqTopRight.x; dot3.cy = sqTopRight.y;
-
-    // GAME MODE: dot4 is sitting white at top-left. Wait for the kid to
-    // tap, then the recolorAll below paints all four dots green together.
-    await waitForTapOnDotSlow(dot4);
-    dot4.el.setAttribute('fill', dot4OrigFill);
-    dot4.el.setAttribute('stroke', '#000');
-    dot4.el.setAttribute('stroke-width', '2');
 
     recolorAll([dot1.el, dot2.el, dot3.el, dot4.el], NUMBER_COLOR[4]);
     setNum(4);

@@ -83,6 +83,25 @@
     60% { transform: scale(1.4); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
   }
+  /* Wait-to-tap glow on the active untapped dot.  Ported from
+     counting-to-10-game.html.  3s slow black breathing -> 5s black/red
+     flash -> 5s urgent red pulse -> auto-fill at ~18s total. */
+  @keyframes dotGlowBlack {
+    0%, 100% { stroke-width: 1.5; stroke-opacity: 0.55; }
+    50%      { stroke-width: 4.0; stroke-opacity: 1.0;  }
+  }
+  @keyframes dotGlowFlash {
+    0%   { stroke: #000;    stroke-width: 1.5; stroke-opacity: 0.65; }
+    50%  { stroke: #d92525; stroke-width: 4.0; stroke-opacity: 1.0;  }
+    100% { stroke: #000;    stroke-width: 1.5; stroke-opacity: 0.65; }
+  }
+  @keyframes dotGlowRed {
+    0%, 100% { stroke-width: 3.0; }
+    50%      { stroke-width: 4.5; }
+  }
+  .wait-dot        { stroke: #000;    animation: dotGlowBlack 3.6s ease-in-out infinite; }
+  .wait-dot-warn   {                  animation: dotGlowFlash 1.2s ease-in-out infinite; }
+  .wait-dot-urgent { stroke: #d92525; animation: dotGlowRed   0.9s ease-in-out infinite; }
   .play-area { position: absolute; top: 26%; left: 0; right: 0; height: 36%; }
   .play-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
   .number-line-wrap { position: absolute; bottom: 22%; left: 0; right: 0; padding: 0 2%; }
@@ -513,10 +532,80 @@
   let activeTarget  = 0;    // count needed to finish the step
   let clickOrder    = [];   // indices into activeDots, in tap order
   let countResolve  = null;
+  // "Wait to tap" glow + auto-fill state.  Only ONE untapped dot is
+  // emphasized at a time (the next-in-reading-order one).
+  let waitDotEl     = null;     // the SVG circle currently glowing
+  let waitTimers    = [];       // timer ids to clear when the dot is tapped
 
   function isWhiteDot(dot) {
     const f = dot.el.getAttribute('fill');
     return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
+  }
+
+  function clearActiveWait() {
+    if (waitDotEl) {
+      waitDotEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+      waitDotEl = null;
+    }
+    waitTimers.forEach(t => clearTimeout(t));
+    waitTimers = [];
+  }
+
+  // Pick the next untapped dot (by index in activeDots) and start its glow.
+  // Schedules escalation (warn -> urgent) and a final auto-fill that
+  // counts the rest of the step for the kid if they don't tap.
+  function startActiveWait() {
+    clearActiveWait();
+    if (activeDots.length === 0) return;
+    let next = -1;
+    for (let i = 0; i < activeDots.length; i++) {
+      if (clickOrder.indexOf(i) === -1) { next = i; break; }
+    }
+    if (next < 0) return;
+    const dot = activeDots[next];
+    waitDotEl = dot.el;
+    waitDotEl.classList.add('wait-dot');
+    waitTimers.push(setTimeout(() => {
+      if (!waitDotEl) return;
+      waitDotEl.classList.remove('wait-dot');
+      waitDotEl.classList.add('wait-dot-warn');
+    }, 8000));
+    waitTimers.push(setTimeout(() => {
+      if (!waitDotEl) return;
+      waitDotEl.classList.remove('wait-dot-warn');
+      waitDotEl.classList.add('wait-dot-urgent');
+    }, 13000));
+    waitTimers.push(setTimeout(() => {
+      // Auto-fill: count the rest of the step for the kid.
+      autoFillRemainder(next);
+    }, 18000));
+  }
+
+  function autoFillRemainder(startIdx) {
+    if (activeDots.length === 0 || !countResolve) return;
+    // Tap the active dot first, then the rest in order.
+    const remaining = [];
+    if (clickOrder.indexOf(startIdx) === -1) remaining.push(startIdx);
+    for (let i = 0; i < activeDots.length; i++) {
+      if (i !== startIdx && clickOrder.indexOf(i) === -1) remaining.push(i);
+    }
+    // Apply them all so the count hits target.
+    for (const idx of remaining) clickOrder.push(idx);
+    const count = clickOrder.length;
+    for (const d of activeDots) d.el.setAttribute('fill', '#ffffff');
+    if (count > 0) {
+      const c = COLORS[NUMBER_COLOR[Math.min(count, activeTarget)]];
+      for (const idx of clickOrder) activeDots[idx].el.setAttribute('fill', c);
+    }
+    clearActiveWait();
+    if (countResolve) {
+      const r = countResolve;
+      countResolve = null;
+      activeDots   = [];
+      activeTarget = 0;
+      clickOrder   = [];
+      r();
+    }
   }
 
   // Start a counting step.  Resolves when the kid has tapped `target`
@@ -527,6 +616,7 @@
       activeTarget = target;
       clickOrder   = [];
       countResolve = resolve;
+      startActiveWait();   // begin glowing the first untapped dot
     });
   }
 
@@ -538,6 +628,9 @@
       if (activeDots[i].el === ev.target) { tappedIdx = i; break; }
     }
     if (tappedIdx < 0) return;   // ignore taps on background / other dots
+
+    // Clear wait-glow / timers before mutating the cluster state.
+    clearActiveWait();
 
     if (isWhiteDot(activeDots[tappedIdx])) {
       if (clickOrder.indexOf(tappedIdx) === -1) clickOrder.push(tappedIdx);
@@ -561,6 +654,9 @@
       activeTarget = 0;
       clickOrder   = [];
       r();
+    } else {
+      // More dots still to fill: re-arm the wait glow on the next one.
+      startActiveWait();
     }
   }
 

@@ -110,12 +110,12 @@
   .perfectbox .score-row { justify-content: flex-start; }
   .score-row { display: flex; align-items: center; gap: 0.6em; justify-content: flex-end; }
   .score-label {
-    font-size: 1.5vh; font-weight: 600; color: #888;
+    font-size: 2.6vh; font-weight: 700; color: #555;
     letter-spacing: 0.04em;
   }
   .score-value {
     display: inline-flex; align-items: flex-end;
-    gap: 0.5vh; min-height: 2vh;
+    gap: 0.8vh; min-height: 3.4vh;
   }
   /* Each digit of the number is rendered as a tiny dot-group, ColorMyMath
      digital style (1 = 1 dot, 2 = 2 dots, ..., 0 = ring). Score row uses
@@ -128,13 +128,13 @@
     display: flex; align-items: center; justify-content: center; gap: 0;
   }
   .score-dot {
-    width: 0.6vh; height: 0.6vh;
+    width: 1.2vh; height: 1.2vh;
     border-radius: 50%;
     flex-shrink: 0;
   }
   .score-dot.ring {
     background: transparent !important;
-    border: 1px solid;
+    border: 2px solid;
   }
   .score-dot.spacer { visibility: hidden; }
   .score-value.bw .score-dot { background: #000 !important; }
@@ -149,18 +149,18 @@
 <div class="stage" id="stage">
   <div class="brand">✦ ColorMyMath ✦</div>
 
-  <div class="perfectbox" id="perfectbox">
+<div class="perfectbox" id="perfectbox">
     <div class="score-row">
       <span class="score-label">Perfect</span>
       <span class="score-value" id="perfectValue"></span>
     </div>
-  </div>
-
-  <div class="scorebox" id="scorebox">
     <div class="score-row">
       <span class="score-label">Score</span>
       <span class="score-value" id="scoreValue"></span>
     </div>
+  </div>
+
+  <div class="scorebox" id="scorebox">
     <div class="score-row">
       <span class="score-label">Screen</span>
       <span class="score-value bw" id="screenValue"></span>

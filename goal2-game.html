@@ -1311,9 +1311,12 @@
       lbl.style.transition = 'opacity 0.4s ease';
       dotGroup.appendChild(lbl);
       requestAnimationFrame(() => { lbl.style.opacity = '1'; });
-      await sleep(1200);
+      // Brief beat before the next pair flies in — the kid already
+      // paced the pair by tapping, so the long autoplay hold isn't
+      // needed in game mode.
+      await sleep(450);
     }
-    await sleep(2000);
+    await sleep(1200);
   }
 
 
@@ -1502,18 +1505,57 @@
     return dots.map(d => ({ el: d.el, cx: d.target.x, cy: d.target.y }));
   }
 
+  // Same flight path as flyDotsFromCell, but spawns the dots as WHITE
+  // (empty / no color name) with a black border, and registers them in
+  // dotsById with a unique id.  Used by the game finale: small cluster
+  // flies out of its cell white, the kid taps to color it in.
+  async function flyWhiteDotsFromCell(n, sourceN, targetCx, targetYBot, durationMs, customTargets) {
+    const targets = customTargets || finaleClusterPositions(n, targetCx, targetYBot);
+    const start = cellSpawnPos(sourceN);
+    const created = targets.map((t, i) => {
+      const sx = start.x + (i - (n - 1) / 2) * 1.5;
+      const el = document.createElementNS(SVG_NS, 'circle');
+      el.setAttribute('cx', sx);
+      el.setAttribute('cy', start.y);
+      el.setAttribute('r', FINALE_R * 0.5);
+      el.setAttribute('fill', '#ffffff');
+      el.setAttribute('stroke', '#000');
+      el.setAttribute('stroke-width', '1.5');
+      dotGroup.appendChild(el);
+      return { el, sx, target: t };
+    });
+    const moves = created.map(d =>
+      animateMiniDot(d.el, d.sx, start.y, FINALE_R * 0.5, d.target.x, d.target.y, FINALE_R, durationMs, 12)
+    );
+    await Promise.all(moves);
+    return created.map(d => {
+      const id = 'fw_' + sourceN + '_' + Math.floor(Math.random() * 999999);
+      const rec = { id, el: d.el, cx: d.target.x, cy: d.target.y };
+      dotsById[id] = rec;
+      return rec;
+    });
+  }
+
   // Place one finale pair: smaller cluster on top, larger on bottom.
+  // GAME MODE: the LARGE cluster flies in fully colored, but the SMALL
+  // cluster flies in as WHITE empty dots that the kid must tap to color.
+  // Blocks until every small white dot has been filled.
   async function placeFinalePair(smallN, largeM, smallColor, largeColor, pairCx, smallYBot, largeYBot, narrationId) {
     if (hasAudio(narrationId)) playAudio(narrationId);
     // For pairs with custom saddle/reflected layout, override the smaller
     // cluster's target positions. Falls back to default placement for 3+7.
     const customSmall = finaleSmallTargets(smallN, largeM, pairCx, largeYBot);
-    const [smallDots, largeDots] = await Promise.all([
-      flyDotsFromCell(smallN, smallN, pairCx, smallYBot, smallColor, 1100, customSmall),
-      flyDotsFromCell(largeM, largeM, pairCx, largeYBot, largeColor, 1100)
+    // Large cluster flies in colored; small cluster flies in WHITE.
+    const [largeDots, whiteDots] = await Promise.all([
+      flyDotsFromCell(largeM, largeM, pairCx, largeYBot, largeColor, 1100),
+      flyWhiteDotsFromCell(smallN, smallN, pairCx, smallYBot, 1100, customSmall),
     ]);
-    // All 10 dots of this pair (small + large), for the later triangle morph.
-    return smallDots.concat(largeDots);
+    // Queue the white dots so the next consumeTap() taps color them.
+    pendingWhiteDots  = whiteDots.slice();
+    pendingColorName  = smallColor;
+    await waitForDotsFilled();
+    // All small dots are now colored. Return all 10 records.
+    return whiteDots.concat(largeDots);
   }
 
   // Keep a morphed pair-triangle inside the viewBox: shift the side pairs

@@ -1816,11 +1816,14 @@
     await sleep(150);
     const d10AngleRef = newDot.angleRef;
 
-    await animateRollMove(newDot.el, startX, startY, landings[0].x, landings[0].y,
-                           1100, (t) => t, d10AngleRef);
-    newDot.cx = landings[0].x; newDot.cy = landings[0].y;
+    // Roll past the corner so the ball clears the L's vertical wall before
+    // the fall begins — otherwise the falling ball visually overlaps the wall.
+    const fallStartX = landings[0].x + DOT_R + 5;
+    await animateRollMove(newDot.el, startX, startY, fallStartX, landings[0].y,
+                           1200, (t) => t, d10AngleRef);
+    newDot.cx = fallStartX; newDot.cy = landings[0].y;
 
-    await animateFallOff(newDot.el, landings[0].x, landings[0].y,
+    await animateFallOff(newDot.el, fallStartX, landings[0].y,
                           preContactX, DOT_REST_Y, 600, d10AngleRef);
     newDot.cx = preContactX; newDot.cy = DOT_REST_Y;
 

@@ -2529,68 +2529,72 @@
     clearDots();
 
     const sumN = 2 * n;
-    setEquation(n, '+', n, sumN);
-
-    // Start narration first; visual events below sync to its timeline.
-    const _dblId = 'audio_double_' + n;
-    if (hasAudio(_dblId)) playAudio(_dblId);
-
-    const wt = DOUBLE_WORD_TIMES[n] || [0, 400, 800, 1200, 1600];
-
-    // Pop each equation part on its matching spoken word.
-    setTimeout(() => popPart(eqA),  wt[0]);   // first N
-    setTimeout(() => popPart(eqOp), wt[1]);   // "plus"
-    setTimeout(() => popPart(eqB),  wt[2]);   // second N
-    setTimeout(() => popPart(eqEq), wt[3]);   // "is"
-    setTimeout(() => popPart(eqC),  wt[4]);   // 2N
-
-    // Highlight cell N on the number line when the first "N" is spoken.
-    setTimeout(() => {
-      highlightCell(n);
-      populateNumberLineCell(n);
-    }, wt[0]);
-
     const colorN = NUMBER_COLOR[n];
-    const halfW = clusterHalfWidth(n);
-    // Each cluster's outer-edge meets the other's at CENTER_X.
+
+    // Equation starts blank; we fill in each part as the step progresses.
+    setEquation('', '', '', '');
+
+    // Play the narration ("N plus N is 2N") at the start; the kid taps
+    // at their own pace to fill the right cluster.
+    if (hasAudio('audio_double_' + n)) playAudio('audio_double_' + n);
+
+    // Show the first N (left summand) and highlight cell N below.
+    setEqPart(eqA, n);
+    popPart(eqA);
+    highlightCell(n);
+    populateNumberLineCell(n);
+
+    // Roll the LEFT cluster in, fully colored.
+    const halfW  = clusterHalfWidth(n);
     const offset = halfW;
+    await _rollInCluster(n, colorN, -offset, 1100);
 
-    // Time the cluster roll-in so the two clusters MEET right when "2N"
-    // is spoken — that's also when cell-2N lights up below.
-    const ROLL_MS = 1400;
-    const rollStart = Math.max(0, wt[4] - ROLL_MS);
-    await sleep(rollStart);
+    // Show the "+" between the summands.
+    setEqPart(eqOp, '+');
+    popPart(eqOp);
+    await sleep(250);
 
-    await Promise.all([
-      _rollInCluster(n, colorN, -offset, ROLL_MS),
-      _rollInCluster(n, colorN, +offset, ROLL_MS)
-    ]);
+    // Spawn the RIGHT cluster as WHITE empty dots. The kid taps each
+    // one to color it in.
+    const yBot = CLUSTER_REST_Y;
+    const whiteDots = _spawnWhiteCluster(n, CENTER_X + offset, yBot, 'd' + n);
+    pendingWhiteDots  = whiteDots.slice();
+    pendingColorName  = colorN;
 
-    // As soon as the two clusters TOUCH, recolor everyone to the sum's
-    // color right away (e.g. the two green 4s turn pink the instant they
-    // meet) — before they rearrange into the 2n shape.
+    // Block here until every white dot has been tapped.
+    await waitForDotsFilled();
+
+    // Right side complete — show the second N, then "=", then the sum.
+    setEqPart(eqB, n);
+    popPart(eqB);
+    await sleep(300);
+    setEqPart(eqEq, '=');
+    popPart(eqEq);
+    await sleep(300);
+    setEqPart(eqC, sumN);
+    popPart(eqC);
+
+    // Recolor both clusters to the sum's color and light up cell 2N.
     recolor(Object.values(dotsById), NUMBER_COLOR[sumN]);
     highlightCell(sumN);
     populateNumberLineCell(sumN);
     await sleep(550);
 
-    // Now morph the (already sum-colored) dots into the proper 2n shape.
-    const yBot = CLUSTER_REST_Y;
-    const sumTargets = clusterPositions(sumN, CENTER_X, yBot);
-    const allDots = Object.values(dotsById);
+    // Morph into the canonical 2N shape.
+    const sumTargets    = clusterPositions(sumN, CENTER_X, yBot);
+    const allDots       = Object.values(dotsById);
     const sortedExisting = allDots.slice().sort(_sortByXThenYDesc);
-    const sortedTargets = sumTargets.slice().sort(_sortByXThenYDesc);
-
+    const sortedTargets  = sumTargets.slice().sort(_sortByXThenYDesc);
     const mergeMoves = [];
     for (let i = 0; i < sortedExisting.length; i++) {
       const dot = sortedExisting[i];
-      const t = sortedTargets[i];
+      const t   = sortedTargets[i];
       if (!t) continue;
       const r1 = parseFloat(dot.el.getAttribute('r')) || CLUSTER_R;
       mergeMoves.push(morphMoveDot(dot, dot.cx, dot.cy, r1, t.x, t.y, CLUSTER_R, 500, 0));
     }
     await Promise.all(mergeMoves);
-    await sleep(1200);
+    await sleep(900);
   }
 
   // --- Doubles: 1+1, 2+2, 3+3, 4+4, 5+5 ---

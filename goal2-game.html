@@ -2880,16 +2880,26 @@
     // visually via transparent color + zero font-size + nothing-to-see styles.
     startBtn.textContent = 'Start with sound';
     startBtn.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;border:none;outline:none;cursor:pointer;z-index:1000;padding:0;margin:0;color:transparent;font-size:0;line-height:0;text-indent:-9999px;overflow:hidden;';
-    startBtn.onclick = () => {
-      startBtn.remove();
-      unlockAllAudio();
-      started = true; vclock = 0; _vlast = null;
-      gameStarted = true;
-      // Subsequent clicks anywhere advance the game.
-      document.addEventListener('click', consumeTap);
-      setTimeout(play, 100);
-    };
     document.body.appendChild(startBtn);
+
+    // Single document-level handler.  First click starts the game,
+    // every subsequent click colors the next pending white dot.
+    // More reliable on mobile / inside an iframe than relying on
+    // startBtn.onclick alone.
+    function onAnyTap(ev) {
+      if (!gameStarted) {
+        const sb = document.getElementById('startOverlay');
+        if (sb) sb.remove();
+        unlockAllAudio();
+        started = true; vclock = 0; _vlast = null;
+        gameStarted = true;
+        setTimeout(play, 100);
+        return;
+      }
+      consumeTap(ev);
+    }
+    document.addEventListener('click', onAnyTap);
+    document.addEventListener('touchstart', onAnyTap, { passive: true });
   });
 </script>
 </body>

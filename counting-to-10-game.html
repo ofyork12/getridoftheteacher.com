@@ -102,6 +102,12 @@
     display: flex; flex-direction: column; gap: 0.6vh;
     z-index: 5; pointer-events: none;
   }
+  .perfectbox {
+    position: absolute; top: 1.5%; left: 2.5%;
+    display: flex; flex-direction: column; gap: 0.6vh;
+    z-index: 5; pointer-events: none;
+  }
+  .perfectbox .score-row { justify-content: flex-start; }
   .score-row { display: flex; align-items: center; gap: 0.6em; justify-content: flex-end; }
   .score-label {
     font-size: 1.5vh; font-weight: 600; color: #888;
@@ -142,6 +148,13 @@
 
 <div class="stage" id="stage">
   <div class="brand">✦ ColorMyMath ✦</div>
+
+  <div class="perfectbox" id="perfectbox">
+    <div class="score-row">
+      <span class="score-label">Perfect</span>
+      <span class="score-value" id="perfectValue"></span>
+    </div>
+  </div>
 
   <div class="scorebox" id="scorebox">
     <div class="score-row">
@@ -2127,7 +2140,9 @@
       }
       if (!activeDot) break;   // all colored, done
 
+      startPerfectStep(activeDot);
       const tapped = await waitForCountAction(activeDot, dots);
+      endPerfectStep();
       const tappedIdx = dots.indexOf(tapped);
 
       // Toggle the tapped dot. Placeholder fill — redrawCluster overwrites
@@ -2186,13 +2201,40 @@
   }
 
   // === Scoreboard ===========================================================
-  // Score:  clicks that landed on a dot.
-  // Screen: clicks that hit the screen (anywhere not on a dot).
+  // Score:   clicks that landed on a dot.
+  // Screen:  clicks that hit the screen (anywhere not on a dot).
+  // Perfect: clicks where the user tapped EXACTLY the dot they were supposed
+  //          to tap, with no wrong-dot detours during that step. Goes up only,
+  //          maxes out at the total number of "supposed" clicks in the game.
   // The very first click (which starts the game) is NOT counted.
   let scoreCount = 0;
   let screenCount = 0;
-  const scoreValueEl = document.getElementById('scoreValue');
-  const screenValueEl = document.getElementById('screenValue');
+  let perfectCount = 0;
+  const scoreValueEl   = document.getElementById('scoreValue');
+  const screenValueEl  = document.getElementById('screenValue');
+  const perfectValueEl = document.getElementById('perfectValue');
+
+  // Perfect-step tracking. Each "step" (one of: step1, each placement
+  // step 2-10, each count-up iteration) sets currentExpectedDot to the dot
+  // the kid is supposed to tap. The capture-phase click listener flips
+  // stepClickedExpected when that dot is tapped, and flips stepClean to
+  // false the moment any OTHER dot is tapped during the same step. At step
+  // end, perfect++ iff both: expected was tapped AND nothing else was.
+  let currentExpectedDot = null;
+  let stepClean = true;
+  let stepClickedExpected = false;
+  function startPerfectStep(dot) {
+    currentExpectedDot = dot;
+    stepClean = true;
+    stepClickedExpected = false;
+  }
+  function endPerfectStep() {
+    if (stepClickedExpected && stepClean) {
+      perfectCount++;
+    }
+    currentExpectedDot = null;
+    renderScoreboard();
+  }
 
   // Digital ColorMyMath number rendering: each digit of N is shown as its own
   // little dot-group (1 = 1 dot, 2 = 2 dots, ..., 0 = ring). So 400 becomes
@@ -2243,12 +2285,17 @@
     }
   }
   function renderScoreboard() {
-    if (scoreValueEl)  renderDigitalNumber(scoreValueEl,  scoreCount);
-    if (screenValueEl) renderDigitalNumber(screenValueEl, screenCount);
+    if (scoreValueEl)   renderDigitalNumber(scoreValueEl,   scoreCount);
+    if (screenValueEl)  renderDigitalNumber(screenValueEl,  screenCount);
+    if (perfectValueEl) renderDigitalNumber(perfectValueEl, perfectCount);
   }
   function resetScoreboard() {
     scoreCount = 0;
     screenCount = 0;
+    perfectCount = 0;
+    currentExpectedDot = null;
+    stepClean = true;
+    stepClickedExpected = false;
     renderScoreboard();
   }
   function isDotElement(target) {
@@ -2262,8 +2309,19 @@
   // call stopPropagation (e.g. waitForDotTap consuming the event).
   document.addEventListener('click', (ev) => {
     if (!gameStarted) return;  // first click just starts the game
-    if (isDotElement(ev.target)) scoreCount++;
+    const target = ev.target;
+    const isDot = isDotElement(target);
+    if (isDot) scoreCount++;
     else screenCount++;
+    // Update the per-step "perfect" flags. Only dot clicks influence
+    // perfect — clicks on the background don't earn or taint a step.
+    if (currentExpectedDot && isDot) {
+      if (target === currentExpectedDot.el) {
+        stepClickedExpected = true;
+      } else {
+        stepClean = false;
+      }
+    }
     renderScoreboard();
   }, true);
 
@@ -2296,6 +2354,7 @@
   //
   // Background clicks are ignored.
   function waitForDotTap(dot) {
+    startPerfectStep(dot);
     return new Promise((resolve) => {
       const activeEl = dot.el;
       let resolved = false;
@@ -2303,6 +2362,10 @@
       function isWhite(el) {
         const f = el.getAttribute('fill');
         return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
+      }
+      function finish() {
+        endPerfectStep();
+        resolve();
       }
       function cleanup() {
         activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
@@ -2340,7 +2403,7 @@
             }
             // Step done when every dot in the cluster is colored.
             if (stepComplete) {
-              resolved = true; cleanup(); resolve();
+              resolved = true; cleanup(); finish();
             }
             return;
           }
@@ -2363,7 +2426,7 @@
       }, 13000);
       const t4 = setTimeout(() => {
         if (resolved) return;
-        resolved = true; cleanup(); resolve();
+        resolved = true; cleanup(); finish();
       }, 18000);
       document.addEventListener('click', onClick, true);
     });
@@ -2491,6 +2554,7 @@
     const el = dot.el;
     let cleared = false;
     let stopHopping = null;
+    startPerfectStep(dot);
     const t1 = setTimeout(() => {
       if (cleared) return;
       el.classList.add('wait-dot-first');
@@ -2515,6 +2579,7 @@
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
       el.classList.remove('wait-dot-first');
       if (stopHopping) stopHopping();
+      endPerfectStep();
     }
   }
 

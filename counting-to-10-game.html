@@ -2275,7 +2275,13 @@
             const dot = document.createElement('span');
             dot.className = 'score-dot' + (isZero ? ' ring' : '');
             dot.style.background = color;
-            if (isZero) dot.style.borderColor = color;
+            // Zero renders as an empty ring; the border MUST be visible
+            // (the digit colour for 0 is white, so we override to black
+            // and bump the border weight so 200 reads as "2 ring ring").
+            if (isZero) {
+              dot.style.borderColor = '#000';
+              dot.style.borderWidth = '1.5px';
+            }
             row.appendChild(dot);
           }
         }

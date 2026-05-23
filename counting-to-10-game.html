@@ -99,18 +99,42 @@
   .wait-dot-first  { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
   .scorebox {
     position: absolute; top: 1.5%; right: 2.5%;
-    display: flex; flex-direction: column; gap: 0.2vh;
+    display: flex; flex-direction: column; gap: 0.6vh;
     z-index: 5; pointer-events: none;
-    text-align: right;
   }
-  .score-row { display: flex; align-items: baseline; gap: 0.5em; justify-content: flex-end; }
+  .score-row { display: flex; align-items: center; gap: 0.6em; justify-content: flex-end; }
   .score-label {
-    font-size: 1.7vh; font-weight: 600; color: #888;
+    font-size: 1.5vh; font-weight: 600; color: #888;
     letter-spacing: 0.04em;
   }
   .score-value {
-    font-size: 2.6vh; font-weight: 800; color: #000;
-    min-width: 1.5ch;
+    display: inline-flex; align-items: flex-end;
+    gap: 0.5vh; min-height: 2vh;
+  }
+  /* Each digit of the number is rendered as a tiny dot-group, ColorMyMath
+     digital style (1 = 1 dot, 2 = 2 dots, ..., 0 = ring). Score row uses
+     the per-digit color palette; Screen row uses black/white via .bw. */
+  .score-digit-group {
+    display: inline-flex; flex-direction: column;
+    align-items: center; gap: 0;
+  }
+  .score-digit-row {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+  }
+  .score-dot {
+    width: 0.6vh; height: 0.6vh;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .score-dot.ring {
+    background: transparent !important;
+    border: 1px solid;
+  }
+  .score-dot.spacer { visibility: hidden; }
+  .score-value.bw .score-dot { background: #000 !important; }
+  .score-value.bw .score-dot.ring {
+    background: transparent !important;
+    border-color: #000 !important;
   }
 </style>
 </head>
@@ -122,11 +146,11 @@
   <div class="scorebox" id="scorebox">
     <div class="score-row">
       <span class="score-label">Score</span>
-      <span class="score-value" id="scoreValue">0</span>
+      <span class="score-value" id="scoreValue"></span>
     </div>
     <div class="score-row">
       <span class="score-label">Screen</span>
-      <span class="score-value" id="screenValue">0</span>
+      <span class="score-value bw" id="screenValue"></span>
     </div>
   </div>
 
@@ -2169,9 +2193,58 @@
   let screenCount = 0;
   const scoreValueEl = document.getElementById('scoreValue');
   const screenValueEl = document.getElementById('screenValue');
+
+  // Digital ColorMyMath number rendering: each digit of N is shown as its own
+  // little dot-group (1 = 1 dot, 2 = 2 dots, ..., 0 = ring). So 400 becomes
+  // four green dots, then a ring, then a ring — not 400 individual dots.
+  const DIGIT_COLORS = {
+    0: '#ffffff', 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c',
+    5: '#0066ff', 6: '#7700dd', 7: '#7a3b00', 8: '#ff3fa6', 9: '#38c7ff',
+  };
+  const DIGIT_ARRANGEMENT = {
+    0: [1], 1: [1], 2: [2], 3: [1, 2], 4: [2, 2], 5: [2, 3],
+    6: [1, 2, 3], 7: [2, 3, 2], 8: [3, 'split', 3], 9: [3, 3, 3],
+  };
+  function renderDigitalNumber(container, num) {
+    container.innerHTML = '';
+    const str = String(num);
+    for (const ch of str) {
+      const d = parseInt(ch, 10);
+      if (isNaN(d)) continue;
+      const isZero = d === 0;
+      const color = DIGIT_COLORS[d];
+      const group = document.createElement('span');
+      group.className = 'score-digit-group';
+      for (const rowSpec of DIGIT_ARRANGEMENT[d]) {
+        const row = document.createElement('span');
+        row.className = 'score-digit-row';
+        if (rowSpec === 'split') {
+          const a = document.createElement('span');
+          a.className = 'score-dot';
+          a.style.background = color;
+          const sp = document.createElement('span');
+          sp.className = 'score-dot spacer';
+          const b = document.createElement('span');
+          b.className = 'score-dot';
+          b.style.background = color;
+          row.appendChild(a); row.appendChild(sp); row.appendChild(b);
+        } else {
+          for (let i = 0; i < rowSpec; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'score-dot' + (isZero ? ' ring' : '');
+            dot.style.background = color;
+            if (isZero) dot.style.borderColor = color;
+            row.appendChild(dot);
+          }
+        }
+        group.appendChild(row);
+      }
+      container.appendChild(group);
+    }
+  }
   function renderScoreboard() {
-    if (scoreValueEl)  scoreValueEl.textContent  = String(scoreCount);
-    if (screenValueEl) screenValueEl.textContent = String(screenCount);
+    if (scoreValueEl)  renderDigitalNumber(scoreValueEl,  scoreCount);
+    if (screenValueEl) renderDigitalNumber(screenValueEl, screenCount);
   }
   function resetScoreboard() {
     scoreCount = 0;

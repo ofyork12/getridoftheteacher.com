@@ -500,31 +500,66 @@
   let seekTargetV = 0;
   let audioSilenced = false; // mute audio while skipping
 
-  // === GAME MODE: tap-to-fill =============================================
-  // Each doubles / partition step shows one side already colored and the
-  // other side as WHITE empty dots.  The kid taps to fill the empty side
-  // one dot at a time; when all are filled, the step's resolve fires and
-  // play() continues to the merge animation.
-  let gameStarted = false;
-  let pendingWhiteDots = [];      // FIFO queue of white dots to be filled
-  let pendingColorName = null;    // color the next tap should apply
-  let pendingResolve = null;      // resolves when pendingWhiteDots empties
+  // === GAME MODE: counting-up tap mechanic ================================
+  // Mirrors counting-to-10-game.html.  The kid taps dots to count up:
+  //   first tap   -> ALL clicked dots turn red    (NUMBER_COLOR[1])
+  //   second tap  -> ALL clicked dots turn orange (NUMBER_COLOR[2])
+  //   ...
+  // Tapping an already-colored dot un-counts it (decrements count), and
+  // the remaining clicked dots recolor to the new (lower) count.
+  // When the count reaches the target N, the step's resolve fires.
+  let gameStarted   = false;
+  let activeDots    = [];   // dot records currently in the counting pool
+  let activeTarget  = 0;    // count needed to finish the step
+  let clickOrder    = [];   // indices into activeDots, in tap order
+  let countResolve  = null;
 
-  function waitForDotsFilled() {
+  function isWhiteDot(dot) {
+    const f = dot.el.getAttribute('fill');
+    return !f || f.toLowerCase() === '#ffffff' || f.toLowerCase() === 'white';
+  }
+
+  // Start a counting step.  Resolves when the kid has tapped `target`
+  // distinct dots (no un-toggles outstanding).  Background taps are ignored.
+  function startCount(dots, target) {
     return new Promise(resolve => {
-      if (pendingWhiteDots.length === 0) { resolve(); return; }
-      pendingResolve = resolve;
+      activeDots   = dots.slice();
+      activeTarget = target;
+      clickOrder   = [];
+      countResolve = resolve;
     });
   }
 
   function consumeTap(ev) {
-    if (!gameStarted || pendingWhiteDots.length === 0) return;
-    const dot = pendingWhiteDots.shift();
-    if (dot && dot.el) {
-      dot.el.setAttribute('fill', COLORS[pendingColorName]);
+    if (!gameStarted || activeDots.length === 0) return;
+    // Did the tap land on one of the active dots?
+    let tappedIdx = -1;
+    for (let i = 0; i < activeDots.length; i++) {
+      if (activeDots[i].el === ev.target) { tappedIdx = i; break; }
     }
-    if (pendingWhiteDots.length === 0 && pendingResolve) {
-      const r = pendingResolve; pendingResolve = null;
+    if (tappedIdx < 0) return;   // ignore taps on background / other dots
+
+    if (isWhiteDot(activeDots[tappedIdx])) {
+      if (clickOrder.indexOf(tappedIdx) === -1) clickOrder.push(tappedIdx);
+    } else {
+      const pos = clickOrder.indexOf(tappedIdx);
+      if (pos >= 0) clickOrder.splice(pos, 1);
+    }
+
+    // Recolor: all currently-clicked dots get NUMBER_COLOR[count]; others go white.
+    const count = clickOrder.length;
+    for (const d of activeDots) d.el.setAttribute('fill', '#ffffff');
+    if (count > 0) {
+      const c = COLORS[NUMBER_COLOR[count]];
+      for (const idx of clickOrder) activeDots[idx].el.setAttribute('fill', c);
+    }
+
+    if (count === activeTarget && countResolve) {
+      const r = countResolve;
+      countResolve = null;
+      activeDots   = [];
+      activeTarget = 0;
+      clickOrder   = [];
       r();
     }
   }
@@ -1550,11 +1585,11 @@
       flyDotsFromCell(largeM, largeM, pairCx, largeYBot, largeColor, 1100),
       flyWhiteDotsFromCell(smallN, smallN, pairCx, smallYBot, 1100, customSmall),
     ]);
-    // Queue the white dots so the next consumeTap() taps color them.
-    pendingWhiteDots  = whiteDots.slice();
-    pendingColorName  = smallColor;
-    await waitForDotsFilled();
-    // All small dots are now colored. Return all 10 records.
+    // Kid counts up to smallN by tapping the white dots.  After the
+    // count completes the dots are colored with NUMBER_COLOR[smallN]
+    // (which equals smallColor for the standard 1/2/3/4/5 partitions),
+    // so the visual ends up the right color naturally.
+    await startCount(whiteDots, smallN);
     return whiteDots.concat(largeDots);
   }
 
@@ -2596,15 +2631,13 @@
     popPart(eqOp);
     await sleep(250);
 
-    // Spawn the RIGHT cluster as WHITE empty dots. The kid taps each
-    // one to color it in.
+    // Spawn the RIGHT cluster as WHITE empty dots. The kid counts up
+    // by tapping; each tap recolors ALL clicked dots to NUMBER_COLOR[count].
     const yBot = CLUSTER_REST_Y;
     const whiteDots = _spawnWhiteCluster(n, CENTER_X + offset, yBot, 'd' + n);
-    pendingWhiteDots  = whiteDots.slice();
-    pendingColorName  = colorN;
 
-    // Block here until every white dot has been tapped.
-    await waitForDotsFilled();
+    // Block until the kid has counted up to N.
+    await startCount(whiteDots, n);
 
     // Right side complete — show the second N, then "=", then the sum.
     setEqPart(eqB, n);

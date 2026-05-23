@@ -28,6 +28,14 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   }
+  /* Landscape / laptop screens: use a less-tall aspect ratio so the stage
+     fills more of the available width instead of leaving wide grey margins. */
+  @media (orientation: landscape) and (min-width: 800px) {
+    .stage {
+      width: min(100vw, 75vh);
+      aspect-ratio: 3 / 4;
+    }
+  }
   .equation {
     position: absolute; top: 6%; left: 50%;
     transform: translateX(-50%);        /* center on the .equation's left value */
@@ -1956,7 +1964,7 @@
     //   - Move the number line down (closer to the floor).
     //   - Center the equation digit horizontally.
     const ramp = document.getElementById('rampPath');
-    if (ramp) ramp.setAttribute('d', 'M -120,200 L 380,200');
+    if (ramp) ramp.setAttribute('d', 'M -2000,200 L 2000,200');
     const playArea = document.getElementById('playArea');
     if (playArea) playArea.style.top = '30%';     // push the SVG (and floor) further down
     const nlw = document.querySelector('.number-line-wrap');

@@ -12,6 +12,8 @@
     font-family: 'Nunito', sans-serif;
     overflow: hidden;
     display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;   /* kill the 300ms tap delay on mobile */
+    -webkit-tap-highlight-color: transparent;
   }
   .stage {
     position: relative;
@@ -3027,8 +3029,10 @@
       }
       consumeTap(ev);
     }
+    // Single click listener — using both 'click' and 'touchstart' caused
+    // each tap to fire TWICE on mobile (toggle on, then off ~300ms later),
+    // which made the red flash appear and disappear and broke the count.
     document.addEventListener('click', onAnyTap);
-    document.addEventListener('touchstart', onAnyTap, { passive: true });
   });
 </script>
 </body>

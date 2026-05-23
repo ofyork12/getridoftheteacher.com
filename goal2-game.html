@@ -499,6 +499,57 @@
   let seekActive = false;    // currently fast-forwarding toward a target
   let seekTargetV = 0;
   let audioSilenced = false; // mute audio while skipping
+
+  // === GAME MODE: tap-to-fill =============================================
+  // Each doubles / partition step shows one side already colored and the
+  // other side as WHITE empty dots.  The kid taps to fill the empty side
+  // one dot at a time; when all are filled, the step's resolve fires and
+  // play() continues to the merge animation.
+  let gameStarted = false;
+  let pendingWhiteDots = [];      // FIFO queue of white dots to be filled
+  let pendingColorName = null;    // color the next tap should apply
+  let pendingResolve = null;      // resolves when pendingWhiteDots empties
+
+  function waitForDotsFilled() {
+    return new Promise(resolve => {
+      if (pendingWhiteDots.length === 0) { resolve(); return; }
+      pendingResolve = resolve;
+    });
+  }
+
+  function consumeTap(ev) {
+    if (!gameStarted || pendingWhiteDots.length === 0) return;
+    const dot = pendingWhiteDots.shift();
+    if (dot && dot.el) {
+      dot.el.setAttribute('fill', COLORS[pendingColorName]);
+    }
+    if (pendingWhiteDots.length === 0 && pendingResolve) {
+      const r = pendingResolve; pendingResolve = null;
+      r();
+    }
+  }
+
+  // Spawn n WHITE dots in cluster-shape at (cx, yBot) with a black border.
+  // Returns the dot records in the order they should be filled.
+  function _spawnWhiteCluster(n, cx, yBot, idPrefix) {
+    const positions = clusterPositions(n, cx, yBot);
+    const out = [];
+    for (let i = 0; i < positions.length; i++) {
+      const id = idPrefix + '_' + i + '_' + Math.floor(Math.random() * 99999);
+      const el = document.createElementNS(SVG_NS, 'circle');
+      el.setAttribute('cx', positions[i].x);
+      el.setAttribute('cy', positions[i].y);
+      el.setAttribute('r', CLUSTER_R);
+      el.setAttribute('fill', '#ffffff');
+      el.setAttribute('stroke', '#000');
+      el.setAttribute('stroke-width', '2');
+      dotGroup.appendChild(el);
+      const rec = { id, el, cx: positions[i].x, cy: positions[i].y };
+      dotsById[id] = rec;
+      out.push(rec);
+    }
+    return out;
+  }
   let playGen = 0;           // generation token to cancel a stale play() loop
   const SEEK_SCALE = 30;
   function vnow() { return vclock; }

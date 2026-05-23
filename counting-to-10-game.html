@@ -97,12 +97,38 @@
     50%      { r: 30;   stroke-width: 2.2; stroke-opacity: 1.0;  }
   }
   .wait-dot-first  { stroke: #000;    animation: dotBreatheFirst 3.0s ease-in-out infinite; }
+  .scorebox {
+    position: absolute; top: 1.5%; right: 2.5%;
+    display: flex; flex-direction: column; gap: 0.2vh;
+    z-index: 5; pointer-events: none;
+    text-align: right;
+  }
+  .score-row { display: flex; align-items: baseline; gap: 0.5em; justify-content: flex-end; }
+  .score-label {
+    font-size: 1.7vh; font-weight: 600; color: #888;
+    letter-spacing: 0.04em;
+  }
+  .score-value {
+    font-size: 2.6vh; font-weight: 800; color: #000;
+    min-width: 1.5ch;
+  }
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage">
   <div class="brand">✦ ColorMyMath ✦</div>
+
+  <div class="scorebox" id="scorebox">
+    <div class="score-row">
+      <span class="score-label">Score</span>
+      <span class="score-value" id="scoreValue">0</span>
+    </div>
+    <div class="score-row">
+      <span class="score-label">Screen</span>
+      <span class="score-value" id="screenValue">0</span>
+    </div>
+  </div>
 
   <div class="equation">
     <span class="eq-part" id="eqNum"></span>
@@ -2134,6 +2160,40 @@
       tapResolve = resolve;
     });
   }
+
+  // === Scoreboard ===========================================================
+  // Score:  clicks that landed on a dot.
+  // Screen: clicks that hit the screen (anywhere not on a dot).
+  // The very first click (which starts the game) is NOT counted.
+  let scoreCount = 0;
+  let screenCount = 0;
+  const scoreValueEl = document.getElementById('scoreValue');
+  const screenValueEl = document.getElementById('screenValue');
+  function renderScoreboard() {
+    if (scoreValueEl)  scoreValueEl.textContent  = String(scoreCount);
+    if (screenValueEl) screenValueEl.textContent = String(screenCount);
+  }
+  function resetScoreboard() {
+    scoreCount = 0;
+    screenCount = 0;
+    renderScoreboard();
+  }
+  function isDotElement(target) {
+    if (!target) return false;
+    for (const id in dotsById) {
+      if (dotsById[id] && dotsById[id].el === target) return true;
+    }
+    return false;
+  }
+  // Capture phase so we count every click, even when downstream handlers
+  // call stopPropagation (e.g. waitForDotTap consuming the event).
+  document.addEventListener('click', (ev) => {
+    if (!gameStarted) return;  // first click just starts the game
+    if (isDotElement(ev.target)) scoreCount++;
+    else screenCount++;
+    renderScoreboard();
+  }, true);
+
   document.addEventListener('click', () => {
     if (!gameStarted) {
       gameStarted = true;
@@ -2391,6 +2451,7 @@
     try {
       buildNumberLine();
       clearDots();
+      resetScoreboard();
       lockedDigitX = 96;
       setNum('');
       highlightCell(0);

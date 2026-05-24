@@ -2598,6 +2598,69 @@
     }
   }
 
+  // After the count-up finishes, show a BIG centered scoreboard with
+  // the final Score in ColorMyMath digital dots, plus a separate
+  // Replay button positioned vertically ABOVE it (NOT stacked on
+  // top — the scoreboard stays fully visible).
+  function showEndScreen() {
+    // Remove any stale end-screen elements (e.g., if replay was just clicked).
+    document.getElementById('endScoreboard')?.remove();
+    document.getElementById('replayBtn')?.remove();
+    const stage = document.getElementById('stage');
+
+    // Big centered scoreboard (the "look-at" element).
+    const board = document.createElement('div');
+    board.id = 'endScoreboard';
+    board.style.cssText =
+      'position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);' +
+      'z-index:1000;display:flex;flex-direction:column;align-items:center;' +
+      'gap:2vh;padding:4vh 7vw;background:#ffffff;' +
+      'border:4px solid #000;border-radius:3vh;' +
+      'box-shadow:0 10px 40px rgba(0,0,0,0.35);' +
+      'pointer-events:none;opacity:0;transition:opacity 0.5s ease;';
+    const lbl = document.createElement('div');
+    lbl.textContent = 'SCORE';
+    lbl.style.cssText = 'font-size:5vh;font-weight:800;color:#333;letter-spacing:0.18em;';
+    board.appendChild(lbl);
+    const val = document.createElement('div');
+    val.style.cssText = 'display:flex;gap:1.5vh;align-items:flex-end;';
+    board.appendChild(val);
+    stage.appendChild(board);
+    renderDigitalNumber(val, scoreCount);
+    // Override per-dot sizes for the endgame display so the score reads big.
+    val.querySelectorAll('.score-dot').forEach(d => {
+      d.style.width = '4vh';
+      d.style.height = '4vh';
+      if (d.classList.contains('ring')) d.style.borderWidth = '4px';
+    });
+
+    // Replay button — placed vertically ABOVE the scoreboard so they
+    // don't overlap.  Uses its own click handler with stopPropagation
+    // so the document-level tap handler doesn't intercept it.
+    const btn = document.createElement('button');
+    btn.id = 'replayBtn';
+    btn.textContent = 'Replay';
+    btn.style.cssText =
+      'position:absolute;top:18%;left:50%;transform:translateX(-50%);' +
+      'z-index:1001;font-family:Nunito,sans-serif;font-size:5vh;font-weight:800;' +
+      'padding:1.8vh 5vw;background:#ff6200;color:#fff;' +
+      'border:4px solid #000;border-radius:3vh;cursor:pointer;' +
+      'box-shadow:0 8px 25px rgba(0,0,0,0.35);' +
+      'opacity:0;transition:opacity 0.5s ease 0.3s;';
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      board.remove();
+      btn.remove();
+      play();
+    }, true);
+    stage.appendChild(btn);
+
+    requestAnimationFrame(() => {
+      board.style.opacity = '1';
+      btn.style.opacity = '1';
+    });
+  }
+
   async function play() {
     if (playing) return;
     playing = true;
@@ -2618,6 +2681,7 @@
         await stepN(n);
       }
       await countUp10();
+      showEndScreen();
     } catch (err) {
       console.error('ERROR:', err);
       const errDiv = document.createElement('div');

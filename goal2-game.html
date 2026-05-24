@@ -719,6 +719,15 @@
     if (activeDots.length === 0 || !countResolve) return;
     clearActiveWait();
 
+    // Stop any in-progress equation audio (e.g. the FIRST "N plus N is 2N"
+    // pass might still be playing).  Otherwise the count we're about to
+    // speak ("one... two... three...") layers on top of the equation.
+    if (_currentDoubleEqAudio) {
+      try { _currentDoubleEqAudio.pause(); _currentDoubleEqAudio.currentTime = 0; }
+      catch (e) {}
+      _currentDoubleEqAudio = null;
+    }
+
     // Snapshot the state we need locally — once consumeTap can't fire
     // anymore, we can mutate the shared globals freely.
     const r            = countResolve;
@@ -749,6 +758,10 @@
       if (typeof playNumber === 'function') playNumber(count);
       await sleep(700);
     }
+
+    // Give the LAST number audio ("five") clear air to finish before
+    // doubleStep replays the full equation ("five plus five is ten").
+    await sleep(500);
 
     activeDots   = [];
     activeTarget = 0;

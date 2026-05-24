@@ -674,14 +674,21 @@
     waitTimers = [];
   }
 
-  // Pick the next untapped dot (by index in activeDots) and start its glow.
+  // Pick the next untapped dot and start its glow.  The wait-glow walks
+  // the dots in READING ORDER (top-to-bottom, left-to-right) so the
+  // first dot the kid sees pulsing is the top-LEFT one of the white
+  // cluster, then it works across like text.
   // Schedules escalation (warn -> urgent) and a final auto-fill that
   // counts the rest of the step for the kid if they don't tap.
   function startActiveWait() {
     clearActiveWait();
     if (activeDots.length === 0) return;
+    // Sort by cy first (top), then cx (left) — reading order.
+    const order = activeDots
+      .map((d, i) => ({ d, i }))
+      .sort((a, b) => (a.d.cy - b.d.cy) || (a.d.cx - b.d.cx));
     let next = -1;
-    for (let i = 0; i < activeDots.length; i++) {
+    for (const { i } of order) {
       if (clickOrder.indexOf(i) === -1) { next = i; break; }
     }
     if (next < 0) return;

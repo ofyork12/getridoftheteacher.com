@@ -2677,6 +2677,17 @@
     if (playing) return;
     playing = true;
     try {
+      // Reset any inline CSS overrides made by countUp10() on the previous
+      // run so the play-area, number-line, and equation start back at the
+      // default positions defined in the stylesheet.  Without this, replay
+      // started with the dots rolling on a floor that had been pushed down.
+      const _pa = document.getElementById('playArea');
+      if (_pa) _pa.style.top = '';
+      const _nl = document.querySelector('.number-line-wrap');
+      if (_nl) _nl.style.bottom = '';
+      const _eq = document.querySelector('.equation');
+      if (_eq) _eq.style.left = '';
+
       buildNumberLine();
       clearDots();
       resetScoreboard();

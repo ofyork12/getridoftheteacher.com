@@ -2608,31 +2608,43 @@
     document.getElementById('replayBtn')?.remove();
     const stage = document.getElementById('stage');
 
-    // Big centered scoreboard (the "look-at" element).
+    // Big centered scoreboard (the "look-at" element) — shows all three
+    // top-bar stats: Score, Perfect, Screen, each as a row with a label
+    // and the value rendered in BIG ColorMyMath digital dots.
     const board = document.createElement('div');
     board.id = 'endScoreboard';
     board.style.cssText =
       'position:absolute;top:58%;left:50%;transform:translate(-50%,-50%);' +
       'z-index:1000;display:flex;flex-direction:column;align-items:center;' +
-      'gap:2vh;padding:4vh 7vw;background:#ffffff;' +
+      'gap:2vh;padding:3.5vh 6vw;background:#ffffff;' +
       'border:4px solid #000;border-radius:3vh;' +
       'box-shadow:0 10px 40px rgba(0,0,0,0.35);' +
       'pointer-events:none;opacity:0;transition:opacity 0.5s ease;';
-    const lbl = document.createElement('div');
-    lbl.textContent = 'SCORE';
-    lbl.style.cssText = 'font-size:5vh;font-weight:800;color:#333;letter-spacing:0.18em;';
-    board.appendChild(lbl);
-    const val = document.createElement('div');
-    val.style.cssText = 'display:flex;gap:1.5vh;align-items:flex-end;';
-    board.appendChild(val);
+
+    function addRow(labelText, value) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:2.5vh;';
+      const lbl = document.createElement('div');
+      lbl.textContent = labelText;
+      lbl.style.cssText = 'font-size:4vh;font-weight:800;color:#333;letter-spacing:0.12em;min-width:11vh;text-align:left;';
+      row.appendChild(lbl);
+      const val = document.createElement('div');
+      val.style.cssText = 'display:flex;gap:1.2vh;align-items:flex-end;';
+      row.appendChild(val);
+      board.appendChild(row);
+      renderDigitalNumber(val, value);
+      // Bigger dots for the endgame display.
+      val.querySelectorAll('.score-dot').forEach(d => {
+        d.style.width = '3vh';
+        d.style.height = '3vh';
+        if (d.classList.contains('ring')) d.style.borderWidth = '3px';
+      });
+    }
+
+    addRow('Score',   scoreCount);
+    addRow('Perfect', perfectCount);
+    addRow('Screen',  screenCount);
     stage.appendChild(board);
-    renderDigitalNumber(val, scoreCount);
-    // Override per-dot sizes for the endgame display so the score reads big.
-    val.querySelectorAll('.score-dot').forEach(d => {
-      d.style.width = '4vh';
-      d.style.height = '4vh';
-      if (d.classList.contains('ring')) d.style.borderWidth = '4px';
-    });
 
     // Replay button — placed vertically ABOVE the scoreboard so they
     // don't overlap.  Uses its own click handler with stopPropagation

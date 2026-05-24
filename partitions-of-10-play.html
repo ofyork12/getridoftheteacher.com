@@ -72,6 +72,7 @@
   <div class="equation" id="eq"></div>
   <div class="play-area">
     <svg class="play-svg" id="playSvg" viewBox="0 0 200 240" preserveAspectRatio="xMidYMid meet">
+      <g id="bgGroup"></g>
       <g id="dotGroup"></g>
     </svg>
   </div>
@@ -79,30 +80,63 @@
 </div>
 
 <script>
-  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const SVG_NS  = 'http://www.w3.org/2000/svg';
+  const bgGroup  = document.getElementById('bgGroup');
   const dotGroup = document.getElementById('dotGroup');
-  const eqEl    = document.getElementById('eq');
+  const eqEl     = document.getElementById('eq');
 
   // ColorMyMath standard 1-dot colour.
   const RED = '#FF1744';
 
-  // 10 dot slots arranged in two rows (5 + 5) centered in the play area.
-  const DOT_R    = 14;
-  const ROW_GAP  = 6;
-  const COL_GAP  = 6;
-  const D        = 2 * DOT_R;
-  const ROWS = 2, COLS = 5;
-  const GRID_W = COLS * D + (COLS - 1) * COL_GAP;
-  const GRID_H = ROWS * D + (ROWS - 1) * ROW_GAP;
-  const X0 = (200 - GRID_W) / 2 + DOT_R;     // left edge of first dot's centre
-  const Y0 = (240 - GRID_H) / 2 + DOT_R;
+  // 10 dot slots in the canonical ColorMyMath 10-triangle:
+  // 4 across the bottom, then 3, then 2, then 1 at the apex
+  // (matching the number-line cell shape for 10 used in every lesson).
+  const DOT_R = 18;
+  const D     = 2 * DOT_R;
+  const H     = D * Math.sqrt(3) / 2;   // close-pack vertical step
 
-  const slots = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      slots.push({ x: X0 + c * (D + COL_GAP), y: Y0 + r * (D + ROW_GAP) });
-    }
-  }
+  // Triangle geometry: 4 dots on base means halfWidth = 3*R + R*sqrt(3)
+  // for the surrounding triangle outline; the dot CENTRES span 3D total.
+  const BASE_HW = 3 * DOT_R;            // base-row half-width (centres)
+  // Anchor so the triangle is centred and sits low in the play area.
+  const cx   = 100;
+  const yBot = 240 - DOT_R - 6;
+
+  // Build slots in READING ORDER: apex first, then each row top-to-bottom,
+  // left-to-right.  So filling order is 1 (apex), 2-3 (row 2), 4-5-6
+  // (row 3), 7-8-9-10 (base).
+  const slots = [
+    // Apex (single dot)
+    { x: cx,         y: yBot - 3*H },
+    // Row 2 (2 dots)
+    { x: cx - DOT_R, y: yBot - 2*H },
+    { x: cx + DOT_R, y: yBot - 2*H },
+    // Row 3 (3 dots)
+    { x: cx - D,     y: yBot -   H },
+    { x: cx,         y: yBot -   H },
+    { x: cx + D,     y: yBot -   H },
+    // Base row (4 dots)
+    { x: cx - 3*DOT_R, y: yBot },
+    { x: cx - DOT_R,   y: yBot },
+    { x: cx + DOT_R,   y: yBot },
+    { x: cx + 3*DOT_R, y: yBot },
+  ];
+
+  // Draw the canonical 10-triangle OUTLINE behind the dots (matches the
+  // number-line cell-10 look used everywhere else in ColorMyMath).
+  (function drawOutline() {
+    const halfW = 3 * DOT_R + DOT_R * Math.sqrt(3);
+    const baseY = yBot + DOT_R;
+    const topY  = baseY - halfW * Math.sqrt(3);
+    const tri = document.createElementNS(SVG_NS, 'polygon');
+    tri.setAttribute('points',
+      `${cx - halfW},${baseY} ${cx + halfW},${baseY} ${cx},${topY}`);
+    tri.setAttribute('fill', 'none');
+    tri.setAttribute('stroke', '#000');
+    tri.setAttribute('stroke-width', '2');
+    tri.setAttribute('stroke-linejoin', 'round');
+    bgGroup.appendChild(tri);
+  })();
 
   // Pre-place 10 white empty dots so the layout is visible from the start.
   const dots = slots.map(({x, y}, i) => {

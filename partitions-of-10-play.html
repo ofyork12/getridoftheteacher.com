@@ -251,29 +251,30 @@
     // Clear and reset.
     for (const d of dots) d.el.setAttribute('fill', '#ffffff');
     setEquation(0, false);
-    await sleep(700);
-    // Colour each dot in order, build the equation, and SPEAK the
-    // partition out loud as "one, plus one, plus one, ... plus one,
-    // ... ten".  First dot just says "one"; every subsequent dot
-    // chains "plus" + "one".
+    await sleep(500);
+
+    // Play the user-supplied "intro" recording (the FULL spoken
+    // equation "one plus one plus one ... equals ten", ~9.13s) ONCE,
+    // and time each dot to fill exactly when its "one" word is heard.
+    // Word onsets measured by ffmpeg silencedetect on the intro wav.
+    const DOT_TIMES_MS = [381, 1352, 2055, 2773, 3684, 4586, 5459, 6202, 7081, 7682];
+    const EQUALS_MS    = 7780;   // moment "= 10" should appear on screen
+
+    _stopAllSpeech();
+    _playKey('intro');
+    const startWall = Date.now();
     for (let i = 0; i < dots.length; i++) {
+      const wait = Math.max(0, DOT_TIMES_MS[i] - (Date.now() - startWall));
+      if (wait > 0) await sleep(wait);
       dots[i].el.setAttribute('fill', RED);
       setEquation(i + 1, false);
-      // Use the user-supplied "plus_one" recording (~1.93s) as one
-      // single clip per subsequent step — no chaining, no overlap.
-      if (i === 0) playNumber(1);
-      else         { _stopAllSpeech(); _playKey('plus_one'); }
-      await sleep(2000);
     }
-    // Final hold: append "= 10" and say "is ten" (closest available
-    // recording for "equals ten" — extracted "is" from audio_double_1,
-    // Final hold: append "= 10" and say "ten".  No library audio
-    // exists for "equals" in a matching kid voice; we'll add one
-    // once a recording is available.
-    await sleep(300);
+    // "= 10" lands on the spoken "equals ten" near the end of the intro.
+    const tailWait = Math.max(0, EQUALS_MS - (Date.now() - startWall));
+    if (tailWait > 0) await sleep(tailWait);
     setEquation(10, true);
-    playNumber(10);
-    await sleep(2500);
+    // Let the rest of the intro ("equals ten") finish, then hold.
+    await sleep(2200);
   }
 
   // Invisible full-screen tap target — first tap starts playback.

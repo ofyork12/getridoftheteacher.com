@@ -711,31 +711,49 @@
     }, 18000));
   }
 
-  function autoFillRemainder(startIdx) {
+  // When the auto-fill timer fires, COUNT the remaining dots one at a
+  // time (with the number-audio voice saying "one... two... three...")
+  // instead of popping straight to the final color.  The kid hears the
+  // count audibly even when they didn't tap.
+  async function autoFillRemainder(startIdx) {
     if (activeDots.length === 0 || !countResolve) return;
-    // Tap the active dot first, then the rest in order.
+    clearActiveWait();
+
+    // Snapshot the state we need locally — once consumeTap can't fire
+    // anymore, we can mutate the shared globals freely.
+    const r            = countResolve;
+    const target       = activeTarget;
+    const dotsLocal    = activeDots;
+    countResolve = null;
+
+    // Build the list of remaining indices in reading order
+    // (the active one first if not already clicked).
+    const orderRO = dotsLocal
+      .map((d, i) => ({ d, i }))
+      .sort((a, b) => (a.d.cy - b.d.cy) || (a.d.cx - b.d.cx))
+      .map(o => o.i);
     const remaining = [];
     if (clickOrder.indexOf(startIdx) === -1) remaining.push(startIdx);
-    for (let i = 0; i < activeDots.length; i++) {
+    for (const i of orderRO) {
       if (i !== startIdx && clickOrder.indexOf(i) === -1) remaining.push(i);
     }
-    // Apply them all so the count hits target.
-    for (const idx of remaining) clickOrder.push(idx);
-    const count = clickOrder.length;
-    for (const d of activeDots) d.el.setAttribute('fill', '#ffffff');
-    if (count > 0) {
-      const c = COLORS[NUMBER_COLOR[Math.min(count, activeTarget)]];
-      for (const idx of clickOrder) activeDots[idx].el.setAttribute('fill', c);
+
+    for (const idx of remaining) {
+      clickOrder.push(idx);
+      const count = clickOrder.length;
+      // Recolor all currently clicked dots to NUMBER_COLOR[count].
+      for (const d of dotsLocal) d.el.setAttribute('fill', '#ffffff');
+      const c = COLORS[NUMBER_COLOR[Math.min(count, target)]];
+      for (const ci of clickOrder) dotsLocal[ci].el.setAttribute('fill', c);
+      // Speak the count.
+      if (typeof playNumber === 'function') playNumber(count);
+      await sleep(700);
     }
-    clearActiveWait();
-    if (countResolve) {
-      const r = countResolve;
-      countResolve = null;
-      activeDots   = [];
-      activeTarget = 0;
-      clickOrder   = [];
-      r();
-    }
+
+    activeDots   = [];
+    activeTarget = 0;
+    clickOrder   = [];
+    r();
   }
 
   // Start a counting step.  Resolves when the kid has tapped `target`

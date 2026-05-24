@@ -2933,20 +2933,23 @@
     // Block until the kid has counted up to N.
     await startCount(whiteDots, n);
 
-    // SECOND narration: replay "N plus N is 2N" after the kid finishes.
-    // playDoubleEqAudio() pauses whatever's still playing from the first
-    // pass so the two plays don't overlap into one indistinct blob.
+    // SECOND narration: replay "N plus N is 2N" after the kid finishes,
+    // and EMPHASIZE each digit/operator exactly when its word is spoken.
+    // playDoubleEqAudio() pauses any first-pass audio so they don't blur.
     playDoubleEqAudio(n);
+    const wt2 = DOUBLE_WORD_TIMES[n] || [0, 400, 800, 1200, 1600];
 
-    // Show the second N, then "=", then the sum.
-    setEqPart(eqB, n);
-    popPart(eqB);
-    await sleep(300);
-    setEqPart(eqEq, '=');
-    popPart(eqEq);
-    await sleep(300);
-    setEqPart(eqC, sumN);
-    popPart(eqC);
+    // eqA + eqOp are already on screen — re-trigger the pop animation
+    // on them so they bounce / emphasize at the spoken word.
+    setTimeout(() => popPart(eqA),  wt2[0]);   // first N spoken
+    setTimeout(() => popPart(eqOp), wt2[1]);   // "plus" spoken
+    // eqB / eqEq / eqC haven't been shown yet — set their text then pop.
+    setTimeout(() => { setEqPart(eqB,  n);    popPart(eqB);  }, wt2[2]);   // second N
+    setTimeout(() => { setEqPart(eqEq, '=');  popPart(eqEq); }, wt2[3]);   // "is" / "equals"
+    setTimeout(() => { setEqPart(eqC,  sumN); popPart(eqC);  }, wt2[4]);   // 2N
+
+    // Hold until just past the last spoken word before the merge.
+    await sleep(wt2[4] + 600);
 
     // Recolor both clusters to the sum's color and light up cell 2N.
     recolor(Object.values(dotsById), NUMBER_COLOR[sumN]);

@@ -54,7 +54,7 @@
     overflow: visible;
   }
   .play-area {
-    position: absolute; top: 32%; left: 0; right: 0; height: 60%;
+    position: absolute; top: 22%; left: 0; right: 0; height: 60%;
   }
   .play-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -181,9 +181,12 @@
   // Triangle geometry: 4 dots on base means halfWidth = 3*R + R*sqrt(3)
   // for the surrounding triangle outline; the dot CENTRES span 3D total.
   const BASE_HW = 3 * DOT_R;            // base-row half-width (centres)
-  // Anchor so the triangle is centred and sits low in the play area.
+  // Anchor the triangle vertically centred in the viewBox.  Outline
+  // height = R*3*(sqrt(3)+1); baseY centres it; yBot = baseY - DOT_R.
+  // For R=22 this resolves to yBot ~= 178 so the triangle's middle
+  // lands at viewBox y=110 (the centre of the 220-tall viewBox).
   const cx   = 105;
-  const yBot = 220 - DOT_R - 6;
+  const yBot = 178;
 
   // Build slots in READING ORDER: apex first, then each row top-to-bottom,
   // left-to-right.  So filling order is 1 (apex), 2-3 (row 2), 4-5-6

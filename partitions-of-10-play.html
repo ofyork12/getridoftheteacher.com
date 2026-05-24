@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>42 — The Magic Number — ColorMyMath</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    background: #333;
+    font-family: 'Nunito', Arial, sans-serif;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100vw, 56.25vh);
+    aspect-ratio: 9 / 16;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .brand {
+    position: absolute; bottom: 1%; left: 0; right: 0;
+    text-align: center; font-size: 2.2vh; font-weight: 600;
+    color: #888; letter-spacing: 0.25em;
+    pointer-events: none;
+  }
+  .title {
+    position: absolute; top: 2%; left: 0; right: 0;
+    text-align: center; font-size: 2.8vh; font-weight: 700;
+    color: #333; letter-spacing: 0.1em;
+  }
+  .equation {
+    position: absolute; top: 9%; left: 0; right: 0;
+    text-align: center;
+    font-size: 5.5vh; font-weight: 800;
+    color: #000;
+    padding: 0 3%;
+    word-spacing: -0.1em;
+    line-height: 1.1;
+    min-height: 12vh;
+  }
+  .play-area {
+    position: absolute; top: 30%; left: 0; right: 0; height: 50%;
+  }
+  .play-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    overflow: visible;
+  }
+  .start-overlay {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    background: transparent; border: none; outline: none;
+    cursor: pointer; z-index: 1000;
+    color: transparent; font-size: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="title">42 — The Magic Number<br><span style="font-size:1.8vh;color:#666;letter-spacing:0.05em;">Partition 1 of 42</span></div>
+  <div class="equation" id="eq"></div>
+  <div class="play-area">
+    <svg class="play-svg" id="playSvg" viewBox="0 0 200 240" preserveAspectRatio="xMidYMid meet">
+      <g id="dotGroup"></g>
+    </svg>
+  </div>
+  <div class="brand">✦ ColorMyMath ✦</div>
+</div>
+
+<script>
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const dotGroup = document.getElementById('dotGroup');
+  const eqEl    = document.getElementById('eq');
+
+  // ColorMyMath standard 1-dot colour.
+  const RED = '#FF1744';
+
+  // 10 dot slots arranged in two rows (5 + 5) centered in the play area.
+  const DOT_R    = 14;
+  const ROW_GAP  = 6;
+  const COL_GAP  = 6;
+  const D        = 2 * DOT_R;
+  const ROWS = 2, COLS = 5;
+  const GRID_W = COLS * D + (COLS - 1) * COL_GAP;
+  const GRID_H = ROWS * D + (ROWS - 1) * ROW_GAP;
+  const X0 = (200 - GRID_W) / 2 + DOT_R;     // left edge of first dot's centre
+  const Y0 = (240 - GRID_H) / 2 + DOT_R;
+
+  const slots = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      slots.push({ x: X0 + c * (D + COL_GAP), y: Y0 + r * (D + ROW_GAP) });
+    }
+  }
+
+  // Pre-place 10 white empty dots so the layout is visible from the start.
+  const dots = slots.map(({x, y}, i) => {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
+    c.setAttribute('r', DOT_R);
+    c.setAttribute('fill', '#ffffff');
+    c.setAttribute('stroke', '#000');
+    c.setAttribute('stroke-width', '2');
+    c.style.transition = 'fill 0.25s ease';
+    dotGroup.appendChild(c);
+    return { el: c, i };
+  });
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Build the equation incrementally: "1", "1 + 1", "1 + 1 + 1", ...,
+  // then append " = 10" once all 10 dots are coloured.
+  function setEquation(count, includeSum) {
+    if (count === 0) { eqEl.textContent = ''; return; }
+    let s = Array(count).fill('1').join(' + ');
+    if (includeSum) s += ' = 10';
+    eqEl.textContent = s;
+  }
+
+  async function play() {
+    // Clear and reset.
+    for (const d of dots) d.el.setAttribute('fill', '#ffffff');
+    setEquation(0, false);
+    await sleep(700);
+    // Colour each dot in order; build the equation as we go.
+    for (let i = 0; i < dots.length; i++) {
+      dots[i].el.setAttribute('fill', RED);
+      setEquation(i + 1, false);
+      await sleep(620);
+    }
+    // Final hold: append "= 10".
+    await sleep(400);
+    setEquation(10, true);
+    await sleep(2500);
+  }
+
+  // Invisible full-screen tap target — first tap starts playback.
+  const startBtn = document.createElement('button');
+  startBtn.className = 'start-overlay';
+  startBtn.textContent = 'Start with sound';
+  startBtn.onclick = () => { startBtn.remove(); play(); };
+  document.body.appendChild(startBtn);
+</script>
+</body>
+</html>

@@ -796,11 +796,21 @@
     }
     if (onActive) {
       scoreCount++;
-    } else {
+      renderScoreboard();
+      return;
+    }
+    // Off-active taps: only flag stepClean=false (and bump Screen) when
+    // the tap was on something CLEARLY not a dot — equation text, brand,
+    // background.  Taps on OTHER svg circles (the left cluster of a
+    // doubles step, an already-placed partition pair, etc.) are
+    // neutral — neither rewarded nor punished — so the kid isn't denied
+    // a Perfect for grazing a neighbour.
+    const isCircle = ev.target && ev.target.tagName === 'circle';
+    if (!isCircle) {
       screenCount++;
       stepClean = false;
+      renderScoreboard();
     }
-    renderScoreboard();
   }, true);
 
   function consumeTap(ev) {

@@ -1572,7 +1572,7 @@
     // outline already appears around the 5+5 result in doubleStep,
     // which is the right moment for it.)
     const PAIRS = [
-      { sN: 1, lM: 9, sC: 'red',    lC: 'cyan',   id: 'audio_finale_p9plus1', cx:  25, yL: -25 },
+      { sN: 1, lM: 9, sC: 'red',    lC: 'cyan',   id: 'audio_finale_p9plus1', cx:  25, yL: -25, withTriangle: true },
       { sN: 2, lM: 8, sC: 'orange', lC: 'pink',   id: 'audio_finale_p8plus2', cx: 175, yL: -25 },
       { sN: 3, lM: 7, sC: 'yellow', lC: 'brown',  id: 'audio_finale_p7plus3', cx:  25, yL: 280 },
       { sN: 4, lM: 6, sC: 'green',  lC: 'purple', id: 'audio_finale_p6plus4', cx: 175, yL: 280 },
@@ -1623,6 +1623,11 @@
       await sleep(450);
     }
     await sleep(1200);
+
+    // Closing narration: replay "five and five make ten" as the very
+    // last spoken line, tying the doubles lesson back to its anchor.
+    if (hasAudio('audio_finale_p5plus5')) playAudio('audio_finale_p5plus5');
+    await sleep(2400);
   }
 
 

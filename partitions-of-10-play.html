@@ -157,6 +157,19 @@
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // Use browser text-to-speech to narrate the equation as it builds.
+  // Cancel any in-progress utterance first so the chain doesn't queue
+  // up and over-run the visual.
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate  = 0.95;
+    u.pitch = 1.05;
+    u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  }
+
   // Build the equation incrementally: "1", "1 + 1", "1 + 1 + 1", ...,
   // then append " = 10" once all 10 dots are coloured.
   function setEquation(count, includeSum) {
@@ -171,15 +184,19 @@
     for (const d of dots) d.el.setAttribute('fill', '#ffffff');
     setEquation(0, false);
     await sleep(700);
-    // Colour each dot in order; build the equation as we go.
+    // Colour each dot in order, build the equation, and speak the
+    // narration "one ... plus one ... plus one ..." in sync.
     for (let i = 0; i < dots.length; i++) {
       dots[i].el.setAttribute('fill', RED);
       setEquation(i + 1, false);
-      await sleep(620);
+      speak(i === 0 ? 'one' : 'plus one');
+      // Pace each step so the TTS has time to say "plus one" cleanly.
+      await sleep(820);
     }
-    // Final hold: append "= 10".
-    await sleep(400);
+    // Final hold: append "= 10" and say it out loud.
+    await sleep(300);
     setEquation(10, true);
+    speak('equals ten');
     await sleep(2500);
   }
 

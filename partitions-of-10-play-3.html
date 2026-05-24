@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>42 — Partition 2 (2+1+1+1+1+1+1+1+1=10) — ColorMyMath</title>
+<title>42 — Partition 3 (2+2+1+1+1+1+1+1=10) — ColorMyMath</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -71,7 +71,7 @@
 <body>
 
 <div class="stage" id="stage">
-  <div class="title">42 — The Magic Number<br><span style="font-size:1.8vh;color:#666;letter-spacing:0.05em;">Partition 2 of 42</span></div>
+  <div class="title">42 — The Magic Number<br><span style="font-size:1.8vh;color:#666;letter-spacing:0.05em;">Partition 3 of 42</span></div>
   <div class="equation" id="eq"></div>
   <div class="play-area">
     <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
@@ -251,19 +251,20 @@
   // partition needs a word that's not a digit (e.g., "plus", "equals"),
   // record it and add it to NUMBER_AUDIO rather than going back to TTS.
 
-  // PARTITION 2 of 42: 2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 10
+  // PARTITION 3 of 42: 2 + 2 + 1 + 1 + 1 + 1 + 1 + 1 = 10
   // Each "part" places one or more dots in the triangle at the listed
   // slot indices, all in that part's number colour.  Parts fire in
   // order; the equation appends each value as it lands.
   // Slot indices (set above): 0=apex, 1-2=row2, 3-5=row3, 6-9=base.
+  // Two orange pairs (row-2 + base-left) keep their positions in
+  // partition 4 so the visual story builds up cleanly.
   const PARTITION = [
     { value: 2, slots: [1, 2] },              // orange pair in row-2
+    { value: 2, slots: [6, 7] },              // orange pair in base-left
     { value: 1, slots: [0] },                 // red apex
     { value: 1, slots: [3] },                 // red row-3 left
     { value: 1, slots: [4] },                 // red row-3 middle
     { value: 1, slots: [5] },                 // red row-3 right
-    { value: 1, slots: [6] },                 // red base 1 (leftmost)
-    { value: 1, slots: [7] },                 // red base 2
     { value: 1, slots: [8] },                 // red base 3
     { value: 1, slots: [9] },                 // red base 4 (rightmost)
   ];

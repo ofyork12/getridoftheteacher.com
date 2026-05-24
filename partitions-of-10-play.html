@@ -54,7 +54,7 @@
     overflow: visible;
   }
   .play-area {
-    position: absolute; top: 30%; left: 0; right: 0; height: 50%;
+    position: absolute; top: 32%; left: 0; right: 0; height: 60%;
   }
   .play-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -74,7 +74,7 @@
   <div class="title">42 — The Magic Number<br><span style="font-size:1.8vh;color:#666;letter-spacing:0.05em;">Partition 1 of 42</span></div>
   <div class="equation" id="eq"></div>
   <div class="play-area">
-    <svg class="play-svg" id="playSvg" viewBox="0 0 200 240" preserveAspectRatio="xMidYMid meet">
+    <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
       <g id="bgGroup"></g>
       <g id="dotGroup"></g>
     </svg>
@@ -170,7 +170,11 @@
   // 10 dot slots in the canonical ColorMyMath 10-triangle:
   // 4 across the bottom, then 3, then 2, then 1 at the apex
   // (matching the number-line cell shape for 10 used in every lesson).
-  const DOT_R = 18;
+  // Larger DOT_R for the Magic-42 partitions — we want the triangle
+  // to dominate the play area the way it does at the end of
+  // counting-to-10-game.html, so the dots and outline are both bumped
+  // up (was 18; tied to viewBox 210x220, see <svg> above).
+  const DOT_R = 22;
   const D     = 2 * DOT_R;
   const H     = D * Math.sqrt(3) / 2;   // close-pack vertical step
 
@@ -178,8 +182,8 @@
   // for the surrounding triangle outline; the dot CENTRES span 3D total.
   const BASE_HW = 3 * DOT_R;            // base-row half-width (centres)
   // Anchor so the triangle is centred and sits low in the play area.
-  const cx   = 100;
-  const yBot = 240 - DOT_R - 6;
+  const cx   = 105;
+  const yBot = 220 - DOT_R - 6;
 
   // Build slots in READING ORDER: apex first, then each row top-to-bottom,
   // left-to-right.  So filling order is 1 (apex), 2-3 (row 2), 4-5-6

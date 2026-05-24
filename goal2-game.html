@@ -2872,6 +2872,30 @@
     4: [470, 790, 1360, 1700, 2120],
     5: [440, 890, 1580, 1900, 2280],
   };
+  // Track the currently-playing equation audio so we can stop it before
+  // replaying the SECOND time (otherwise the two plays overlap and sound
+  // like a single louder voice).
+  let _currentDoubleEqAudio = null;
+  function playDoubleEqAudio(n) {
+    if (_currentDoubleEqAudio) {
+      try { _currentDoubleEqAudio.pause(); _currentDoubleEqAudio.currentTime = 0; }
+      catch (e) {}
+      _currentDoubleEqAudio = null;
+    }
+    const id = 'audio_double_' + n;
+    if (!hasAudio(id)) return;
+    const orig = document.getElementById(id);
+    if (!orig || !orig.src) return;
+    const a = new Audio(orig.src);
+    a.volume = 1.0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});
+    _currentDoubleEqAudio = a;
+    a.addEventListener('ended', () => {
+      if (_currentDoubleEqAudio === a) _currentDoubleEqAudio = null;
+    });
+  }
+
   async function doubleStep(n) {
     fadeOutBigTriangle();
     clearDots();
@@ -2882,9 +2906,8 @@
     // Equation starts blank; we fill in each part as the step progresses.
     setEquation('', '', '', '');
 
-    // Play the narration ("N plus N is 2N") at the start; the kid taps
-    // at their own pace to fill the right cluster.
-    if (hasAudio('audio_double_' + n)) playAudio('audio_double_' + n);
+    // FIRST narration: "N plus N is 2N" while the kid is tapping.
+    playDoubleEqAudio(n);
 
     // Show the first N (left summand) and highlight cell N below.
     setEqPart(eqA, n);
@@ -2910,9 +2933,10 @@
     // Block until the kid has counted up to N.
     await startCount(whiteDots, n);
 
-    // Right side complete — replay the equation narration so the kid
-    // hears "N plus N is 2N" a SECOND time right after they finished.
-    if (hasAudio('audio_double_' + n)) playAudio('audio_double_' + n);
+    // SECOND narration: replay "N plus N is 2N" after the kid finishes.
+    // playDoubleEqAudio() pauses whatever's still playing from the first
+    // pass so the two plays don't overlap into one indistinct blob.
+    playDoubleEqAudio(n);
 
     // Show the second N, then "=", then the sum.
     setEqPart(eqB, n);

@@ -2910,7 +2910,11 @@
     // Block until the kid has counted up to N.
     await startCount(whiteDots, n);
 
-    // Right side complete — show the second N, then "=", then the sum.
+    // Right side complete — replay the equation narration so the kid
+    // hears "N plus N is 2N" a SECOND time right after they finished.
+    if (hasAudio('audio_double_' + n)) playAudio('audio_double_' + n);
+
+    // Show the second N, then "=", then the sum.
     setEqPart(eqB, n);
     popPart(eqB);
     await sleep(300);

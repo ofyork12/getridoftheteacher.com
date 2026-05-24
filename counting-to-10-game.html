@@ -2439,9 +2439,36 @@
         activeEl.classList.remove('wait-dot-warn');
         activeEl.classList.add('wait-dot-urgent');
       }, 13000);
-      const t4 = setTimeout(() => {
+      // Auto-fill: when the wait timer fires, COUNT UP the remaining
+      // white dots audibly ("one... two... three...") instead of just
+      // snapping straight to the final count.  Same UX as goal2-game.
+      const t4 = setTimeout(async () => {
         if (resolved) return;
-        resolved = true; cleanup(); finish();
+        resolved = true;
+        document.removeEventListener('click', onClick, true);
+        clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+        activeEl.classList.remove('wait-dot', 'wait-dot-warn', 'wait-dot-urgent');
+        activeEl.setAttribute('stroke-width', '2');
+
+        const allDots = Object.values(dotsById);
+        const remaining = allDots
+          .filter(d => isWhite(d.el))
+          .sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
+        const colored = allDots.filter(d => !isWhite(d.el));
+        let count = colored.length;
+        for (const d of remaining) {
+          count++;
+          colored.push(d);
+          const c = COLORS[NUMBER_COLOR[count]];
+          for (const cd of colored) cd.el.setAttribute('fill', c);
+          if (typeof playNumber === 'function') playNumber(count);
+          setNum(count);
+          await sleep(700);
+        }
+        // Let the last number audio finish cleanly before the caller
+        // continues (which may speak the count again).
+        await sleep(500);
+        finish();
       }, 18000);
       document.addEventListener('click', onClick, true);
     });

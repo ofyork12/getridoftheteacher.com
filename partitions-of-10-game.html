@@ -73,6 +73,10 @@
     box-shadow: 0 0 0 3px #000, 0 6px 14px rgba(0,0,0,0.4),
                 inset 0 2px 4px rgba(0,0,0,0.18);
   }
+  /* "disabled" hides a paint slot without losing its grid placement --
+     used while we're only enabling red + white.  Remove the class on a
+     slot to bring its colour back into the tray. */
+  .paint-slot.disabled { display: none; }
 
   /* Running equation at the top, below the paint tray. */
   .equation {
@@ -141,17 +145,17 @@
          Row 2: 1(red)    3(yellow) 5(blue)   7(brown)  9(cyan)
        So white sits in the top-left and red sits directly below it. -->
   <div class="paint-tray" id="paintTray">
-    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff;" aria-label="white (0)"></button>
-    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
-    <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
-    <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
-    <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
+    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff; grid-column:1; grid-row:1;" aria-label="white (0)"></button>
+    <button class="paint-slot disabled" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
+    <button class="paint-slot disabled" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
+    <button class="paint-slot disabled" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
+    <button class="paint-slot disabled" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
 
-    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946;" aria-label="red (1)"></button>
-    <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
-    <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
-    <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
-    <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
+    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946; grid-column:1; grid-row:2;" aria-label="red (1)"></button>
+    <button class="paint-slot disabled" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
+    <button class="paint-slot disabled" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
+    <button class="paint-slot disabled" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
+    <button class="paint-slot disabled" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
   </div>
 
   <div class="equation" id="eq"></div>

@@ -1014,6 +1014,11 @@
 
   function startRound() {
     currentSpec = pickNextSpec();
+    // Clear FIRST so the previous round's strokes are gone before we
+    // ask applyLimitsForSpec to compute spent states.  Otherwise a
+    // partition-6 -> partition-4 jump (5 oranges -> cap 3) leaves the
+    // orange chip stuck `.spent` from a count that no longer applies.
+    clearAllDots();
     applyLimitsForSpec(currentSpec);
     updateRoundLabel(currentSpec);
     hidePerfectBanner();

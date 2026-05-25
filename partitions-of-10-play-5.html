@@ -90,6 +90,51 @@
     cursor: pointer; z-index: 1000;
     color: transparent; font-size: 0;
   }
+
+  /* Number line at the bottom of the stage -- same look as the one
+     in counting-to-10-game.html: 10 cells, each with a coloured
+     "quantity" SVG on top of a black digit label.  Cell #10 has a
+     black equilateral-triangle outline wrapped around its 4-3-2-1
+     dot cluster, matching the ten-triangle motif used everywhere
+     else on the site. */
+  .number-line-wrap {
+    position: absolute;
+    bottom: 8%; left: 1%; right: 1%;
+    height: 14%;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .number-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 0.5%;
+    height: 100%;
+  }
+  .nl-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4vh;
+    min-width: 0;
+    height: 100%;
+  }
+  .nl-quantity {
+    width: 100%;
+    height: 70%;
+    position: relative;
+  }
+  .nl-quantity svg {
+    width: 100%; height: 100%;
+    overflow: visible;
+  }
+  .nl-label {
+    height: 30%;
+  }
+  .nl-label svg {
+    height: 100%; width: auto;
+  }
 </style>
 </head>
 <body>
@@ -103,6 +148,22 @@
       <g id="dotGroup"></g>
     </svg>
   </div>
+  <!-- Number line: colour-coded quantity SVG on top, black digit below. -->
+  <div class="number-line-wrap">
+    <div class="number-line">
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty1"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">1</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty2"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">2</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty3"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">3</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty4"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">4</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty5"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">5</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty6"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">6</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty7"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">7</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty8"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">8</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty9"></svg></div><div class="nl-label"><svg viewBox="0 0 30 40" preserveAspectRatio="xMidYMid meet"><text x="15" y="32" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="34" fill="#000">9</text></svg></div></div>
+      <div class="nl-cell"><div class="nl-quantity"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="nlQty10"></svg></div><div class="nl-label"><svg viewBox="0 0 50 40" preserveAspectRatio="xMidYMid meet"><text x="25" y="33" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="700" font-size="40" fill="#000">10</text></svg></div></div>
+    </div>
+  </div>
+
   <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 40" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="14" y1="3" x2="14" y2="22"/><polyline points="30,3 30,22 42,22 42,36"/><polyline points="54,3 54,22 64,22"/></g></svg></div>
 </div>
 
@@ -378,6 +439,89 @@
   startBtn.textContent = 'Start with sound';
   startBtn.onclick = () => { startBtn.remove(); play(); };
   document.body.appendChild(startBtn);
+
+  // --- Number-line cells (coloured quantity above black digit) -------
+  (function buildNumberLine() {
+    const NL_R = 10;
+    const NL_CX = 50;
+    const NL_YBOT = 92;
+    const NL_D = 2 * NL_R;
+    const NL_TRI_H = NL_D * Math.sqrt(3) / 2;
+    const NUMBER_LINE_LAYOUTS = {
+      1:  { color: '#e63946', centers: [{x: NL_CX, y: NL_YBOT}] },
+      2:  { color: '#ff6200', centers: [
+              {x: NL_CX - NL_R, y: NL_YBOT}, {x: NL_CX + NL_R, y: NL_YBOT}
+            ] },
+      3:  { color: '#e6c800', centers: [
+              {x: NL_CX - NL_R, y: NL_YBOT}, {x: NL_CX + NL_R, y: NL_YBOT},
+              {x: NL_CX,        y: NL_YBOT - NL_TRI_H}
+            ] },
+      4:  { color: '#00a12c', centers: [
+              {x: NL_CX - NL_R, y: NL_YBOT}, {x: NL_CX + NL_R, y: NL_YBOT},
+              {x: NL_CX - NL_R, y: NL_YBOT - NL_D}, {x: NL_CX + NL_R, y: NL_YBOT - NL_D}
+            ] },
+      5:  { color: '#0066ff', centers: [
+              {x: NL_CX - NL_D, y: NL_YBOT}, {x: NL_CX, y: NL_YBOT}, {x: NL_CX + NL_D, y: NL_YBOT},
+              {x: NL_CX - NL_R, y: NL_YBOT - NL_TRI_H}, {x: NL_CX + NL_R, y: NL_YBOT - NL_TRI_H}
+            ] },
+      6:  { color: '#7700dd', centers: [
+              {x: NL_CX - NL_D, y: NL_YBOT}, {x: NL_CX, y: NL_YBOT}, {x: NL_CX + NL_D, y: NL_YBOT},
+              {x: NL_CX - NL_R, y: NL_YBOT - NL_TRI_H}, {x: NL_CX + NL_R, y: NL_YBOT - NL_TRI_H},
+              {x: NL_CX,        y: NL_YBOT - 2 * NL_TRI_H}
+            ] },
+      7:  { color: '#7a3b00', centers: [
+              {x: NL_CX - NL_R, y: NL_YBOT}, {x: NL_CX + NL_R, y: NL_YBOT},
+              {x: NL_CX - NL_D, y: NL_YBOT - NL_TRI_H}, {x: NL_CX, y: NL_YBOT - NL_TRI_H}, {x: NL_CX + NL_D, y: NL_YBOT - NL_TRI_H},
+              {x: NL_CX - NL_R, y: NL_YBOT - 2 * NL_TRI_H}, {x: NL_CX + NL_R, y: NL_YBOT - 2 * NL_TRI_H}
+            ] },
+      8:  { color: '#ff3fa6', centers: [
+              {x: NL_CX - NL_D, y: NL_YBOT}, {x: NL_CX, y: NL_YBOT}, {x: NL_CX + NL_D, y: NL_YBOT},
+              {x: NL_CX - NL_D, y: NL_YBOT - NL_D},                                           {x: NL_CX + NL_D, y: NL_YBOT - NL_D},
+              {x: NL_CX - NL_D, y: NL_YBOT - 2 * NL_D}, {x: NL_CX, y: NL_YBOT - 2 * NL_D}, {x: NL_CX + NL_D, y: NL_YBOT - 2 * NL_D}
+            ] },
+      9:  { color: '#38c7ff', centers: [
+              {x: NL_CX - NL_D, y: NL_YBOT}, {x: NL_CX, y: NL_YBOT}, {x: NL_CX + NL_D, y: NL_YBOT},
+              {x: NL_CX - NL_D, y: NL_YBOT - NL_D}, {x: NL_CX, y: NL_YBOT - NL_D}, {x: NL_CX + NL_D, y: NL_YBOT - NL_D},
+              {x: NL_CX - NL_D, y: NL_YBOT - 2 * NL_D}, {x: NL_CX, y: NL_YBOT - 2 * NL_D}, {x: NL_CX + NL_D, y: NL_YBOT - 2 * NL_D}
+            ] },
+      10: { color: '#e63946', centers: [
+              {x: NL_CX - 3*NL_R, y: NL_YBOT}, {x: NL_CX - NL_R, y: NL_YBOT}, {x: NL_CX + NL_R, y: NL_YBOT}, {x: NL_CX + 3*NL_R, y: NL_YBOT},
+              {x: NL_CX - NL_D, y: NL_YBOT - NL_TRI_H}, {x: NL_CX, y: NL_YBOT - NL_TRI_H}, {x: NL_CX + NL_D, y: NL_YBOT - NL_TRI_H},
+              {x: NL_CX - NL_R, y: NL_YBOT - 2 * NL_TRI_H}, {x: NL_CX + NL_R, y: NL_YBOT - 2 * NL_TRI_H},
+              {x: NL_CX,        y: NL_YBOT - 3 * NL_TRI_H}
+            ] }
+    };
+    for (let n = 1; n <= 10; n++) {
+      const svg = document.getElementById('nlQty' + n);
+      if (!svg) continue;
+      const { color, centers } = NUMBER_LINE_LAYOUTS[n];
+      if (n === 10) {
+        const halfW = 3 * NL_R + NL_R * Math.sqrt(3);
+        const baseY = NL_YBOT + NL_R;
+        const topY  = baseY - halfW * Math.sqrt(3);
+        const tri = document.createElementNS(SVG_NS, 'polygon');
+        tri.setAttribute('points',
+          (NL_CX - halfW) + ',' + baseY + ' ' +
+          (NL_CX + halfW) + ',' + baseY + ' ' +
+          NL_CX + ',' + topY);
+        tri.setAttribute('fill', 'none');
+        tri.setAttribute('stroke', '#000');
+        tri.setAttribute('stroke-width', '1.6');
+        tri.setAttribute('stroke-linejoin', 'round');
+        svg.appendChild(tri);
+      }
+      for (const p of centers) {
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', p.y);
+        c.setAttribute('r', NL_R);
+        c.setAttribute('fill', color);
+        c.setAttribute('stroke', '#000');
+        c.setAttribute('stroke-width', '1.4');
+        svg.appendChild(c);
+      }
+    }
+  })();
 </script>
 </body>
 </html>

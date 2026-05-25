@@ -345,7 +345,12 @@
       }
       // Pulse the digit that's currently being spoken.
       flashEquationDigit(pi);
-      await sleep(2000);
+      // playPlusNumber chains "plus" (~250ms) + 480ms gap + the digit
+      // word (~700ms+), so a 2s wait isn't long enough -- the next
+      // clip kicks in while "two" is still finishing and the user
+      // hears them overlap.  Give chained "plus N" steps extra time.
+      const chained = pi > 0 && part.value > 1;
+      await sleep(chained ? 2700 : 2000);
     }
 
     // Final hold: append "= 10" and say "equals ten" using the clip

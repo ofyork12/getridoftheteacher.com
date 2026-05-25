@@ -284,18 +284,21 @@
   // slot indices, all in that part's number colour.  Parts fire in
   // order; the equation appends each value as it lands.
   // Slot indices (set above): 0=apex, 1-2=row2, 3-5=row3, 6-9=base.
-  // Pair placement follows reading order top-to-bottom, left-to-right:
-  // each "2" takes the next two free slots in [0,1,2,3,4,5,6,7,8,9],
-  // so pairs 1-3 fill the top six slots (apex, row 2, row 3 left+mid)
-  // and the four 1s fill row-3-right through the entire base.
+  // Orange pairs go in the big triangle's THREE CORNERS so none of
+  // the 2's touch each other:
+  //   pair 1 — apex corner       (0 + 1, second orange attached down-left)
+  //   pair 2 — bottom-left corner (6 + 7, second orange attached right)
+  //   pair 3 — bottom-right corner (9 + 5, second orange attached up)
+  // Verified by adjacency: no orange in one pair sits next to an
+  // orange in another pair.  Reds fill the four middle slots.
   const PARTITION = [
-    { value: 2, slots: [0, 1] },              // orange pair: apex + row-2 left
-    { value: 2, slots: [2, 3] },              // orange pair: row-2 right + row-3 left
-    { value: 2, slots: [4, 5] },              // orange pair: row-3 middle + row-3 right
-    { value: 1, slots: [6] },                 // red base 1 (leftmost)
-    { value: 1, slots: [7] },                 // red base 2
+    { value: 2, slots: [0, 1] },              // apex corner: 0 + row-2 left
+    { value: 2, slots: [6, 7] },              // bottom-left corner: 6 + base-2
+    { value: 2, slots: [9, 5] },              // bottom-right corner: 9 + row-3 right
+    { value: 1, slots: [2] },                 // red row-2 right
+    { value: 1, slots: [3] },                 // red row-3 left
+    { value: 1, slots: [4] },                 // red row-3 middle
     { value: 1, slots: [8] },                 // red base 3
-    { value: 1, slots: [9] },                 // red base 4 (rightmost)
   ];
 
   // Build the equation as parts land: "2", "2 + 2", "2 + 2 + 2", ...

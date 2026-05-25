@@ -341,6 +341,21 @@
       background: #fff;
       color: #000;
     }
+
+    /* Count-UP-the-page layout: the ten number sections live inside
+       this wrapper, which paints them BOTTOM-TO-TOP with column-reverse.
+       So in the DOM they're still 1, 2, 3, ..., 10 (easy to read), but
+       visually 1 sits at the BOTTOM of the page and 10 at the TOP.
+       Combined with the auto-scroll-to-bottom on load (see the inline
+       <script> at the end of <body>), the kid lands on "Number 1" and
+       SCROLLS UP to count 2, 3, 4 ... 10. */
+    .number-stack {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: var(--section-gap);
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -390,6 +405,11 @@
       <button class="dual" data-dual="hi">हिन्दी + English</button>
     </div>
   </div>
+
+  <!-- All ten number sections are wrapped so .number-stack can flip
+       them visually with column-reverse.  DO NOT reorder the sections
+       in the source; the flex-direction handles the flip. -->
+  <div class="number-stack">
 
   <section class="set">
     <h2>Number 1</h2>
@@ -504,6 +524,25 @@
       <div class="circle row1-4"></div>
     </div>
   </section>
+
+  </div><!-- /.number-stack -->
+
+<script>
+  // Land the kid at the BOTTOM of the page on load (where "Number 1"
+  // lives, thanks to column-reverse).  From there they scroll UP to
+  // count 2, 3, 4, ... 10.  We jump twice -- once immediately, once
+  // after fonts/layout settle -- because the page height changes as
+  // the language buttons and circles size themselves.
+  function _scrollToCountStart() {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+  }
+  _scrollToCountStart();
+  window.addEventListener('load', () => {
+    _scrollToCountStart();
+    // One more tick for any late layout shifts.
+    setTimeout(_scrollToCountStart, 150);
+  });
+</script>
 
 <script>
 const COLOR_CLASSES = ["orange","yellow","green","blue","purple","brown","pink","sky","red-final"];

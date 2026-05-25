@@ -35,6 +35,15 @@
     color: #888; letter-spacing: 0.25em;
     pointer-events: none;
   }
+  .brand-sig {
+    position: absolute;
+    right: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.5vh;
+    width: auto;
+    color: #000;             /* trademark — always black, not the brand gray */
+  }
   .title {
     position: absolute; top: 2%; left: 0; right: 0;
     text-align: center; font-size: 2.8vh; font-weight: 700;
@@ -43,15 +52,27 @@
   .equation {
     position: absolute; top: 10%; left: 0; right: 0;
     text-align: center;
-    /* Long partitions like "1 + 1 + ... + 1 = 10" need a smaller font
-       so they fit the portrait stage in a single line. */
+    /* Long partitions like "2 + 1 + ... + 1 = 10" wrap to a second
+       line when they don't fit on one.  min-height: 8vh covers two
+       lines at the current font + line-height. */
     font-size: 3.4vh; font-weight: 800;
     color: #000;
     padding: 0 3%;
     line-height: 1.15;
     min-height: 8vh;
-    white-space: nowrap;
     overflow: visible;
+  }
+  .equation .num {
+    display: inline-block;
+    transform-origin: center center;
+  }
+  .equation .num.flash {
+    animation: equationFlash 0.7s ease;
+  }
+  @keyframes equationFlash {
+    0%   { transform: scale(1);   color: #000; }
+    50%  { transform: scale(1.5); color: #e63946; }
+    100% { transform: scale(1);   color: #000; }
   }
   .play-area {
     position: absolute; top: 22%; left: 0; right: 0; height: 60%;
@@ -79,7 +100,7 @@
       <g id="dotGroup"></g>
     </svg>
   </div>
-  <div class="brand">✦ ColorMyMath ✦</div>
+  <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 30" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="16" y1="3" x2="16" y2="24"/><polyline points="24,3 24,24 38,24"/><polyline points="50,3 50,24 64,24"/></g></svg></div>
 </div>
 
 <script>
@@ -272,12 +293,23 @@
   ];
 
   // Build the equation as parts land: "2", "2 + 1", "2 + 1 + 1", ...
-  // then append " = 10" once every part has been placed.
+  // then append " = 10" once every part has been placed.  Each digit
+  // is rendered as a <span class="num"> so flashEquationDigit() can
+  // pulse the one currently being spoken.
   function setEquationFromPlaced(placedValues, includeSum) {
-    if (placedValues.length === 0) { eqEl.textContent = ''; return; }
-    let s = placedValues.join(' + ');
-    if (includeSum) s += ' = 10';
-    eqEl.textContent = s;
+    if (placedValues.length === 0) { eqEl.innerHTML = ''; return; }
+    const parts = placedValues.map(v => '<span class="num">' + v + '</span>');
+    let html = parts.join(' + ');
+    if (includeSum) html += ' = <span class="num">10</span>';
+    eqEl.innerHTML = html;
+  }
+  function flashEquationDigit(idx) {
+    const spans = eqEl.querySelectorAll('.num');
+    const t = spans[idx];
+    if (!t) return;
+    t.classList.remove('flash');
+    void t.offsetWidth;          // restart animation
+    t.classList.add('flash');
   }
 
   async function play() {
@@ -307,6 +339,8 @@
       } else {
         playPlusNumber(part.value);   // fallback to chain
       }
+      // Pulse the digit that's currently being spoken.
+      flashEquationDigit(pi);
       await sleep(2000);
     }
 
@@ -316,6 +350,8 @@
     setEquationFromPlaced(placed, true);
     _stopAllSpeech();
     _playKey('equals_ten');
+    // Flash the "10" -- it's the last .num span after we added " = 10".
+    flashEquationDigit(eqEl.querySelectorAll('.num').length - 1);
     await sleep(2500);
   }
 

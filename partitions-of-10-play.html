@@ -35,6 +35,15 @@
     color: #888; letter-spacing: 0.25em;
     pointer-events: none;
   }
+  .brand-sig {
+    position: absolute;
+    right: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.5vh;
+    width: auto;
+    color: #000;             /* trademark — always black, not the brand gray */
+  }
   .title {
     position: absolute; top: 2%; left: 0; right: 0;
     text-align: center; font-size: 2.8vh; font-weight: 700;
@@ -43,19 +52,51 @@
   .equation {
     position: absolute; top: 10%; left: 0; right: 0;
     text-align: center;
-    /* Long partitions like "1 + 1 + ... + 1 = 10" need a smaller font
-       so they fit the portrait stage in a single line. */
+    /* Long partitions like "1+1+...+1=10" wrap to a second line when
+       they don't fit on one.  min-height: 8vh covers two lines at the
+       current font + line-height. */
     font-size: 3.4vh; font-weight: 800;
     color: #000;
     padding: 0 3%;
     line-height: 1.15;
     min-height: 8vh;
-    white-space: nowrap;
     overflow: visible;
+  }
+  .equation .num {
+    display: inline-block;
+    transform-origin: center center;
+  }
+  .equation .num.flash {
+    animation: equationFlash 0.7s ease;
+  }
+  @keyframes equationFlash {
+    0%   { transform: scale(1);   color: #000; }
+    50%  { transform: scale(1.5); color: #e63946; }
+    100% { transform: scale(1);   color: #000; }
   }
   .play-area {
     position: absolute; top: 22%; left: 0; right: 0; height: 60%;
   }
+  /* Paint palette: small lily-pad-shaped chips on the left side.
+     Tapping one loads the brush; tapping a dot then paints it.
+     Foundation for future modes (blue = paint 5 dots, etc.). */
+  .paint-pad {
+    position: absolute;
+    left: 3%;
+    top: 32%;
+    width: 14%;
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+    pointer-events: auto;
+    z-index: 1100;             /* above the start-overlay (z=1000) */
+    transition: transform 0.15s ease, filter 0.15s ease;
+  }
+  .paint-pad:hover { transform: scale(1.05); }
+  .paint-pad.active {
+    filter: drop-shadow(0 0 6px currentColor);
+    transform: scale(1.1);
+  }
+  .paint-pad svg { width: 100%; height: 100%; display: block; }
   .play-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;
     overflow: visible;
@@ -79,7 +120,17 @@
       <g id="dotGroup"></g>
     </svg>
   </div>
-  <div class="brand">✦ ColorMyMath ✦</div>
+  <div class="paint-pad" id="paintPadRed" data-color="#e63946" style="color:#e63946;" title="Red paint (1)">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <!-- Lily-pad: circle with a thin wedge cut at the top (Pac-Man-ish). -->
+      <path d="M 53,12 A 40,40 0 1 1 47,12 L 50,50 Z"
+            fill="#ffffff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+      <text x="50" y="55" text-anchor="middle" dominant-baseline="central"
+            font-family="Nunito, Arial, sans-serif" font-weight="800" font-size="48"
+            fill="#e63946">1</text>
+    </svg>
+  </div>
+  <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 30" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="16" y1="3" x2="16" y2="24"/><polyline points="24,3 24,24 38,24"/><polyline points="50,3 50,24 64,24"/></g></svg></div>
 </div>
 
 <script>
@@ -247,12 +298,24 @@
   // record it and add it to NUMBER_AUDIO rather than going back to TTS.
 
   // Build the equation incrementally: "1", "1 + 1", "1 + 1 + 1", ...,
-  // then append " = 10" once all 10 dots are coloured.
+  // then append " = 10" once all 10 dots are coloured.  Each digit
+  // is rendered as a <span class="num"> so flashEquationDigit() can
+  // pulse the one that's currently being spoken.
   function setEquation(count, includeSum) {
-    if (count === 0) { eqEl.textContent = ''; return; }
-    let s = Array(count).fill('1').join(' + ');
-    if (includeSum) s += ' = 10';
-    eqEl.textContent = s;
+    if (count === 0) { eqEl.innerHTML = ''; return; }
+    const parts = [];
+    for (let i = 0; i < count; i++) parts.push('<span class="num">1</span>');
+    let html = parts.join(' + ');
+    if (includeSum) html += ' = <span class="num">10</span>';
+    eqEl.innerHTML = html;
+  }
+  function flashEquationDigit(idx) {
+    const spans = eqEl.querySelectorAll('.num');
+    const t = spans[idx];
+    if (!t) return;
+    t.classList.remove('flash');
+    void t.offsetWidth;          // restart animation
+    t.classList.add('flash');
   }
 
   async function play() {
@@ -276,11 +339,15 @@
       if (wait > 0) await sleep(wait);
       dots[i].el.setAttribute('fill', RED);
       setEquation(i + 1, false);
+      // Pulse the newest "1" on its spoken onset.
+      flashEquationDigit(i);
     }
     // "= 10" lands on the spoken "equals ten" near the end of the intro.
     const tailWait = Math.max(0, EQUALS_MS - (Date.now() - startWall));
     if (tailWait > 0) await sleep(tailWait);
     setEquation(10, true);
+    // Flash the "10" with "equals ten" -- it's the last .num span.
+    flashEquationDigit(10);
     // Let the rest of the intro ("equals ten") finish, then hold.
     await sleep(2200);
   }
@@ -291,6 +358,39 @@
   startBtn.textContent = 'Start with sound';
   startBtn.onclick = () => { startBtn.remove(); play(); };
   document.body.appendChild(startBtn);
+
+  // Paint palette: tap a pad to "load" the brush with that colour, then
+  // tap a dot to paint it.  Tapping the active pad again deactivates.
+  // Foundation for future modes (blue = paint 5 dots per click, white
+  // = eraser, etc.) -- for now there's just the red "1" pad.
+  let activePaint = null;
+  function setActivePaint(pad) {
+    const wasActive = pad.classList.contains('active');
+    document.querySelectorAll('.paint-pad.active').forEach(p => p.classList.remove('active'));
+    if (wasActive) {
+      activePaint = null;
+    } else {
+      pad.classList.add('active');
+      activePaint = pad.dataset.color;
+    }
+  }
+  document.querySelectorAll('.paint-pad').forEach(pad => {
+    pad.addEventListener('click', (e) => {
+      e.stopPropagation();          // don't trigger the start-overlay
+      setActivePaint(pad);
+    });
+  });
+  // Dot clicks paint with the active colour.  Doesn't disturb autoplay
+  // since autoplay sets fills directly via setAttribute.
+  for (const d of dots) {
+    d.el.style.cursor = 'pointer';
+    d.el.addEventListener('click', (e) => {
+      if (activePaint) {
+        d.el.setAttribute('fill', activePaint);
+        e.stopPropagation();
+      }
+    });
+  }
 </script>
 </body>
 </html>

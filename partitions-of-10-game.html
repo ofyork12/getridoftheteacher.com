@@ -388,7 +388,8 @@
   // --- Equation: show the running sum of painted dot values ---------
   // Each painted dot contributes its colour's digit value (red=1,
   // orange=2, ..., cyan=9; white=0).  Equation reads like
-  // "1 + 1 + 5 = 7"; when the sum hits 10 the right side flashes.
+  // "1 + 1 + 5 = 7" -- every digit stays black; the "equals ten"
+  // audio + the filled dots carry the celebration when the sum hits 10.
   function updateEquation() {
     const painted = dots
       .filter(d => d.value > 0)

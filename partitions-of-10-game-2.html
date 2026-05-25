@@ -371,6 +371,52 @@
   // a minus-one clip right now).
   const strokes = [];   // [{ value, color, dotIndices: [number, ...] }]
 
+  // Slot adjacency map -- which dots TOUCH which.  Used to find a
+  // partner for orange (value-2) paints so the two orange dots in a
+  // stroke always sit next to each other instead of one corner dot
+  // and one stray "next in reading order" dot.
+  // Slot index reference: 0=apex, 1-2=row 2, 3-5=row 3, 6-9=base.
+  // Each list is ORDERED by preference -- the first available white
+  // neighbour gets paired, so e.g. tapping slot 9 prefers slot 5
+  // (the [9,5] corner pair from partition 4) over slot 8.
+  const ADJACENCY = {
+    0: [1, 2],
+    1: [0, 3, 2, 4],
+    2: [0, 5, 1, 4],
+    3: [6, 1, 4, 7],
+    4: [1, 2, 3, 5, 7, 8],
+    5: [9, 2, 4, 8],
+    6: [7, 3],
+    7: [6, 3, 8, 4],
+    8: [9, 7, 4, 5],
+    9: [5, 8],
+  };
+
+  // BFS through the adjacency graph from `d` to gather `count` total
+  // white dots (including d itself).  Returns the dots collected, or
+  // fewer than count if there aren't enough connected whites left.
+  function findPaintTargets(d, count) {
+    const targets = [d];
+    if (count <= 1) return targets;
+    let remaining = count - 1;
+    const visited = new Set([d.i]);
+    const queue = [d.i];
+    while (queue.length && remaining > 0) {
+      const idx = queue.shift();
+      for (const adjIdx of (ADJACENCY[idx] || [])) {
+        if (visited.has(adjIdx)) continue;
+        visited.add(adjIdx);
+        if (dots[adjIdx].value === 0) {
+          targets.push(dots[adjIdx]);
+          remaining--;
+          queue.push(adjIdx);
+          if (remaining === 0) break;
+        }
+      }
+    }
+    return targets;
+  }
+
   function paintDot(d, color, value) {
     // ----- Eraser branch (white brush) -------------------------------
     if (value === 0) {
@@ -392,20 +438,13 @@
     // ----- Painting branch -------------------------------------------
     if (d.value > 0) return;       // dot already painted; ignore re-tap
 
-    // Gather `value` white dots: the tapped one + (value - 1) more in
-    // reading order (slot 0 -> 9).  Bail if there aren't enough whites
-    // left -- the user has to clear something first.
-    const targets = [d];
-    if (value > 1) {
-      let remaining = value - 1;
-      for (let i = 0; i < dots.length && remaining > 0; i++) {
-        if (i === d.i) continue;
-        if (dots[i].value > 0) continue;
-        targets.push(dots[i]);
-        remaining--;
-      }
-      if (targets.length < value) return;
-    }
+    // Gather `value` connected white dots starting from d.  BFS through
+    // the adjacency graph so the partner(s) always TOUCH the tapped
+    // dot -- e.g. tapping slot 9 with orange paints [9, 5] (corner
+    // pair) instead of [9, 2] (stray dot somewhere up top).  Bail if
+    // there aren't enough connected whites left.
+    const targets = findPaintTargets(d, value);
+    if (targets.length < value) return;
 
     for (const t of targets) {
       t.el.setAttribute('fill', color);

@@ -110,13 +110,12 @@
     overflow: visible;
   }
 
-  /* "Clear all" pill -- sits just above the "1" cell of the number
-     line on the left side, so the bottom-right stays free for the
-     brand + signature.  Slightly smaller font/padding so it fits
-     comfortably above a single number-line cell. */
+  /* "Clear all" pill -- pinned to the top-right corner of the stage
+     so it doesn't sit on top of the triangle outline or the
+     number-line strip.  The title is centred so this corner is empty. */
   .reset-btn {
     position: absolute;
-    bottom: 23%; left: 2.5%;
+    top: 1.5%; right: 3%;
     padding: 0.55vh 1.4vh;
     border: 2px solid #000;
     border-radius: 999px;

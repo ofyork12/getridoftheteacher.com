@@ -1004,16 +1004,30 @@
   const COLORS_BY_N = { 1: '#e63946', 2: '#ff6200' };
 
   let currentSpec = null;
-  let phase = 'idle';        // 'idle' | 'demo' | 'play' | 'win'
-  let recentSpecs = [];      // last few specs played, to avoid immediate repeats
+  let phase = 'idle';        // 'idle' | 'demo' | 'play' | 'win' | 'done'
+  let sessionQueue = [];     // remaining specs to play in the current session
+  let roundNumber = 0;       // 1-based, current round within the session
+  const TOTAL_ROUNDS = PARTITION_SPECS.length;   // 6 partitions per session
 
-  function pickNextSpec() {
-    const available = PARTITION_SPECS.filter(s => !recentSpecs.includes(s.n));
-    const pool = available.length > 0 ? available : PARTITION_SPECS;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    recentSpecs.push(pick.n);
-    if (recentSpecs.length > 3) recentSpecs.shift();
-    return pick;
+  // A session = play through all 6 partitions once, in shuffled order.
+  // Score and Perfect reset to 0 at the start of each session.  Max
+  // possible total = 60 (each red stroke = 1 pt, each orange = 2 pts,
+  // every partition sums to 10 pts -> 6 partitions * 10 = 60).
+  function startNewSession() {
+    sessionQueue = PARTITION_SPECS.slice();
+    // Fisher-Yates shuffle so the partitions appear in random order
+    // but each session contains all 6 exactly once.
+    for (let i = sessionQueue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = sessionQueue[i]; sessionQueue[i] = sessionQueue[j]; sessionQueue[j] = tmp;
+    }
+    roundNumber = 0;
+    scoreCount = 0;
+    perfectCount = 0;
+    screenCount = 0;
+    renderScoreboard();
+    saveScoreboard();
+    startRound();
   }
 
   function clearAllDots() {
@@ -1044,7 +1058,8 @@
 
   function updateRoundLabel(spec) {
     const lbl = document.getElementById('roundLabel');
-    if (lbl) lbl.textContent = 'Make ' + spec.equation;
+    if (lbl) lbl.textContent = 'Round ' + roundNumber + ' of ' + TOTAL_ROUNDS
+                              + ' — Make ' + spec.equation;
   }
 
   async function playDemo(spec) {
@@ -1072,7 +1087,17 @@
   }
 
   function startRound() {
-    currentSpec = pickNextSpec();
+    if (sessionQueue.length === 0) {
+      // Session complete -- six rounds done.  Stop the auto-cycle and
+      // wait for the kid to tap PLAY AGAIN to start a fresh session.
+      phase = 'done';
+      hideReplayBtn();
+      hidePerfectBanner();
+      showStartOverlay('PLAY AGAIN');
+      return;
+    }
+    currentSpec = sessionQueue.shift();
+    roundNumber++;
     // Fresh round = fresh perfection flag.  Goes false the moment the
     // kid plays a stroke that wasn't the biggest available value.
     roundWasPerfect = true;
@@ -1110,21 +1135,28 @@
   // Erase taps undo work, so they don't get a Score point.
   window.bumpScoreForErase = function() {};
 
-  // Per-paint score bump with sequence-aware perfect check.  Fires AFTER
-  // paintDot has pushed the new stroke onto `strokes`, so strokes.length
-  // - 1 is the index of the stroke just placed AND the spec.layout slot
-  // it should be compared against.
+  // Per-paint score bump.  Fires AFTER paintDot has pushed the new
+  // stroke onto `strokes`, so strokes.length - 1 is both the stroke
+  // just placed AND the spec.layout slot it should be compared against.
+  //
+  // Points = stroke VALUE (not 1 per stroke):
+  //   red  (value 1) -> 1 pt
+  //   orange (value 2) -> 2 pts
+  // Every partition sums to 10 pts -> a full 6-round session is 60.
+  // Perfect points only land when the stroke matched the demo's
+  // sequence (same value + same slots in the same i-th position).
   window.bumpScoreForPaint = function() {
     if (phase !== 'play') return;
     const i = strokes.length - 1;
     const placed = strokes[i];
     if (!placed) return;
-    scoreCount++;
+    const pts = placed.value;
+    scoreCount += pts;
     const expected = currentSpec && currentSpec.layout[i];
     const matches  = !!expected
                     && expected.v === placed.value
                     && sameSlotSet(expected.s, placed.dotIndices);
-    if (matches) perfectCount++;
+    if (matches) perfectCount += pts;
     else         roundWasPerfect = false;
     renderScoreboard();
     saveScoreboard();
@@ -1140,18 +1172,17 @@
     hideReplayBtn();
     if (roundWasPerfect) {
       _origShowPerfect();           // PERFECT! banner on
-      // Hold the banner, then drop the PLAY AGAIN overlay so the kid
-      // chooses when (or whether) to keep going.  Game doesn't loop
-      // forever -- they have to actually tap to start each new round.
+      // Auto-cycle to the next round in the session (no overlay
+      // between rounds).  startRound() will detect when the queue
+      // empties and drop the PLAY AGAIN overlay after round 6.
       setTimeout(() => {
         hidePerfectBanner();
-        showStartOverlay('PLAY AGAIN');
-      }, 3500);
+        startRound();
+      }, 2800);
     } else {
       // No PERFECT banner -- the kid played out of order at least
-      // once this round.  Score still went up on each tap; Perfect
-      // didn't.  Still wait for them to tap PLAY AGAIN.
-      setTimeout(() => showStartOverlay('PLAY AGAIN'), 1500);
+      // once this round.  Auto-cycle to the next round.
+      setTimeout(startRound, 1500);
     }
   };
   window.showPerfectBanner = showPerfectBanner;
@@ -1168,11 +1199,13 @@
   function hideStartOverlay() {
     if (startOverlay) startOverlay.classList.add('hidden');
   }
-  // Tap anywhere on the overlay (button OR backdrop) to begin the round.
+  // Tap anywhere on the overlay (button OR backdrop) to begin a fresh
+  // 6-round session.  PLAY (initial) and PLAY AGAIN (after session
+  // ends) both reset scores and shuffle the queue.
   if (startOverlay) {
     startOverlay.addEventListener('click', () => {
       hideStartOverlay();
-      startRound();
+      startNewSession();
     });
   }
   // SHOW AGAIN button: re-plays the current spec's demo (clears any

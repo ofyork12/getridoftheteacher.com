@@ -81,6 +81,16 @@
      used while we're only enabling red + white.  Remove the class on a
      slot to bring its colour back into the tray. */
   .paint-slot.disabled { display: none; }
+  /* "spent" = colour's stroke limit reached for the current partition.
+     Slot fades out, shrinks, and stops responding to taps.  When the
+     user erases a stroke and the count drops back below the limit,
+     `spent` comes off and the slot snaps back to normal. */
+  .paint-slot.spent {
+    opacity: 0.25;
+    transform: scale(0.8);
+    pointer-events: none;
+    cursor: not-allowed;
+  }
 
   /* Running equation across the top -- offset to the right so the
      left-side tray doesn't collide with long equations. */
@@ -184,7 +194,7 @@
     right: 6%;
     top: 50%;
     transform: translateY(-50%);
-    height: 1.5vh;
+    height: 1.8vh;
     width: auto;
     color: #000;
   }
@@ -240,7 +250,7 @@
 
   <button class="reset-btn" id="resetBtn">CLEAR</button>
 
-  <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 30" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="16" y1="3" x2="16" y2="24"/><polyline points="24,3 24,24 38,24"/><polyline points="50,3 50,24 64,24"/></g></svg></div>
+  <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 40" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="14" y1="3" x2="14" y2="22"/><polyline points="30,3 30,22 42,22 42,36"/><polyline points="54,3 54,22 64,22"/></g></svg></div>
 </div>
 
 <script>
@@ -371,6 +381,36 @@
   // a minus-one clip right now).
   const strokes = [];   // [{ value, color, dotIndices: [number, ...] }]
 
+  // Partition 2 = one "2" + eight "1"s.  Cap each colour to those
+  // counts so the user can't over-paint the partition.  Once a
+  // colour hits its cap its tray chip gets the `spent` class
+  // (fade + shrink + disabled).  Erasing a stroke drops the count
+  // and re-enables the chip.
+  const STROKE_LIMITS = { 1: 8, 2: 1 };
+
+  function strokeCount(value) {
+    let n = 0;
+    for (const s of strokes) if (s.value === value) n++;
+    return n;
+  }
+
+  function updatePaintSlotStates() {
+    document.querySelectorAll('.paint-slot[data-value]').forEach(slot => {
+      const v = parseInt(slot.dataset.value, 10);
+      if (!(v in STROKE_LIMITS)) return;
+      const count = strokeCount(v);
+      const spent = count >= STROKE_LIMITS[v];
+      slot.classList.toggle('spent', spent);
+      // If the active brush just became spent, drop the brush so the
+      // next tap doesn't silently no-op against a hidden chip.
+      if (spent && slot.classList.contains('active')) {
+        slot.classList.remove('active');
+        activePaint = null;
+        activeValue = 0;
+      }
+    });
+  }
+
   // Slot adjacency map -- which dots TOUCH which.  Used to find a
   // partner for orange (value-2) paints so the two orange dots in a
   // stroke always sit next to each other instead of one corner dot
@@ -442,11 +482,18 @@
         _playKey('minus');
         setTimeout(() => _playKey(String(stroke.value)), 420);
       }
+      updatePaintSlotStates();   // chip count went down -> maybe un-spend
       return;
     }
 
     // ----- Painting branch -------------------------------------------
     if (d.value > 0) return;       // dot already painted; ignore re-tap
+
+    // Cap each colour at its partition-2 limit (1 orange, 8 reds).
+    // If the user has somehow loaded a spent brush, just no-op.
+    if (value in STROKE_LIMITS && strokeCount(value) >= STROKE_LIMITS[value]) {
+      return;
+    }
 
     // Gather `value` connected white dots starting from d.  BFS through
     // the adjacency graph so the partner(s) always TOUCH the tapped
@@ -477,6 +524,8 @@
     if (sum === 10) {
       setTimeout(() => _playKey('equals_ten'), 800);
     }
+
+    updatePaintSlotStates();   // chip count went up -> maybe spend
   }
   for (const d of dots) {
     d.el.addEventListener('click', () => {
@@ -510,6 +559,7 @@
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
     activePaint = null;
     activeValue = 0;
+    updatePaintSlotStates();   // brings any "spent" chips back
   });
 
   // --- Number-line cells (coloured quantity above black digit) -------

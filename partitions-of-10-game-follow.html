@@ -1073,6 +1073,9 @@
 
   function startRound() {
     currentSpec = pickNextSpec();
+    // Fresh round = fresh perfection flag.  Goes false the moment the
+    // kid plays a stroke that wasn't the biggest available value.
+    roundWasPerfect = true;
     // Clear FIRST so the previous round's strokes are gone before we
     // ask applyLimitsForSpec to compute spent states.  Otherwise a
     // partition-6 -> partition-4 jump (5 oranges -> cap 3) leaves the
@@ -1084,62 +1087,67 @@
     playDemo(currentSpec);
   }
 
-  // Follow-Me scoring: a "round" only counts when the player actually
-  // reproduces the demo's positions, not just the counts.  Override the
-  // per-paint score bumps that the partition-2 game does -- in this
-  // mode the only score events are round completions.
-  window.bumpScoreForPaint = function() {};
+  // Follow-Me scoring (per user spec):
+  //   Score:   +1 every time a paint stroke lands successfully on the
+  //            triangle (per-tap-inside, not per-round).
+  //   Perfect: +1 every time the stroke played the BIGGEST value still
+  //            available -- the kid should be playing 2's before 1's.
+  //            If they paint a 1 while there's still orange capacity
+  //            left, they get the Score point but no Perfect point.
+  //   Banner:  PERFECT! pops only when the whole round was played in
+  //            correct big-to-small order.
+  let roundWasPerfect = true;
+
+  // Erase taps undo work, so they don't get a Score point.
   window.bumpScoreForErase = function() {};
 
-  // Check whether the player's dots match the spec's canonical layout
-  // exactly (per-slot colour comparison).  STROKE_LIMITS already
-  // guarantees the counts match by the time sum hits 10, so this is
-  // really a POSITION check -- did the orange pair land at [0,1] like
-  // the demo showed, or did the player put it at [9,5] instead?
-  function isPerfectMatch(spec) {
-    const expected = new Array(dots.length).fill('#ffffff');
-    for (const stroke of spec.layout) {
-      const c = COLORS_BY_N[stroke.v];
-      for (const idx of stroke.s) expected[idx] = c;
+  // Replace the per-paint score bump with the order-aware version.
+  // This fires AFTER paintDot has pushed the new stroke onto `strokes`,
+  // so strokes[len-1] is the stroke just placed.
+  window.bumpScoreForPaint = function() {
+    if (phase !== 'play') return;
+    const last = strokes[strokes.length - 1];
+    if (!last) return;
+    const value = last.value;
+    scoreCount++;
+    // Was this stroke the biggest value still available?  Check whether
+    // any LARGER value still has remaining capacity.  (strokeCount() for
+    // larger values is unchanged by this stroke, so it gives the pre-paint
+    // count for those values.)
+    let wasPerfect = true;
+    for (const vKey in STROKE_LIMITS) {
+      const vNum = parseInt(vKey, 10);
+      if (vNum > value && strokeCount(vNum) < STROKE_LIMITS[vNum]) {
+        wasPerfect = false;
+        break;
+      }
     }
-    for (let i = 0; i < dots.length; i++) {
-      if (dots[i].color !== expected[i]) return false;
-    }
-    return true;
-  }
+    if (wasPerfect) perfectCount++;
+    else            roundWasPerfect = false;
+    renderScoreboard();
+    saveScoreboard();
+  };
 
-  // Override the showPerfectBanner hook: only ACTUALLY say "PERFECT!"
-  // when the player's pattern matches the demo.  Otherwise the round
-  // ended (sum hit 10) but positions were wrong -- bump Score but not
-  // Perfect, skip the banner.  Either way wait, then show the START
-  // overlay again so the kid can pick when the next round begins.
+  // Override the PERFECT! banner: pop it only when the entire round was
+  // played in biggest-first order.  Otherwise the round still completes
+  // and auto-cycles, just without the celebration.
   const _origShowPerfect = showPerfectBanner;
   showPerfectBanner = function() {
     if (phase !== 'play') return;   // ignore stray callbacks outside play
     phase = 'win';
     hideReplayBtn();
-    scoreCount++;
-    const perfect = isPerfectMatch(currentSpec);
-    if (perfect) {
-      perfectCount++;
+    if (roundWasPerfect) {
       _origShowPerfect();           // PERFECT! banner on
-      // Hold the banner, then auto-cycle to the next round.  No
-      // PLAY AGAIN overlay -- once the kid has tapped PLAY once,
-      // the game flows from one round to the next on its own.
-      // SHOW AGAIN stays available if they want to re-watch the
-      // next demo.
+      // Hold the banner, then auto-cycle to the next round.
       setTimeout(() => {
         hidePerfectBanner();
         startRound();
       }, 3500);
     } else {
-      // Don't say perfect -- the kid built a valid sum-of-10 but the
-      // positions didn't match what the demo showed.  Score is what
-      // tracks completions; Perfect is reserved for matched layouts.
+      // No banner -- the kid played out of order at least once this
+      // round.  Score still went up on each tap; Perfect didn't.
       setTimeout(startRound, 1800);
     }
-    renderScoreboard();
-    saveScoreboard();
   };
   window.showPerfectBanner = showPerfectBanner;
 

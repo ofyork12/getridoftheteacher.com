@@ -1090,40 +1090,42 @@
   // Follow-Me scoring (per user spec):
   //   Score:   +1 every time a paint stroke lands successfully on the
   //            triangle (per-tap-inside, not per-round).
-  //   Perfect: +1 every time the stroke played the BIGGEST value still
-  //            available -- the kid should be playing 2's before 1's.
-  //            If they paint a 1 while there's still orange capacity
-  //            left, they get the Score point but no Perfect point.
-  //   Banner:  PERFECT! pops only when the whole round was played in
-  //            correct big-to-small order.
+  //   Perfect: +1 every time the stroke matches the demo's NEXT
+  //            expected stroke exactly -- same value AND same slot(s).
+  //            If the kid paints out of order (wrong value or wrong
+  //            position), they get the Score point but no Perfect
+  //            point and the round's perfect flag flips false.
+  //   Banner:  PERFECT! pops only when EVERY stroke in the round
+  //            matched the demo's sequence exactly.
   let roundWasPerfect = true;
+
+  function sameSlotSet(a, b) {
+    if (!a || !b || a.length !== b.length) return false;
+    const A = a.slice().sort((x, y) => x - y);
+    const B = b.slice().sort((x, y) => x - y);
+    for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return false;
+    return true;
+  }
 
   // Erase taps undo work, so they don't get a Score point.
   window.bumpScoreForErase = function() {};
 
-  // Replace the per-paint score bump with the order-aware version.
-  // This fires AFTER paintDot has pushed the new stroke onto `strokes`,
-  // so strokes[len-1] is the stroke just placed.
+  // Per-paint score bump with sequence-aware perfect check.  Fires AFTER
+  // paintDot has pushed the new stroke onto `strokes`, so strokes.length
+  // - 1 is the index of the stroke just placed AND the spec.layout slot
+  // it should be compared against.
   window.bumpScoreForPaint = function() {
     if (phase !== 'play') return;
-    const last = strokes[strokes.length - 1];
-    if (!last) return;
-    const value = last.value;
+    const i = strokes.length - 1;
+    const placed = strokes[i];
+    if (!placed) return;
     scoreCount++;
-    // Was this stroke the biggest value still available?  Check whether
-    // any LARGER value still has remaining capacity.  (strokeCount() for
-    // larger values is unchanged by this stroke, so it gives the pre-paint
-    // count for those values.)
-    let wasPerfect = true;
-    for (const vKey in STROKE_LIMITS) {
-      const vNum = parseInt(vKey, 10);
-      if (vNum > value && strokeCount(vNum) < STROKE_LIMITS[vNum]) {
-        wasPerfect = false;
-        break;
-      }
-    }
-    if (wasPerfect) perfectCount++;
-    else            roundWasPerfect = false;
+    const expected = currentSpec && currentSpec.layout[i];
+    const matches  = !!expected
+                    && expected.v === placed.value
+                    && sameSlotSet(expected.s, placed.dotIndices);
+    if (matches) perfectCount++;
+    else         roundWasPerfect = false;
     renderScoreboard();
     saveScoreboard();
   };

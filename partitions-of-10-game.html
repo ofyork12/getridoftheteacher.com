@@ -110,17 +110,19 @@
     overflow: visible;
   }
 
-  /* "Clear all" pill -- moved to the bottom-right so it doesn't fight
-     the number-line strip at the bottom of the stage. */
+  /* "Clear all" pill -- sits just above the "1" cell of the number
+     line on the left side, so the bottom-right stays free for the
+     brand + signature.  Slightly smaller font/padding so it fits
+     comfortably above a single number-line cell. */
   .reset-btn {
     position: absolute;
-    bottom: 1.2%; right: 4%;
-    padding: 0.7vh 1.6vh;
+    bottom: 19%; left: 2.5%;
+    padding: 0.55vh 1.4vh;
     border: 2px solid #000;
     border-radius: 999px;
     background: #fff;
     color: #000;
-    font: 700 1.5vh 'Nunito', Arial, sans-serif;
+    font: 700 1.35vh 'Nunito', Arial, sans-serif;
     letter-spacing: 0.08em;
     cursor: pointer;
     z-index: 30;

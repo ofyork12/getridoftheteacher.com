@@ -292,6 +292,25 @@
     cursor: pointer;
   }
   .start-overlay.hidden { display: none; }
+
+  /* "Show again" button -- visible only while the kid is in the play
+     phase so they can re-watch the demo if they forgot the pattern. */
+  .replay-btn {
+    position: absolute;
+    top: 1.5%; right: 3%;
+    padding: 0.55vh 1.4vh;
+    border: 2px solid #000;
+    border-radius: 999px;
+    background: #ffeb3b;
+    color: #000;
+    font: 700 1.35vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    z-index: 40;
+    display: none;
+  }
+  .replay-btn.show { display: inline-block; }
+  .replay-btn:hover { background: #fff176; }
   .start-button {
     background: #ff6200;
     color: #fff;
@@ -319,6 +338,7 @@
   <div class="start-overlay" id="startOverlay">
     <button class="start-button" id="startButton" type="button">PLAY</button>
   </div>
+  <button class="replay-btn" id="replayBtn" type="button">SHOW AGAIN</button>
 
 
   <div class="scorebox-left" id="scorebox-left">
@@ -1029,6 +1049,7 @@
 
   async function playDemo(spec) {
     phase = 'demo';
+    hideReplayBtn();
     clearAllDots();
     await new Promise(r => setTimeout(r, 600));
     // Light up each stroke in turn so the kid sees both the layout
@@ -1045,6 +1066,9 @@
     // Clear and switch to play phase.
     clearAllDots();
     phase = 'play';
+    // Show the "SHOW AGAIN" button so the kid can re-watch the demo
+    // mid-round if they forgot what they were supposed to follow.
+    showReplayBtn();
   }
 
   function startRound() {
@@ -1093,6 +1117,7 @@
   showPerfectBanner = function() {
     if (phase !== 'play') return;   // ignore stray callbacks outside play
     phase = 'win';
+    hideReplayBtn();
     scoreCount++;
     const perfect = isPerfectMatch(currentSpec);
     if (perfect) {
@@ -1132,6 +1157,20 @@
       startRound();
     });
   }
+  // SHOW AGAIN button: re-plays the current spec's demo (clears any
+  // in-progress painting so the kid starts fresh).
+  const replayBtn = document.getElementById('replayBtn');
+  function showReplayBtn() { if (replayBtn) replayBtn.classList.add('show'); }
+  function hideReplayBtn() { if (replayBtn) replayBtn.classList.remove('show'); }
+  if (replayBtn) {
+    replayBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentSpec) return;
+      hideReplayBtn();
+      playDemo(currentSpec);
+    });
+  }
+
   // Show the initial PLAY button -- nothing happens until the kid taps it.
   showStartOverlay('PLAY');
 </script>

@@ -278,12 +278,47 @@
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+
+  /* Start / Replay overlay -- the round won't begin until the kid taps
+     it.  Covers the whole stage so they can't accidentally interact
+     with the dots or chips before the demo plays. */
+  .start-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 400;
+    cursor: pointer;
+  }
+  .start-overlay.hidden { display: none; }
+  .start-button {
+    background: #ff6200;
+    color: #fff;
+    border: 5px solid #000;
+    border-radius: 20px;
+    padding: 3vh 6vh;
+    font: 900 4.5vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.12em;
+    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+    box-shadow: 0 6px 0 #000, 0 12px 24px rgba(0,0,0,0.45);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .start-overlay:hover .start-button { transform: translateY(-2px); }
+  .start-overlay:active .start-button {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #000, 0 4px 10px rgba(0,0,0,0.4);
+  }
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage">
   <div class="perfect-banner" id="perfectBanner">PERFECT!</div>
+  <div class="start-overlay" id="startOverlay">
+    <button class="start-button" id="startButton" type="button">PLAY</button>
+  </div>
 
 
   <div class="scorebox-left" id="scorebox-left">
@@ -1052,7 +1087,8 @@
   // Override the showPerfectBanner hook: only ACTUALLY say "PERFECT!"
   // when the player's pattern matches the demo.  Otherwise the round
   // ended (sum hit 10) but positions were wrong -- bump Score but not
-  // Perfect, skip the banner.  Either way wait, then start a new round.
+  // Perfect, skip the banner.  Either way wait, then show the START
+  // overlay again so the kid can pick when the next round begins.
   const _origShowPerfect = showPerfectBanner;
   showPerfectBanner = function() {
     if (phase !== 'play') return;   // ignore stray callbacks outside play
@@ -1062,20 +1098,42 @@
     if (perfect) {
       perfectCount++;
       _origShowPerfect();           // PERFECT! banner on
-      setTimeout(startRound, 3500);
+      setTimeout(() => {
+        hidePerfectBanner();
+        showStartOverlay('PLAY AGAIN');
+      }, 3500);
     } else {
       // Don't say perfect -- the kid built a valid sum-of-10 but the
       // positions didn't match what the demo showed.  Score is what
       // tracks completions; Perfect is reserved for matched layouts.
-      setTimeout(startRound, 2200);
+      setTimeout(() => showStartOverlay('PLAY AGAIN'), 1800);
     }
     renderScoreboard();
     saveScoreboard();
   };
   window.showPerfectBanner = showPerfectBanner;
 
-  // First round on page load.
-  startRound();
+  // Start/Replay overlay -- the round only fires when the kid taps it.
+  // Was auto-starting on page load, which gave the user no chance to
+  // get the game centred on their screen first.
+  const startOverlay = document.getElementById('startOverlay');
+  const startButton  = document.getElementById('startButton');
+  function showStartOverlay(label) {
+    if (startButton && label) startButton.textContent = label;
+    if (startOverlay) startOverlay.classList.remove('hidden');
+  }
+  function hideStartOverlay() {
+    if (startOverlay) startOverlay.classList.add('hidden');
+  }
+  // Tap anywhere on the overlay (button OR backdrop) to begin the round.
+  if (startOverlay) {
+    startOverlay.addEventListener('click', () => {
+      hideStartOverlay();
+      startRound();
+    });
+  }
+  // Show the initial PLAY button -- nothing happens until the kid taps it.
+  showStartOverlay('PLAY');
 </script>
 
 </body>

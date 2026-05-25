@@ -357,39 +357,76 @@
   });
 
   // --- Dot painting --------------------------------------------------
-  // Tap a dot with the brush loaded -> paint that dot.  (Future: blue
-  // paint (5) will fill 5 dots per tap, etc.  For v1 we just paint
-  // one dot per tap, regardless of brush value.)
+  // Each "stroke" is one term in the equation.  Red strokes paint a
+  // single dot (value 1).  Orange strokes paint TWO dots together --
+  // the tapped one + the next still-white dot in reading order -- and
+  // count as a single "2" in the equation.  This way each visible
+  // orange pair represents one "2" term, mirroring the partition-2
+  // autoplay video where the orange dots are placed in a pair.
   //
-  // Audio: when a white dot becomes painted (value > 0) we speak the
-  // running narration so the user hears "one ... plus one ... plus
-  // one ..." as they build their partition, then "equals ten" the
-  // moment the sum reaches 10.  Erasing a coloured dot (value == 0
-  // when the previous value was > 0) plays "minus one" -- sliced
-  // out of the audio_1minus1 clip in subtraction-from-10-play.html.
+  // Audio matches the stroke value: first stroke speaks the digit
+  // ("one"/"two"); subsequent strokes speak "plus one" / "plus two".
+  // The eraser removes the WHOLE stroke containing the tapped dot
+  // and plays "minus one" regardless of stroke value (we only have
+  // a minus-one clip right now).
+  const strokes = [];   // [{ value, color, dotIndices: [number, ...] }]
+
   function paintDot(d, color, value) {
-    const previousValue = d.value;
-    const wasEmpty = previousValue === 0;
-    d.el.setAttribute('fill', color);
-    d.color = color;
-    d.value = value;
-    updateEquation();
-
-    if (value > 0 && wasEmpty) {
-      // Painting a previously-empty dot.
-      const paintedCount = dots.filter(dd => dd.value > 0).length;
-      _stopAllSpeech();
-      _playKey(paintedCount === 1 ? '1' : 'plus_one');
-
-      const sum = dots.reduce((a, b) => a + b.value, 0);
-      if (sum === 10) {
-        // Give the digit clip ~0.8s to finish before saying "equals ten".
-        setTimeout(() => _playKey('equals_ten'), 800);
+    // ----- Eraser branch (white brush) -------------------------------
+    if (value === 0) {
+      const sIdx = strokes.findIndex(s => s.dotIndices.includes(d.i));
+      if (sIdx === -1) return;     // dot wasn't part of any stroke
+      const stroke = strokes[sIdx];
+      for (const idx of stroke.dotIndices) {
+        dots[idx].el.setAttribute('fill', '#ffffff');
+        dots[idx].color = '#ffffff';
+        dots[idx].value = 0;
       }
-    } else if (value === 0 && previousValue > 0) {
-      // Erasing a coloured dot back to white.
+      strokes.splice(sIdx, 1);
+      updateEquation();
       _stopAllSpeech();
       _playKey('minus_one');
+      return;
+    }
+
+    // ----- Painting branch -------------------------------------------
+    if (d.value > 0) return;       // dot already painted; ignore re-tap
+
+    // Gather `value` white dots: the tapped one + (value - 1) more in
+    // reading order (slot 0 -> 9).  Bail if there aren't enough whites
+    // left -- the user has to clear something first.
+    const targets = [d];
+    if (value > 1) {
+      let remaining = value - 1;
+      for (let i = 0; i < dots.length && remaining > 0; i++) {
+        if (i === d.i) continue;
+        if (dots[i].value > 0) continue;
+        targets.push(dots[i]);
+        remaining--;
+      }
+      if (targets.length < value) return;
+    }
+
+    for (const t of targets) {
+      t.el.setAttribute('fill', color);
+      t.color = color;
+      t.value = value;
+    }
+    strokes.push({ value: value, color: color, dotIndices: targets.map(t => t.i) });
+    updateEquation();
+
+    // Audio: speak the bare digit for the first stroke, "plus N" after.
+    _stopAllSpeech();
+    if (strokes.length === 1) {
+      _playKey(value === 2 ? '2' : '1');
+    } else {
+      _playKey(value === 2 ? 'plus_two' : 'plus_one');
+    }
+
+    // Celebrate when the sum reaches 10.
+    const sum = strokes.reduce((s, x) => s + x.value, 0);
+    if (sum === 10) {
+      setTimeout(() => _playKey('equals_ten'), 800);
     }
   }
   for (const d of dots) {
@@ -399,20 +436,14 @@
     });
   }
 
-  // --- Equation: show the running sum of painted dot values ---------
-  // Each painted dot contributes its colour's digit value (red=1,
-  // orange=2, ..., cyan=9; white=0).  Equation reads like
-  // "1 + 1 + 5 = 7" -- every digit stays black; the "equals ten"
-  // audio + the filled dots carry the celebration when the sum hits 10.
+  // --- Equation: one term per stroke --------------------------------
+  // strokes = [{value:2,...}, {value:1,...}, {value:1,...}] renders as
+  // "2 + 1 + 1 = 4".  Stays black throughout; the dots + audio carry
+  // the celebration when the sum hits 10.
   function updateEquation() {
-    const painted = dots
-      .filter(d => d.value > 0)
-      .map(d => d.value);
-    if (painted.length === 0) { eqEl.innerHTML = ''; return; }
-    const sum = painted.reduce((a, b) => a + b, 0);
-    const lhs = painted.map(v => '<span class="num">' + v + '</span>').join(' + ');
-    // All digits stay BLACK -- the sum doesn't flash green at 10; the
-    // "equals ten" audio + the dots themselves carry that signal.
+    if (strokes.length === 0) { eqEl.innerHTML = ''; return; }
+    const sum = strokes.reduce((s, x) => s + x.value, 0);
+    const lhs = strokes.map(s => '<span class="num">' + s.value + '</span>').join(' + ');
     const rhs = '<span class="num">' + sum + '</span>';
     eqEl.innerHTML = lhs + ' = ' + rhs;
   }
@@ -424,6 +455,7 @@
       d.color = '#ffffff';
       d.value = 0;
     }
+    strokes.length = 0;
     updateEquation();
     // Drop any active paint too.
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));

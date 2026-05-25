@@ -31,8 +31,9 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   }
   .title {
-    position: absolute; top: 1.5%; left: 0; right: 0;
-    text-align: center; font-size: 1.9vh; font-weight: 700;
+    /* Pushed down below the new scoreboard at top: 1.2%. */
+    position: absolute; top: 5.5%; left: 0; right: 0;
+    text-align: center; font-size: 1.6vh; font-weight: 700;
     color: #333; letter-spacing: 0.08em;
     pointer-events: none;
     z-index: 10;
@@ -53,7 +54,7 @@
      triangle without overlapping the outline. */
   .paint-tray {
     position: absolute;
-    top: 7%; left: 3%;
+    top: 10%; left: 3%;
     width: 15%;
     display: grid;
     grid-template-columns: 1fr;
@@ -120,12 +121,12 @@
     overflow: visible;
   }
 
-  /* "Clear all" pill -- pinned to the top-right corner of the stage
-     so it doesn't sit on top of the triangle outline or the
-     number-line strip.  The title is centred so this corner is empty. */
+  /* "Clear all" pill -- bottom-left corner of the stage, below the
+     number line and to the left of the brand text.  Out of the way
+     of the scoreboard at the top and the triangle in the middle. */
   .reset-btn {
     position: absolute;
-    top: 1.5%; right: 3%;
+    bottom: 1%; left: 3%;
     padding: 0.55vh 1.4vh;
     border: 2px solid #000;
     border-radius: 999px;
@@ -198,11 +199,83 @@
     width: auto;
     color: #000;
   }
+
+  /* === Magic-42 game scoreboard (Score | Perfect | Screen) ===
+     Same look as counting-to-10-game.html: each number rendered as
+     a tiny dot-group in the ColorMyMath digit palette.  Score
+     persists across partition games via localStorage so the child
+     keeps going when they jump from partition 1 to partition 2. */
+  .scorebox-left {
+    position: absolute; top: 1.2%; left: 2.5%;
+    z-index: 6; pointer-events: none;
+  }
+  .scorebox-center {
+    position: absolute; top: 1.2%; left: 50%; transform: translateX(-50%);
+    z-index: 6; pointer-events: none;
+  }
+  .scorebox-right {
+    position: absolute; top: 1.2%; right: 2.5%;
+    z-index: 6; pointer-events: none;
+  }
+  .scorebox-left   .score-row { justify-content: flex-start; }
+  .scorebox-center .score-row { justify-content: center;     }
+  .scorebox-right  .score-row { justify-content: flex-end;   }
+  .score-row { display: flex; align-items: center; gap: 0.6em; }
+  .score-label {
+    font-size: 1.9vh; font-weight: 700; color: #555;
+    letter-spacing: 0.04em;
+  }
+  .score-value {
+    display: inline-flex; align-items: flex-end;
+    gap: 0.5vh; min-height: 2.2vh;
+  }
+  .score-digit-group {
+    display: inline-flex; flex-direction: column;
+    align-items: center; gap: 0;
+  }
+  .score-digit-row {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+  }
+  .score-dot {
+    width: 0.9vh; height: 0.9vh;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .score-dot.ring {
+    background: transparent !important;
+    border: 1.5px solid;
+  }
+  .score-dot.spacer { visibility: hidden; }
+  .score-value.bw .score-dot { background: #000 !important; }
+  .score-value.bw .score-dot.ring {
+    background: transparent !important;
+    border-color: #000 !important;
+  }
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage">
+
+  <div class="scorebox-left" id="scorebox-left">
+    <div class="score-row">
+      <span class="score-label">Score</span>
+      <span class="score-value" id="scoreValue"></span>
+    </div>
+  </div>
+  <div class="scorebox-center" id="scorebox-center">
+    <div class="score-row">
+      <span class="score-label">Perfect</span>
+      <span class="score-value" id="perfectValue"></span>
+    </div>
+  </div>
+  <div class="scorebox-right" id="scorebox-right">
+    <div class="score-row">
+      <span class="score-label">Screen</span>
+      <span class="score-value" id="screenValue"></span>
+    </div>
+  </div>
+
   <div class="title">42 — The Magic Number<span class="sub">Partition 2 of 42 — build 10 with 2's and 1's</span></div>
 
   <!-- Paint tray.  Only white, red, and orange are enabled for the
@@ -503,6 +576,7 @@
         _playKey('minus');
         setTimeout(() => _playKey(String(stroke.value)), 420);
       }
+      if (typeof window.bumpScoreForErase === 'function') window.bumpScoreForErase();
       updatePaintSlotStates();   // chip count went down -> maybe un-spend
       return;
     }
@@ -546,6 +620,7 @@
       setTimeout(() => _playKey('equals_ten'), 800);
     }
 
+    if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
     updatePaintSlotStates();   // chip count went up -> maybe spend
   }
   for (const d of dots) {
@@ -669,6 +744,127 @@
       svg.appendChild(c);
     }
   }
+
+  // === Magic-42 game scoreboard ============================================
+  // Score:   every successful paint stroke (any colour).
+  // Perfect: every successful stroke that wasn't immediately erased.
+  // Screen:  taps that didn't paint anything (background, spent chips,
+  //          already-painted dot taps without an active brush, etc.).
+  // Persisted across the partition game pages via localStorage so the
+  // child carries their score from partition 1 -> 2 -> ...
+  const SCORE_STORAGE_KEY = 'colormymath.magic42.scoreboard';
+  let scoreCount = 0;
+  let screenCount = 0;
+  let perfectCount = 0;
+  const scoreValueEl   = document.getElementById('scoreValue');
+  const screenValueEl  = document.getElementById('screenValue');
+  const perfectValueEl = document.getElementById('perfectValue');
+
+  function loadScoreboard() {
+    try {
+      const raw = localStorage.getItem(SCORE_STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (typeof s.score   === 'number') scoreCount   = s.score;
+      if (typeof s.perfect === 'number') perfectCount = s.perfect;
+      if (typeof s.screen  === 'number') screenCount  = s.screen;
+    } catch (e) { /* ignore corrupt storage */ }
+  }
+  function saveScoreboard() {
+    try {
+      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
+        score: scoreCount, perfect: perfectCount, screen: screenCount,
+      }));
+    } catch (e) { /* storage full, ignore */ }
+  }
+
+  // Digital ColorMyMath number rendering -- each digit becomes a small
+  // dot-group in its palette colour (0 = ring).
+  const DIGIT_COLORS = {
+    0: '#ffffff', 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c',
+    5: '#0066ff', 6: '#7700dd', 7: '#7a3b00', 8: '#ff3fa6', 9: '#38c7ff',
+  };
+  const DIGIT_ARRANGEMENT = {
+    0: [1], 1: [1], 2: [2], 3: [1, 2], 4: [2, 2], 5: [2, 3],
+    6: [1, 2, 3], 7: [2, 3, 2], 8: [3, 'split', 3], 9: [3, 3, 3],
+  };
+  function renderDigitalNumber(container, num) {
+    container.innerHTML = '';
+    const str = String(num);
+    for (const ch of str) {
+      const d = parseInt(ch, 10);
+      if (isNaN(d)) continue;
+      const isZero = d === 0;
+      const color = DIGIT_COLORS[d];
+      const group = document.createElement('span');
+      group.className = 'score-digit-group';
+      for (const rowSpec of DIGIT_ARRANGEMENT[d]) {
+        const row = document.createElement('span');
+        row.className = 'score-digit-row';
+        if (rowSpec === 'split') {
+          const a = document.createElement('span');
+          a.className = 'score-dot';
+          a.style.background = color;
+          const sp = document.createElement('span');
+          sp.className = 'score-dot spacer';
+          const b = document.createElement('span');
+          b.className = 'score-dot';
+          b.style.background = color;
+          row.appendChild(a); row.appendChild(sp); row.appendChild(b);
+        } else {
+          for (let i = 0; i < rowSpec; i++) {
+            const dot = document.createElement('span');
+            dot.className = 'score-dot' + (isZero ? ' ring' : '');
+            dot.style.background = color;
+            if (isZero) {
+              dot.style.borderColor = '#000';
+              dot.style.borderWidth = '1.5px';
+            }
+            row.appendChild(dot);
+          }
+        }
+        group.appendChild(row);
+      }
+      container.appendChild(group);
+    }
+  }
+  function renderScoreboard() {
+    if (scoreValueEl)   renderDigitalNumber(scoreValueEl,   scoreCount);
+    if (screenValueEl)  { screenValueEl.classList.add('bw'); renderDigitalNumber(screenValueEl,  screenCount); }
+    if (perfectValueEl) renderDigitalNumber(perfectValueEl, perfectCount);
+  }
+  // Score hooks invoked from paintDot.
+  window.bumpScoreForPaint = function() {
+    scoreCount++;
+    perfectCount++;
+    renderScoreboard();
+    saveScoreboard();
+  };
+  window.bumpScoreForErase = function() {
+    // Erasing doesn't count toward Score or Perfect -- it undoes work.
+    // We just save so the persisted board stays consistent.
+    saveScoreboard();
+  };
+  // Capture-phase screen-tap listener: anything that lands on the stage
+  // background (not a dot, not a paint chip, not the CLEAR pill, not the
+  // scoreboard itself) counts as a "screen" miss.
+  document.addEventListener('click', (ev) => {
+    const t = ev.target;
+    if (!t) return;
+    if (t.closest('.paint-slot')) return;
+    if (t.closest('.reset-btn')) return;
+    if (t.closest('.scorebox-left, .scorebox-center, .scorebox-right')) return;
+    if (t.closest('.number-line-wrap')) return;
+    // SVG <circle> dots inside #dotGroup count as dot taps (handled
+    // by paintDot), not screen misses.
+    if (t.tagName === 'circle' && t.parentNode && t.parentNode.id === 'dotGroup') return;
+    screenCount++;
+    renderScoreboard();
+    saveScoreboard();
+  }, true);
+
+  loadScoreboard();
+  renderScoreboard();
 </script>
 
 </body>

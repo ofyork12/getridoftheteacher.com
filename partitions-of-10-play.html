@@ -70,9 +70,12 @@
     animation: equationFlash 0.7s ease;
   }
   @keyframes equationFlash {
-    0%   { transform: scale(1);   color: #000; }
-    50%  { transform: scale(1.5); color: #e63946; }
-    100% { transform: scale(1);   color: #000; }
+    /* Scale pulse only -- the digit keeps its colour throughout the
+       flash instead of flickering red.  (User asked: "keep everything
+       black when you're doing the digits", and disliked the red ink.) */
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.5); }
+    100% { transform: scale(1); }
   }
   .play-area {
     position: absolute; top: 22%; left: 0; right: 0; height: 60%;

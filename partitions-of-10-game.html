@@ -48,14 +48,16 @@
      square paint chips stacked top-to-bottom.  White (0) is on top,
      red (1) directly below it.  Slots tagged `disabled` are hidden so
      this same tray will grow back to 10 colours when we re-enable
-     the others -- just toggle `disabled` off. */
+     the others -- just toggle `disabled` off.  The slot size below
+     (width: 22%) is tuned for the current 2-colour set; when more
+     colours come back we'll shrink the chips so they all fit. */
   .paint-tray {
     position: absolute;
-    top: 8%; left: 4%;
-    width: 17%;
+    top: 7%; left: 3%;
+    width: 22%;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 4%;
+    gap: 3%;
     z-index: 50;
   }
   .paint-slot {

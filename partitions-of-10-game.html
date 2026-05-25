@@ -116,7 +116,7 @@
      comfortably above a single number-line cell. */
   .reset-btn {
     position: absolute;
-    bottom: 19%; left: 2.5%;
+    bottom: 23%; left: 2.5%;
     padding: 0.55vh 1.4vh;
     border: 2px solid #000;
     border-radius: 999px;
@@ -129,15 +129,14 @@
   }
   .reset-btn:hover { background: #f4f4f4; }
 
-  /* Number line at the bottom of the stage -- same look as the one
-     in counting-to-10-game.html: 10 cells, each with a coloured
-     "quantity" SVG (the colour-coded dot grouping for that digit)
-     on top of a black digit label.  Cell #10 has a black triangle
-     outline wrapped around its 4-3-2-1 cluster, matching the
-     ten-triangle motif used everywhere else on the site. */
+  /* Number line shifted up so the strip sits right below the big
+     triangle (the user wanted it closer).  Was bottom: 4.5%; now
+     bottom: 8% puts the number-line top at ~stage 78% -- the
+     triangle outline base is at stage 76.5%, so only a thin gap
+     remains between them. */
   .number-line-wrap {
     position: absolute;
-    bottom: 4.5%; left: 1%; right: 1%;
+    bottom: 8%; left: 1%; right: 1%;
     height: 14%;
     z-index: 5;
     pointer-events: none;

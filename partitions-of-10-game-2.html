@@ -45,16 +45,16 @@
   }
 
   /* Paint tray: vertical column on the LEFT side of the stage, big
-     square paint chips stacked top-to-bottom.  White (0) is on top,
-     red (1) directly below it.  Slots tagged `disabled` are hidden so
-     this same tray will grow back to 10 colours when we re-enable
-     the others -- just toggle `disabled` off.  The slot size below
-     (width: 22%) is tuned for the current 2-colour set; when more
-     colours come back we'll shrink the chips so they all fit. */
+     square paint chips stacked top-to-bottom.  White (0) on top,
+     red (1) middle, orange (2) bottom for the partition-2 game.
+     Slots tagged `disabled` are hidden -- enabling more later just
+     means removing the class.  Width: 15% so three stacked chips
+     (3 x 15% + 2 x 3% gap = 51%) fit cleanly to the left of the
+     triangle without overlapping the outline. */
   .paint-tray {
     position: absolute;
     top: 7%; left: 3%;
-    width: 22%;
+    width: 15%;
     display: grid;
     grid-template-columns: 1fr;
     gap: 3%;
@@ -194,15 +194,15 @@
 <body>
 
 <div class="stage" id="stage">
-  <div class="title">42 — The Magic Number<span class="sub">Partition 1 of 42 — build 10 with 1's</span></div>
+  <div class="title">42 — The Magic Number<span class="sub">Partition 2 of 42 — build 10 with 2's and 1's</span></div>
 
-  <!-- Paint tray.  Layout:
-         Row 1: 0(white)  2(orange) 4(green)  6(purple) 8(pink)
-         Row 2: 1(red)    3(yellow) 5(blue)   7(brown)  9(cyan)
-       So white sits in the top-left and red sits directly below it. -->
+  <!-- Paint tray.  Only white, red, and orange are enabled for the
+       partition-2 game.  Layout stacks them vertically in column 1:
+       white on top, red in the middle, orange at the bottom.
+       Each orange click paints 2 dots (orange = value 2). -->
   <div class="paint-tray" id="paintTray">
     <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff; grid-column:1; grid-row:1;" aria-label="white (0)"></button>
-    <button class="paint-slot disabled" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
+    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200; grid-column:1; grid-row:3;" aria-label="orange (2)"></button>
     <button class="paint-slot disabled" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
     <button class="paint-slot disabled" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
     <button class="paint-slot disabled" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>

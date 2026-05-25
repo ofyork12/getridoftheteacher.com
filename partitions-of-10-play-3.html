@@ -284,15 +284,17 @@
   // slot indices, all in that part's number colour.  Parts fire in
   // order; the equation appends each value as it lands.
   // Slot indices (set above): 0=apex, 1-2=row2, 3-5=row3, 6-9=base.
-  // Two orange pairs (row-2 + base-left) keep their positions in
-  // partition 4 so the visual story builds up cleanly.
+  // Pair placement follows reading order top-to-bottom, left-to-right:
+  // each "2" takes the next two free slots in [0,1,2,3,4,5,6,7,8,9],
+  // so pair 1 is apex + row-2-left, pair 2 is row-2-right + row-3-left,
+  // and the remaining 1s fill from row-3-middle onward.
   const PARTITION = [
-    { value: 2, slots: [1, 2] },              // orange pair in row-2
-    { value: 2, slots: [6, 7] },              // orange pair in base-left
-    { value: 1, slots: [0] },                 // red apex
-    { value: 1, slots: [3] },                 // red row-3 left
+    { value: 2, slots: [0, 1] },              // orange pair: apex + row-2 left
+    { value: 2, slots: [2, 3] },              // orange pair: row-2 right + row-3 left
     { value: 1, slots: [4] },                 // red row-3 middle
     { value: 1, slots: [5] },                 // red row-3 right
+    { value: 1, slots: [6] },                 // red base 1 (leftmost)
+    { value: 1, slots: [7] },                 // red base 2
     { value: 1, slots: [8] },                 // red base 3
     { value: 1, slots: [9] },                 // red base 4 (rightmost)
   ];

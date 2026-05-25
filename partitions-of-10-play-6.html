@@ -294,19 +294,20 @@
     t.classList.add('flash');
   }
 
-  // Partition 5 places 5 pairs of 2 in the triangle.  Each pair lights
-  // two slots at once with the orange "2" colour.  Pair layout keeps
-  // each pair on a natural geometric axis where possible:
-  //   pair 1 — apex + row-3 middle    (centre column, vertical pair)
-  //   pair 2 — row 2                  (top horizontal pair)
-  //   pair 3 — row 3 outer (L + R)    (skip the middle, already lit)
-  //   pair 4 — base left              (horizontal pair)
-  //   pair 5 — base right             (horizontal pair)
+  // Partition 6 places 5 pairs of 2 in the triangle.  Each pair lights
+  // two slots at once with the orange "2" colour.  Pair placement
+  // follows reading order top-to-bottom, left-to-right -- each pair
+  // takes the next two free slots in [0,1,2,3,4,5,6,7,8,9]:
+  //   pair 1 — apex + row-2 left
+  //   pair 2 — row-2 right + row-3 left
+  //   pair 3 — row-3 middle + row-3 right
+  //   pair 4 — base 1 + base 2
+  //   pair 5 — base 3 + base 4
   // Slot indices: 0=apex, 1-2=row 2, 3-5=row 3, 6-9=base.
   const PAIRS = [
-    [0, 4],
-    [1, 2],
-    [3, 5],
+    [0, 1],
+    [2, 3],
+    [4, 5],
     [6, 7],
     [8, 9],
   ];

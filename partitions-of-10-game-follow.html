@@ -1140,15 +1140,18 @@
     hideReplayBtn();
     if (roundWasPerfect) {
       _origShowPerfect();           // PERFECT! banner on
-      // Hold the banner, then auto-cycle to the next round.
+      // Hold the banner, then drop the PLAY AGAIN overlay so the kid
+      // chooses when (or whether) to keep going.  Game doesn't loop
+      // forever -- they have to actually tap to start each new round.
       setTimeout(() => {
         hidePerfectBanner();
-        startRound();
+        showStartOverlay('PLAY AGAIN');
       }, 3500);
     } else {
-      // No banner -- the kid played out of order at least once this
-      // round.  Score still went up on each tap; Perfect didn't.
-      setTimeout(startRound, 1800);
+      // No PERFECT banner -- the kid played out of order at least
+      // once this round.  Score still went up on each tap; Perfect
+      // didn't.  Still wait for them to tap PLAY AGAIN.
+      setTimeout(() => showStartOverlay('PLAY AGAIN'), 1500);
     }
   };
   window.showPerfectBanner = showPerfectBanner;

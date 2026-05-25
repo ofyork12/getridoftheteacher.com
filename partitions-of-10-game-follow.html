@@ -1123,15 +1123,20 @@
     if (perfect) {
       perfectCount++;
       _origShowPerfect();           // PERFECT! banner on
+      // Hold the banner, then auto-cycle to the next round.  No
+      // PLAY AGAIN overlay -- once the kid has tapped PLAY once,
+      // the game flows from one round to the next on its own.
+      // SHOW AGAIN stays available if they want to re-watch the
+      // next demo.
       setTimeout(() => {
         hidePerfectBanner();
-        showStartOverlay('PLAY AGAIN');
+        startRound();
       }, 3500);
     } else {
       // Don't say perfect -- the kid built a valid sum-of-10 but the
       // positions didn't match what the demo showed.  Score is what
       // tracks completions; Perfect is reserved for matched layouts.
-      setTimeout(() => showStartOverlay('PLAY AGAIN'), 1800);
+      setTimeout(startRound, 1800);
     }
     renderScoreboard();
     saveScoreboard();

@@ -750,8 +750,11 @@
   // Perfect: every successful stroke that wasn't immediately erased.
   // Screen:  taps that didn't paint anything (background, spent chips,
   //          already-painted dot taps without an active brush, etc.).
-  // Persisted across the partition game pages via localStorage so the
-  // child carries their score from partition 1 -> 2 -> ...
+  // Persisted across the partition game pages via sessionStorage so
+  // the child carries their score from partition 1 -> 2 -> ... within
+  // a single play session, but the board resets clean when they
+  // close the tab/browser and come back later (per user request --
+  // localStorage was sticking the score across visits forever).
   const SCORE_STORAGE_KEY = 'colormymath.magic42.scoreboard';
   let scoreCount = 0;
   let screenCount = 0;
@@ -762,17 +765,20 @@
 
   function loadScoreboard() {
     try {
-      const raw = localStorage.getItem(SCORE_STORAGE_KEY);
+      const raw = sessionStorage.getItem(SCORE_STORAGE_KEY);
       if (!raw) return;
       const s = JSON.parse(raw);
       if (typeof s.score   === 'number') scoreCount   = s.score;
       if (typeof s.perfect === 'number') perfectCount = s.perfect;
       if (typeof s.screen  === 'number') screenCount  = s.screen;
     } catch (e) { /* ignore corrupt storage */ }
+    // One-time cleanup: clear any old localStorage value so the
+    // previous "permanent" score from older builds stops loading.
+    try { localStorage.removeItem(SCORE_STORAGE_KEY); } catch (e) {}
   }
   function saveScoreboard() {
     try {
-      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
+      sessionStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
         score: scoreCount, perfect: perfectCount, screen: screenCount,
       }));
     } catch (e) { /* storage full, ignore */ }

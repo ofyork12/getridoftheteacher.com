@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>42 — Magic Number Game — ColorMyMath</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    background: #333;
+    font-family: 'Nunito', Arial, sans-serif;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100vw, 56.25vh);
+    aspect-ratio: 9 / 16;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .title {
+    position: absolute; top: 1.2%; left: 0; right: 0;
+    text-align: center; font-size: 2vh; font-weight: 700;
+    color: #333; letter-spacing: 0.08em;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .title .sub {
+    display: block;
+    font-size: 1.4vh; font-weight: 500;
+    color: #777; letter-spacing: 0.05em;
+    margin-top: 0.2vh;
+  }
+
+  /* Paint tray: 2 rows x 5 columns at the top.  White (0) sits in the
+     top-left; red (1) sits directly below it.  Remaining 8 slots fill
+     the digit colours (evens on top, odds on the bottom). */
+  .paint-tray {
+    position: absolute;
+    top: 7%; left: 5%; right: 5%;
+    height: 14%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1.4%;
+    z-index: 50;
+  }
+  .paint-slot {
+    background: var(--c);
+    border: 2px solid #000;
+    border-radius: 22%;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    /* Tiny inner shadow gives each slot a hint of the "paint well" look. */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.18);
+  }
+  .paint-slot:hover { transform: scale(1.05); }
+  .paint-slot.active {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 3px #000, 0 6px 14px rgba(0,0,0,0.4),
+                inset 0 2px 4px rgba(0,0,0,0.18);
+  }
+
+  /* Running equation at the top, below the paint tray. */
+  .equation {
+    position: absolute; top: 23%; left: 0; right: 0;
+    text-align: center;
+    font-size: 3vh; font-weight: 800;
+    color: #000;
+    padding: 0 3%;
+    line-height: 1.15;
+    min-height: 7vh;
+    pointer-events: none;
+  }
+  .equation .num {
+    display: inline-block;
+    transform-origin: center center;
+  }
+
+  .play-area {
+    position: absolute; top: 33%; left: 0; right: 0; height: 58%;
+  }
+  .play-svg {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    overflow: visible;
+  }
+
+  /* "Clear all" pill in the bottom-left of the play area. */
+  .reset-btn {
+    position: absolute;
+    bottom: 8%; left: 4%;
+    padding: 1vh 2.4vh;
+    border: 2px solid #000;
+    border-radius: 999px;
+    background: #fff;
+    color: #000;
+    font: 700 1.7vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    z-index: 30;
+  }
+  .reset-btn:hover { background: #f4f4f4; }
+
+  .brand {
+    position: absolute; bottom: 1%; left: 0; right: 0;
+    text-align: center; font-size: 2.2vh; font-weight: 600;
+    color: #888; letter-spacing: 0.25em;
+    pointer-events: none;
+  }
+  .brand-sig {
+    position: absolute;
+    right: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 1.5vh;
+    width: auto;
+    color: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="title">42 — The Magic Number<span class="sub">Build your own partition of 10</span></div>
+
+  <!-- Paint tray.  Layout:
+         Row 1: 0(white)  2(orange) 4(green)  6(purple) 8(pink)
+         Row 2: 1(red)    3(yellow) 5(blue)   7(brown)  9(cyan)
+       So white sits in the top-left and red sits directly below it. -->
+  <div class="paint-tray" id="paintTray">
+    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff;" aria-label="white (0)"></button>
+    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
+    <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
+    <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
+    <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
+
+    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946;" aria-label="red (1)"></button>
+    <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
+    <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
+    <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
+    <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
+  </div>
+
+  <div class="equation" id="eq"></div>
+
+  <div class="play-area">
+    <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
+      <g id="bgGroup"></g>
+      <g id="dotGroup"></g>
+    </svg>
+  </div>
+
+  <button class="reset-btn" id="resetBtn">CLEAR</button>
+
+  <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 30" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="16" y1="3" x2="16" y2="24"/><polyline points="24,3 24,24 38,24"/><polyline points="50,3 50,24 64,24"/></g></svg></div>
+</div>
+
+<script>
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const bgGroup  = document.getElementById('bgGroup');
+  const dotGroup = document.getElementById('dotGroup');
+  const eqEl     = document.getElementById('eq');
+
+  // Triangle geometry -- same big-triangle setup as the magic-42 plays.
+  const DOT_R = 22;
+  const D     = 2 * DOT_R;
+  const H     = D * Math.sqrt(3) / 2;
+  const BASE_HW = 3 * DOT_R;
+  const cx   = 105;
+  const yBot = 178;
+
+  // Reading order: apex -> row2 (L,R) -> row3 (L,M,R) -> base (4).
+  const slots = [
+    { x: cx,         y: yBot - 3*H },
+    { x: cx - DOT_R, y: yBot - 2*H },
+    { x: cx + DOT_R, y: yBot - 2*H },
+    { x: cx - D,     y: yBot -   H },
+    { x: cx,         y: yBot -   H },
+    { x: cx + D,     y: yBot -   H },
+    { x: cx - 3*DOT_R, y: yBot },
+    { x: cx - DOT_R,   y: yBot },
+    { x: cx + DOT_R,   y: yBot },
+    { x: cx + 3*DOT_R, y: yBot },
+  ];
+
+  // Triangle outline behind the dots.
+  (function drawOutline() {
+    const halfW = 3 * DOT_R + DOT_R * Math.sqrt(3);
+    const baseY = yBot + DOT_R;
+    const topY  = baseY - halfW * Math.sqrt(3);
+    const tri = document.createElementNS(SVG_NS, 'polygon');
+    tri.setAttribute('points',
+      `${cx - halfW},${baseY} ${cx + halfW},${baseY} ${cx},${topY}`);
+    tri.setAttribute('fill', 'none');
+    tri.setAttribute('stroke', '#000');
+    tri.setAttribute('stroke-width', '2');
+    tri.setAttribute('stroke-linejoin', 'round');
+    bgGroup.appendChild(tri);
+  })();
+
+  // 10 empty (white) dots.
+  const dots = slots.map(({x, y}, i) => {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', x);
+    c.setAttribute('cy', y);
+    c.setAttribute('r', DOT_R);
+    c.setAttribute('fill', '#ffffff');
+    c.setAttribute('stroke', '#000');
+    c.setAttribute('stroke-width', '2');
+    c.style.transition = 'fill 0.2s ease';
+    c.style.cursor = 'pointer';
+    dotGroup.appendChild(c);
+    return { el: c, i, color: '#ffffff', value: 0 };
+  });
+
+  // --- Paint tray ----------------------------------------------------
+  // Tap a slot to load the brush.  Tap the active slot again to drop it.
+  let activePaint = null;          // hex colour, or null
+  let activeValue = 0;             // numeric value for the active paint
+  function setActivePaint(slot) {
+    const wasActive = slot.classList.contains('active');
+    document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
+    if (wasActive) {
+      activePaint = null;
+      activeValue = 0;
+    } else {
+      slot.classList.add('active');
+      activePaint = slot.dataset.color;
+      activeValue = parseInt(slot.dataset.value, 10);
+    }
+  }
+  document.querySelectorAll('.paint-slot').forEach(slot => {
+    slot.addEventListener('click', () => setActivePaint(slot));
+  });
+
+  // --- Dot painting --------------------------------------------------
+  // Tap a dot with the brush loaded -> paint that dot.  (Future: blue
+  // paint (5) will fill 5 dots per tap, etc.  For v1 we just paint
+  // one dot per tap, regardless of brush value.)
+  function paintDot(d, color, value) {
+    d.el.setAttribute('fill', color);
+    d.color = color;
+    d.value = value;
+    updateEquation();
+  }
+  for (const d of dots) {
+    d.el.addEventListener('click', () => {
+      if (activePaint == null) return;
+      paintDot(d, activePaint, activeValue);
+    });
+  }
+
+  // --- Equation: show the running sum of painted dot values ---------
+  // Each painted dot contributes its colour's digit value (red=1,
+  // orange=2, ..., cyan=9; white=0).  Equation reads like
+  // "1 + 1 + 5 = 7"; when the sum hits 10 the right side flashes.
+  function updateEquation() {
+    const painted = dots
+      .filter(d => d.value > 0)
+      .map(d => d.value);
+    if (painted.length === 0) { eqEl.innerHTML = ''; return; }
+    const sum = painted.reduce((a, b) => a + b, 0);
+    const lhs = painted.map(v => '<span class="num">' + v + '</span>').join(' + ');
+    const rhs = '<span class="num" style="color:' +
+                (sum === 10 ? '#00a12c' : '#000') + ';">' + sum + '</span>';
+    eqEl.innerHTML = lhs + ' = ' + rhs;
+  }
+
+  // --- Reset button --------------------------------------------------
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    for (const d of dots) {
+      d.el.setAttribute('fill', '#ffffff');
+      d.color = '#ffffff';
+      d.value = 0;
+    }
+    updateEquation();
+    // Drop any active paint too.
+    document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
+    activePaint = null;
+    activeValue = 0;
+  });
+</script>
+
+</body>
+</html>

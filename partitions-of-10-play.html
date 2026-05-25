@@ -77,26 +77,6 @@
   .play-area {
     position: absolute; top: 22%; left: 0; right: 0; height: 60%;
   }
-  /* Paint palette: small lily-pad-shaped chips on the left side.
-     Tapping one loads the brush; tapping a dot then paints it.
-     Foundation for future modes (blue = paint 5 dots, etc.). */
-  .paint-pad {
-    position: absolute;
-    left: 3%;
-    top: 32%;
-    width: 14%;
-    aspect-ratio: 1 / 1;
-    cursor: pointer;
-    pointer-events: auto;
-    z-index: 1100;             /* above the start-overlay (z=1000) */
-    transition: transform 0.15s ease, filter 0.15s ease;
-  }
-  .paint-pad:hover { transform: scale(1.05); }
-  .paint-pad.active {
-    filter: drop-shadow(0 0 6px currentColor);
-    transform: scale(1.1);
-  }
-  .paint-pad svg { width: 100%; height: 100%; display: block; }
   .play-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;
     overflow: visible;
@@ -118,16 +98,6 @@
     <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
       <g id="bgGroup"></g>
       <g id="dotGroup"></g>
-    </svg>
-  </div>
-  <div class="paint-pad" id="paintPadRed" data-color="#e63946" style="color:#e63946;" title="Red paint (1)">
-    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <!-- Lily-pad: circle with a thin wedge cut at the top (Pac-Man-ish). -->
-      <path d="M 53,12 A 40,40 0 1 1 47,12 L 50,50 Z"
-            fill="#ffffff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
-      <text x="50" y="55" text-anchor="middle" dominant-baseline="central"
-            font-family="Nunito, Arial, sans-serif" font-weight="800" font-size="48"
-            fill="#e63946">1</text>
     </svg>
   </div>
   <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 30" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="16" y1="3" x2="16" y2="24"/><polyline points="24,3 24,24 38,24"/><polyline points="50,3 50,24 64,24"/></g></svg></div>
@@ -358,39 +328,6 @@
   startBtn.textContent = 'Start with sound';
   startBtn.onclick = () => { startBtn.remove(); play(); };
   document.body.appendChild(startBtn);
-
-  // Paint palette: tap a pad to "load" the brush with that colour, then
-  // tap a dot to paint it.  Tapping the active pad again deactivates.
-  // Foundation for future modes (blue = paint 5 dots per click, white
-  // = eraser, etc.) -- for now there's just the red "1" pad.
-  let activePaint = null;
-  function setActivePaint(pad) {
-    const wasActive = pad.classList.contains('active');
-    document.querySelectorAll('.paint-pad.active').forEach(p => p.classList.remove('active'));
-    if (wasActive) {
-      activePaint = null;
-    } else {
-      pad.classList.add('active');
-      activePaint = pad.dataset.color;
-    }
-  }
-  document.querySelectorAll('.paint-pad').forEach(pad => {
-    pad.addEventListener('click', (e) => {
-      e.stopPropagation();          // don't trigger the start-overlay
-      setActivePaint(pad);
-    });
-  });
-  // Dot clicks paint with the active colour.  Doesn't disturb autoplay
-  // since autoplay sets fills directly via setAttribute.
-  for (const d of dots) {
-    d.el.style.cursor = 'pointer';
-    d.el.addEventListener('click', (e) => {
-      if (activePaint) {
-        d.el.setAttribute('fill', activePaint);
-        e.stopPropagation();
-      }
-    });
-  }
 </script>
 </body>
 </html>

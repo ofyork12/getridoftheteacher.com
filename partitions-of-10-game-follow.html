@@ -1020,16 +1020,52 @@
     playDemo(currentSpec);
   }
 
-  // When the running sum hits 10, the kid finished the round.  Wait for
-  // the PERFECT! banner + "equals ten" audio, then cycle to a new spec.
-  // We override showPerfectBanner so it ALSO schedules the next round.
+  // Follow-Me scoring: a "round" only counts when the player actually
+  // reproduces the demo's positions, not just the counts.  Override the
+  // per-paint score bumps that the partition-2 game does -- in this
+  // mode the only score events are round completions.
+  window.bumpScoreForPaint = function() {};
+  window.bumpScoreForErase = function() {};
+
+  // Check whether the player's dots match the spec's canonical layout
+  // exactly (per-slot colour comparison).  STROKE_LIMITS already
+  // guarantees the counts match by the time sum hits 10, so this is
+  // really a POSITION check -- did the orange pair land at [0,1] like
+  // the demo showed, or did the player put it at [9,5] instead?
+  function isPerfectMatch(spec) {
+    const expected = new Array(dots.length).fill('#ffffff');
+    for (const stroke of spec.layout) {
+      const c = COLORS_BY_N[stroke.v];
+      for (const idx of stroke.s) expected[idx] = c;
+    }
+    for (let i = 0; i < dots.length; i++) {
+      if (dots[i].color !== expected[i]) return false;
+    }
+    return true;
+  }
+
+  // Override the showPerfectBanner hook: only ACTUALLY say "PERFECT!"
+  // when the player's pattern matches the demo.  Otherwise the round
+  // ended (sum hit 10) but positions were wrong -- bump Score but not
+  // Perfect, skip the banner.  Either way wait, then start a new round.
   const _origShowPerfect = showPerfectBanner;
   showPerfectBanner = function() {
-    _origShowPerfect();
-    if (phase === 'play') {
-      phase = 'win';
-      setTimeout(startRound, 3200);
+    if (phase !== 'play') return;   // ignore stray callbacks outside play
+    phase = 'win';
+    scoreCount++;
+    const perfect = isPerfectMatch(currentSpec);
+    if (perfect) {
+      perfectCount++;
+      _origShowPerfect();           // PERFECT! banner on
+      setTimeout(startRound, 3500);
+    } else {
+      // Don't say perfect -- the kid built a valid sum-of-10 but the
+      // positions didn't match what the demo showed.  Score is what
+      // tracks completions; Perfect is reserved for matched layouts.
+      setTimeout(startRound, 2200);
     }
+    renderScoreboard();
+    saveScoreboard();
   };
   window.showPerfectBanner = showPerfectBanner;
 

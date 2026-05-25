@@ -286,12 +286,31 @@
     position: absolute; inset: 0;
     background: rgba(0,0,0,0.55);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 3vh;
     z-index: 400;
     cursor: pointer;
   }
   .start-overlay.hidden { display: none; }
+  .session-summary {
+    color: #fff;
+    text-align: center;
+    font: 800 3.2vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.06em;
+    text-shadow: 2px 2px 0 #000;
+    line-height: 1.25;
+    pointer-events: none;
+  }
+  .session-summary .small {
+    display: block;
+    font-size: 2.2vh;
+    font-weight: 600;
+    opacity: 0.85;
+    margin-top: 0.4vh;
+  }
+  .session-summary.hidden { display: none; }
 
   /* "Show again" button -- visible only while the kid is in the play
      phase so they can re-watch the demo if they forgot the pattern. */
@@ -336,6 +355,7 @@
 <div class="stage" id="stage">
   <div class="perfect-banner" id="perfectBanner">PERFECT!</div>
   <div class="start-overlay" id="startOverlay">
+    <div class="session-summary hidden" id="sessionSummary"></div>
     <button class="start-button" id="startButton" type="button">PLAY</button>
   </div>
   <button class="replay-btn" id="replayBtn" type="button">SHOW AGAIN</button>
@@ -1088,11 +1108,18 @@
 
   function startRound() {
     if (sessionQueue.length === 0) {
-      // Session complete -- six rounds done.  Stop the auto-cycle and
-      // wait for the kid to tap PLAY AGAIN to start a fresh session.
+      // Session complete -- six rounds done.  Stop the auto-cycle,
+      // show the final score next to the PLAY AGAIN button so the
+      // kid sees exactly where they landed, and wait for a tap.
       phase = 'done';
       hideReplayBtn();
       hidePerfectBanner();
+      const summary = document.getElementById('sessionSummary');
+      if (summary) {
+        summary.innerHTML = 'GOOD JOB!<span class="small">Score: '
+          + scoreCount + ' &nbsp;·&nbsp; Perfect: ' + perfectCount + ' / 60</span>';
+        summary.classList.remove('hidden');
+      }
       showStartOverlay('PLAY AGAIN');
       return;
     }
@@ -1205,6 +1232,10 @@
   if (startOverlay) {
     startOverlay.addEventListener('click', () => {
       hideStartOverlay();
+      // Hide any leftover session-end summary so the next session
+      // starts visually clean (only re-appears when round 6 finishes).
+      const summary = document.getElementById('sessionSummary');
+      if (summary) summary.classList.add('hidden');
       startNewSession();
     });
   }

@@ -395,6 +395,7 @@
   }
 
   function updatePaintSlotStates() {
+    let activeRetired = false;
     document.querySelectorAll('.paint-slot[data-value]').forEach(slot => {
       const v = parseInt(slot.dataset.value, 10);
       if (!(v in STROKE_LIMITS)) return;
@@ -407,8 +408,28 @@
         slot.classList.remove('active');
         activePaint = null;
         activeValue = 0;
+        activeRetired = true;
       }
     });
+    // The user described it as "pretend the person clicked on red":
+    // when the current brush runs out, auto-pick the next-highest
+    // non-spent paint colour so the child doesn't have to hunt for it.
+    // Eraser (value 0) is never auto-selected -- it's a destructive
+    // tool, not a forward move.
+    if (activeRetired) autoAdvanceBrush();
+  }
+
+  function autoAdvanceBrush() {
+    const candidates = Array.from(document.querySelectorAll('.paint-slot[data-value]'))
+      .filter(s => !s.classList.contains('disabled'))
+      .filter(s => !s.classList.contains('spent'))
+      .filter(s => parseInt(s.dataset.value, 10) > 0)
+      .sort((a, b) => parseInt(b.dataset.value, 10) - parseInt(a.dataset.value, 10));
+    if (candidates.length === 0) return;
+    const next = candidates[0];
+    next.classList.add('active');
+    activePaint = next.dataset.color;
+    activeValue = parseInt(next.dataset.value, 10);
   }
 
   // Slot adjacency map -- which dots TOUCH which.  Used to find a

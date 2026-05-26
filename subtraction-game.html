@@ -256,7 +256,7 @@
   }
   function _playChain(keys, gapMs) {
     _cancelNarration();
-    const gap = gapMs || 470;
+    const gap = gapMs || 650;   // SLOWED so digits don't overlap (was 470)
     let delay = 0;
     for (const k of keys) {
       _narrationTimeouts.push(setTimeout(() => _playKey(k), delay));
@@ -299,8 +299,13 @@
   let dots = [];
   let nextId = 0;
   let currentRoundIdx = 0;
-  let removedThisRound = 0;
-  let roundComplete = false;     // set once the kid hits the target
+  // selectedDots = dots the kid has tapped this round (held in the order
+  // tapped).  The mark-and-batch-remove mechanic recolours every dot in
+  // selectedDots to COLORS[selectedDots.length] on each new tap, and
+  // once selectedDots.length === round.remove they all roll off as a
+  // group.
+  let selectedDots = [];
+  let roundComplete = false;
   let resetting = false;
   let clicksTotal = 0;
   let clicksPerfect = 0;
@@ -340,7 +345,9 @@
   function updatePromptAndCount() {
     const round = ROUNDS[currentRoundIdx];
     if (!round) { promptEl.innerHTML = ''; return; }
-    const remaining = round.start - removedThisRound;
+    // While the kid is marking dots: the big-count cell shows how many
+    // would be LEFT once the currently-selected ones leave.
+    const remaining = round.start - selectedDots.length;
     const answer = roundComplete ? String(round.start - round.remove) : '?';
     promptEl.innerHTML =
       '<span>' + round.start + '</span> - ' +
@@ -354,7 +361,7 @@
     if (idx >= ROUNDS.length) { onGameComplete(); return; }
     resetting = true;
     roundComplete = false;
-    removedThisRound = 0;
+    selectedDots = [];
 
     while (playArea.firstChild) playArea.removeChild(playArea.firstChild);
     dots = [];
@@ -371,77 +378,119 @@
     updatePromptAndCount();
     updateScoreboard();
 
-    // Speak the prompt at the top of each round so the kid hears the goal.
-    const r = round;
-    _playChain([String(r.start), 'minus', String(r.remove), 'equals', '?']
-                 .filter(k => k !== '?'));   // skip the literal '?' clip
+    // Speak the prompt at the top of each round so the kid hears the
+    // goal: "five minus four".  No "equals" yet -- the answer is the
+    // payoff once they've picked the right number of dots.
+    _playChain([String(round.start), 'minus', String(round.remove)]);
     requestAnimationFrame(() => { resetting = false; });
   }
 
+  // The NEW tap mechanic (per user 2026-05-26):
+  //   * First tap on a dot turns that ONE dot RED   (colour for count 1).
+  //   * Second tap turns BOTH selected dots ORANGE (colour for count 2).
+  //   * Third tap turns ALL three selected dots YELLOW (colour for 3).
+  //   * ...and so on, up to round.remove.
+  //   * The dots stay put while marking -- nothing rolls off until the
+  //     kid has marked exactly round.remove of them.
+  //   * Once the target count is hit, ALL marked dots roll off the
+  //     stage TOGETHER (each toward its nearest edge), the prompt fills
+  //     in the answer, the audio plays "N minus K equals M", PERFECT
+  //     flashes, and we auto-advance to the next round.
   function onTapDot(ev) {
     if (resetting || roundComplete) return;
     const el = ev.currentTarget;
-    if (el.classList.contains('exiting') || el.dataset.takingAway === 'true') return;
-    const idx = dots.findIndex(d => d.el === el);
-    if (idx === -1) return;
+    if (el.classList.contains('exiting')) return;
+    // Re-tapping an already-selected dot: ignore (we don't unmark).
+    if (el.dataset.selected === 'true') return;
 
-    // Tapping a dot counts toward BOTH metrics.
+    const round = ROUNDS[currentRoundIdx];
+
+    // Count the click on both scoreboards.
     clicksTotal++;
     clicksPerfect++;
     updateScoreboard();
 
-    const stageRect = document.getElementById('stage').getBoundingClientRect();
-    const dotRect   = el.getBoundingClientRect();
-    const dotCenterX = dotRect.left + dotRect.width / 2;
-    const goLeft = (dotCenterX - stageRect.left) < (stageRect.right - dotCenterX);
+    // Mark the dot.
+    el.dataset.selected = 'true';
+    selectedDots.push(el);
+    const count = selectedDots.length;
 
-    el.dataset.takingAway = 'true';
-    el.style.backgroundColor = '#ffffff';
-    dots.splice(idx, 1);
-    removedThisRound++;
-
-    const round = ROUNDS[currentRoundIdx];
-    const remaining = round.start - removedThisRound;
-    const reachedTarget = removedThisRound >= round.remove;
-    if (reachedTarget) roundComplete = true;
+    // Recolour every selected dot to the canonical "count" colour so
+    // the kid sees red -> orange -> yellow -> green as they accumulate.
+    const newColor = COLORS[count] || '#000000';
+    for (const sel of selectedDots) {
+      sel.style.backgroundColor = newColor;
+    }
 
     updatePromptAndCount();
 
-    const PAUSE_MS = 220;
-    setTimeout(() => {
-      el.classList.add('exiting');
-      el.style.left = goLeft ? '-25%' : '125%';
-      // Reshape the SURVIVING dots into the canonical (remaining)-layout.
-      layoutDots(remaining);
-    }, PAUSE_MS);
-    setTimeout(() => {
-      if (el.parentNode) el.parentNode.removeChild(el);
-    }, PAUSE_MS + 600);
+    if (count >= round.remove) {
+      // TARGET REACHED -- roll off all selected dots together.
+      roundComplete = true;
+      const remaining = round.start - round.remove;
 
-    if (reachedTarget) {
+      // Stage rect (in pixels) needed once -- decide each dot's exit side.
+      const stageRect = document.getElementById('stage').getBoundingClientRect();
+      // Give the kid ~350ms to register the final colour before motion.
+      setTimeout(() => {
+        for (const dot of selectedDots) {
+          const dotRect = dot.getBoundingClientRect();
+          const dotCenterX = dotRect.left + dotRect.width / 2;
+          const goLeft = (dotCenterX - stageRect.left) < (stageRect.right - dotCenterX);
+          dot.classList.add('exiting');
+          dot.style.left = goLeft ? '-25%' : '125%';
+        }
+      }, 350);
+
+      // After the slide finishes, remove the selected dots from the
+      // DOM and reshape the survivors into the canonical (remaining)
+      // layout / colour.
+      setTimeout(() => {
+        for (const dot of selectedDots) {
+          if (dot.parentNode) dot.parentNode.removeChild(dot);
+        }
+        const survivorSet = new Set(selectedDots);
+        dots = dots.filter(d => !survivorSet.has(d.el));
+        layoutDots(remaining);
+        // Update the big-count cell to the post-removal state.
+        const r = ROUNDS[currentRoundIdx];
+        digitEl.textContent = remaining + '';
+        renderBigCountShape(remaining);
+        // Now show the answer in the prompt.
+        promptEl.innerHTML =
+          '<span>' + r.start + '</span> - ' +
+          '<span>' + r.remove + '</span> = ' +
+          '<span>' + remaining + '</span>';
+      }, 1000);
+
       // Audio: prefer the recorded "N minus 1 equals M" sentence when
-      // the round is N-1; otherwise chain digit + minus + digit + equals
-      // + digit.  No "minus N" recordings for N > 1.
+      // the round is N-1 (only K=1 has a recorded one-shot); otherwise
+      // chain "N minus K equals M" with the slower 650ms gap.
       let used = false;
       if (round.remove === 1) {
         const key = 'sentence_' + round.start + '_minus_1';
         if (NUMBER_AUDIO[key]) {
           _cancelNarration();
-          _playKey(key);
+          setTimeout(() => _playKey(key), 600);
           used = true;
         }
       }
       if (!used) {
-        _playChain([String(round.start), 'minus', String(round.remove),
-                    'equals', String(remaining)]);
+        setTimeout(() => {
+          _playChain([String(round.start), 'minus', String(round.remove),
+                      'equals', String(remaining)]);
+        }, 600);
       }
-      // Flash PERFECT briefly, then advance to the next round.
-      setTimeout(showBanner, 350);
+
+      // Banner + auto-advance.  Tuned so PERFECT pops AFTER the dots
+      // have rolled off, audio finishes, then we wait a beat, then
+      // load the next round.
+      setTimeout(showBanner, 1500);
       setTimeout(() => {
         hideBanner();
         currentRoundIdx++;
         startRound(currentRoundIdx);
-      }, 1900);
+      }, 3200);
     }
   }
 

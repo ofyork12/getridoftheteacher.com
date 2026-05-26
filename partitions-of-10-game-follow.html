@@ -1017,19 +1017,26 @@
   let phase = 'idle';        // 'idle' | 'demo' | 'play' | 'win' | 'done'
   let sessionQueue = [];     // remaining specs to play in the current session
   let roundNumber = 0;       // 1-based, current round within the session
+  let sessionsPlayed = 0;    // number of FINISHED sessions; controls shuffle
   const TOTAL_ROUNDS = PARTITION_SPECS.length;   // 6 partitions per session
 
-  // A session = play through all 6 partitions once, in shuffled order.
+  // A session = play through all 6 partitions once.
+  // Per user 2026-05-26: the FIRST session goes in order (P1 -> P2 ->
+  // ... -> P6) so the kid sees the partitions build up gradually
+  // (all 1's, then one 2 + eight 1's, then two 2's + six 1's, etc.).
+  // Every replay after that shuffles so the kid doesn't memorise the
+  // sequence.
   // Score and Perfect reset to 0 at the start of each session.  Max
   // possible total = 60 (each red stroke = 1 pt, each orange = 2 pts,
   // every partition sums to 10 pts -> 6 partitions * 10 = 60).
   function startNewSession() {
     sessionQueue = PARTITION_SPECS.slice();
-    // Fisher-Yates shuffle so the partitions appear in random order
-    // but each session contains all 6 exactly once.
-    for (let i = sessionQueue.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const tmp = sessionQueue[i]; sessionQueue[i] = sessionQueue[j]; sessionQueue[j] = tmp;
+    if (sessionsPlayed > 0) {
+      // Fisher-Yates shuffle for replays only.
+      for (let i = sessionQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = sessionQueue[i]; sessionQueue[i] = sessionQueue[j]; sessionQueue[j] = tmp;
+      }
     }
     roundNumber = 0;
     scoreCount = 0;
@@ -1098,9 +1105,11 @@
 
   function startRound() {
     if (sessionQueue.length === 0) {
-      // Session complete -- six rounds done.  Stop the auto-cycle,
-      // show the final score next to the PLAY AGAIN button so the
-      // kid sees exactly where they landed, and wait for a tap.
+      // Session complete -- six rounds done.  Bump sessionsPlayed so
+      // the next startNewSession() shuffles (the first session goes
+      // in canonical order; replays are randomised).  Stop the auto-
+      // cycle, show the final score next to the PLAY AGAIN button.
+      sessionsPlayed++;
       phase = 'done';
       hideReplayBtn();
       hidePerfectBanner();

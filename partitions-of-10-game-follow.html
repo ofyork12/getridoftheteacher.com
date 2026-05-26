@@ -1047,7 +1047,12 @@
     startRound();
   }
 
-  function clearAllDots() {
+  // Per user 2026-05-26: when the kid clicks the orange chip BEFORE
+  // the demo finishes, the chip used to lose its `.active` highlight
+  // every time clearAllDots cleared the dots back to white between
+  // demo phases.  Now clearAllDots takes an optional flag so the demo
+  // can clear DOT FILLS without dropping the kid's paint selection.
+  function clearAllDots(keepActivePaint) {
     for (const d of dots) {
       d.el.setAttribute('fill', '#ffffff');
       d.color = '#ffffff';
@@ -1055,9 +1060,11 @@
     }
     strokes.length = 0;
     updateEquation();
-    document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
-    activePaint = null;
-    activeValue = 0;
+    if (!keepActivePaint) {
+      document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
+      activePaint = null;
+      activeValue = 0;
+    }
   }
 
   function applyLimitsForSpec(spec) {
@@ -1082,7 +1089,10 @@
   async function playDemo(spec) {
     phase = 'demo';
     hideReplayBtn();
-    clearAllDots();
+    // Keep the kid's paint chip selected through the demo -- they may
+    // have clicked orange already and we don't want to deselect it
+    // every time the dots flash white between phases.
+    clearAllDots(true);
     await new Promise(r => setTimeout(r, 600));
     // Light up each stroke in turn so the kid sees both the layout
     // AND the order/colour of placements.
@@ -1095,8 +1105,9 @@
     }
     // Hold the finished pattern for a couple seconds so the kid can study it.
     await new Promise(r => setTimeout(r, 2200));
-    // Clear and switch to play phase.
-    clearAllDots();
+    // Clear dots back to white -- but KEEP the kid's paint chip
+    // selected if they pre-loaded one during the demo.
+    clearAllDots(true);
     phase = 'play';
     // Show the "SHOW AGAIN" button so the kid can re-watch the demo
     // mid-round if they forgot what they were supposed to follow.

@@ -616,7 +616,14 @@
 
   // BFS through the adjacency graph from `d` to gather `count` total
   // white dots (including d itself).  Returns the dots collected, or
-  // fewer than count if there aren't enough connected whites left.
+  // fewer than count if there aren't enough whites left ANYWHERE.
+  //
+  // If BFS-by-adjacency can't reach `count` connected whites (e.g. the
+  // first stroke fragmented the remaining 5 into a 1-isolated + a
+  // 4-connected group, leaving 5+5 unbuildable), FALL BACK to grabbing
+  // any leftover whites by index.  This guarantees the
+  // partition-completing stroke always succeeds, so e.g. 5+5, 6+4,
+  // 4+4+2 don't silently no-op when the first stroke wasn't optimal.
   function findPaintTargets(d, count) {
     const targets = [d];
     if (count <= 1) return targets;
@@ -633,6 +640,18 @@
           remaining--;
           queue.push(adjIdx);
           if (remaining === 0) break;
+        }
+      }
+    }
+    // Fallback: connected BFS exhausted but we still need more dots.
+    // Grab any remaining whites (visited set keeps us from double-picking).
+    if (remaining > 0) {
+      for (const dd of dots) {
+        if (remaining === 0) break;
+        if (dd.value === 0 && !visited.has(dd.i)) {
+          targets.push(dd);
+          visited.add(dd.i);
+          remaining--;
         }
       }
     }

@@ -287,7 +287,7 @@
   }
 
   // ---------- Game state ----------
-  const SHAPES = {"0":[],"1":[[50,50]],"2":[[33.5,50],[66.5,50]],"3":[[50,35.71058083755676],[33.5,64.28941916244324],[66.5,64.28941916244324]],"4":[[33.5,33.5],[66.5,33.5],[33.5,66.5],[66.5,66.5]],"5":[[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324]],"6":[[50,21.421161675113527],[33.5,50],[66.5,50],[17,78.57883832488648],[50,78.57883832488648],[83,78.57883832488648]],"7":[[33.5,21.421161675113527],[66.5,21.421161675113527],[17,50],[50,50],[83,50],[33.5,78.57883832488648],[66.5,78.57883832488648]],"8":[[17,17],[50,17],[83,17],[17,50],[83,50],[17,83],[50,83],[83,83]],"9":[[17,17],[50,17],[83,17],[17,50],[50,50],[83,50],[17,83],[50,83],[83,83]],"10":[[50,7.131742512670293],[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324],[0.5,92.86825748732971],[33.5,92.86825748732971],[66.5,92.86825748732971],[99.5,92.86825748732971]]};
+  const SHAPES = {"0":[[50,50]],"1":[[50,50]],"2":[[33.5,50],[66.5,50]],"3":[[50,35.71058083755676],[33.5,64.28941916244324],[66.5,64.28941916244324]],"4":[[33.5,33.5],[66.5,33.5],[33.5,66.5],[66.5,66.5]],"5":[[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324]],"6":[[50,21.421161675113527],[33.5,50],[66.5,50],[17,78.57883832488648],[50,78.57883832488648],[83,78.57883832488648]],"7":[[33.5,21.421161675113527],[66.5,21.421161675113527],[17,50],[50,50],[83,50],[33.5,78.57883832488648],[66.5,78.57883832488648]],"8":[[17,17],[50,17],[83,17],[17,50],[83,50],[17,83],[50,83],[83,83]],"9":[[17,17],[50,17],[83,17],[17,50],[50,50],[83,50],[17,83],[50,83],[83,83]],"10":[[50,7.131742512670293],[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324],[0.5,92.86825748732971],[33.5,92.86825748732971],[66.5,92.86825748732971],[99.5,92.86825748732971]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
   const ROUNDS = [{"start":5,"remove":1},{"start":4,"remove":1},{"start":3,"remove":1},{"start":2,"remove":1},{"start":1,"remove":1},{"start":5,"remove":2},{"start":4,"remove":2},{"start":3,"remove":2},{"start":2,"remove":2},{"start":5,"remove":3},{"start":4,"remove":3},{"start":3,"remove":3},{"start":5,"remove":4},{"start":4,"remove":4},{"start":5,"remove":5}];
 
@@ -375,16 +375,19 @@
     renderEqCell(eqShapeA, eqDigitA, round.start, String(round.start));
     // Cell B: the REMOVE count (fixed within a round).
     renderEqCell(eqShapeB, eqDigitB, round.remove, String(round.remove));
-    // Cell C: live answer-preview while marking, real answer on completion.
-    //   While the kid is marking: shape = current would-be remaining
-    //     (start - selectedDots.length) in its canonical colour;
-    //     digit is "?" until target reached.
-    //   On completion: shape and digit both show the final answer.
-    const wouldBeLeft = round.start - selectedDots.length;
-    const finalAnswer = round.start - round.remove;
-    const showCount   = roundComplete ? finalAnswer : wouldBeLeft;
-    const showDigit   = roundComplete ? String(finalAnswer) : '?';
-    renderEqCell(eqShapeC, eqDigitC, showCount, showDigit);
+    // Cell C: answer cell.
+    //   While the kid is marking: NO shape (we don't know the answer
+    //     yet -- the cell stays blank above a plain "?" digit).
+    //   On round completion: render the answer's canonical shape +
+    //     digit (zero shows as a single white ring, matching the rest
+    //     of the site).
+    if (roundComplete) {
+      const finalAnswer = round.start - round.remove;
+      renderEqCell(eqShapeC, eqDigitC, finalAnswer, String(finalAnswer));
+    } else {
+      while (eqShapeC.firstChild) eqShapeC.removeChild(eqShapeC.firstChild);
+      eqDigitC.textContent = '?';
+    }
   }
 
   function startRound(idx) {

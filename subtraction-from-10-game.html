@@ -56,26 +56,46 @@
     pointer-events: none;
   }
 
-  /* Big count read-out below the equation. */
+  /* Big count read-out below the equation -- styled like every other
+     ColorMyMath number-line cell: a small colour-coded quantity SVG
+     stacked above the BLACK digit. */
   .big-count {
     position: absolute;
-    top: 16%; left: 0; right: 0;
-    text-align: center;
-    font-size: 6vh; font-weight: 900;
-    color: #000;
-    letter-spacing: 0.04em;
+    top: 14.5%; left: 0; right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2vh;
     pointer-events: none;
   }
+  .big-count-shape {
+    width: 7vh;
+    height: 7vh;
+    overflow: visible;
+  }
+  .big-count-digit {
+    font-size: 5vh;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
 
-  /* Play area where the dots live. */
+  /* Play area where the dots live -- forced SQUARE so % units behave
+     the same on both axes (this is what makes the canonical tangent
+     packings actually touch in pixels). */
   .play-area {
     position: absolute;
-    top: 26%; left: 5%; right: 5%; bottom: 18%;
+    top: 28%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    aspect-ratio: 1 / 1;
   }
   /* .dot width must match the DOT_D constant in JS (% of play area). */
   .dot {
     position: absolute;
-    width: 22%;
+    width: 25%;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     border: 0.4vh solid #000;
@@ -152,7 +172,12 @@
 
   <div class="title">Subtraction from 10<span class="sub">Tap a dot to take it away.  Count down from 10 to 0.</span></div>
   <div class="equation" id="eq"></div>
-  <div class="big-count" id="bigCount"></div>
+
+  <div class="big-count" id="bigCount">
+    <svg class="big-count-shape" id="bigCountShape" viewBox="0 0 100 100"
+         preserveAspectRatio="xMidYMid meet"></svg>
+    <span class="big-count-digit" id="bigCountDigit"></span>
+  </div>
 
   <div class="play-area" id="playArea"></div>
 
@@ -198,13 +223,35 @@
 
   // ---------- Game state ----------
   const START_COUNT = 10;
-  const SHAPES = {"0":[],"1":[[50,50]],"2":[[39,50],[61,50]],"3":[[50,40.47372055837118],[39,59.52627944162882],[61,59.52627944162882]],"4":[[39,39],[61,39],[39,61],[61,61]],"5":[[39,40.47372055837118],[61,40.47372055837118],[28,59.52627944162882],[50,59.52627944162882],[72,59.52627944162882]],"6":[[50,30.94744111674235],[39,50],[61,50],[28,69.05255888325765],[50,69.05255888325765],[72,69.05255888325765]],"7":[[39,30.94744111674235],[61,30.94744111674235],[28,50],[50,50],[72,50],[39,69.05255888325765],[61,69.05255888325765]],"8":[[28,28],[50,28],[72,28],[28,50],[72,50],[28,72],[50,72],[72,72]],"9":[[28,28],[50,28],[72,28],[28,50],[50,50],[72,50],[28,72],[50,72],[72,72]],"10":[[50,21.421161675113524],[39,40.47372055837118],[61,40.47372055837118],[28,59.52627944162882],[50,59.52627944162882],[72,59.52627944162882],[17,78.57883832488648],[39,78.57883832488648],[61,78.57883832488648],[83,78.57883832488648]]};
+  const SHAPES = {"0":[],"1":[[50,50]],"2":[[37.5,50],[62.5,50]],"3":[[50,39.17468245269452],[37.5,60.82531754730548],[62.5,60.82531754730548]],"4":[[37.5,37.5],[62.5,37.5],[37.5,62.5],[62.5,62.5]],"5":[[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548]],"6":[[50,28.349364905389034],[37.5,50],[62.5,50],[25,71.65063509461096],[50,71.65063509461096],[75,71.65063509461096]],"7":[[37.5,28.349364905389034],[62.5,28.349364905389034],[25,50],[50,50],[75,50],[37.5,71.65063509461096],[62.5,71.65063509461096]],"8":[[25,25],[50,25],[75,25],[25,50],[75,50],[25,75],[50,75],[75,75]],"9":[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]],"10":[[50,17.52404735808355],[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548],[12.5,82.47595264191645],[37.5,82.47595264191645],[62.5,82.47595264191645],[87.5,82.47595264191645]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
 
-  const playArea = document.getElementById('playArea');
-  const eqEl     = document.getElementById('eq');
-  const bigEl    = document.getElementById('bigCount');
-  const banner   = document.getElementById('perfectBanner');
+  const playArea  = document.getElementById('playArea');
+  const eqEl      = document.getElementById('eq');
+  const shapeEl   = document.getElementById('bigCountShape');
+  const digitEl   = document.getElementById('bigCountDigit');
+  const banner    = document.getElementById('perfectBanner');
+
+  // Render the canonical N-shape inside the big-count cell (colour-coded
+  // dots, sized small to act as a number-line label).  Mirrors the
+  // colour-on-top-of-black-digit pattern used in every other lesson.
+  const SHAPE_R = DOT_D / 2;        // SVG radius in viewBox-100 units
+  const SVG_NS  = 'http://www.w3.org/2000/svg';
+  function renderBigCountShape(count) {
+    while (shapeEl.firstChild) shapeEl.removeChild(shapeEl.firstChild);
+    const positions = SHAPES[count] || [];
+    const colour = COLORS[count] || '#ffffff';
+    for (const [x, y] of positions) {
+      const c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('cx', x);
+      c.setAttribute('cy', y);
+      c.setAttribute('r', SHAPE_R);
+      c.setAttribute('fill', colour);
+      c.setAttribute('stroke', '#000');
+      c.setAttribute('stroke-width', '1.6');
+      shapeEl.appendChild(c);
+    }
+  }
 
   // dots[] is a list of { el, id } -- id stays stable so we can pick
   // the "best surviving subset" when reshaping, but the reshape just
@@ -241,8 +288,9 @@
 
   function updateReadouts() {
     const remaining = START_COUNT - removedSoFar;
-    bigEl.textContent = remaining + '';
-    bigEl.style.color = COLORS[remaining] || '#000';
+    // Black digit + coloured canonical shape above it (number-line cell style).
+    digitEl.textContent = remaining + '';
+    renderBigCountShape(remaining);
     if (removedSoFar === 0) {
       eqEl.innerHTML = '';
     } else {

@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Subtraction 5 minus 1 — Game — ColorMyMath</title>
+<title>Subtraction Game — ColorMyMath</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
@@ -30,38 +30,72 @@
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0,0,0,0.4);
   }
+
+  /* Scoreboard: three little boxes at the top of the stage. */
+  .scorebox {
+    position: absolute;
+    top: 1.2%; left: 2%; right: 2%;
+    display: flex;
+    justify-content: space-around;
+    gap: 1%;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .score-cell {
+    background: #fff;
+    border: 1.5px solid #000;
+    border-radius: 8px;
+    padding: 0.35vh 1vh 0.45vh;
+    text-align: center;
+    min-width: 8vh;
+    flex: 0 1 auto;
+  }
+  .score-label {
+    font-size: 1vh;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #666;
+    text-transform: uppercase;
+  }
+  .score-val {
+    font-size: 2vh;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+    margin-top: 0.2vh;
+  }
+
   .title {
-    position: absolute; top: 5.5%; left: 0; right: 0;
-    text-align: center; font-size: 1.6vh; font-weight: 700;
+    position: absolute; top: 7%; left: 0; right: 0;
+    text-align: center; font-size: 1.4vh; font-weight: 700;
     color: #333; letter-spacing: 0.08em;
     pointer-events: none;
     z-index: 10;
   }
   .title .sub {
     display: block;
-    font-size: 1.4vh; font-weight: 500;
+    font-size: 1.2vh; font-weight: 500;
     color: #666; letter-spacing: 0.06em;
-    margin-top: 0.3vh;
+    margin-top: 0.2vh;
   }
 
-  /* Running equation, just below the title. */
-  .equation {
+  /* The prompt "5 - 4 = ?" -- prominent, black-on-white. */
+  .prompt {
     position: absolute;
-    top: 11%; left: 4%; right: 4%;
+    top: 11.5%; left: 4%; right: 4%;
     text-align: center;
-    font-size: 3.2vh; font-weight: 800;
+    font-size: 4.5vh; font-weight: 900;
     color: #000;
-    line-height: 1.15;
-    min-height: 4vh;
+    line-height: 1.1;
+    letter-spacing: 0.04em;
     pointer-events: none;
   }
 
-  /* Big count read-out below the equation -- styled like every other
-     ColorMyMath number-line cell: a small colour-coded quantity SVG
-     stacked above the BLACK digit. */
+  /* Number-line style read-out: coloured shape over the BLACK digit
+     showing how many dots are LEFT right now. */
   .big-count {
     position: absolute;
-    top: 14.5%; left: 0; right: 0;
+    top: 19%; left: 0; right: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -69,30 +103,26 @@
     pointer-events: none;
   }
   .big-count-shape {
-    width: 7vh;
-    height: 7vh;
+    width: 5.5vh;
+    height: 5.5vh;
     overflow: visible;
   }
   .big-count-digit {
-    font-size: 5vh;
+    font-size: 3.5vh;
     font-weight: 900;
     color: #000;
     line-height: 1;
-    letter-spacing: 0.04em;
   }
 
-  /* Play area where the dots live -- forced SQUARE so % units behave
-     the same on both axes (this is what makes the canonical tangent
-     packings actually touch in pixels). */
+  /* Square play area centred in the stage. */
   .play-area {
     position: absolute;
-    top: 28%;
+    top: 32%;
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
     aspect-ratio: 1 / 1;
   }
-  /* .dot width must match the DOT_D constant in JS (% of play area). */
   .dot {
     position: absolute;
     width: 25%;
@@ -109,7 +139,6 @@
   }
   .dot:active { transform: translate(-50%, -50%) scale(1.06); }
   .dot.exiting {
-    /* The tapped dot is moved off-screen (left:-20% or 120%) and faded. */
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.7);
     pointer-events: none;
@@ -117,7 +146,7 @@
 
   .perfect-banner {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 55%; left: 50%;
     transform: translate(-50%, -50%) scale(0);
     background: #00a12c;
     color: #fff;
@@ -130,14 +159,21 @@
     z-index: 200;
     pointer-events: none;
     opacity: 0;
-    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-                opacity 0.4s ease;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.3s ease;
     white-space: nowrap;
     text-align: center;
   }
   .perfect-banner.show {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+  }
+  .perfect-banner .summary {
+    display: block;
+    font-size: 0.55em;
+    font-weight: 700;
+    margin-top: 0.6vh;
+    letter-spacing: 0.05em;
   }
 
   .reset-btn {
@@ -168,10 +204,17 @@
 <body>
 
 <div class="stage" id="stage">
+  <div class="scorebox">
+    <div class="score-cell"><div class="score-label">Clicks</div><div class="score-val" id="clicksVal">0</div></div>
+    <div class="score-cell"><div class="score-label">Perfect</div><div class="score-val" id="perfectVal">0</div></div>
+    <div class="score-cell"><div class="score-label">Round</div><div class="score-val" id="roundVal">1/7</div></div>
+  </div>
+
   <div class="perfect-banner" id="perfectBanner">PERFECT!</div>
 
-  <div class="title">Subtraction<span class="sub">Tap a dot to take it away.  Count down from 5 to 0.</span></div>
-  <div class="equation" id="eq"></div>
+  <div class="title">Subtraction<span class="sub">Take away the right number of dots, then keep going</span></div>
+
+  <div class="prompt" id="prompt"></div>
 
   <div class="big-count" id="bigCount">
     <svg class="big-count-shape" id="bigCountShape" viewBox="0 0 100 100"
@@ -222,20 +265,20 @@
   }
 
   // ---------- Game state ----------
-  const START_COUNT = 5;
   const SHAPES = {"0":[],"1":[[50,50]],"2":[[37.5,50],[62.5,50]],"3":[[50,39.17468245269452],[37.5,60.82531754730548],[62.5,60.82531754730548]],"4":[[37.5,37.5],[62.5,37.5],[37.5,62.5],[62.5,62.5]],"5":[[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548]],"6":[[50,28.349364905389034],[37.5,50],[62.5,50],[25,71.65063509461096],[50,71.65063509461096],[75,71.65063509461096]],"7":[[37.5,28.349364905389034],[62.5,28.349364905389034],[25,50],[50,50],[75,50],[37.5,71.65063509461096],[62.5,71.65063509461096]],"8":[[25,25],[50,25],[75,25],[25,50],[75,50],[25,75],[50,75],[75,75]],"9":[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]],"10":[[50,17.52404735808355],[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548],[12.5,82.47595264191645],[37.5,82.47595264191645],[62.5,82.47595264191645],[87.5,82.47595264191645]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
+  const ROUNDS = [{"start":5,"remove":4},{"start":5,"remove":3},{"start":5,"remove":2},{"start":5,"remove":1},{"start":4,"remove":3},{"start":4,"remove":2},{"start":3,"remove":2}];
 
   const playArea  = document.getElementById('playArea');
-  const eqEl      = document.getElementById('eq');
+  const promptEl  = document.getElementById('prompt');
   const shapeEl   = document.getElementById('bigCountShape');
   const digitEl   = document.getElementById('bigCountDigit');
   const banner    = document.getElementById('perfectBanner');
+  const clicksEl  = document.getElementById('clicksVal');
+  const perfectEl = document.getElementById('perfectVal');
+  const roundEl   = document.getElementById('roundVal');
 
-  // Render the canonical N-shape inside the big-count cell (colour-coded
-  // dots, sized small to act as a number-line label).  Mirrors the
-  // colour-on-top-of-black-digit pattern used in every other lesson.
-  const SHAPE_R = 12.5;        // SVG radius in viewBox-100 units
+  const SHAPE_R = 12.5;
   const SVG_NS  = 'http://www.w3.org/2000/svg';
   function renderBigCountShape(count) {
     while (shapeEl.firstChild) shapeEl.removeChild(shapeEl.firstChild);
@@ -253,13 +296,21 @@
     }
   }
 
-  // dots[] is a list of { el, id } -- id stays stable so we can pick
-  // the "best surviving subset" when reshaping, but the reshape just
-  // assigns them to the new positions in their current order.
   let dots = [];
   let nextId = 0;
-  let removedSoFar = 0;       // how many have been taken away this round
-  let resetting = false;      // guard so taps during reset don't fire
+  let currentRoundIdx = 0;
+  let removedThisRound = 0;
+  let roundComplete = false;     // set once the kid hits the target
+  let resetting = false;
+  let clicksTotal = 0;
+  let clicksPerfect = 0;
+
+  function updateScoreboard() {
+    clicksEl.textContent  = clicksTotal;
+    perfectEl.textContent = clicksPerfect;
+    const shown = Math.min(currentRoundIdx + 1, ROUNDS.length);
+    roundEl.textContent = shown + '/' + ROUNDS.length;
+  }
 
   function makeDot(x, y, color, id) {
     const el = document.createElement('div');
@@ -286,108 +337,152 @@
     });
   }
 
-  function updateReadouts() {
-    const remaining = START_COUNT - removedSoFar;
-    // Black digit + coloured canonical shape above it (number-line cell style).
+  function updatePromptAndCount() {
+    const round = ROUNDS[currentRoundIdx];
+    if (!round) { promptEl.innerHTML = ''; return; }
+    const remaining = round.start - removedThisRound;
+    const answer = roundComplete ? String(round.start - round.remove) : '?';
+    promptEl.innerHTML =
+      '<span>' + round.start + '</span> - ' +
+      '<span>' + round.remove + '</span> = ' +
+      '<span>' + answer + '</span>';
     digitEl.textContent = remaining + '';
     renderBigCountShape(remaining);
-    if (removedSoFar === 0) {
-      eqEl.innerHTML = '';
-    } else {
-      let html = '<span>' + START_COUNT + '</span>';
-      for (let i = 0; i < removedSoFar; i++) html += ' - <span>1</span>';
-      html += ' = <span>' + remaining + '</span>';
-      eqEl.innerHTML = html;
-    }
   }
 
-  function start() {
+  function startRound(idx) {
+    if (idx >= ROUNDS.length) { onGameComplete(); return; }
     resetting = true;
-    // Remove any existing dots.
+    roundComplete = false;
+    removedThisRound = 0;
+
     while (playArea.firstChild) playArea.removeChild(playArea.firstChild);
     dots = [];
-    removedSoFar = 0;
     hideBanner();
     _cancelNarration();
-    // Create the starting shape.
-    const positions = SHAPES[START_COUNT];
-    const color = COLORS[START_COUNT];
+
+    const round = ROUNDS[idx];
+    const positions = SHAPES[round.start];
+    const color = COLORS[round.start];
     for (let i = 0; i < positions.length; i++) {
       const [x, y] = positions[i];
       dots.push(makeDot(x, y, color, nextId++));
     }
-    updateReadouts();
-    // Drop the resetting guard after the first paint so taps are live.
+    updatePromptAndCount();
+    updateScoreboard();
+
+    // Speak the prompt at the top of each round so the kid hears the goal.
+    const r = round;
+    _playChain([String(r.start), 'minus', String(r.remove), 'equals', '?']
+                 .filter(k => k !== '?'));   // skip the literal '?' clip
     requestAnimationFrame(() => { resetting = false; });
   }
 
   function onTapDot(ev) {
-    if (resetting) return;
+    if (resetting || roundComplete) return;
     const el = ev.currentTarget;
     if (el.classList.contains('exiting') || el.dataset.takingAway === 'true') return;
     const idx = dots.findIndex(d => d.el === el);
     if (idx === -1) return;
 
-    // Figure out which edge is closer -- send the dot to that side.
+    // Tapping a dot counts toward BOTH metrics.
+    clicksTotal++;
+    clicksPerfect++;
+    updateScoreboard();
+
     const stageRect = document.getElementById('stage').getBoundingClientRect();
     const dotRect   = el.getBoundingClientRect();
     const dotCenterX = dotRect.left + dotRect.width / 2;
     const goLeft = (dotCenterX - stageRect.left) < (stageRect.right - dotCenterX);
 
-    // STEP 1: turn the tapped dot WHITE immediately + update the
-    // equation and big-count read-out so the kid sees the change
-    // register the moment they tap.
-    el.dataset.takingAway = 'true';        // guard against re-tap during fade
+    el.dataset.takingAway = 'true';
     el.style.backgroundColor = '#ffffff';
-    dots.splice(idx, 1);                    // remove from dots[] so reshape skips it
-    removedSoFar++;
-    const remaining = START_COUNT - removedSoFar;
-    const prevCount = remaining + 1;
-    updateReadouts();
+    dots.splice(idx, 1);
+    removedThisRound++;
 
-    // STEP 2: after a brief pause to register the white flash, slide
-    // the dot OUT to whichever stage edge is closer, AND reshape the
-    // surviving dots into the canonical (N-1) layout / colour at the
-    // same time so it all reads as one motion.
+    const round = ROUNDS[currentRoundIdx];
+    const remaining = round.start - removedThisRound;
+    const reachedTarget = removedThisRound >= round.remove;
+    if (reachedTarget) roundComplete = true;
+
+    updatePromptAndCount();
+
     const PAUSE_MS = 220;
     setTimeout(() => {
       el.classList.add('exiting');
       el.style.left = goLeft ? '-25%' : '125%';
+      // Reshape the SURVIVING dots into the canonical (remaining)-layout.
       layoutDots(remaining);
     }, PAUSE_MS);
-
-    // STEP 3: drop the exited dot from the DOM after the slide
-    // animation finishes (220ms pause + ~450ms transition).
     setTimeout(() => {
       if (el.parentNode) el.parentNode.removeChild(el);
     }, PAUSE_MS + 600);
 
-    // Narrate "[old] minus one equals [new]".  Prefer the RECORDED
-    // sentence clip if we have one (same audio the subtraction play
-    // page uses); fall back to chaining individual digit/minus/equals
-    // clips otherwise.  This keeps the user's recorded voice whenever
-    // we have it (5-1 through 1-1) and still narrates 10-1 .. 6-1
-    // even though we never recorded those as one-shot sentences.
-    const sentenceKey = 'sentence_' + prevCount + '_minus_1';
-    if (NUMBER_AUDIO[sentenceKey]) {
-      _cancelNarration();
-      _playKey(sentenceKey);
-    } else {
-      _playChain([String(prevCount), 'minus', '1', 'equals', String(remaining)]);
-    }
-
-    // PERFECT! when we hit 0.
-    if (remaining === 0) {
-      setTimeout(showBanner, 700);
+    if (reachedTarget) {
+      // Audio: prefer the recorded "N minus 1 equals M" sentence when
+      // the round is N-1; otherwise chain digit + minus + digit + equals
+      // + digit.  No "minus N" recordings for N > 1.
+      let used = false;
+      if (round.remove === 1) {
+        const key = 'sentence_' + round.start + '_minus_1';
+        if (NUMBER_AUDIO[key]) {
+          _cancelNarration();
+          _playKey(key);
+          used = true;
+        }
+      }
+      if (!used) {
+        _playChain([String(round.start), 'minus', String(round.remove),
+                    'equals', String(remaining)]);
+      }
+      // Flash PERFECT briefly, then advance to the next round.
+      setTimeout(showBanner, 350);
+      setTimeout(() => {
+        hideBanner();
+        currentRoundIdx++;
+        startRound(currentRoundIdx);
+      }, 1900);
     }
   }
 
+  // Stage-level click: count any tap that didn't land on a dot as a
+  // "non-perfect" click.  Excludes reset button and scoreboard hits.
+  function onStageClick(ev) {
+    if (resetting || roundComplete) return;
+    const t = ev.target;
+    if (t.classList && t.classList.contains('dot')) return;     // dot tap counted separately
+    if (t.closest && (t.closest('.reset-btn') || t.closest('.scorebox'))) return;
+    clicksTotal++;
+    updateScoreboard();
+  }
+
+  function onGameComplete() {
+    // Final celebration: PERFECT plus a summary line, then leave it
+    // up so the kid (or grown-up) can read the score.
+    banner.innerHTML = 'GREAT JOB!<span class="summary">' +
+      clicksPerfect + ' perfect / ' + clicksTotal + ' clicks</span>';
+    banner.classList.add('show');
+  }
+
   function showBanner() { banner.classList.add('show'); }
-  function hideBanner() { banner.classList.remove('show'); }
+  function hideBanner() {
+    banner.classList.remove('show');
+    // Restore default text in case the previous round's banner had a
+    // different innerHTML.
+    banner.innerHTML = 'PERFECT!';
+  }
 
-  document.getElementById('resetBtn').addEventListener('click', start);
+  function fullRestart() {
+    currentRoundIdx = 0;
+    clicksTotal = 0;
+    clicksPerfect = 0;
+    startRound(0);
+  }
 
-  start();
+  document.getElementById('resetBtn').addEventListener('click', fullRestart);
+  document.getElementById('stage').addEventListener('click', onStageClick);
+
+  startRound(0);
 </script>
 
 </body>

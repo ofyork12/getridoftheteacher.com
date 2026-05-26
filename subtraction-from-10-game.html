@@ -235,7 +235,7 @@
   // Render the canonical N-shape inside the big-count cell (colour-coded
   // dots, sized small to act as a number-line label).  Mirrors the
   // colour-on-top-of-black-digit pattern used in every other lesson.
-  const SHAPE_R = DOT_D / 2;        // SVG radius in viewBox-100 units
+  const SHAPE_R = 12.5;        // SVG radius in viewBox-100 units
   const SVG_NS  = 'http://www.w3.org/2000/svg';
   function renderBigCountShape(count) {
     while (shapeEl.firstChild) shapeEl.removeChild(shapeEl.firstChild);

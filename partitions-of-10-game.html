@@ -638,24 +638,14 @@
   const perfectValueEl = document.getElementById('perfectValue');
 
   function loadScoreboard() {
-    try {
-      const raw = sessionStorage.getItem(SCORE_STORAGE_KEY);
-      if (!raw) return;
-      const s = JSON.parse(raw);
-      if (typeof s.score   === 'number') scoreCount   = s.score;
-      if (typeof s.perfect === 'number') perfectCount = s.perfect;
-      if (typeof s.screen  === 'number') screenCount  = s.screen;
-    } catch (e) { /* ignore corrupt storage */ }
-    // One-time cleanup: clear any old localStorage value so the
-    // previous "permanent" score from older builds stops loading.
-    try { localStorage.removeItem(SCORE_STORAGE_KEY); } catch (e) {}
+    // No persistence -- per user request, every page load starts fresh
+    // at Score 0 / Perfect 0 / Screen 0.  Purge any leftover storage
+    // from older builds so it can't sneak back in.
+    try { sessionStorage.removeItem(SCORE_STORAGE_KEY); } catch (e) {}
+    try { localStorage.removeItem(SCORE_STORAGE_KEY);   } catch (e) {}
   }
   function saveScoreboard() {
-    try {
-      sessionStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify({
-        score: scoreCount, perfect: perfectCount, screen: screenCount,
-      }));
-    } catch (e) { /* storage full, ignore */ }
+    // No-op: see loadScoreboard above for why persistence is off.
   }
 
   // Digital ColorMyMath number rendering -- each digit becomes a small

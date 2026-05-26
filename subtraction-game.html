@@ -79,53 +79,59 @@
     margin-top: 0.2vh;
   }
 
-  /* The prompt "5 - 4 = ?" -- prominent, black-on-white. */
-  .prompt {
+  /* Big colour-coded equation: three number-line "cells" (one per
+     operand) with "-" and "=" between them, sized large so it reads
+     across the room.  Each cell has the coloured canonical shape on
+     top and the BLACK digit below -- the ColorMyMath house style. */
+  .equation-row {
     position: absolute;
-    top: 11.5%; left: 4%; right: 4%;
-    text-align: center;
-    font-size: 4.5vh; font-weight: 900;
-    color: #000;
-    line-height: 1.1;
-    letter-spacing: 0.04em;
+    top: 13%; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4vh;
     pointer-events: none;
   }
-
-  /* Number-line style read-out: coloured shape over the BLACK digit
-     showing how many dots are LEFT right now. */
-  .big-count {
-    position: absolute;
-    top: 19%; left: 0; right: 0;
+  .eq-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.2vh;
-    pointer-events: none;
   }
-  .big-count-shape {
-    width: 5.5vh;
-    height: 5.5vh;
+  .eq-shape {
+    width: 9vh;
+    height: 9vh;
     overflow: visible;
   }
-  .big-count-digit {
-    font-size: 3.5vh;
+  .eq-digit {
+    font-size: 6.5vh;
     font-weight: 900;
     color: #000;
     line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .eq-op {
+    font-size: 6.5vh;
+    font-weight: 900;
+    color: #000;
+    line-height: 1;
+    align-self: flex-end;
+    padding-bottom: 0.4vh;
   }
 
-  /* Square play area centred in the stage. */
+  /* Square play area centred in the stage -- moved DOWN to give the
+     bigger equation room to breathe. */
   .play-area {
     position: absolute;
-    top: 32%;
+    top: 38%;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
+    width: 96%;
     aspect-ratio: 1 / 1;
   }
   .dot {
     position: absolute;
-    width: 25%;
+    width: 33%;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     border: 0.4vh solid #000;
@@ -214,12 +220,27 @@
 
   <div class="title">Subtraction<span class="sub">Take away the right number of dots, then keep going</span></div>
 
-  <div class="prompt" id="prompt"></div>
-
-  <div class="big-count" id="bigCount">
-    <svg class="big-count-shape" id="bigCountShape" viewBox="0 0 100 100"
-         preserveAspectRatio="xMidYMid meet"></svg>
-    <span class="big-count-digit" id="bigCountDigit"></span>
+  <!-- Equation row: three colour-coded cells with operators between.
+       Each cell is { coloured canonical-shape SVG on top, BLACK digit
+       below }.  The answer cell shows a "?" until the round is done. -->
+  <div class="equation-row" id="equationRow">
+    <div class="eq-cell">
+      <svg class="eq-shape" id="eqShapeA" viewBox="0 0 100 100"
+           preserveAspectRatio="xMidYMid meet"></svg>
+      <span class="eq-digit" id="eqDigitA"></span>
+    </div>
+    <span class="eq-op">−</span>
+    <div class="eq-cell">
+      <svg class="eq-shape" id="eqShapeB" viewBox="0 0 100 100"
+           preserveAspectRatio="xMidYMid meet"></svg>
+      <span class="eq-digit" id="eqDigitB"></span>
+    </div>
+    <span class="eq-op">=</span>
+    <div class="eq-cell">
+      <svg class="eq-shape" id="eqShapeC" viewBox="0 0 100 100"
+           preserveAspectRatio="xMidYMid meet"></svg>
+      <span class="eq-digit" id="eqDigitC"></span>
+    </div>
   </div>
 
   <div class="play-area" id="playArea"></div>
@@ -266,23 +287,26 @@
   }
 
   // ---------- Game state ----------
-  const SHAPES = {"0":[],"1":[[50,50]],"2":[[37.5,50],[62.5,50]],"3":[[50,39.17468245269452],[37.5,60.82531754730548],[62.5,60.82531754730548]],"4":[[37.5,37.5],[62.5,37.5],[37.5,62.5],[62.5,62.5]],"5":[[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548]],"6":[[50,28.349364905389034],[37.5,50],[62.5,50],[25,71.65063509461096],[50,71.65063509461096],[75,71.65063509461096]],"7":[[37.5,28.349364905389034],[62.5,28.349364905389034],[25,50],[50,50],[75,50],[37.5,71.65063509461096],[62.5,71.65063509461096]],"8":[[25,25],[50,25],[75,25],[25,50],[75,50],[25,75],[50,75],[75,75]],"9":[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]],"10":[[50,17.52404735808355],[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548],[12.5,82.47595264191645],[37.5,82.47595264191645],[62.5,82.47595264191645],[87.5,82.47595264191645]]};
+  const SHAPES = {"0":[],"1":[[50,50]],"2":[[33.5,50],[66.5,50]],"3":[[50,35.71058083755676],[33.5,64.28941916244324],[66.5,64.28941916244324]],"4":[[33.5,33.5],[66.5,33.5],[33.5,66.5],[66.5,66.5]],"5":[[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324]],"6":[[50,21.421161675113527],[33.5,50],[66.5,50],[17,78.57883832488648],[50,78.57883832488648],[83,78.57883832488648]],"7":[[33.5,21.421161675113527],[66.5,21.421161675113527],[17,50],[50,50],[83,50],[33.5,78.57883832488648],[66.5,78.57883832488648]],"8":[[17,17],[50,17],[83,17],[17,50],[83,50],[17,83],[50,83],[83,83]],"9":[[17,17],[50,17],[83,17],[17,50],[50,50],[83,50],[17,83],[50,83],[83,83]],"10":[[50,7.131742512670293],[33.5,35.71058083755676],[66.5,35.71058083755676],[17,64.28941916244324],[50,64.28941916244324],[83,64.28941916244324],[0.5,92.86825748732971],[33.5,92.86825748732971],[66.5,92.86825748732971],[99.5,92.86825748732971]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
   const ROUNDS = [{"start":5,"remove":1},{"start":4,"remove":1},{"start":3,"remove":1},{"start":2,"remove":1},{"start":1,"remove":1},{"start":5,"remove":2},{"start":4,"remove":2},{"start":3,"remove":2},{"start":5,"remove":3},{"start":4,"remove":3},{"start":5,"remove":4}];
 
   const playArea  = document.getElementById('playArea');
-  const promptEl  = document.getElementById('prompt');
-  const shapeEl   = document.getElementById('bigCountShape');
-  const digitEl   = document.getElementById('bigCountDigit');
+  const eqShapeA  = document.getElementById('eqShapeA');
+  const eqDigitA  = document.getElementById('eqDigitA');
+  const eqShapeB  = document.getElementById('eqShapeB');
+  const eqDigitB  = document.getElementById('eqDigitB');
+  const eqShapeC  = document.getElementById('eqShapeC');
+  const eqDigitC  = document.getElementById('eqDigitC');
   const banner    = document.getElementById('perfectBanner');
   const clicksEl  = document.getElementById('clicksVal');
   const perfectEl = document.getElementById('perfectVal');
   const roundEl   = document.getElementById('roundVal');
 
-  const SHAPE_R = 12.5;
+  const SHAPE_R = 16.5;      // matches the SHAPES coord system
   const SVG_NS  = 'http://www.w3.org/2000/svg';
-  function renderBigCountShape(count) {
-    while (shapeEl.firstChild) shapeEl.removeChild(shapeEl.firstChild);
+  function renderEqCell(svgEl, digitEl, count, digitText) {
+    while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
     const positions = SHAPES[count] || [];
     const colour = COLORS[count] || '#ffffff';
     for (const [x, y] of positions) {
@@ -293,8 +317,9 @@
       c.setAttribute('fill', colour);
       c.setAttribute('stroke', '#000');
       c.setAttribute('stroke-width', '1.6');
-      shapeEl.appendChild(c);
+      svgEl.appendChild(c);
     }
+    digitEl.textContent = digitText;
   }
 
   let dots = [];
@@ -345,17 +370,21 @@
 
   function updatePromptAndCount() {
     const round = ROUNDS[currentRoundIdx];
-    if (!round) { promptEl.innerHTML = ''; return; }
-    // While the kid is marking dots: the big-count cell shows how many
-    // would be LEFT once the currently-selected ones leave.
-    const remaining = round.start - selectedDots.length;
-    const answer = roundComplete ? String(round.start - round.remove) : '?';
-    promptEl.innerHTML =
-      '<span>' + round.start + '</span> - ' +
-      '<span>' + round.remove + '</span> = ' +
-      '<span>' + answer + '</span>';
-    digitEl.textContent = remaining + '';
-    renderBigCountShape(remaining);
+    if (!round) return;
+    // Cell A: the START count (fixed within a round).
+    renderEqCell(eqShapeA, eqDigitA, round.start, String(round.start));
+    // Cell B: the REMOVE count (fixed within a round).
+    renderEqCell(eqShapeB, eqDigitB, round.remove, String(round.remove));
+    // Cell C: live answer-preview while marking, real answer on completion.
+    //   While the kid is marking: shape = current would-be remaining
+    //     (start - selectedDots.length) in its canonical colour;
+    //     digit is "?" until target reached.
+    //   On completion: shape and digit both show the final answer.
+    const wouldBeLeft = round.start - selectedDots.length;
+    const finalAnswer = round.start - round.remove;
+    const showCount   = roundComplete ? finalAnswer : wouldBeLeft;
+    const showDigit   = roundComplete ? String(finalAnswer) : '?';
+    renderEqCell(eqShapeC, eqDigitC, showCount, showDigit);
   }
 
   function startRound(idx) {
@@ -453,15 +482,9 @@
         const survivorSet = new Set(selectedDots);
         dots = dots.filter(d => !survivorSet.has(d.el));
         layoutDots(remaining);
-        // Update the big-count cell to the post-removal state.
-        const r = ROUNDS[currentRoundIdx];
-        digitEl.textContent = remaining + '';
-        renderBigCountShape(remaining);
-        // Now show the answer in the prompt.
-        promptEl.innerHTML =
-          '<span>' + r.start + '</span> - ' +
-          '<span>' + r.remove + '</span> = ' +
-          '<span>' + remaining + '</span>';
+        // updatePromptAndCount() now does the cell update -- roundComplete
+        // is true so it draws the final answer in cell C.
+        updatePromptAndCount();
       }, 1000);
 
       // Audio: prefer the recorded "N minus 1 equals M" sentence when

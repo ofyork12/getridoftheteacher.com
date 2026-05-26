@@ -430,9 +430,6 @@
       <button id="modeFrEn" class="active">French → English</button>
       <a href="language-learning-game-en-fr.html" class="opposite-button">Opposite</a>
     </div>
-
-    <div class="pagination-controls" id="paginationControls"></div>
-
     <div id="gameArea">
       <div class="question-card">
         <div class="question-text" id="questionText">
@@ -446,6 +443,8 @@
         <div class="feedback" id="feedback"></div>
       </div>
     </div>
+    <div class="pagination-controls" id="paginationControls"></div>
+
   </div>
 
 <script>
@@ -1266,22 +1265,32 @@ function showRoundEnd() {
   const nextRound = currentRound + 1;
   const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
   const finalRound = nextRound > totalRounds ? 1 : nextRound;
-  
+
   document.getElementById("questionText").textContent = `Round ${endingRound} Complete!`;
   document.getElementById("questionHint").textContent = `Score: ${score} | Correct: ${correct} | Wrong: ${wrong}`;
   document.getElementById("playQuestion").style.display = "none";
-  
-  // Show button to start next round
-  document.getElementById("answerOptions").innerHTML = `
-    <button class="game-button" onclick="startNextRound()" style="margin: 20px auto; display: block;">
-      Start Round ${finalRound}
-    </button>
-  `;
-  
+
+  // Big "Good job!" celebration -- no manual button.  The next round
+  // auto-loads after the bilingual announcement finishes.
+  document.getElementById("answerOptions").innerHTML =
+    '<div style="font-size: 38px; text-align: center; margin: 24px 0;' +
+    ' color: #4caf50; font-weight: 900; line-height: 1.25;">' +
+    'Good job!<br>Round ' + finalRound + '!' +
+    '</div>';
   document.getElementById("feedback").textContent = "";
   document.getElementById("feedback").className = "feedback";
-  
   updateStats();
+
+  // Speak "Good job! Round N!" first in ENGLISH, then in the target
+  // language a beat later so the kid hears both.
+  try { speakWord('Good job! Round ' + finalRound + '!', 'en'); } catch (e) {}
+  setTimeout(() => {
+    try { speakWord('Good job! Round ' + finalRound + '!', 'en'); } catch (e) {}
+  }, 2200);
+
+  // Auto-advance.  ~5s gives both phrases room to finish before the
+  // first question of the new round speaks.
+  setTimeout(() => { startNextRound(); }, 5200);
 }
 
 function startNextRound() {

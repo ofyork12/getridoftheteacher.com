@@ -72,9 +72,10 @@
     position: absolute;
     top: 26%; left: 5%; right: 5%; bottom: 18%;
   }
+  /* .dot width must match the DOT_D constant in JS (% of play area). */
   .dot {
     position: absolute;
-    width: 18%;
+    width: 22%;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
     border: 0.4vh solid #000;
@@ -82,7 +83,7 @@
     transform: translate(-50%, -50%);
     transition: left 0.45s cubic-bezier(0.25, 0.8, 0.4, 1),
                 top  0.45s cubic-bezier(0.25, 0.8, 0.4, 1),
-                background-color 0.45s ease,
+                background-color 0.25s ease,
                 opacity 0.45s ease,
                 transform 0.45s cubic-bezier(0.25, 0.8, 0.4, 1);
   }
@@ -197,7 +198,7 @@
 
   // ---------- Game state ----------
   const START_COUNT = 5;
-  const SHAPES = {"0":[],"1":[[50,50]],"2":[[34,50],[66,50]],"3":[[50,28],[28,72],[72,72]],"4":[[30,30],[70,30],[30,70],[70,70]],"5":[[30,30],[70,30],[18,72],[50,72],[82,72]],"6":[[50,22],[33,50],[67,50],[18,78],[50,78],[82,78]],"7":[[34,20],[66,20],[18,50],[50,50],[82,50],[34,80],[66,80]],"8":[[20,20],[50,20],[80,20],[20,50],[80,50],[20,80],[50,80],[80,80]],"9":[[20,22],[50,22],[80,22],[20,50],[50,50],[80,50],[20,78],[50,78],[80,78]],"10":[[50,20],[38,38],[62,38],[26,57],[50,57],[74,57],[16,78],[38,78],[62,78],[84,78]]};
+  const SHAPES = {"0":[],"1":[[50,50]],"2":[[39,50],[61,50]],"3":[[50,40.47372055837118],[39,59.52627944162882],[61,59.52627944162882]],"4":[[39,39],[61,39],[39,61],[61,61]],"5":[[39,40.47372055837118],[61,40.47372055837118],[28,59.52627944162882],[50,59.52627944162882],[72,59.52627944162882]],"6":[[50,30.94744111674235],[39,50],[61,50],[28,69.05255888325765],[50,69.05255888325765],[72,69.05255888325765]],"7":[[39,30.94744111674235],[61,30.94744111674235],[28,50],[50,50],[72,50],[39,69.05255888325765],[61,69.05255888325765]],"8":[[28,28],[50,28],[72,28],[28,50],[72,50],[28,72],[50,72],[72,72]],"9":[[28,28],[50,28],[72,28],[28,50],[50,50],[72,50],[28,72],[50,72],[72,72]],"10":[[50,21.421161675113524],[39,40.47372055837118],[61,40.47372055837118],[28,59.52627944162882],[50,59.52627944162882],[72,59.52627944162882],[17,78.57883832488648],[39,78.57883832488648],[61,78.57883832488648],[83,78.57883832488648]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
 
   const playArea = document.getElementById('playArea');
@@ -275,7 +276,7 @@
   function onTapDot(ev) {
     if (resetting) return;
     const el = ev.currentTarget;
-    if (el.classList.contains('exiting')) return;
+    if (el.classList.contains('exiting') || el.dataset.takingAway === 'true') return;
     const idx = dots.findIndex(d => d.el === el);
     if (idx === -1) return;
 
@@ -285,24 +286,33 @@
     const dotCenterX = dotRect.left + dotRect.width / 2;
     const goLeft = (dotCenterX - stageRect.left) < (stageRect.right - dotCenterX);
 
-    // Animate the tapped dot to the chosen edge + fade.
-    el.classList.add('exiting');
-    el.style.left = goLeft ? '-25%' : '125%';
-
-    // Remove from dots[] BEFORE relayout so reshape skips it.
-    dots.splice(idx, 1);
+    // STEP 1: turn the tapped dot WHITE immediately + update the
+    // equation and big-count read-out so the kid sees the change
+    // register the moment they tap.
+    el.dataset.takingAway = 'true';        // guard against re-tap during fade
+    el.style.backgroundColor = '#ffffff';
+    dots.splice(idx, 1);                    // remove from dots[] so reshape skips it
     removedSoFar++;
     const remaining = START_COUNT - removedSoFar;
     const prevCount = remaining + 1;
+    updateReadouts();
 
-    // Drop the exiting dot from the DOM after the animation finishes.
+    // STEP 2: after a brief pause to register the white flash, slide
+    // the dot OUT to whichever stage edge is closer, AND reshape the
+    // surviving dots into the canonical (N-1) layout / colour at the
+    // same time so it all reads as one motion.
+    const PAUSE_MS = 220;
+    setTimeout(() => {
+      el.classList.add('exiting');
+      el.style.left = goLeft ? '-25%' : '125%';
+      layoutDots(remaining);
+    }, PAUSE_MS);
+
+    // STEP 3: drop the exited dot from the DOM after the slide
+    // animation finishes (220ms pause + ~450ms transition).
     setTimeout(() => {
       if (el.parentNode) el.parentNode.removeChild(el);
-    }, 600);
-
-    // Reshape and recolour the survivors to the canonical N-1 layout.
-    layoutDots(remaining);
-    updateReadouts();
+    }, PAUSE_MS + 600);
 
     // Narrate "[old] minus one equals [new]".  Prefer the RECORDED
     // sentence clip if we have one (same audio the subtraction play

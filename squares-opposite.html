@@ -269,6 +269,72 @@
     
     /* 26×26 through 30×30 grids with numbers - larger circles */
     /* Removed old rules for grids 676, 729, 784, 841, 900 - now using same size as 13×13 grid */
+    /* 1×1, 2×2, 3×3, 4×4, 5×5 -- match the 13× outer footprint that
+       grid-36 .. grid-1369 use so 1² through 5² look exactly as big
+       as 6² and beyond.  (Without these, the small grids fell back
+       to inline `repeat(N, var(--circle-total))` sizing, which is
+       only N× wide -- making 5² noticeably smaller than 6².) */
+    .grid-1 {
+      --circle-total-1: calc(var(--circle-total) * 13);
+      grid-template-columns: repeat(1, var(--circle-total-1)) !important;
+      grid-template-rows: repeat(1, var(--circle-total-1)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-1 .circle {
+      width: var(--circle-total-1) !important;
+      height: var(--circle-total-1) !important;
+      border-width: 0.5px !important;
+    }
+    .grid-4 {
+      --circle-total-4: calc(var(--circle-total) * 13 / 2);
+      grid-template-columns: repeat(2, var(--circle-total-4)) !important;
+      grid-template-rows: repeat(2, var(--circle-total-4)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-4 .circle {
+      width: var(--circle-total-4) !important;
+      height: var(--circle-total-4) !important;
+      border-width: 0.5px !important;
+    }
+    .grid-9 {
+      --circle-total-9: calc(var(--circle-total) * 13 / 3);
+      grid-template-columns: repeat(3, var(--circle-total-9)) !important;
+      grid-template-rows: repeat(3, var(--circle-total-9)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-9 .circle {
+      width: var(--circle-total-9) !important;
+      height: var(--circle-total-9) !important;
+      border-width: 0.5px !important;
+    }
+    .grid-16 {
+      --circle-total-16: calc(var(--circle-total) * 13 / 4);
+      grid-template-columns: repeat(4, var(--circle-total-16)) !important;
+      grid-template-rows: repeat(4, var(--circle-total-16)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-16 .circle {
+      width: var(--circle-total-16) !important;
+      height: var(--circle-total-16) !important;
+      border-width: 0.5px !important;
+    }
+    .grid-25 {
+      --circle-total-25: calc(var(--circle-total) * 13 / 5);
+      grid-template-columns: repeat(5, var(--circle-total-25)) !important;
+      grid-template-rows: repeat(5, var(--circle-total-25)) !important;
+      width: calc(var(--circle-total) * 13) !important;
+      height: calc(var(--circle-total) * 13) !important;
+    }
+    .grid-25 .circle {
+      width: var(--circle-total-25) !important;
+      height: var(--circle-total-25) !important;
+      border-width: 0.5px !important;
+    }
+
     /* 6×6 (36) through 12×12 (144) grids - same size as 13×13 grid */
     .grid-36 {
       --circle-total-36: calc(var(--circle-total) * 13 / 6);
@@ -3076,9 +3142,10 @@ function generateSquare(n, label = null) {
   grid.className = `grid-dynamic`;
   grid.id = `square-${square}`;
   
-  // Special handling for 13×13 (169) through 37×37 (1369) grids - CSS handles sizing
-  // Add grid class for squares 6² through 12² and all larger squares
-  if (square === 36 || square === 49 || square === 64 || square === 81 || square === 100 || square === 121 || square === 144 || square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369) {
+  // Special handling for 1×1, 2×2, ..., 5×5 (NEW -- per user request
+  // to match the 6²+ look) and 6×6 (36) through 37×37 (1369) grids -
+  // CSS handles sizing for all of these.
+  if (square === 1 || square === 4 || square === 9 || square === 16 || square === 25 || square === 36 || square === 49 || square === 64 || square === 81 || square === 100 || square === 121 || square === 144 || square === 169 || square === 196 || square === 225 || square === 256 || square === 289 || square === 324 || square === 361 || square === 400 || square === 441 || square === 484 || square === 529 || square === 576 || square === 625 || square === 676 || square === 729 || square === 784 || square === 841 || square === 900 || square === 961 || square === 1024 || square === 1089 || square === 1156 || square === 1225 || square === 1296 || square === 1369) {
     grid.classList.add(`grid-${square}`);
   } else {
     // Use the standard size for all other grids (including 37×37)
@@ -8142,11 +8209,22 @@ if (moreSquaresContainer) {
   // To get 6² after 5², we need 6² to be LAST in moreSquares DOM (appears FIRST in moreSquares, which is right before 5² visually)
   // Wait, that's confusing. Let me keep it simple: append 6-36 in reverse so 6² is last
   
-  // Replace 5² section (keep it where it is)
-  const existing25Section = document.querySelector('#square-25')?.closest('.set');
-  if (existing25Section) {
-    const newSection = generateSquare(5);
-    existing25Section.replaceWith(newSection);
+  // Replace the static 1²-5² sections with generated ones so they
+  // pick up the new grid-1/grid-4/grid-9/grid-16/grid-25 sizing and
+  // visually match 6² and beyond.
+  const SMALL_SECTIONS = [
+    { selector: '[data-square="1"]',  n: 1 },
+    { selector: '[data-square="4"]',  n: 2 },
+    { selector: '[data-square="9"]',  n: 3 },
+    { selector: '[data-square="16"]', n: 4 },
+    { selector: '#square-25',         n: 5 },
+  ];
+  for (const { selector, n } of SMALL_SECTIONS) {
+    const existing = document.querySelector(selector)?.closest('.set');
+    if (existing) {
+      const newSection = generateSquare(n);
+      if (newSection) existing.replaceWith(newSection);
+    }
   }
 
   // Remove any existing 37² (1369) and 38² (1444) grids if they exist

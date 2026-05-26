@@ -1215,31 +1215,21 @@ function showRoundEnd() {
   const totalRounds = Math.ceil(VOCABULARY.length / QUESTIONS_PER_ROUND);
   const finalRound = nextRound > totalRounds ? 1 : nextRound;
 
-  document.getElementById("questionText").textContent = `Round ${endingRound} Complete!`;
+  document.getElementById("questionText").textContent = `Round ${endingRound} Complete`;
   document.getElementById("questionHint").textContent = `Score: ${score} | Correct: ${correct} | Wrong: ${wrong}`;
   document.getElementById("playQuestion").style.display = "none";
 
-  // Big "Good job!" celebration -- no manual button.  The next round
-  // auto-loads after the bilingual announcement finishes.
+  // Brief visual flash announcing the next round -- no audio, no
+  // bilingual "Good job!" celebration (per user, just go to the next
+  // level).  Auto-advance after ~2s.
   document.getElementById("answerOptions").innerHTML =
     '<div style="font-size: 38px; text-align: center; margin: 24px 0;' +
-    ' color: #4caf50; font-weight: 900; line-height: 1.25;">' +
-    'Good job!<br>Round ' + finalRound + '!' +
-    '</div>';
+    ' color: #4caf50; font-weight: 900;">Round ' + finalRound + '</div>';
   document.getElementById("feedback").textContent = "";
   document.getElementById("feedback").className = "feedback";
   updateStats();
 
-  // Speak "Good job! Round N!" first in ENGLISH, then in the target
-  // language a beat later so the kid hears both.
-  try { speakWord('Good job! Round ' + finalRound + '!', 'en'); } catch (e) {}
-  setTimeout(() => {
-    try { speakWord('Bravo! Niveau ' + finalRound + '!', 'fr'); } catch (e) {}
-  }, 2200);
-
-  // Auto-advance.  ~5s gives both phrases room to finish before the
-  // first question of the new round speaks.
-  setTimeout(() => { startNextRound(); }, 5200);
+  setTimeout(() => { startNextRound(); }, 2000);
 }
 
 function startNextRound() {

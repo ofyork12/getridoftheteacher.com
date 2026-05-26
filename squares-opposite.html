@@ -74,7 +74,10 @@
       margin: 30px 0;
       justify-content: center;
       flex-wrap: wrap;
-      order: -1;
+      /* In column-reverse: lower `order` = visual bottom.  Game-nav
+         goes to the very bottom (-2); language .controls sit just
+         above it (-1) so they end up directly under the squares. */
+      order: -2;
     }
     .game-nav-button {
       padding: 36px 72px;
@@ -203,7 +206,11 @@
       gap: 24px;
       margin-bottom: 40px;
       justify-content: center;
-      order: -2;
+      /* In column-reverse: lower `order` = bottom of page.  We want
+         the language buttons to sit RIGHT UNDER the squares (i.e.
+         above the game-nav buttons), so controls gets the HIGHER
+         order (-1) and .game-navigation gets -2 (very bottom). */
+      order: -1;
     }
     .lang-group {
       display: flex;

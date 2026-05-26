@@ -256,7 +256,8 @@
   }
   function _playChain(keys, gapMs) {
     _cancelNarration();
-    const gap = gapMs || 650;   // SLOWED so digits don't overlap (was 470)
+    const gap = gapMs || 780;   // SLOWED again so each digit finishes before
+                                // the next fires (was 650, 470 originally).
     let delay = 0;
     for (const k of keys) {
       _narrationTimeouts.push(setTimeout(() => _playKey(k), delay));
@@ -267,7 +268,7 @@
   // ---------- Game state ----------
   const SHAPES = {"0":[],"1":[[50,50]],"2":[[37.5,50],[62.5,50]],"3":[[50,39.17468245269452],[37.5,60.82531754730548],[62.5,60.82531754730548]],"4":[[37.5,37.5],[62.5,37.5],[37.5,62.5],[62.5,62.5]],"5":[[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548]],"6":[[50,28.349364905389034],[37.5,50],[62.5,50],[25,71.65063509461096],[50,71.65063509461096],[75,71.65063509461096]],"7":[[37.5,28.349364905389034],[62.5,28.349364905389034],[25,50],[50,50],[75,50],[37.5,71.65063509461096],[62.5,71.65063509461096]],"8":[[25,25],[50,25],[75,25],[25,50],[75,50],[25,75],[50,75],[75,75]],"9":[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]],"10":[[50,17.52404735808355],[37.5,39.17468245269452],[62.5,39.17468245269452],[25,60.82531754730548],[50,60.82531754730548],[75,60.82531754730548],[12.5,82.47595264191645],[37.5,82.47595264191645],[62.5,82.47595264191645],[87.5,82.47595264191645]]};
   const COLORS = {"0":"#ffffff","1":"#e63946","2":"#ff6200","3":"#e6c800","4":"#00a12c","5":"#0066ff","6":"#7700dd","7":"#7a3b00","8":"#ff3fa6","9":"#38c7ff","10":"#ff0000"};
-  const ROUNDS = [{"start":5,"remove":4},{"start":5,"remove":3},{"start":5,"remove":2},{"start":5,"remove":1},{"start":4,"remove":3},{"start":4,"remove":2},{"start":3,"remove":2}];
+  const ROUNDS = [{"start":5,"remove":4},{"start":5,"remove":3},{"start":5,"remove":2},{"start":5,"remove":1},{"start":4,"remove":3},{"start":4,"remove":2},{"start":4,"remove":1},{"start":3,"remove":2},{"start":3,"remove":1},{"start":2,"remove":1},{"start":1,"remove":1}];
 
   const playArea  = document.getElementById('playArea');
   const promptEl  = document.getElementById('prompt');
@@ -464,33 +465,42 @@
       }, 1000);
 
       // Audio: prefer the recorded "N minus 1 equals M" sentence when
-      // the round is N-1 (only K=1 has a recorded one-shot); otherwise
-      // chain "N minus K equals M" with the slower 650ms gap.
-      let used = false;
-      if (round.remove === 1) {
-        const key = 'sentence_' + round.start + '_minus_1';
-        if (NUMBER_AUDIO[key]) {
-          _cancelNarration();
-          setTimeout(() => _playKey(key), 600);
-          used = true;
-        }
-      }
-      if (!used) {
+      // K=1 (only K=1 has a recorded one-shot, including 1-1 -> zero);
+      // otherwise chain "N minus K equals M" through individual digit
+      // clips with the slower 780ms gap.
+      //
+      // Both branches RETURN an estimated audioMs so we can schedule
+      // the banner + auto-advance based on when the full sentence
+      // actually finishes (so we never cut off "equals two", etc.).
+      let audioMs;
+      if (round.remove === 1
+          && NUMBER_AUDIO['sentence_' + round.start + '_minus_1']) {
+        _cancelNarration();
+        setTimeout(() => _playKey('sentence_' + round.start + '_minus_1'), 700);
+        // Recorded sentences run ~3.5s wall clock; add the 700ms intro pause.
+        audioMs = 700 + 3500;
+      } else {
         setTimeout(() => {
           _playChain([String(round.start), 'minus', String(round.remove),
                       'equals', String(remaining)]);
-        }, 600);
+        }, 700);
+        // Chain of 5 clips at 780ms gap = 4 gaps + last clip duration (~700ms)
+        // -> ~3820ms.  Add the 700ms intro pause -> ~4520ms.
+        audioMs = 700 + (5 - 1) * 780 + 700;
       }
 
-      // Banner + auto-advance.  Tuned so PERFECT pops AFTER the dots
-      // have rolled off, audio finishes, then we wait a beat, then
-      // load the next round.
-      setTimeout(showBanner, 1500);
+      // Banner + auto-advance.  Tuned so the full sentence has time to
+      // finish, THEN PERFECT pops and stays for a beat, THEN we load
+      // the next round.  Without this, "five minus four equals one"
+      // was being cut off at "equals" by the next round's intro audio.
+      const bannerMs   = Math.max(audioMs + 200, 2500);
+      const advanceMs  = bannerMs + 1500;
+      setTimeout(showBanner, bannerMs);
       setTimeout(() => {
         hideBanner();
         currentRoundIdx++;
         startRound(currentRoundIdx);
-      }, 3200);
+      }, advanceMs);
     }
   }
 

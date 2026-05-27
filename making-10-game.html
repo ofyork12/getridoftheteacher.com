@@ -45,20 +45,16 @@
     margin-top: 0.3vh;
   }
 
-  /* Paint tray: vertical column on the LEFT side of the stage, big
-     square paint chips stacked top-to-bottom.  White (0) on top,
-     red (1) middle, orange (2) bottom for the partition-2 game.
-     Slots tagged `disabled` are hidden -- enabling more later just
-     means removing the class.  Width: 15% so three stacked chips
-     (3 x 15% + 2 x 3% gap = 51%) fit cleanly to the left of the
-     triangle without overlapping the outline. */
+  /* Paint tray: HORIZONTAL row above the triangle (user 2026-05-27 --
+     moved from left-side vertical column to a top-row horizontal
+     strip so the triangle has the full stage width).  10 columns x
+     1 row; chip height is set by column width via aspect-ratio. */
   .paint-tray {
     position: absolute;
-    top: 10%; left: 3%;
-    width: 15%;
+    top: 12.5%; left: 3%; right: 3%;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 3%;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 1%;
     z-index: 50;
   }
   .paint-slot {
@@ -93,16 +89,16 @@
     cursor: not-allowed;
   }
 
-  /* Running equation across the top -- offset to the right so the
-     left-side tray doesn't collide with long equations. */
+  /* Running equation across the top -- full width now that the tray
+     is horizontal above the triangle (no longer on the left). */
   .equation {
-    position: absolute; top: 10%; left: 22%; right: 4%;
+    position: absolute; top: 7.5%; left: 4%; right: 4%;
     text-align: center;
-    font-size: 3vh; font-weight: 800;
+    font-size: 2.6vh; font-weight: 800;
     color: #000;
     padding: 0 2%;
     line-height: 1.15;
-    min-height: 7vh;
+    min-height: 4vh;
     pointer-events: none;
   }
   .equation .num {
@@ -372,16 +368,16 @@
        white on top, red in the middle, orange at the bottom.
        Each orange click paints 2 dots (orange = value 2). -->
     <div class="paint-tray" id="paintTray">
-    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff; grid-column:1; grid-row:1;" aria-label="white (0)"></button>
-    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946; grid-column:2; grid-row:1;" aria-label="red (1)"></button>
-    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200; grid-column:1; grid-row:2;" aria-label="orange (2)"></button>
-    <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800; grid-column:2; grid-row:2;" aria-label="yellow (3)"></button>
-    <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c; grid-column:1; grid-row:3;" aria-label="green (4)"></button>
-    <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff; grid-column:2; grid-row:3;" aria-label="blue (5)"></button>
-    <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd; grid-column:1; grid-row:4;" aria-label="purple (6)"></button>
-    <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00; grid-column:2; grid-row:4;" aria-label="brown (7)"></button>
-    <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6; grid-column:1; grid-row:5;" aria-label="pink (8)"></button>
-    <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff; grid-column:2; grid-row:5;" aria-label="cyan (9)"></button>
+    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff;" aria-label="white (0)"></button>
+    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946;" aria-label="red (1)"></button>
+    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
+    <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
+    <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
+    <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
+    <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
+    <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
+    <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
+    <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
   </div>
 
   <div class="equation" id="eq"></div>

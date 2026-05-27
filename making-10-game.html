@@ -756,8 +756,14 @@
     eqEl.innerHTML = lhs + ' = ' + rhs;
   }
 
-  // --- Reset button --------------------------------------------------
-  document.getElementById('resetBtn').addEventListener('click', () => {
+  // --- Reset --------------------------------------------------------
+  // Same fix as goal3-game.html: extract Reset into a named function
+  // so the post-PERFECT auto-reset can re-use it.  Per user 2026-05-27
+  // the game was freezing after the first partition because the
+  // banner showed but nothing cleared the canvas.
+  let _autoResetTimer = null;
+  function resetCanvas() {
+    if (_autoResetTimer) { clearTimeout(_autoResetTimer); _autoResetTimer = null; }
     hidePerfectBanner();
     for (const d of dots) {
       d.el.setAttribute('fill', '#ffffff');
@@ -766,12 +772,12 @@
     }
     strokes.length = 0;
     updateEquation();
-    // Drop any active paint too.
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
     activePaint = null;
     activeValue = 0;
-    updatePaintSlotStates();   // brings any "spent" chips back
-  });
+    updatePaintSlotStates();
+  }
+  document.getElementById('resetBtn').addEventListener('click', resetCanvas);
 
   // --- Number-line cells (coloured quantity above black digit) -------
   // Layouts mirror the counting-to-10-game.html number line: each
@@ -1030,15 +1036,14 @@
 
     if (partEl) {
       partEl.innerHTML = index > 0
-        ? 'Partition <b>' + index + '</b> of 42<br><span class="perfect-sum">' +
-          values.join(' + ') + ' = 10</span>'
+        ? '<span class="perfect-sum">' + values.join(' + ') + ' = 10</span>'
         : '';
     }
     if (progressEl) {
       const got = collectedPartitions.size;
       if (got >= 42) {
         progressEl.innerHTML =
-          '<span style="color:#ffe600;">YOU FOUND ALL 42 MAGIC PARTITIONS!</span>';
+          '<span style="color:#ffe600;">YOU FOUND ALL 42!</span>';
       } else if (isNew) {
         progressEl.innerHTML =
           'NEW! You\'ve found ' + got + ' of 42 partitions of 10.';
@@ -1048,11 +1053,21 @@
       }
     }
     if (headlineEl) {
-      headlineEl.textContent = collectedPartitions.size >= 42
-        ? 'MAGIC NUMBER 42!'
-        : 'PERFECT!';
+      // "PERFECT! NUMBER N" -- bake the partition number into the
+      // headline so the kid sees which of the 42 they just made.
+      if (collectedPartitions.size >= 42) {
+        headlineEl.textContent = 'YOU FOUND ALL 42!';
+      } else if (index > 0) {
+        headlineEl.textContent = 'PERFECT!  NUMBER ' + index;
+      } else {
+        headlineEl.textContent = 'PERFECT!';
+      }
     }
     showPerfectBanner();
+
+    // Auto-clear after 3.2s so the kid can build another partition.
+    if (_autoResetTimer) clearTimeout(_autoResetTimer);
+    _autoResetTimer = setTimeout(resetCanvas, 3200);
   }
   // ============ end Magic-42 collector ==================================
 

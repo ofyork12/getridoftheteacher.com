@@ -45,18 +45,23 @@
     margin-top: 0.3vh;
   }
 
-  /* Paint tray: HORIZONTAL row above the triangle (user 2026-05-27 --
-     moved from left-side vertical column to a top-row horizontal
-     strip so the triangle has the full stage width).  10 columns x
-     1 row; chip height is set by column width via aspect-ratio. */
+  /* Paint tray (user 2026-05-27, two-side layout): TWO vertical
+     strips, one on each side of the triangle.  5 chips per side,
+     stacked top-to-bottom, sized fingerprint-big (19% of stage
+     width = chip width AND chip height via aspect-ratio: 1/1).
+     5 chips x 19% w + 4 gaps x 1.5% = ~59% of stage height; fits
+     in the 22%..82% play-area window with breathing room. */
   .paint-tray {
     position: absolute;
-    top: 12.5%; left: 3%; right: 3%;
+    top: 22%;
+    width: 19%;
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 1%;
+    grid-template-columns: 1fr;
+    gap: 1.5%;
     z-index: 50;
   }
+  .paint-tray-left  { left: 1%; }
+  .paint-tray-right { right: 1%; }
   .paint-slot {
     width: 100%;
     aspect-ratio: 1 / 1;
@@ -106,11 +111,13 @@
     transform-origin: center center;
   }
 
-  /* Triangle play-area back at top: 22%, height: 60% to match the
-     partition autoplay videos.  The big-triangle geometry below
-     (DOT_R=22, viewBox 210x220) is already sized for this. */
+  /* Triangle play-area, centred between the two side trays.  Each
+     tray is 19% wide + 1% edge margin -> trays end at x=20%/80%,
+     so the play-area spans 21% to 79% (with 1% breathing room from
+     each tray).  Height unchanged at 60%; the SVG triangle's
+     viewBox keeps its xMidYMid meet aspect so it scales centred. */
   .play-area {
-    position: absolute; top: 22%; left: 0; right: 0; height: 60%;
+    position: absolute; top: 22%; left: 21%; right: 21%; height: 60%;
   }
   .play-svg {
     position: absolute; inset: 0; width: 100%; height: 100%;
@@ -367,18 +374,20 @@
        partition-2 game.  Layout stacks them vertically in column 1:
        white on top, red in the middle, orange at the bottom.
        Each orange click paints 2 dots (orange = value 2). -->
-    <div class="paint-tray" id="paintTray">
-    <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff;" aria-label="white (0)"></button>
-    <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946;" aria-label="red (1)"></button>
-    <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
-    <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
-    <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
-    <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
-    <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
-    <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
-    <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
-    <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
-  </div>
+    <div class="paint-tray paint-tray-left" id="paintTrayLeft">
+      <button class="paint-slot" data-color="#ffffff" data-value="0" style="--c:#ffffff;" aria-label="white (0)"></button>
+      <button class="paint-slot" data-color="#e63946" data-value="1" style="--c:#e63946;" aria-label="red (1)"></button>
+      <button class="paint-slot" data-color="#ff6200" data-value="2" style="--c:#ff6200;" aria-label="orange (2)"></button>
+      <button class="paint-slot" data-color="#e6c800" data-value="3" style="--c:#e6c800;" aria-label="yellow (3)"></button>
+      <button class="paint-slot" data-color="#00a12c" data-value="4" style="--c:#00a12c;" aria-label="green (4)"></button>
+    </div>
+    <div class="paint-tray paint-tray-right" id="paintTrayRight">
+      <button class="paint-slot" data-color="#0066ff" data-value="5" style="--c:#0066ff;" aria-label="blue (5)"></button>
+      <button class="paint-slot" data-color="#7700dd" data-value="6" style="--c:#7700dd;" aria-label="purple (6)"></button>
+      <button class="paint-slot" data-color="#7a3b00" data-value="7" style="--c:#7a3b00;" aria-label="brown (7)"></button>
+      <button class="paint-slot" data-color="#ff3fa6" data-value="8" style="--c:#ff3fa6;" aria-label="pink (8)"></button>
+      <button class="paint-slot" data-color="#38c7ff" data-value="9" style="--c:#38c7ff;" aria-label="cyan (9)"></button>
+    </div>
 
   <div class="equation" id="eq"></div>
 

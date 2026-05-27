@@ -164,11 +164,14 @@
                 border-width 0.6s ease;
   }
   .dot:active { transform: translate(-50%, -50%) scale(1.06); }
-  /* Exiting dots keep their colour + size during the roll-off (no
-     scale shrink, no fade) -- the user wants them to look like real
-     balls rolling off, then settle into the void off-stage. */
+  /* Exiting dots float up and pop (Web Animations API drives
+     top + transform + opacity).  transition:none so the .dot's
+     existing 1.8s CSS transitions don't fight the WAA per-frame
+     interpolation -- otherwise scale/opacity smear and the pop
+     looks like a slow fade. */
   .dot.exiting {
     pointer-events: none;
+    transition: none !important;
   }
 
   /* Inactivity emphasis -- per user follow-up: cycle through K dots
@@ -722,39 +725,32 @@
       // POP cell A at audio start (instant "N").
       setTimeout(() => popCell(cellA), 700);
 
-      // POP cell B + start dot roll-out when "K" hits.
-      //
-      // Per user 2026-05-27 (round 2 of feedback): forget the upward
-      // arch.  The leaving dot has no colour, has no place in the
-      // surviving group -- it should roll OFF the bottom of the stage
-      // SLOWLY, the opposite direction of "up".  Visual story: the
-      // dot tips over its perch and rolls down and out, picking up
-      // speed like gravity is pulling it down off the floor edge.
-      //
-      // Implementation: Web Animations API with 2 keyframes (start ->
-      // far below + sideways).  Ease-in curve so the motion starts
-      // gently (the dot is just losing its balance), then accelerates
-      // as it falls.  Duration bumped from 1.8s to 2.8s so the
-      // roll-off lasts about as long as "equals M" is being spoken
-      // (the user's anchor: "you have to think of them as being said
-      // that they're leaving").
-      //
-      // fill:'forwards' holds the dot at the end position; inline
-      // style.left/top is intentionally NOT touched so the CSS
-      // transition can't fight the animation.
+      // POP cell B + float the WHITE "nothing" dots up and pop them.
+      // Per user 2026-05-27: same float-up-and-pop motion as the
+      // countdown game now uses.  Every selected dot rises 30% of
+      // play-area height (no horizontal motion -- no chance of
+      // intersecting any survivor), then scales up to 1.4x and fades
+      // out for the pop.  fill:'forwards' holds the popped state
+      // until DOM cleanup fires.
       setTimeout(() => {
         popCell(cellB);
         for (const plan of exitPlans) {
           plan.dot.classList.add('exiting');
           plan.dot.animate([
-            { left: plan.startLeftPct + '%', top: plan.startTopPct + '%' },
-            { left: plan.endLeftPct   + '%', top: plan.endTopPct   + '%' },
+            { top: plan.startTopPct + '%',
+              transform: 'translate(-50%, -50%) scale(1)',
+              opacity: 1 },
+            { top: (plan.startTopPct - 30) + '%',
+              transform: 'translate(-50%, -50%) scale(1)',
+              opacity: 1,
+              offset: 0.70 },
+            { top: (plan.startTopPct - 32) + '%',
+              transform: 'translate(-50%, -50%) scale(1.4)',
+              opacity: 0 },
           ], {
-            duration: 2800,
-            // ease-in: slow tip-off the start spot, accelerating fall
-            // toward the floor (gravity-like).
-            easing: 'cubic-bezier(0.55, 0.05, 0.85, 0.55)',
-            fill:   'forwards',
+            duration: 1200,
+            easing:   'ease-out',
+            fill:     'forwards',
           });
         }
       }, 1400);
@@ -768,22 +764,21 @@
         popCell(cellC);
       }, 2400);
 
-      // Dot DOM cleanup: wait until AFTER the 2.8s slow roll-off is
-      // done.  Slide started at +1400; 2.8s later = +4200.  Add a
-      // 100ms safety -> +4300.
+      // Dot DOM cleanup: wait until AFTER the 1.2s float-and-pop is
+      // done.  Float started at +1400; 1.2s later = +2600.  Add a
+      // 200ms safety -> +2800.
       setTimeout(() => {
         for (const { dot } of exitPlans) {
           if (dot.parentNode) dot.parentNode.removeChild(dot);
         }
-      }, 4300);
+      }, 2800);
 
-      // Auto-advance once the audio + slow roll-off + cleanup are
-      // done.  Cleanup at +4300, give the kid a beat to read the
-      // final answer, then advance.
+      // Auto-advance: hold on the final answer for ~1.6s after
+      // cleanup so the kid can read it, then advance.
       setTimeout(() => {
         currentRoundIdx++;
         startRound(currentRoundIdx);
-      }, 5500);
+      }, 4400);
     }
   }
 

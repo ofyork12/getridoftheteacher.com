@@ -107,20 +107,21 @@
     }
     .card:hover .filename { opacity: 1; }
 
-    /* Hero "Make Your Own" card -- the coolest thing on the page,
-       so it gets pride of place at the top with a brighter border
-       and a yellow accent that stays even when not hovered. */
+    /* Hero "Make Your Own" card -- short, inviting, no walls of text.
+       Big headline, one-liner pitch, flag row, big "Start" button.
+       Yellow accent stays even when not hovered. */
     .hero-card {
       display: block;
-      padding: 32px 36px;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, rgba(255,230,0,0.08), rgba(255,255,255,0.02));
+      padding: 40px 40px 36px;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, rgba(255,230,0,0.12), rgba(255,230,0,0.02));
       color: #fff;
       border: 4px solid #ffe600;
-      border-radius: 18px;
+      border-radius: 22px;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: transform 0.25s ease, background 0.3s ease;
       position: relative;
+      text-align: center;
     }
     .hero-card:hover {
       background: #ffe600;
@@ -131,56 +132,54 @@
       display: inline-block;
       font-size: 12px;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       text-transform: uppercase;
       color: #ffe600;
-      background: rgba(255,230,0,0.12);
-      padding: 4px 10px;
+      background: rgba(255,230,0,0.15);
+      padding: 5px 14px;
       border-radius: 999px;
-      margin-bottom: 12px;
+      margin-bottom: 18px;
     }
     .hero-card:hover .tag {
       color: #000;
       background: rgba(0,0,0,0.15);
     }
     .hero-card h3 {
-      margin: 0 0 8px;
-      font-size: clamp(22px, 4vw, 30px);
+      margin: 0 0 10px;
+      font-size: clamp(28px, 6vw, 44px);
       letter-spacing: 0.5px;
+      line-height: 1.15;
+      font-weight: 800;
     }
     .hero-card p {
-      margin: 0 0 14px;
-      font-size: 15px;
-      line-height: 1.55;
+      margin: 0 0 22px;
+      font-size: 17px;
+      line-height: 1.45;
       opacity: 0.9;
     }
     .hero-card:hover p { opacity: 1; }
-    .hero-card .how {
-      margin: 12px 0 6px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 10px;
-      font-size: 13.5px;
-      line-height: 1.5;
+    .hero-card .flags {
+      font-size: 30px;
+      letter-spacing: 8px;
+      margin: 0 0 22px;
+      line-height: 1;
     }
-    .hero-card:hover .how {
-      background: rgba(0,0,0,0.06);
+    .hero-card .cta {
+      display: inline-block;
+      padding: 14px 32px;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: #ffe600;
+      color: #000;
+      border-radius: 999px;
+      border: 3px solid #000;
     }
-    .hero-card .how ol {
-      margin: 0;
-      padding-left: 22px;
+    .hero-card:hover .cta {
+      background: #000;
+      color: #ffe600;
+      border-color: #ffe600;
     }
-    .hero-card .how li {
-      margin: 3px 0;
-    }
-    .hero-card .filename {
-      display: block;
-      margin-top: 12px;
-      font-size: 12px;
-      font-family: 'SF Mono', Menlo, Consolas, monospace;
-      opacity: 0.55;
-    }
-    .hero-card:hover .filename { opacity: 0.9; }
   </style>
 </head>
 <body>
@@ -192,23 +191,12 @@
     <h1>Language</h1>
     <p class="sub">Vocabulary lessons and games in four languages — or build your own.</p>
 
-    <h2 class="section-heading">Make Your Own Lesson</h2>
-    <p class="section-note">The coolest thing on the page — pick any language pair and write the sentences yourself.</p>
     <a href="lesson-generator.html" class="hero-card">
       <span class="tag">★ Featured</span>
-      <h3>Build Your Own Language Lesson</h3>
-      <p>Pick any two languages (English, Vietnamese, Chinese, Korean, French, Spanish, Hindi, Japanese, Arabic… all the ones the page lists), type the sentences you want to learn, and the page builds you a finished flashcard lesson you can save and reuse.</p>
-      <div class="how">
-        How it works:
-        <ol>
-          <li>Choose the language you’re translating <b>from</b> and the language you’re translating <b>to</b>.</li>
-          <li>Add a lesson title and a few sentences (5 or 6 is a great start).</li>
-          <li>Type each sentence in your language; the page helps you fill in the translation, pronunciation, and a word-by-word breakdown.</li>
-          <li>Optional: paste in a picture URL for each sentence.</li>
-          <li>Click <b>Download HTML page</b> — you get a full flashcard lesson that plays audio and works offline.</li>
-        </ol>
-      </div>
-      <span class="filename">lesson-generator.html</span>
+      <h3>Build Your Own Lesson</h3>
+      <p>Pick two languages, type your sentences, get a flashcard lesson.</p>
+      <div class="flags">🇺🇸 🇻🇳 🇨🇳 🇰🇷 🇫🇷 🇪🇸 🇮🇳 🇯🇵</div>
+      <span class="cta">Start →</span>
     </a>
 
     <h2 class="section-heading">Vocabulary Lessons</h2>

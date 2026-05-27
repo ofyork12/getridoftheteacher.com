@@ -726,12 +726,10 @@
       setTimeout(() => popCell(cellA), 700);
 
       // POP cell B + float the WHITE "nothing" dots up and pop them.
-      // Per user 2026-05-27: same float-up-and-pop motion as the
-      // countdown game now uses.  Every selected dot rises 30% of
-      // play-area height (no horizontal motion -- no chance of
-      // intersecting any survivor), then scales up to 1.4x and fades
-      // out for the pop.  fill:'forwards' holds the popped state
-      // until DOM cleanup fires.
+      // Per user 2026-05-27 (tweak): float longer, pop faster + smaller.
+      //   - duration 1500ms (was 1200)
+      //   - float phase 0..88% (was 0..70%) -- pop window only ~180ms
+      //   - pop scale 1.15x (was 1.4x)
       setTimeout(() => {
         popCell(cellB);
         for (const plan of exitPlans) {
@@ -740,15 +738,15 @@
             { top: plan.startTopPct + '%',
               transform: 'translate(-50%, -50%) scale(1)',
               opacity: 1 },
-            { top: (plan.startTopPct - 30) + '%',
+            { top: (plan.startTopPct - 32) + '%',
               transform: 'translate(-50%, -50%) scale(1)',
               opacity: 1,
-              offset: 0.70 },
-            { top: (plan.startTopPct - 32) + '%',
-              transform: 'translate(-50%, -50%) scale(1.4)',
+              offset: 0.88 },
+            { top: (plan.startTopPct - 33) + '%',
+              transform: 'translate(-50%, -50%) scale(1.15)',
               opacity: 0 },
           ], {
-            duration: 1200,
+            duration: 1500,
             easing:   'ease-out',
             fill:     'forwards',
           });
@@ -764,21 +762,21 @@
         popCell(cellC);
       }, 2400);
 
-      // Dot DOM cleanup: wait until AFTER the 1.2s float-and-pop is
-      // done.  Float started at +1400; 1.2s later = +2600.  Add a
-      // 200ms safety -> +2800.
+      // Dot DOM cleanup: wait until AFTER the 1.5s float-and-pop is
+      // done.  Float started at +1400; 1.5s later = +2900.  Add a
+      // 200ms safety -> +3100.
       setTimeout(() => {
         for (const { dot } of exitPlans) {
           if (dot.parentNode) dot.parentNode.removeChild(dot);
         }
-      }, 2800);
+      }, 3100);
 
       // Auto-advance: hold on the final answer for ~1.6s after
       // cleanup so the kid can read it, then advance.
       setTimeout(() => {
         currentRoundIdx++;
         startRound(currentRoundIdx);
-      }, 4400);
+      }, 4700);
     }
   }
 

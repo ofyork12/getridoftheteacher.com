@@ -636,56 +636,54 @@
     selectedDots.push(el);
     const count = selectedDots.length;
 
+    // PER USER 2026-05-27: "as soon as one of the dots turns white
+    // and starts to ... float away by itself and then the next one
+    // floats away by itself and the next one ... they just float
+    // away by themselves and pop."  Start THIS dot's float-and-pop
+    // immediately on tap -- don't wait for the K-th tap to fire all
+    // of them together.
+    const startLeftPctTap = parseFloat(el.style.left);
+    const startTopPctTap  = parseFloat(el.style.top);
+    el.classList.add('exiting');
+    el.animate([
+      { left: startLeftPctTap + '%',
+        top:  startTopPctTap + '%',
+        transform: 'translate(-50%, -50%) scale(1)',
+        opacity: 1 },
+      { left: startLeftPctTap + '%',
+        top: (startTopPctTap - 32) + '%',
+        transform: 'translate(-50%, -50%) scale(1)',
+        opacity: 1,
+        offset: 0.88 },
+      { left: startLeftPctTap + '%',
+        top: (startTopPctTap - 33) + '%',
+        transform: 'translate(-50%, -50%) scale(1.15)',
+        opacity: 0 },
+    ], {
+      duration: 1500,
+      easing:   'ease-out',
+      fill:     'forwards',
+    });
+    // Remove this dot from the DOM right after its pop completes.
+    setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 1700);
+
     updatePromptAndCount();
 
     if (count >= round.remove) {
       // TARGET REACHED -- choreograph the round-end:
-      //   t = +0      target hit; dots stay white in place
       //   t = +700    audio "N minus K equals M" starts;
       //               POP cell A as "N" is spoken
-      //   t = +1700   "minus K" arriving -> POP cell B + start dots
-      //               sliding off (~1.2s slow slide)
-      //   t = +2700   "equals M" arriving -> POP cell C with the
-      //               answer + remove exited dots + reshape survivors
-      //   t = +4500   advance to next round
+      //   t = +1400   POP cell B  ("K" word)
+      //   t = +2400   POP cell C with answer + reshape survivors
+      //   t = +4700   advance to next round
+      // Dots themselves already started floating on their respective
+      // taps; their per-dot DOM cleanups are scheduled separately.
       roundComplete = true;
       killIdleTimer();
       const remaining = round.start - round.remove;
-
-      // Per user 2026-05-27: roll the WHOLE selected group off the
-      // stage in formation (no dot passing another, no overlap), and
-      // let them "fall to the ground" as they go.  Implemented by
-      // translating every dot by the SAME (dx, dy) delta -- so their
-      // relative spacing is preserved, they stay tangent if they
-      // were tangent, and the visual reads as a tray of balls
-      // rolling off and settling onto the floor.
-      const positions = selectedDots.map(dot => ({
-        dot,
-        leftPct: parseFloat(dot.style.left),    // % of play area
-        topPct:  parseFloat(dot.style.top),
-      }));
-      let avgX = 0;
-      for (const p of positions) avgX += p.leftPct;
-      avgX /= Math.max(1, positions.length);
-      // Modest sideways lean (~15%) so the dot rolls down-and-toward
-      // whichever side it started on -- the previous logic pushed the
-      // dot fully off the SIDE edge, which fought the "roll DOWN off
-      // the bottom" feel the user asked for.  Now the dominant motion
-      // is vertical (dy=60) and dx just adds a little lean.
-      const dx = avgX < 50 ? -15 : 15;
-      // Drop the row down ~60% as it rolls -- per user 2026-05-27:
-      // the leaving dot should roll DOWN toward the floor (not up
-      // into the air) and exit off the BOTTOM edge of the stage, not
-      // just barely below the survivors.  Larger dy makes the motion
-      // visibly downward across the whole slide.
-      const dy = 60;
-      const exitPlans = positions.map(p => ({
-        dot:          p.dot,
-        startLeftPct: p.leftPct,
-        startTopPct:  p.topPct,
-        endLeftPct:   p.leftPct + dx,
-        endTopPct:    p.topPct  + dy,
-      }));
+      const floatingSet = new Set(selectedDots);
 
       // Helper -- pop a cell by toggling .popping (restart-safe).
       function popCell(cellEl) {
@@ -725,54 +723,20 @@
       // POP cell A at audio start (instant "N").
       setTimeout(() => popCell(cellA), 700);
 
-      // POP cell B + float the WHITE "nothing" dots up and pop them.
-      // Per user 2026-05-27 (tweak): float longer, pop faster + smaller.
-      //   - duration 1500ms (was 1200)
-      //   - float phase 0..88% (was 0..70%) -- pop window only ~180ms
-      //   - pop scale 1.15x (was 1.4x)
-      setTimeout(() => {
-        popCell(cellB);
-        for (const plan of exitPlans) {
-          plan.dot.classList.add('exiting');
-          plan.dot.animate([
-            { top: plan.startTopPct + '%',
-              transform: 'translate(-50%, -50%) scale(1)',
-              opacity: 1 },
-            { top: (plan.startTopPct - 32) + '%',
-              transform: 'translate(-50%, -50%) scale(1)',
-              opacity: 1,
-              offset: 0.88 },
-            { top: (plan.startTopPct - 33) + '%',
-              transform: 'translate(-50%, -50%) scale(1.15)',
-              opacity: 0 },
-          ], {
-            duration: 1500,
-            easing:   'ease-out',
-            fill:     'forwards',
-          });
-        }
-      }, 1400);
+      // POP cell B as "K" is spoken.  (Dots are already floating;
+      // they started on their individual taps.)
+      setTimeout(() => popCell(cellB), 1400);
 
       // POP cell C with the ANSWER + reshape survivors when "M" hits.
       setTimeout(() => {
-        const survivorSet = new Set(exitPlans.map(p => p.dot));
-        dots = dots.filter(d => !survivorSet.has(d.el));
+        dots = dots.filter(d => !floatingSet.has(d.el));
         layoutDots(remaining);
         updatePromptAndCount();    // roundComplete=true -> draws final answer
         popCell(cellC);
       }, 2400);
 
-      // Dot DOM cleanup: wait until AFTER the 1.5s float-and-pop is
-      // done.  Float started at +1400; 1.5s later = +2900.  Add a
-      // 200ms safety -> +3100.
-      setTimeout(() => {
-        for (const { dot } of exitPlans) {
-          if (dot.parentNode) dot.parentNode.removeChild(dot);
-        }
-      }, 3100);
-
-      // Auto-advance: hold on the final answer for ~1.6s after
-      // cleanup so the kid can read it, then advance.
+      // Auto-advance: hold on the final answer for ~2.3s after the
+      // answer pops so the kid can read it, then advance.
       setTimeout(() => {
         currentRoundIdx++;
         startRound(currentRoundIdx);

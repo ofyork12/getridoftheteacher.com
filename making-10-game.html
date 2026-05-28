@@ -744,10 +744,14 @@
       _playKey('plus_one');
     } else if (value === 2) {
       _playKey('plus_two');
-    } else {
-      // No single-clip "plus N" for N > 2 yet -- chain "plus" + digit.
-      playPlusNumber(value);
     }
+    // No "plus N" recording for N > 2 -- stay silent for those.  Used
+    // to call playPlusNumber(value) here, but that function was never
+    // defined -- it threw a ReferenceError that killed the rest of
+    // paintDot, including the sum===10 check.  Per user 2026-05-27:
+    // "3+7 and 6+4 don't record as a partition" -- exact same root
+    // cause: any value > 2 stroke crashed paintDot before the win
+    // detection could run.
 
     // Celebrate when the sum reaches 10.
     const sum = strokes.reduce((s, x) => s + x.value, 0);

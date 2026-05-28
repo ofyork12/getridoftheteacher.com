@@ -929,14 +929,24 @@
 
   <div class="game-navigation">
     <a href="index.html" class="game-nav-button">← Go Back</a>
-    <a href="bigger-smaller.html" class="game-nav-button active">Bigger/Smaller</a>
-    <a href="squares.html" class="game-nav-button">Squares</a>
-    <a href="squares-opposite.html" class="game-nav-button">Squares Opposite</a>
-    <a href="squares - game.html" class="game-nav-button">Squares Game</a>
-    <a href="squares game2.html" class="game-nav-button">Squares Game 2</a>
-    <a href="Game3.HTML" class="game-nav-button">Squares Game 3</a>
-    <button onclick="downloadPDF()" class="game-nav-button" style="cursor: pointer; border: none; background: transparent; color: #fff; font-size: inherit; font-family: inherit;">📥 Download PDF</button>
   </div>
+  <div class="game-area" id="gameArea">
+    <div class="game-question" id="gameQuestion">Which one is bigger?</div>
+    <div class="game-score" id="gameScore">
+      <span>Score: </span>
+      <span class="game-score-number" id="scoreCorrect"></span>
+      <span> / </span>
+      <span class="game-score-number" id="scoreTotal"></span>
+    </div>
+    <div class="game-questions-group" id="gameQuestionsGroup">
+      <!-- 5 questions will be inserted here -->
+    </div>
+    <div class="game-group-complete" id="groupComplete">Great! 🎉</div>
+    <div class="game-controls">
+      <button id="backToPractice">← Back to Practice</button>
+    </div>
+  </div>
+
   <button class="game-mode-toggle" id="gameToggle">🎮 Play Game</button>
 
   <div class="instructions" id="instructions">
@@ -975,23 +985,6 @@
       <p><strong>कौन सा बड़ा है?</strong></p>
       <p>दो समूहों के बिंदुओं को देखें। जिस समूह में अधिक बिंदु हैं, उस पर क्लिक करें!</p>
       <p>जब आप सही होंगे, तो आपको उत्तर के चारों ओर एक हरा वृत्त दिखाई देगा।</p>
-    </div>
-  </div>
-
-  <div class="game-area" id="gameArea">
-    <div class="game-question" id="gameQuestion">Which one is bigger?</div>
-    <div class="game-score" id="gameScore">
-      <span>Score: </span>
-      <span class="game-score-number" id="scoreCorrect"></span>
-      <span> / </span>
-      <span class="game-score-number" id="scoreTotal"></span>
-    </div>
-    <div class="game-questions-group" id="gameQuestionsGroup">
-      <!-- 5 questions will be inserted here -->
-    </div>
-    <div class="game-group-complete" id="groupComplete">Great! 🎉</div>
-    <div class="game-controls">
-      <button id="backToPractice">← Back to Practice</button>
     </div>
   </div>
 

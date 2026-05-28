@@ -2626,36 +2626,6 @@
       setTimeout(play, 100);
     };
     document.body.appendChild(startBtn);
-    // ===== Preview seek controls — placed OUTSIDE .stage so they never
-    // appear in the rendered MP4 (the renderer crops to the .stage rect). =====
-    (function buildSeekBar(){
-      const bar = document.createElement('div');
-      bar.id = 'seekBar';
-      bar.style.cssText = 'position:fixed;top:6px;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:0 10px;z-index:1100;pointer-events:none;font-family:Nunito,sans-serif;';
-      function group(items){
-        const g = document.createElement('div');
-        g.style.cssText = 'display:flex;gap:6px;pointer-events:auto;';
-        items.forEach(function(it){
-          const b = document.createElement('button');
-          b.textContent = it[0];
-          b.style.cssText = 'pointer-events:auto;cursor:pointer;border:none;border-radius:14px;padding:7px 12px;font-size:14px;font-weight:700;color:#fff;background:rgba(30,30,40,0.78);box-shadow:0 2px 6px rgba(0,0,0,0.3);';
-          b.onmouseenter = function(){ b.style.background = 'rgba(60,60,85,0.95)'; };
-          b.onmouseleave = function(){ b.style.background = 'rgba(30,30,40,0.78)'; };
-          b.onclick = function(ev){ ev.stopPropagation(); it[1](); };
-          g.appendChild(b);
-        });
-        return g;
-      }
-      const left = group([['« 20','b20'],['« 10','b10'],['« 5','b5']].map(function(x){
-        const s = {b20:20,b10:10,b5:5}[x[1]]; return [x[0], function(){ skipBackward(s); }];
-      }));
-      const right = group([['5 »',5],['10 »',10],['20 »',20]].map(function(x){
-        return [x[0], function(){ skipForward(x[1]); }];
-      }));
-      bar.appendChild(left);
-      bar.appendChild(right);
-      document.body.appendChild(bar);
-    })();
   });
 </script>
 </body>

@@ -423,12 +423,11 @@
     await sleep(2500);
   }
 
-  // Invisible full-screen tap target — first tap starts playback.
-  const startBtn = document.createElement('button');
-  startBtn.className = 'start-overlay';
-  startBtn.textContent = 'Start with sound';
-  startBtn.onclick = () => { startBtn.remove(); play(); };
-  document.body.appendChild(startBtn);
+  // Start-with-sound button removed per user 2026-05-27 -- auto-play
+  // straight away.  Browsers that block audio autoplay will still
+  // render the animation; iframe-embedded usage with a parent-page
+  // user gesture gets full audio.
+  play();
 
   // --- Number-line cells (coloured quantity above black digit) -------
   (function buildNumberLine() {

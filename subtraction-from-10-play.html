@@ -1438,15 +1438,9 @@
   window.addEventListener('load', () => {
     buildNumberLine();
     setInitialStairs();
-    const startBtn = document.createElement('button');
-    startBtn.textContent = '▶ Start with sound';
-    startBtn.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 40px;font-size:24px;background:#fcbf49;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer;box-shadow:0 6px 0 #c89432;z-index:1000;';
-    startBtn.onclick = () => {
-      startBtn.remove();
-      unlockAllAudio();
-      setTimeout(play, 100);
-    };
-    document.body.appendChild(startBtn);
+    // Start-with-sound button removed per user 2026-05-27 -- auto-play.
+    unlockAllAudio();
+    setTimeout(play, 100);
   });
 </script>
 </body>

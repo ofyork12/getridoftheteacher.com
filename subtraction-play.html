@@ -941,23 +941,16 @@
   window.addEventListener('load', () => {
     buildNumberLine();
     setInitialStairs();
-    const startBtn = document.createElement('button');
-    startBtn.textContent = '▶ Start with sound';
-    startBtn.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px 40px;font-size:24px;background:#fcbf49;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-weight:700;cursor:pointer;box-shadow:0 6px 0 #c89432;z-index:1000;';
-    startBtn.onclick = () => {
-      startBtn.remove();
-      // Prime ALL audios silently so they can play later when triggered by code
-      ['audio_one', 'audio_1plus1', 'audio_2plus1', 'audio_3plus1', 'audio_4plus1'].forEach(id => {
-        const a = document.getElementById(id);
-        if (a) {
-          a.muted = true;
-          a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => { a.muted = false; });
-        }
-      });
-      // Start animation
-      setTimeout(play, 100);
-    };
-    document.body.appendChild(startBtn);
+    // Start-with-sound button removed per user 2026-05-27.
+    // Prime audios silently in case autoplay is allowed, then play.
+    ['audio_one', 'audio_1plus1', 'audio_2plus1', 'audio_3plus1', 'audio_4plus1'].forEach(id => {
+      const a = document.getElementById(id);
+      if (a) {
+        a.muted = true;
+        a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => { a.muted = false; });
+      }
+    });
+    setTimeout(play, 100);
   });
 </script>
 

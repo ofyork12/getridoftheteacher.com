@@ -476,49 +476,41 @@
     slot.addEventListener('click', () => setActivePaint(slot));
   });
 
-  // --- Dot painting --------------------------------------------------
-  // Tap a dot with the brush loaded -> paint that dot.  (Future: blue
-  // paint (5) will fill 5 dots per tap, etc.  For v1 we just paint
-  // one dot per tap, regardless of brush value.)
-  //
-  // Audio: when a white dot becomes painted (value > 0) we speak the
-  // running narration so the user hears "one ... plus one ... plus
-  // one ..." as they build their partition, then "equals ten" the
-  // moment the sum reaches 10.  Erasing a coloured dot (value == 0
-  // when the previous value was > 0) plays "minus one" -- sliced
-  // out of the audio_1minus1 clip in subtraction-from-10-play.html.
+  // --- Dot counting --------------------------------------------------
+  // Lesson 1 is a COUNT-UP (user 2026-05-29): tapping dots counts them
+  // 1 -> 5.  Every counted dot is recoloured to that number's colour
+  // (1 red, 2 orange, 3 yellow, 4 green, 5 blue -- the same colours the
+  // number line below uses), and the voice simply says the running
+  // count ("one" ... "five").  White paint erases and counts back down.
+  const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
+  function _recolourCount() {
+    const counted = dots.filter(d => d.value > 0);
+    const n = counted.length;
+    const c = COUNT_COLORS[n];
+    if (n > 0 && c) counted.forEach(d => { d.color = c; d.el.setAttribute('fill', c); });
+    return n;
+  }
   function paintDot(d, color, value) {
-    const previousValue = d.value;
-    const wasEmpty = previousValue === 0;
-    d.el.setAttribute('fill', color);
-    d.color = color;
-    d.value = value;
-    updateEquation();
-
+    const wasEmpty = d.value === 0;
     if (value > 0 && wasEmpty) {
-      // Painting a previously-empty dot -- narrate the RUNNING SUM.
-      //   1st dot: "one"
-      //   2nd dot: "one plus one equals two"
-      //   3rd dot: "two plus one equals three"
-      //   ...etc up to 5.
-      const newSum = dots.reduce((a, b) => a + b.value, 0);
-      const prevSum = newSum - 1;
-      if (newSum === 1) {
-        _cancelNarration();
-        _playKey('1');
-      } else {
-        _playChain([String(prevSum), 'plus', '1', 'equals', String(newSum)]);
-      }
-      if (newSum === 5) {
-        // PERFECT! pops; no special "equals five" clip needed because
-        // the running narration just said "four plus one equals five".
-        showPerfectBanner();
-      }
-      if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
-    } else if (value === 0 && previousValue > 0) {
-      // Erasing a coloured dot back to white.
+      // Count this dot in, recolour the whole group, say the new count.
+      d.value = 1;
+      const n = _recolourCount();
+      updateEquation();
       _cancelNarration();
-      _playKey('minus_one');
+      _playKey(String(n));
+      if (n === 5) showPerfectBanner();
+      if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
+    } else if (value === 0 && d.value > 0) {
+      // Erase with white paint: count back down.
+      d.value = 0;
+      d.color = '#ffffff';
+      d.el.setAttribute('fill', '#ffffff');
+      hidePerfectBanner();
+      const n = _recolourCount();
+      updateEquation();
+      _cancelNarration();
+      if (n > 0) _playKey(String(n));
       if (typeof window.bumpScoreForErase === 'function') window.bumpScoreForErase();
     }
   }
@@ -534,17 +526,11 @@
   // orange=2, ..., cyan=9; white=0).  Equation reads like
   // "1 + 1 + 5 = 7" -- every digit stays black; the "equals ten"
   // audio + the filled dots carry the celebration when the sum hits 10.
+  // Counting display: just the running count (1..5), the same number
+  // the voice says, big and black.
   function updateEquation() {
-    const painted = dots
-      .filter(d => d.value > 0)
-      .map(d => d.value);
-    if (painted.length === 0) { eqEl.innerHTML = ''; return; }
-    const sum = painted.reduce((a, b) => a + b, 0);
-    const lhs = painted.map(v => '<span class="num">' + v + '</span>').join(' + ');
-    // All digits stay BLACK -- the sum doesn't flash green at 10; the
-    // "equals ten" audio + the dots themselves carry that signal.
-    const rhs = '<span class="num">' + sum + '</span>';
-    eqEl.innerHTML = lhs + ' = ' + rhs;
+    const n = dots.filter(d => d.value > 0).length;
+    eqEl.innerHTML = n === 0 ? '' : '<span class="num">' + n + '</span>';
   }
 
   // --- Reset button --------------------------------------------------

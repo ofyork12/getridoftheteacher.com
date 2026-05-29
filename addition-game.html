@@ -374,19 +374,41 @@
   // overlap.  Returns the timeout list so a fresh narration can cancel
   // the leftover chain via _cancelNarration().
   let _narrationTimeouts = [];
+  let _chainToken = 0;
   function _cancelNarration() {
+    _chainToken++;                 // invalidate any in-flight chain
     for (const t of _narrationTimeouts) clearTimeout(t);
     _narrationTimeouts = [];
     _stopAllSpeech();
   }
+  // Play clips one after another, starting the next only when the current
+  // one has actually finished (plus a short gap).  A fixed-delay schedule
+  // overlapped clips whenever one ran longer than the gap ("plus"/"equals"
+  // stepping on the next word); waiting for 'ended' keeps them clean.
   function _playChain(keys, gapMs) {
     _cancelNarration();
-    const gap = gapMs || 470;
-    let delay = 0;
-    for (const k of keys) {
-      _narrationTimeouts.push(setTimeout(() => _playKey(k), delay));
-      delay += gap;
-    }
+    const gap = (gapMs != null) ? gapMs : 140;
+    const myToken = _chainToken;
+    let i = 0;
+    const playNext = () => {
+      if (myToken !== _chainToken || i >= keys.length) return;
+      const p = players[keys[i++]];
+      if (!p) { playNext(); return; }
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        p.removeEventListener('ended', advance);
+        if (myToken === _chainToken) _narrationTimeouts.push(setTimeout(playNext, gap));
+      };
+      p.addEventListener('ended', advance);
+      try { p.currentTime = 0; } catch (e) {}
+      p.play().catch(advance);
+      // Safety net: advance even if 'ended' never fires.
+      const dur = (isFinite(p.duration) && p.duration > 0) ? p.duration * 1000 : 1200;
+      _narrationTimeouts.push(setTimeout(advance, dur + 700));
+    };
+    playNext();
   }
   // === end embedded audio ===
 

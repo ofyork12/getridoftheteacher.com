@@ -453,7 +453,7 @@
 
     .game-question-row {
       display: flex;
-      gap: clamp(20px, 5vw, 50px);
+      gap: clamp(10px, 4vw, 50px);
       justify-content: center;
       align-items: flex-end; /* All numbers align on same baseline */
       flex-wrap: nowrap;
@@ -471,10 +471,10 @@
     }
 
     .game-comparison-symbol {
-      width: clamp(110px, 18vw, 200px);
-      min-width: clamp(110px, 18vw, 200px);
-      max-width: clamp(110px, 18vw, 200px);
-      height: clamp(132px, 22vw, 240px);
+      width: clamp(54px, 13vw, 200px);
+      min-width: clamp(54px, 13vw, 200px);
+      max-width: clamp(54px, 13vw, 200px);
+      height: clamp(66px, 16vw, 240px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -614,7 +614,7 @@
       cursor: pointer;
       transition: none !important;
       transform: none !important;
-      --game-circle-size: clamp(36px, 7vw, 80px);
+      --game-circle-size: clamp(20px, 7vw, 80px);
       --game-circle-border: clamp(1px, 0.25vw, 2.5px);
       --game-circle-total: calc(var(--game-circle-size) + var(--game-circle-border) * 2);
       --game-triangle-rise: calc(var(--game-circle-total) * 0.8660254);

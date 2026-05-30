@@ -573,7 +573,18 @@
       hidePerfectBanner();
       refreshDots();
       _cancelNarration();
-      if (count > 0) _playKey(String(count));
+      if (count > 0) {
+        _playKey(String(count));
+      } else if (players['0']) {
+        // If a recorded "0" clip gets added later, use it automatically.
+        _playKey('0');
+      } else if ("speechSynthesis" in window) {
+        // No recorded "zero" clip yet -- speak it via the browser voice.
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        const u = new SpeechSynthesisUtterance("zero");
+        u.rate = 0.95;
+        window.speechSynthesis.speak(u);
+      }
       if (typeof window.bumpScoreForErase === 'function') window.bumpScoreForErase();
     }
     // else: dot is hidden / not yet revealed -- no-op
@@ -584,9 +595,11 @@
   refreshDots();                  // initial state: only dot[0] visible, white
 
   // Big centre count -- the same number the voice says, shown huge above
-  // the dots so the child can read it as they count up.
+  // the dots so the child can read it as they count up.  Always shows the
+  // current count, including 0 (so "0" is visible after the child counts
+  // all the way back down).
   function updateEquation() {
-    eqEl.innerHTML = count === 0 ? '' : '<span class="num">' + count + '</span>';
+    eqEl.innerHTML = '<span class="num">' + count + '</span>';
   }
 
   // --- Reset button --------------------------------------------------

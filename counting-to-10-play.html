@@ -1036,9 +1036,7 @@
     highlightCell(1);
     const d1 = dotsById['d1'];
     const contactX = d1.cx - d;
-    // Incoming dot is always red (it's "+1"); the cluster recolours to the
-    // new count's colour only after they touch.  Same below for every scene.
-    const newDot = await rollDotInToStopX('d2', contactX, 'red');
+    const newDot = await rollDotInToStopX('d2', contactX, NUMBER_COLOR[2]);
 
     // Small nudge: 4 units each (matches the original addition HTML).
     const NUDGE = 4;
@@ -1071,7 +1069,7 @@
     const clusterLeftX = Math.min(d1.cx, d2.cx);
 
     // Use the original "bounce down stairs onto top of cluster" routine.
-    await bounceDownStairsToTop('d3', apexX, apexY, clusterLeftX, 'red');
+    await bounceDownStairsToTop('d3', apexX, apexY, clusterLeftX, NUMBER_COLOR[3]);
 
     const d3 = dotsById['d3'];
     recolorAll([d1.el, d2.el, d3.el], NUMBER_COLOR[3]);
@@ -1111,7 +1109,7 @@
 
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot4 = addDot('d4', startX, startY, 'red');
+    const dot4 = addDot('d4', startX, startY, NUMBER_COLOR[4]);
     await sleep(150);
     const angleRef = dot4.angleRef;
 
@@ -1208,7 +1206,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const d5 = addDot('d5', startX, startY, 'red');
+    const d5 = addDot('d5', startX, startY, NUMBER_COLOR[5]);
     await sleep(150);
     const angleRef = d5.angleRef;
 
@@ -1335,7 +1333,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot = addDot('d6', startX, startY, 'red');
+    const dot = addDot('d6', startX, startY, NUMBER_COLOR[6]);
     await sleep(150);
     const angleRef = dot.angleRef;
 
@@ -1412,7 +1410,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d7', startX, startY, 'red');
+    const newDot = addDot('d7', startX, startY, NUMBER_COLOR[7]);
     await sleep(150);
     const d7AngleRef = newDot.angleRef;
 
@@ -1510,7 +1508,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d8', startX, startY, 'red');
+    const newDot = addDot('d8', startX, startY, NUMBER_COLOR[8]);
     await sleep(150);
     const d8AngleRef = newDot.angleRef;
 
@@ -1630,7 +1628,7 @@
 
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot9 = addDot('d9', startX, startY, 'red');
+    const dot9 = addDot('d9', startX, startY, NUMBER_COLOR[9]);
     await sleep(150);
     const angleRef = dot9.angleRef;
 
@@ -1737,7 +1735,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d10', startX, startY, 'red');
+    const newDot = addDot('d10', startX, startY, NUMBER_COLOR[10]);
     await sleep(150);
     const d10AngleRef = newDot.angleRef;
 

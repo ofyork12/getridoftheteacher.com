@@ -264,17 +264,14 @@
     background: transparent !important;
     border-color: #000 !important;
   }
-  /* Idle prompt: after 5s of no taps, the next white dot pulses (grows and
-     shrinks) to invite a tap.  Five more seconds and it auto-fills. */
-  .next-pulse {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: dotIdlePulse 0.9s ease-in-out infinite;
+  /* Soft "wait" emphasis on the next dot to tap -- a gentle breathing
+     stroke borrowed verbatim from counting-to-10-game.html so every game
+     feels the same.  Stroke gently grows and brightens over 3.6s. */
+  @keyframes dotGlowBlack {
+    0%, 100% { stroke-width: 1.0; stroke-opacity: 0.55; }
+    50%      { stroke-width: 2.6; stroke-opacity: 1.0;  }
   }
-  @keyframes dotIdlePulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.22); }
-  }
+  .wait-dot { stroke: #000; animation: dotGlowBlack 3.6s ease-in-out infinite; }
 </style>
 </head>
 <body>
@@ -504,16 +501,17 @@
   const colored = new Set();        // dot indices currently coloured
   let count = 0;                    // kept in sync with colored.size below
 
-  const IDLE_PULSE_MS = 5000;
-  const IDLE_FILL_MS  = 5000;
-  let _pulseTimer = null, _fillTimer = null;
+  // The next-to-tap dot wears the soft "wait-dot" breathing stroke
+  // IMMEDIATELY (the same one counting-to-10-game.html uses for dots 2-10).
+  // After IDLE_FILL_MS with no tap, the auto-fill simulates a tap.
+  const IDLE_FILL_MS = 10000;
+  let _fillTimer = null;
   function cancelIdleTimers() {
-    if (_pulseTimer) { clearTimeout(_pulseTimer); _pulseTimer = null; }
-    if (_fillTimer)  { clearTimeout(_fillTimer);  _fillTimer  = null; }
-    dots.forEach(d => d.el.classList.remove('next-pulse'));
+    if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
+    dots.forEach(d => d.el.classList.remove('wait-dot'));
   }
   // First still-uncoloured slot in the predefined slot-array order -- this
-  // is who auto-advance picks to pulse/fill next.
+  // is the one we softly emphasise and the one auto-fill picks next.
   function _nextInOrder() {
     for (let i = 0; i < dots.length; i++) {
       if (!colored.has(i)) return i;
@@ -523,16 +521,13 @@
   function startIdleTimers() {
     cancelIdleTimers();
     if (colored.size >= dots.length) return;
-    _pulseTimer = setTimeout(() => {
-      _pulseTimer = null;
-      const nextI = _nextInOrder();
-      if (nextI < 0) return;
-      dots[nextI].el.classList.add('next-pulse');
-      _fillTimer = setTimeout(() => {
-        _fillTimer = null;
-        handleDotTap(nextI);
-      }, IDLE_FILL_MS);
-    }, IDLE_PULSE_MS);
+    const nextI = _nextInOrder();
+    if (nextI < 0) return;
+    dots[nextI].el.classList.add('wait-dot');         // soft breathing stroke, right away
+    _fillTimer = setTimeout(() => {
+      _fillTimer = null;
+      handleDotTap(nextI);
+    }, IDLE_FILL_MS);
   }
 
   function refreshDots() {

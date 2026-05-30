@@ -286,7 +286,8 @@
     magenta: '#C814FF',   // 6
     brown:   '#B06A1F',   // 7
     pink:    '#FF3DD1',   // 8
-    cyan:    '#1AFFFF'    // 9
+    cyan:    '#1AFFFF',   // 9
+    white:   '#FFFFFF'    // empty / incoming-dot placeholder
   };
 
   // Map each number to its color (final color of the cluster after that step)
@@ -1160,7 +1161,10 @@
     highlightCell(1);
     const d1 = dotsById['d1'];
     const contactX = d1.cx - d;
-    const newDot = await rollDotInToStopX('d2', contactX, NUMBER_COLOR[2]);
+    // Incoming dots arrive EMPTY (white) so the kid can see they're the
+    // one to click; the cluster recolours to the new count's colour after
+    // they click.  Same below for every scene.
+    const newDot = await rollDotInToStopX('d2', contactX, 'white');
 
     // Small nudge: 4 units each (matches the original addition HTML).
     const NUDGE = 4;
@@ -1193,7 +1197,7 @@
     const clusterLeftX = Math.min(d1.cx, d2.cx);
 
     // Use the original "bounce down stairs onto top of cluster" routine.
-    await bounceDownStairsToTop('d3', apexX, apexY, clusterLeftX, NUMBER_COLOR[3]);
+    await bounceDownStairsToTop('d3', apexX, apexY, clusterLeftX, 'white');
 
     const d3 = dotsById['d3'];
     recolorAll([d1.el, d2.el, d3.el], NUMBER_COLOR[3]);
@@ -1233,7 +1237,7 @@
 
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot4 = addDot('d4', startX, startY, NUMBER_COLOR[4]);
+    const dot4 = addDot('d4', startX, startY, 'white');
     dot4.el.setAttribute('fill', '#ffffff');
     dot4.el.setAttribute('stroke', '#000');
     dot4.el.setAttribute('stroke-width', '1.5');
@@ -1335,7 +1339,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const d5 = addDot('d5', startX, startY, NUMBER_COLOR[5]);
+    const d5 = addDot('d5', startX, startY, 'white');
     d5.el.setAttribute('fill', '#ffffff');
     d5.el.setAttribute('stroke', '#000');
     d5.el.setAttribute('stroke-width', '1.5');
@@ -1467,7 +1471,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot = addDot('d6', startX, startY, NUMBER_COLOR[6]);
+    const dot = addDot('d6', startX, startY, 'white');
     dot.el.setAttribute('fill', '#ffffff');
     dot.el.setAttribute('stroke', '#000');
     dot.el.setAttribute('stroke-width', '1.5');
@@ -1549,7 +1553,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d7', startX, startY, NUMBER_COLOR[7]);
+    const newDot = addDot('d7', startX, startY, 'white');
     newDot.el.setAttribute('fill', '#ffffff');
     newDot.el.setAttribute('stroke', '#000');
     newDot.el.setAttribute('stroke-width', '1.5');
@@ -1652,7 +1656,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d8', startX, startY, NUMBER_COLOR[8]);
+    const newDot = addDot('d8', startX, startY, 'white');
     newDot.el.setAttribute('fill', '#ffffff');
     newDot.el.setAttribute('stroke', '#000');
     newDot.el.setAttribute('stroke-width', '1.5');
@@ -1777,7 +1781,7 @@
 
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const dot9 = addDot('d9', startX, startY, NUMBER_COLOR[9]);
+    const dot9 = addDot('d9', startX, startY, 'white');
     dot9.el.setAttribute('fill', '#ffffff');
     dot9.el.setAttribute('stroke', '#000');
     dot9.el.setAttribute('stroke-width', '1.5');
@@ -1889,7 +1893,7 @@
     const landings = stairLandings();
     const startX = -200;
     const startY = STAIR_TOP_Y - DOT_R - 1.25;
-    const newDot = addDot('d10', startX, startY, NUMBER_COLOR[10]);
+    const newDot = addDot('d10', startX, startY, 'white');
     newDot.el.setAttribute('fill', '#ffffff');
     newDot.el.setAttribute('stroke', '#000');
     newDot.el.setAttribute('stroke-width', '1.5');

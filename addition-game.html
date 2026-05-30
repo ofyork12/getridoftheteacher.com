@@ -506,8 +506,10 @@
   // The VERY FIRST dot hops (gentle bounce, like counting-to-10's dot 1).
   // Dots 2-5 use the soft "wait-dot" breathing stroke instead.  After
   // IDLE_FILL_MS with no tap the auto-fill simulates a tap.
-  const IDLE_FILL_MS = 10000;
+  const EMPHASIS_DELAY_MS = 5000;       // dot stays plain for 5s before emphasis
+  const IDLE_FILL_MS      = 10000;      // total time before auto-fill
   let _fillTimer = null;
+  let _emphasisTimer = null;
   let _hopStop = null;
   // Physics-based hop borrowed verbatim from counting-to-10-game.html so the
   // first dot bounces with the same feel.  Returns a stop function.
@@ -550,6 +552,7 @@
   }
   function cancelIdleTimers() {
     if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
+    if (_emphasisTimer) { clearTimeout(_emphasisTimer); _emphasisTimer = null; }
   }
   function _nextInOrder() {
     for (let i = 0; i < dots.length; i++) {
@@ -562,6 +565,20 @@
     if (colored.size >= dots.length) return;
     const nextI = _nextInOrder();
     if (nextI < 0) return;
+    // Phase 1: dot stays plain for EMPHASIS_DELAY_MS so the kid has time
+    // to think.  Then the emphasis kicks in -- hop for d1, wait-dot for d2-5.
+    const wasFirstDot = (count === 0);
+    _emphasisTimer = setTimeout(() => {
+      _emphasisTimer = null;
+      const el = dots[nextI] && dots[nextI].el;
+      if (!el) return;
+      if (wasFirstDot) {
+        _hopStop = startHopping(el);
+      } else {
+        el.classList.add('wait-dot');
+      }
+    }, EMPHASIS_DELAY_MS);
+    // Phase 2: auto-fill at IDLE_FILL_MS total if still no tap.
     _fillTimer = setTimeout(() => {
       _fillTimer = null;
       handleDotTap(nextI);
@@ -585,18 +602,15 @@
         dots[i].color = groupColour;
         dots[i].value = 1;
       } else if (i === nextI) {
-        // next still-uncoloured dot -- white, ready to tap
+        // next still-uncoloured dot -- white, ready to tap.  No emphasis
+        // yet; startIdleTimers adds the hop / wait-dot after a 5s pause so
+        // the kid gets a chance to figure it out on their own first.
         el.setAttribute('fill', '#ffffff');
         el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
         el.style.cursor = 'pointer';
         dots[i].color = '#ffffff';
         dots[i].value = 0;
-        if (count === 0) {
-          _hopStop = startHopping(el);             // d1 hops
-        } else {
-          el.classList.add('wait-dot');             // d2..d5 use wait-dot
-        }
       } else {
         // future dot -- hidden until its turn
         el.setAttribute('fill', '#ffffff');

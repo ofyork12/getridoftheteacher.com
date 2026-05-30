@@ -264,6 +264,17 @@
     background: transparent !important;
     border-color: #000 !important;
   }
+  /* Idle prompt: after 5s of no taps, the next white dot pulses (grows and
+     shrinks) to invite a tap.  Five more seconds and it auto-fills. */
+  .next-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: dotIdlePulse 0.9s ease-in-out infinite;
+  }
+  @keyframes dotIdlePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.22); }
+  }
 </style>
 </head>
 <body>
@@ -486,6 +497,32 @@
   // Tapping any already-coloured dot counts the group back down by one.
   const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
   let count = 0;
+
+  // Idle prompt: if the child doesn't tap, the next dot starts pulsing after
+  // 5s and auto-fills 5s after that, until count reaches 5.  Any tap resets
+  // the timers.
+  const IDLE_PULSE_MS = 5000;
+  const IDLE_FILL_MS  = 5000;
+  let _pulseTimer = null, _fillTimer = null;
+  function cancelIdleTimers() {
+    if (_pulseTimer) { clearTimeout(_pulseTimer); _pulseTimer = null; }
+    if (_fillTimer)  { clearTimeout(_fillTimer);  _fillTimer  = null; }
+    dots.forEach(d => d.el.classList.remove('next-pulse'));
+  }
+  function startIdleTimers() {
+    cancelIdleTimers();
+    if (count >= dots.length) return;          // already at 5, nothing to advance
+    _pulseTimer = setTimeout(() => {
+      _pulseTimer = null;
+      const nextEl = dots[count] && dots[count].el;
+      if (nextEl) nextEl.classList.add('next-pulse');
+      _fillTimer = setTimeout(() => {
+        _fillTimer = null;
+        handleDotTap(count);                   // auto-fill the next dot
+      }, IDLE_FILL_MS);
+    }, IDLE_PULSE_MS);
+  }
+
   function refreshDots() {
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
@@ -519,6 +556,7 @@
       }
     }
     updateEquation();
+    startIdleTimers();                          // (re)arm the auto-advance
   }
   function handleDotTap(i) {
     if (i === count && count < dots.length) {

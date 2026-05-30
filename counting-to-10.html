@@ -81,5 +81,13 @@
         allowfullscreen></iframe>
     </div>
   </div>
+  <script>
+    // Auto-scroll straight to the Game on load -- the user doesn't want to
+    // scroll past the title/nav to reach the game every time.
+    window.addEventListener('DOMContentLoaded', () => {
+      const gameFrame = document.querySelector('.interactive-frame');
+      if (gameFrame) gameFrame.scrollIntoView({ block: 'start' });
+    });
+  </script>
 </body>
 </html>

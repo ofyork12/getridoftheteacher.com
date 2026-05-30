@@ -668,7 +668,8 @@
       refreshDots();
       _cancelNarration();
       if (isPair) {
-        _playChain(['plus', '2']);            // "plus two" on each Round 2 pair tap
+        // Round 2 pair tap: "plus two equals THREE" or "plus two equals FIVE"
+        _playChain(['plus', '2', 'equals', String(colored.size)]);
       } else {
         _playKey(String(colored.size));       // "one"
       }

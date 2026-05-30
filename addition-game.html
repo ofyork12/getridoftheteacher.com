@@ -84,7 +84,7 @@
   /* Big centre count -- the same number the voice says, displayed huge above
      the dots so the child can see and read it as they count up. */
   .equation {
-    position: absolute; top: 9%; left: 4%; right: 4%;
+    position: absolute; top: 13%; left: 4%; right: 4%;
     text-align: center;
     font-size: clamp(64px, 12vh, 140px);
     font-weight: 900;
@@ -427,12 +427,14 @@
   const yBot = 175;
 
   // Reading order: top-left, top-right, then bottom left-to-right.
+  // Reveal order (user 2026-05-29): bottom row fills first, centre out --
+  // bottom-centre, then bottom-left, then bottom-right, then the top row.
   const slots = [
-    { x: cx - DOT_R, y: yBot - H },     // 0: top left
-    { x: cx + DOT_R, y: yBot - H },     // 1: top right
-    { x: cx - D,     y: yBot },         // 2: bottom left
-    { x: cx,         y: yBot },         // 3: bottom middle
-    { x: cx + D,     y: yBot },         // 4: bottom right
+    { x: cx,         y: yBot },         // 0: bottom middle  (reveal 1st)
+    { x: cx - D,     y: yBot },         // 1: bottom left    (reveal 2nd)
+    { x: cx + D,     y: yBot },         // 2: bottom right   (reveal 3rd)
+    { x: cx - DOT_R, y: yBot - H },     // 3: top left       (reveal 4th)
+    { x: cx + DOT_R, y: yBot - H },     // 4: top right      (reveal 5th)
   ];
 
   // No outline behind the 5-shape -- the dots themselves carry the
@@ -505,8 +507,11 @@
         dots[i].color = '#ffffff';
         dots[i].value = 0;
       } else {
-        // not yet revealed
-        el.style.opacity = '0';
+        // not yet revealed -- show the position as a faint placeholder so the
+        // child can see where the upcoming dots will land, but it doesn't
+        // respond to taps until it's the child's turn.
+        el.setAttribute('fill', '#ffffff');
+        el.style.opacity = '0.22';
         el.style.pointerEvents = 'none';
         el.style.cursor = 'default';
         dots[i].color = '#ffffff';

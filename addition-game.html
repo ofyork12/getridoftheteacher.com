@@ -501,17 +501,56 @@
   const colored = new Set();        // dot indices currently coloured
   let count = 0;                    // kept in sync with colored.size below
 
-  // The next-to-tap dot wears the soft "wait-dot" breathing stroke
-  // IMMEDIATELY (the same one counting-to-10-game.html uses for dots 2-10).
-  // After IDLE_FILL_MS with no tap, the auto-fill simulates a tap.
+  // Match counting-to-10-game.html's pattern (user 2026-05-30): only the
+  // next white dot is visible; future dots are hidden until their turn.
+  // The VERY FIRST dot hops (gentle bounce, like counting-to-10's dot 1).
+  // Dots 2-5 use the soft "wait-dot" breathing stroke instead.  After
+  // IDLE_FILL_MS with no tap the auto-fill simulates a tap.
   const IDLE_FILL_MS = 10000;
   let _fillTimer = null;
+  let _hopStop = null;
+  // Physics-based hop borrowed verbatim from counting-to-10-game.html so the
+  // first dot bounces with the same feel.  Returns a stop function.
+  function startHopping(el) {
+    const restCy = parseFloat(el.getAttribute('cy'));
+    const gravity = 0.4;
+    const initVelocity = -5.5;
+    const velocityRetain = 0.7;
+    const maxImpacts = 3;
+    const pauseFrames = 55;
+    let running = true;
+    let velocityY = initVelocity, offsetY = 0;
+    let impactCount = 0, pauseCount = 0, inPause = false;
+    function step() {
+      if (!running) return;
+      if (!inPause) {
+        velocityY += gravity;
+        offsetY += velocityY;
+        if (offsetY >= 0) {
+          offsetY = 0;
+          impactCount++;
+          if (impactCount >= maxImpacts) { velocityY = 0; inPause = true; pauseCount = 0; }
+          else { velocityY = -velocityY * velocityRetain; }
+        }
+      } else {
+        pauseCount++;
+        if (pauseCount >= pauseFrames) {
+          inPause = false; impactCount = 0;
+          velocityY = initVelocity; offsetY = 0;
+        }
+      }
+      el.setAttribute('cy', restCy + offsetY);
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    return () => { running = false; el.setAttribute('cy', restCy); };
+  }
+  function stopHopping() {
+    if (_hopStop) { _hopStop(); _hopStop = null; }
+  }
   function cancelIdleTimers() {
     if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
-    dots.forEach(d => d.el.classList.remove('wait-dot'));
   }
-  // First still-uncoloured slot in the predefined slot-array order -- this
-  // is the one we softly emphasise and the one auto-fill picks next.
   function _nextInOrder() {
     for (let i = 0; i < dots.length; i++) {
       if (!colored.has(i)) return i;
@@ -523,7 +562,6 @@
     if (colored.size >= dots.length) return;
     const nextI = _nextInOrder();
     if (nextI < 0) return;
-    dots[nextI].el.classList.add('wait-dot');         // soft breathing stroke, right away
     _fillTimer = setTimeout(() => {
       _fillTimer = null;
       handleDotTap(nextI);
@@ -531,25 +569,40 @@
   }
 
   function refreshDots() {
+    stopHopping();
     count = colored.size;
     const groupColour = COUNT_COLORS[count];
     const nextI = _nextInOrder();
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
-      el.style.pointerEvents = 'auto';      // every dot is tappable
-      el.style.cursor = 'pointer';
+      el.classList.remove('wait-dot');
       if (colored.has(i)) {
-        // coloured dot -- group colour for the current count
+        // coloured dot
         el.setAttribute('fill', groupColour);
         el.style.opacity = '1';
+        el.style.pointerEvents = 'auto';
+        el.style.cursor = 'pointer';
         dots[i].color = groupColour;
         dots[i].value = 1;
-      } else {
-        // uncoloured -- white.  The next-in-order is full opacity to hint
-        // at the suggested sequence; the rest are dim placeholders so the
-        // child can still see where they'll appear.  Both are tappable.
+      } else if (i === nextI) {
+        // next still-uncoloured dot -- white, ready to tap
         el.setAttribute('fill', '#ffffff');
-        el.style.opacity = (i === nextI) ? '1' : '0.22';
+        el.style.opacity = '1';
+        el.style.pointerEvents = 'auto';
+        el.style.cursor = 'pointer';
+        dots[i].color = '#ffffff';
+        dots[i].value = 0;
+        if (count === 0) {
+          _hopStop = startHopping(el);             // d1 hops
+        } else {
+          el.classList.add('wait-dot');             // d2..d5 use wait-dot
+        }
+      } else {
+        // future dot -- hidden until its turn
+        el.setAttribute('fill', '#ffffff');
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+        el.style.cursor = 'default';
         dots[i].color = '#ffffff';
         dots[i].value = 0;
       }

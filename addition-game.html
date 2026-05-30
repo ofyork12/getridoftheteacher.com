@@ -496,11 +496,14 @@
   // the next dot, and the voice says the running count ("one" ... "five").
   // Tapping any already-coloured dot counts the group back down by one.
   const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
-  let count = 0;
+  // Any dot is tappable (user 2026-05-29): the child can pick any of the
+  // five positions in any order.  The slot array's order only drives
+  // auto-advance -- if the child stops tapping, the pulse + auto-fill move
+  // through the slots in the predefined sequence (bottom-centre, bottom-
+  // left, bottom-right, top-left, top-right).
+  const colored = new Set();        // dot indices currently coloured
+  let count = 0;                    // kept in sync with colored.size below
 
-  // Idle prompt: if the child doesn't tap, the next dot starts pulsing after
-  // 5s and auto-fills 5s after that, until count reaches 5.  Any tap resets
-  // the timers.
   const IDLE_PULSE_MS = 5000;
   const IDLE_FILL_MS  = 5000;
   let _pulseTimer = null, _fillTimer = null;
@@ -509,77 +512,77 @@
     if (_fillTimer)  { clearTimeout(_fillTimer);  _fillTimer  = null; }
     dots.forEach(d => d.el.classList.remove('next-pulse'));
   }
+  // First still-uncoloured slot in the predefined slot-array order -- this
+  // is who auto-advance picks to pulse/fill next.
+  function _nextInOrder() {
+    for (let i = 0; i < dots.length; i++) {
+      if (!colored.has(i)) return i;
+    }
+    return -1;
+  }
   function startIdleTimers() {
     cancelIdleTimers();
-    if (count >= dots.length) return;          // already at 5, nothing to advance
+    if (colored.size >= dots.length) return;
     _pulseTimer = setTimeout(() => {
       _pulseTimer = null;
-      const nextEl = dots[count] && dots[count].el;
-      if (nextEl) nextEl.classList.add('next-pulse');
+      const nextI = _nextInOrder();
+      if (nextI < 0) return;
+      dots[nextI].el.classList.add('next-pulse');
       _fillTimer = setTimeout(() => {
         _fillTimer = null;
-        handleDotTap(count);                   // auto-fill the next dot
+        handleDotTap(nextI);
       }, IDLE_FILL_MS);
     }, IDLE_PULSE_MS);
   }
 
   function refreshDots() {
+    count = colored.size;
+    const groupColour = COUNT_COLORS[count];
+    const nextI = _nextInOrder();
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
-      if (i < count) {
-        // counted dot -- coloured for the current count
-        const c = COUNT_COLORS[count];
-        el.setAttribute('fill', c);
+      el.style.pointerEvents = 'auto';      // every dot is tappable
+      el.style.cursor = 'pointer';
+      if (colored.has(i)) {
+        // coloured dot -- group colour for the current count
+        el.setAttribute('fill', groupColour);
         el.style.opacity = '1';
-        el.style.pointerEvents = 'auto';
-        el.style.cursor = 'pointer';
-        dots[i].color = c;
+        dots[i].color = groupColour;
         dots[i].value = 1;
-      } else if (i === count && count < dots.length) {
-        // the next white dot -- visible, tappable
-        el.setAttribute('fill', '#ffffff');
-        el.style.opacity = '1';
-        el.style.pointerEvents = 'auto';
-        el.style.cursor = 'pointer';
-        dots[i].color = '#ffffff';
-        dots[i].value = 0;
       } else {
-        // not yet revealed -- show the position as a faint placeholder so the
-        // child can see where the upcoming dots will land, but it doesn't
-        // respond to taps until it's the child's turn.
+        // uncoloured -- white.  The next-in-order is full opacity to hint
+        // at the suggested sequence; the rest are dim placeholders so the
+        // child can still see where they'll appear.  Both are tappable.
         el.setAttribute('fill', '#ffffff');
-        el.style.opacity = '0.22';
-        el.style.pointerEvents = 'none';
-        el.style.cursor = 'default';
+        el.style.opacity = (i === nextI) ? '1' : '0.22';
         dots[i].color = '#ffffff';
         dots[i].value = 0;
       }
     }
     updateEquation();
-    startIdleTimers();                          // (re)arm the auto-advance
+    startIdleTimers();
   }
   function handleDotTap(i) {
-    if (i === count && count < dots.length) {
-      // tapped the next white dot -- count up
-      count++;
+    if (!colored.has(i)) {
+      // tapped a white dot in any position -- it joins, count goes up
+      colored.add(i);
       refreshDots();
       _cancelNarration();
-      _playKey(String(count));
-      if (count === 5) showPerfectBanner();
+      _playKey(String(colored.size));
+      if (colored.size === dots.length) showPerfectBanner();
       if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
-    } else if (i < count) {
-      // tapped a coloured dot -- count back down
-      count--;
+    } else {
+      // tapped a coloured dot -- it leaves, count goes back down
+      colored.delete(i);
       hidePerfectBanner();
       refreshDots();
       _cancelNarration();
-      if (count > 0) {
-        _playKey(String(count));
+      const n = colored.size;
+      if (n > 0) {
+        _playKey(String(n));
       } else if (players['0']) {
-        // If a recorded "0" clip gets added later, use it automatically.
         _playKey('0');
       } else if ("speechSynthesis" in window) {
-        // No recorded "zero" clip yet -- speak it via the browser voice.
         try { window.speechSynthesis.cancel(); } catch (e) {}
         const u = new SpeechSynthesisUtterance("zero");
         u.rate = 0.95;
@@ -587,12 +590,11 @@
       }
       if (typeof window.bumpScoreForErase === 'function') window.bumpScoreForErase();
     }
-    // else: dot is hidden / not yet revealed -- no-op
   }
   for (let i = 0; i < dots.length; i++) {
     dots[i].el.addEventListener('click', () => handleDotTap(i));
   }
-  refreshDots();                  // initial state: only dot[0] visible, white
+  refreshDots();                  // initial state: all 5 dots visible
 
   // Big centre count -- the same number the voice says, shown huge above
   // the dots so the child can read it as they count up.  Always shows the
@@ -605,7 +607,7 @@
   // --- Reset button --------------------------------------------------
   document.getElementById('resetBtn').addEventListener('click', () => {
     hidePerfectBanner();
-    count = 0;
+    colored.clear();
     refreshDots();
     // Drop any active paint too (the palette is hidden, but be safe).
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));

@@ -500,6 +500,11 @@
   // left, bottom-right, top-left, top-right).
   const colored = new Set();        // dot indices currently coloured
   let count = 0;                    // kept in sync with colored.size below
+  // Round 1 (default): build to 5 by +1 each tap.
+  // Round 2 (after the first Perfect): build to 5 by +2 each tap -- the
+  // first dot is solo, then a PAIR of dots appears together and tapping
+  // either one adds both. The kid hears "plus two" on each pair tap.
+  let round = 1;
 
   // Match counting-to-10-game.html's pattern (user 2026-05-30): only the
   // next white dot is visible; future dots are hidden until their turn.
@@ -554,34 +559,49 @@
     if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
     if (_emphasisTimer) { clearTimeout(_emphasisTimer); _emphasisTimer = null; }
   }
-  function _nextInOrder() {
-    for (let i = 0; i < dots.length; i++) {
-      if (!colored.has(i)) return i;
+  // Returns array of "next-to-tap" dot indices.  Round 1: one at a time
+  // (the first uncoloured slot).  Round 2: first dot solo, then PAIRS so
+  // the kid taps to add 2 at a time.
+  function _getNextDots() {
+    if (round === 1) {
+      for (let i = 0; i < dots.length; i++) {
+        if (!colored.has(i)) return [i];
+      }
+      return [];
     }
-    return -1;
+    // Round 2 (+2 flow): 0 colored -> [0] solo; 1 colored -> [1,2] pair;
+    // 3 colored -> [3,4] pair; 5 colored -> done.
+    if (colored.size === 0) return [0];
+    if (colored.size === 1) return [1, 2];
+    if (colored.size === 3) return [3, 4];
+    return [];
   }
   function startIdleTimers() {
     cancelIdleTimers();
     if (colored.size >= dots.length) return;
-    const nextI = _nextInOrder();
-    if (nextI < 0) return;
-    // Phase 1: dot stays plain for EMPHASIS_DELAY_MS so the kid has time
-    // to think.  Then the emphasis kicks in -- hop for d1, wait-dot for d2-5.
-    const wasFirstDot = (count === 0);
+    const nextDots = _getNextDots();
+    if (nextDots.length === 0) return;
+    // Phase 1: dots stay plain for EMPHASIS_DELAY_MS so the kid has time
+    // to think.  Then emphasis kicks in -- hop for the solo first dot,
+    // wait-dot stroke on every next dot otherwise (one or both in Round 2).
+    const isFirstSoloDot = (round === 1 && count === 0) ||
+                           (round === 2 && count === 0);
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
-      const el = dots[nextI] && dots[nextI].el;
-      if (!el) return;
-      if (wasFirstDot) {
-        _hopStop = startHopping(el);
+      if (isFirstSoloDot && nextDots.length === 1) {
+        const el = dots[nextDots[0]].el;
+        if (el) _hopStop = startHopping(el);
       } else {
-        el.classList.add('wait-dot');
+        nextDots.forEach(idx => {
+          const el = dots[idx] && dots[idx].el;
+          if (el) el.classList.add('wait-dot');
+        });
       }
     }, EMPHASIS_DELAY_MS);
     // Phase 2: auto-fill at IDLE_FILL_MS total if still no tap.
     _fillTimer = setTimeout(() => {
       _fillTimer = null;
-      handleDotTap(nextI);
+      handleDotTap(nextDots[0]);
     }, IDLE_FILL_MS);
   }
 
@@ -589,20 +609,20 @@
     stopHopping();
     count = colored.size;
     const groupColour = COUNT_COLORS[count];
-    const nextI = _nextInOrder();
+    const nextDots = _getNextDots();
+    const nextSet = new Set(nextDots);
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
       el.classList.remove('wait-dot');
       if (colored.has(i)) {
-        // coloured dot
         el.setAttribute('fill', groupColour);
         el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
         el.style.cursor = 'pointer';
         dots[i].color = groupColour;
         dots[i].value = 1;
-      } else if (i === nextI) {
-        // next still-uncoloured dot -- white, ready to tap.  No emphasis
+      } else if (nextSet.has(i)) {
+        // next still-uncoloured dot(s) -- white, ready to tap.  No emphasis
         // yet; startIdleTimers adds the hop / wait-dot after a 5s pause so
         // the kid gets a chance to figure it out on their own first.
         el.setAttribute('fill', '#ffffff');
@@ -624,17 +644,38 @@
     updateEquation();
     startIdleTimers();
   }
+
+  // When Round 1 reaches Perfect, show the banner, then after a beat clear
+  // the dots and switch to Round 2.  Round 2 reaches Perfect and stays.
+  function onPerfectReached() {
+    showPerfectBanner();
+    if (round === 1) {
+      setTimeout(() => {
+        hidePerfectBanner();
+        colored.clear();
+        round = 2;
+        refreshDots();
+      }, 3500);
+    }
+  }
+
   function handleDotTap(i) {
-    if (!colored.has(i)) {
-      // tapped a white dot in any position -- it joins, count goes up
-      colored.add(i);
+    const nextDots = _getNextDots();
+    if (nextDots.includes(i)) {
+      // tapped a "next" dot -- the whole next group joins as one
+      const isPair = nextDots.length === 2;
+      nextDots.forEach(idx => colored.add(idx));
       refreshDots();
       _cancelNarration();
-      _playKey(String(colored.size));
-      if (colored.size === dots.length) showPerfectBanner();
+      if (isPair) {
+        _playChain(['plus', '2']);            // "plus two" on each Round 2 pair tap
+      } else {
+        _playKey(String(colored.size));       // "one"
+      }
+      if (colored.size === dots.length) onPerfectReached();
       if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
-    } else {
-      // tapped a coloured dot -- it leaves, count goes back down
+    } else if (colored.has(i)) {
+      // tapped a coloured dot -- it leaves, count goes back down by one
       colored.delete(i);
       hidePerfectBanner();
       refreshDots();
@@ -670,6 +711,7 @@
   document.getElementById('resetBtn').addEventListener('click', () => {
     hidePerfectBanner();
     colored.clear();
+    round = 1;
     refreshDots();
     // Drop any active paint too (the palette is hidden, but be safe).
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));

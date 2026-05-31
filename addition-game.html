@@ -98,6 +98,19 @@
     display: inline-block;
     transform-origin: center center;
   }
+  /* Small running equation line below the big centre number: "1 + 1 = 2",
+     "1 + 2 + 2 = 5", etc.  Sits just under the huge count so the child
+     can read the addition that built that count. */
+  .equation-line {
+    position: absolute; top: 26%; left: 4%; right: 4%;
+    text-align: center;
+    font-size: clamp(20px, 3.4vh, 40px);
+    font-weight: 700;
+    color: #000;
+    pointer-events: none;
+    line-height: 1.1;
+    min-height: 3vh;
+  }
 
   /* Triangle play-area back at top: 22%, height: 60% to match the
      partition autoplay videos.  The big-triangle geometry below
@@ -328,6 +341,7 @@
   </div>
 
   <div class="equation" id="eq"></div>
+  <div class="equation-line" id="eqLine"></div>
 
   <div class="play-area">
     <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
@@ -387,6 +401,11 @@
   const bgGroup  = document.getElementById('bgGroup');
   const dotGroup = document.getElementById('dotGroup');
   const eqEl     = document.getElementById('eq');
+  const eqLineEl = document.getElementById('eqLine');
+  // Sequence of addends the child has tapped so far this round, in order.
+  // e.g. Round 1: [1,1,1] for count=3. Round 2 (1+2+2): [1,2,2] for count=5.
+  // Cleared on reset and on Round 1 -> Round 2 transition.
+  const addends = [];
 
   // 5 dot slots in the canonical ColorMyMath "5" shape: 3 dots on
   // the bottom, 2 dots on top (same arrangement used in the number
@@ -398,15 +417,15 @@
   const cx   = 105;
   const yBot = 175;
 
-  // Same canonical tangent 5-domino positions -- every adjacent dot pair is
+  // Canonical tangent 5-domino positions -- every adjacent dot pair is
   // exactly 2*DOT_R apart so circles touch tangentially.  Reveal order
-  // (user 2026-05-30): bottom-left, bottom-middle, top-LEFT (3rd dot ON
-  // TOP -- forms a tangent triangle of 3 at count=3), then bottom-right,
-  // top-right.  Round 2 pairs are slots 1+2 (bottom-middle + top-left) and
-  // slots 3+4 (bottom-right + top-right) -- each pair is tangent.
+  // (user 2026-05-30): bottom-CENTRE, bottom-left, top-left (3rd ON TOP --
+  // tangent triangle of 3 at count=3), then bottom-right, top-right.
+  // Round 2 pairs are slots 1+2 (bottom-left + top-left) and slots 3+4
+  // (bottom-right + top-right) -- each pair is tangent.
   const slots = [
-    { x: cx - D,     y: yBot },         // 0: bottom left    (reveal 1st)
-    { x: cx,         y: yBot },         // 1: bottom middle  (reveal 2nd)
+    { x: cx,         y: yBot },         // 0: bottom CENTRE  (reveal 1st)
+    { x: cx - D,     y: yBot },         // 1: bottom left    (reveal 2nd)
     { x: cx - DOT_R, y: yBot - H },     // 2: top left       (reveal 3rd, ON TOP)
     { x: cx + D,     y: yBot },         // 3: bottom right   (reveal 4th)
     { x: cx + DOT_R, y: yBot - H },     // 4: top right      (reveal 5th)
@@ -625,6 +644,7 @@
       setTimeout(() => {
         hidePerfectBanner();
         colored.clear();
+        addends.length = 0;
         round = 2;
         refreshDots();
       }, 3500);
@@ -653,6 +673,7 @@
         _cancelNarration();
         // "two plus <existing> equals <new>" -- e.g. "2 plus 1 equals 3"
         _playChain(['2', 'plus', String(existing), 'equals', String(newCount)]);
+        addends.push(2);                            // record this +2 for the equation line
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
           refreshDots();                       // recolours all dots to the new count's colour
@@ -662,6 +683,7 @@
       } else {
         // Solo tap (Round 1 every tap, Round 2 first dot)
         nextDots.forEach(idx => colored.add(idx));
+        addends.push(1);                            // record this +1
         refreshDots();
         _cancelNarration();
         _playKey(String(colored.size));
@@ -671,6 +693,7 @@
     } else if (colored.has(i)) {
       // tapped a coloured dot -- it leaves, count goes back down by one
       colored.delete(i);
+      addends.pop();                                // undo the last addend
       hidePerfectBanner();
       refreshDots();
       _cancelNarration();
@@ -696,15 +719,25 @@
   // Big centre count -- the same number the voice says, shown huge above
   // the dots so the child can read it as they count up.  Always shows the
   // current count, including 0 (so "0" is visible after the child counts
-  // all the way back down).
+  // all the way back down).  Plus the small running-equation line below.
   function updateEquation() {
     eqEl.innerHTML = '<span class="num">' + count + '</span>';
+    if (!eqLineEl) return;
+    if (addends.length === 0 || count === 0) {
+      eqLineEl.textContent = '';
+    } else if (addends.length === 1) {
+      // Just "1" -- one number, no equation yet.
+      eqLineEl.textContent = String(addends[0]);
+    } else {
+      eqLineEl.textContent = addends.join(' + ') + ' = ' + count;
+    }
   }
 
   // --- Reset button --------------------------------------------------
   document.getElementById('resetBtn').addEventListener('click', () => {
     hidePerfectBanner();
     colored.clear();
+    addends.length = 0;
     round = 1;
     refreshDots();
     // Drop any active paint too (the palette is hidden, but be safe).

@@ -99,11 +99,41 @@
   // --- active sources (so stopAll can kill them synchronously) ---
   const _active = new Set();
 
+  // Build a source that routes through a GainNode so stopAll can ramp the
+  // gain to 0 *before* the audio reaches the system output buffer.  Without
+  // this, src.stop(0) leaves a brief audible tail on Android because the
+  // sound is already buffered downstream of the source -- the user heard
+  // this as "one extra voice" bleeding into the next clip.
+  function _makeSource(buf) {
+    const c = getCtx();
+    if (!c) return null;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const gain = c.createGain();
+    src.connect(gain);
+    gain.connect(c.destination);
+    src._gain = gain;
+    return src;
+  }
+
   function stopAll() {
+    const c = _ctx;
+    _chainToken++;                                    // invalidate any in-flight chain
     for (const src of _active) {
       try { src.onended = null; } catch (e) {}
-      try { src.stop(0); } catch (e) {}
+      try {
+        if (src._gain && c) {
+          const now = c.currentTime;
+          src._gain.gain.cancelScheduledValues(now);
+          src._gain.gain.setValueAtTime(src._gain.gain.value, now);
+          src._gain.gain.linearRampToValueAtTime(0, now + 0.008);   // 8ms fade
+        }
+      } catch (e) {}
+      try { src.stop(c ? c.currentTime + 0.012 : 0); } catch (e) {
+        try { src.stop(0); } catch (e2) {}
+      }
       try { src.disconnect(); } catch (e) {}
+      if (src._gain) { try { src._gain.disconnect(); } catch (e) {} }
     }
     _active.clear();
   }
@@ -114,12 +144,12 @@
     if (!c) return null;
     const buf = _buffers[key];
     if (!buf) return null;
-    const src = c.createBufferSource();
-    src.buffer = buf;
-    src.connect(c.destination);
+    const src = _makeSource(buf);
+    if (!src) return null;
     src.onended = () => {
       _active.delete(src);
       try { src.disconnect(); } catch (e) {}
+      if (src._gain) { try { src._gain.disconnect(); } catch (e) {} }
     };
     _active.add(src);
     try { src.start(0); } catch (e) {
@@ -182,13 +212,13 @@
           playNext();
           return;
         }
-        const src = c.createBufferSource();
-        src.buffer = buf;
-        src.connect(c.destination);
+        const src = _makeSource(buf);
+        if (!src) { playNext(); return; }
         const gapAfter = item.gap != null ? item.gap : defaultGap;
         src.onended = () => {
           _active.delete(src);
           try { src.disconnect(); } catch (e) {}
+          if (src._gain) { try { src._gain.disconnect(); } catch (e) {} }
           if (item.onEnd) { try { item.onEnd(); } catch (e) {} }
           if (myToken !== _chainToken) { finish(); return; }
           setTimeout(playNext, gapAfter);

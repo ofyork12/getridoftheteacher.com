@@ -142,6 +142,11 @@
       catch (e) { try { src.stop(0); } catch (e2) {} }
     }
     _active.clear();
+    // Also cancel any TTS in flight -- a half-spoken utterance is the most
+    // common "voice from the other tab" the user hears after switching away.
+    if (global.speechSynthesis) {
+      try { global.speechSynthesis.cancel(); } catch (e) {}
+    }
   }
 
   // --- single-clip play (returns the BufferSource, or null) ---
@@ -264,4 +269,28 @@
     say: say,
     isReady: isReady
   };
+
+  // Auto-pause: when the tab/page goes hidden (kid switched apps, scrolled
+  // the YouTube tab into view, locked the phone, etc.), cut every active
+  // sound source AND cancel any pending TTS so the page never keeps
+  // talking when it isn't visible.  Resume is implicit -- the next user
+  // tap restarts audio on demand.
+  if (global.document) {
+    global.document.addEventListener('visibilitychange', () => {
+      if (global.document.hidden) {
+        try { stopAll(); } catch (e) {}
+        // Suspend the AudioContext too so even buffered samples stop.
+        if (_ctx && _ctx.state === 'running') {
+          try { _ctx.suspend(); } catch (e) {}
+        }
+      }
+    });
+    // Also stop on pagehide (iOS Safari fires this when you swipe away).
+    global.addEventListener('pagehide', () => {
+      try { stopAll(); } catch (e) {}
+      if (_ctx && _ctx.state === 'running') {
+        try { _ctx.suspend(); } catch (e) {}
+      }
+    });
+  }
 })(window);

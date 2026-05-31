@@ -426,10 +426,9 @@
   const dotGroup = document.getElementById('dotGroup');
   const eqEl     = document.getElementById('eq');
   const eqLineEl = document.getElementById('eqLine');
-  // Sequence of addends the child has tapped so far this round, in order.
-  // e.g. Round 1: [1,1,1] for count=3. Round 2 (1+2+2): [1,2,2] for count=5.
-  // Cleared on reset and on Round 1 -> Round 2 transition.
-  const addends = [];
+  // The addends list is DERIVED from the current dot groups -- we never
+  // store a tap history that could desync from what's on screen.  See
+  // _computeAddends() further down.
   // True once the kid has tapped at least once this partition.  Lets us
   // show the target ("5") at the very start of every partition and switch
   // to the running count as soon as they begin -- and still show "0" when
@@ -621,9 +620,42 @@
     return [];
   }
 
-  // Builds the audio chain for the cumulative running equation, e.g.
-  // addends=[2,1,1] -> ['2','plus','1','plus','1','equals','4'].
-  function _cumulativeEquationChain(total) {
+  // Compute the addends list FROM A DOT-COLORED SET.  The pair groupings
+  // depend on the round: Round 1 every dot is +1; Round 2 has one pair
+  // (slots 0+1); Round 3 has two pairs (0+1) and (3+4).  If only ONE
+  // member of a pair is coloured (kid untapped one half), that lone dot
+  // counts as +1 -- the equation always reflects what's actually visible.
+  function _computeAddends(setIn) {
+    const has = (i) => setIn.has(i);
+    const arr = [];
+    if (round === 1) {
+      for (let i = 0; i < 5; i++) if (has(i)) arr.push(1);
+      return arr;
+    }
+    if (round === 2) {
+      if (has(0) && has(1)) arr.push(2);
+      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); }
+      if (has(2)) arr.push(1);
+      if (has(3)) arr.push(1);
+      if (has(4)) arr.push(1);
+      return arr;
+    }
+    if (round === 3) {
+      if (has(0) && has(1)) arr.push(2);
+      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); }
+      if (has(3) && has(4)) arr.push(2);
+      else { if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
+      if (has(2)) arr.push(1);
+      return arr;
+    }
+    return arr;
+  }
+  // Build an audio chain from an addends list + total, e.g.
+  // [2,1,1], 4 -> ['2','plus','1','plus','1','equals','4'].
+  // A single-addend list (e.g. [2]) returns just ['2'] -- no "equals".
+  function _chainFromAddends(addends, total) {
+    if (addends.length === 0) return [];
+    if (addends.length === 1) return [String(addends[0])];
     const chain = [];
     for (let k = 0; k < addends.length; k++) {
       if (k > 0) chain.push('plus');
@@ -728,7 +760,6 @@
       setTimeout(() => {
         hidePerfectBanner();
         colored.clear();
-        addends.length = 0;
         _hasTappedThisRound = false;
         round = 2;
         refreshDots();
@@ -738,7 +769,6 @@
       setTimeout(() => {
         hidePerfectBanner();
         colored.clear();
-        addends.length = 0;
         _hasTappedThisRound = false;
         round = 3;
         refreshDots();
@@ -751,14 +781,19 @@
     const nextDots = _getNextDots();
     if (nextDots.includes(i)) {
       const isPair = nextDots.length === 2;
+      // Build the "after this tap" dot set so the audio chain reflects
+      // EXACTLY what will be on screen (never a stored tap history -- no
+      // way to desync from the visible dot groups).
+      const futureSet = new Set(colored);
+      nextDots.forEach(idx => futureSet.add(idx));
+      const futureAddends = _computeAddends(futureSet);
+      const futureCount   = futureSet.size;
+
       if (isPair && (round === 2 || round === 3)) {
         // Pair tap: flash BOTH dots solid orange for 500ms while the voice
-        // speaks the cumulative running equation, then settle into the new
-        // count's colour.  Inner orange hints get hidden right away so the
-        // pulse doesn't overlap the flash.
+        // speaks the running equation, then settle into the new count's
+        // colour.
         cancelIdleTimers();
-        const existing = colored.size;
-        const newCount = existing + 2;
         nextDots.forEach(idx => {
           const el = dots[idx].el;
           el.classList.remove('pair-ghost', 'wait-dot');
@@ -766,15 +801,8 @@
           el.style.opacity = '1';
           el.style.pointerEvents = 'none';
         });
-        addends.push(2);
         _cancelNarration();
-        // First-ever +2 (no previous addends): just "two".  Otherwise speak
-        // the full cumulative running equation, e.g. "2 plus 2 equals 4".
-        if (addends.length === 1) {
-          _playKey('2');
-        } else {
-          _playChain(_cumulativeEquationChain(newCount));
-        }
+        _playChain(_chainFromAddends(futureAddends, futureCount));
         _hasTappedThisRound = true;
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
@@ -784,28 +812,26 @@
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
         // Solo tap.
-        //   Round 1: every tap is +1 counting up by ones -- voice says the
-        //            new count ("one", "two", ...).
-        //   Round 2 (+1s after the opening pair) and Round 3 (final +1):
-        //            voice speaks the FULL cumulative running equation,
-        //            e.g. "2 plus 1 equals 3", "2 plus 2 plus 1 equals 5".
+        //   Round 1: voice says just the new count ("one", "two", ...).
+        //   Round 2/3 solos: voice speaks the running equation, e.g.
+        //   "2 plus 1 equals 3", "2 plus 2 plus 1 equals 5".
         nextDots.forEach(idx => colored.add(idx));
-        addends.push(1);
         _hasTappedThisRound = true;
         refreshDots();
         _cancelNarration();
         if (round === 1) {
           _playKey(String(colored.size));
         } else {
-          _playChain(_cumulativeEquationChain(colored.size));
+          _playChain(_chainFromAddends(futureAddends, futureCount));
         }
         if (colored.size === dots.length) onPerfectReached();
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
     } else if (colored.has(i)) {
-      // tapped a coloured dot -- it leaves, count goes back down by one
+      // tapped a coloured dot -- it leaves, count goes back down by one.
+      // (The equation line is derived from `colored` so no manual undo of
+      // any addend history -- it'll just re-render whatever's still painted.)
       colored.delete(i);
-      addends.pop();                                // undo the last addend
       hidePerfectBanner();
       refreshDots();
       _cancelNarration();
@@ -842,12 +868,16 @@
     }
     eqEl.innerHTML = '<span class="num">' + count + '</span>';
     if (!eqLineEl) return;
-    if (addends.length === 0 || count === 0) {
+    // Derive the addends from the CURRENT dot groups (Round 1: one per
+    // dot; Round 2: pair 0+1 then solos; Round 3: pairs 0+1 and 3+4 then
+    // solo 2).  Equation line ALWAYS matches what's painted.
+    const addendsNow = _computeAddends(colored);
+    if (addendsNow.length === 0 || count === 0) {
       eqLineEl.textContent = '';
-    } else if (addends.length === 1) {
-      eqLineEl.textContent = String(addends[0]);
+    } else if (addendsNow.length === 1) {
+      eqLineEl.textContent = String(addendsNow[0]);
     } else {
-      eqLineEl.textContent = addends.join(' + ') + ' = ' + count;
+      eqLineEl.textContent = addendsNow.join(' + ') + ' = ' + count;
     }
   }
 
@@ -855,7 +885,6 @@
   document.getElementById('resetBtn').addEventListener('click', () => {
     hidePerfectBanner();
     colored.clear();
-    addends.length = 0;
     _hasTappedThisRound = false;            // show target "5" again on reset
     round = 1;
     refreshDots();
@@ -863,6 +892,24 @@
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));
     activePaint = null;
     activeValue = 0;
+  });
+
+  // --- Pause when the page isn't visible ------------------------------
+  // AudioLib already stops sound + suspends its context on visibilitychange,
+  // but THIS game also has idle timers (5s emphasis, 10s auto-fill) and a
+  // hopping animation that would keep running.  Cut everything when hidden
+  // so nothing fires while the kid is looking at another app.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      _cancelNarration();        // belt + suspenders with AudioLib
+      cancelIdleTimers();
+      stopHopping();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    _cancelNarration();
+    cancelIdleTimers();
+    stopHopping();
   });
 
   // --- Number-line cells (coloured quantity above black digit) -------

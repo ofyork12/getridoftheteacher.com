@@ -292,6 +292,26 @@
     50%      { opacity: 0.90; }
   }
   .pair-ghost { animation: pairGhost 1.4s ease-in-out infinite; }
+  /* Round 2 "+2 incoming" centre pulse: show, hide, show, hide, then one
+     big-small flourish, then disappears.  Triggered on entry to each pair
+     phase (after the solo tap, and after the first pair settles). */
+  @keyframes orangeHintPulse {
+    0%   { opacity: 0;    transform: scale(0.4); }
+    8%   { opacity: 0.95; transform: scale(1.1); }
+    18%  { opacity: 0;    transform: scale(0.5); }
+    28%  { opacity: 0.95; transform: scale(1.1); }
+    38%  { opacity: 0;    transform: scale(0.5); }
+    50%  { opacity: 1.0;  transform: scale(1.55); }
+    72%  { opacity: 0.75; transform: scale(0.7);  }
+    100% { opacity: 0;    transform: scale(0.45); }
+  }
+  #orangeHint {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  #orangeHint.show {
+    animation: orangeHintPulse 2.4s ease-in-out 1 forwards;
+  }
 </style>
 <script src="audio-library.js"></script>
 </head>
@@ -347,6 +367,11 @@
     <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
       <g id="bgGroup"></g>
       <g id="dotGroup"></g>
+      <!-- Round 2 "+2 incoming" hint: tiny orange dot in the centre that
+           pulses (show/hide a few times then big/small) when the pair
+           phase begins, then disappears. -->
+      <circle id="orangeHint" cx="105" cy="145" r="13" fill="#ff6200"
+              opacity="0" style="pointer-events:none"/>
     </svg>
   </div>
 
@@ -546,6 +571,16 @@
   function stopHopping() {
     if (_hopStop) { _hopStop(); _hopStop = null; }
   }
+  // Round 2 "+2 incoming" hint: tiny centre orange dot pulses a few times,
+  // then disappears.  Re-triggers each time a fresh pair phase begins.
+  function _showOrangeHint() {
+    const el = document.getElementById('orangeHint');
+    if (!el) return;
+    el.classList.remove('show');
+    void el.offsetWidth;                   // restart the CSS animation
+    el.classList.add('show');
+    setTimeout(() => { try { el.classList.remove('show'); } catch (e) {} }, 2500);
+  }
   function cancelIdleTimers() {
     if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
     if (_emphasisTimer) { clearTimeout(_emphasisTimer); _emphasisTimer = null; }
@@ -685,6 +720,7 @@
           nextDots.forEach(idx => colored.add(idx));
           refreshDots();                       // recolours all dots to the new count's colour
           if (colored.size === dots.length) onPerfectReached();
+          else if (round === 2 && _getNextDots().length === 2) _showOrangeHint();
         }, 500);
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
@@ -696,6 +732,7 @@
         _cancelNarration();
         _playKey(String(colored.size));
         if (colored.size === dots.length) onPerfectReached();
+        else if (round === 2 && _getNextDots().length === 2) _showOrangeHint();
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
     } else if (colored.has(i)) {

@@ -731,6 +731,85 @@
     const prev = total - inc;
     return [String(prev), 'plus', String(inc), 'equals', String(total)];
   }
+
+  // ---- Final cumulative reveal ----------------------------------------
+  // At the final tap of Round 2 / Round 3, replay the WHOLE partition:
+  // empty every dot, then fill each group in sync with the spoken
+  // addends ("two" -> 2 orange dots, "plus", "two" -> 2 more orange
+  // dots, "plus", "one" -> 1 red dot, [pause], all turn blue + "is five").
+  // The on-screen equation line builds along with the voice.
+
+  // Which slot indices belong to each addend, in order, given the round.
+  // Round 2 addends [2,1,1,1] -> [[0,1], [2], [3], [4]].
+  // Round 3 addends [2,2,1]   -> [[0,1], [3,4], [2]].
+  function _slotsForAddendList() {
+    if (round === 2) return [[0, 1], [2], [3], [4]];
+    if (round === 3) return [[0, 1], [3, 4], [2]];
+    return [];
+  }
+
+  function _playFinalReveal(addends, total, onDone) {
+    cancelIdleTimers();
+    stopHopping();
+    if (_partitionViewTimer) { clearTimeout(_partitionViewTimer); _partitionViewTimer = null; }
+    _partitionViewActive = false;
+    // Empty every dot to white, lock against taps, hide inner hints.
+    for (let i = 0; i < dots.length; i++) {
+      const el = dots[i].el;
+      el.classList.remove('wait-dot', 'pair-ghost');
+      el.setAttribute('fill', '#ffffff');
+      el.style.opacity = '1';
+      el.style.pointerEvents = 'none';
+      el.style.cursor = 'default';
+    }
+    innerHints.forEach(h => h.classList.remove('show'));
+    // Big number: TARGET (5).  Equation line: clears, will rebuild as we
+    // voice each addend.
+    if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
+    if (eqLineEl) eqLineEl.textContent = '';
+
+    const groups = _slotsForAddendList();
+    const items  = [];
+    for (let k = 0; k < addends.length; k++) {
+      if (k > 0) items.push({ key: 'plus' });
+      const slots   = groups[k] || [];
+      const value   = addends[k];
+      const color   = COUNT_COLORS[value];          // 2->orange, 1->red
+      const isLast  = (k === addends.length - 1);
+      const visible = addends.slice(0, k + 1);
+      items.push({
+        key: String(value),
+        // Long hold after the last addend so the kid sees the partition
+        // colours (e.g. 2 orange + 2 orange + 1 red) before the "equals"
+        // -> blue transition.
+        gap: isLast ? 800 : 200,
+        onStart: () => {
+          for (const idx of slots) {
+            if (dots[idx]) dots[idx].el.setAttribute('fill', color);
+          }
+          if (eqLineEl) eqLineEl.textContent = visible.join(' + ');
+        }
+      });
+    }
+    items.push({ key: 'equals' });
+    items.push({
+      key: String(total),
+      onStart: () => {
+        const blue = COUNT_COLORS[total];
+        for (let i = 0; i < dots.length; i++) {
+          dots[i].el.setAttribute('fill', blue);
+        }
+        if (eqLineEl) eqLineEl.textContent = addends.join(' + ') + ' = ' + total;
+      }
+    });
+
+    if (window.AudioLib) {
+      AudioLib.playChain(items, { gap: 200, onDone: () => { if (onDone) onDone(); } });
+    } else if (onDone) {
+      onDone();
+    }
+  }
+
   function startIdleTimers() {
     cancelIdleTimers();
     if (colored.size >= dots.length) return;
@@ -889,21 +968,28 @@
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
         // Solo tap.
-        //   Round 1: voice says just the new count ("one", "two", ...) and
-        //   refreshDots immediately (no partition grouping in Round 1).
-        //   Round 2/3 solos: enter PARTITION VIEW so the kid sees
-        //   "2 orange + 1 red" for ~1.8s before everything turns yellow.
+        //   Round 1: voice says just the new count ("one", "two", ...).
+        //   Round 2/3 intermediate solos: delta audio + partition view.
+        //   Round 2/3 FINAL solo (count hits 5): empty all dots and replay
+        //     the whole partition in sync with the voice ("two", fill 2
+        //     orange; "plus"; "two", fill 2 orange; "plus"; "one", fill
+        //     1 red; pause; all blue + "is five").
         nextDots.forEach(idx => colored.add(idx));
         _hasTappedThisRound = true;
         _cancelNarration();
-        if (round === 1) {
-          _playKey(String(colored.size));
+        const isFinal = ((round === 2 || round === 3) && colored.size === dots.length);
+        if (isFinal) {
+          _playFinalReveal(futureAddends, futureCount, onPerfectReached);
         } else {
-          _playChain(_chainForTap(futureAddends, futureCount));
+          if (round === 1) {
+            _playKey(String(colored.size));
+          } else {
+            _playChain(_chainForTap(futureAddends, futureCount));
+          }
+          _enterPartitionView(() => {
+            if (colored.size === dots.length) onPerfectReached();
+          });
         }
-        _enterPartitionView(() => {
-          if (colored.size === dots.length) onPerfectReached();
-        });
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
     } else if (colored.has(i)) {

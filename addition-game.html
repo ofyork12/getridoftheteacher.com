@@ -587,8 +587,8 @@
     dots.forEach(d => d.el.classList.remove('pair-ghost'));
   }
   // Returns array of "next-to-tap" dot indices.  Round 1: one at a time
-  // (the first uncoloured slot).  Round 2: first dot solo, then PAIRS so
-  // the kid taps to add 2 at a time.
+  // (the first uncoloured slot).  Round 2 (2+2+1): PAIR -> PAIR -> SOLO,
+  // so the equation builds as "2", then "2+2=4", then "2+2+1=5".
   function _getNextDots() {
     if (round === 1) {
       for (let i = 0; i < dots.length; i++) {
@@ -596,11 +596,11 @@
       }
       return [];
     }
-    // Round 2 (+2 flow): 0 colored -> [0] solo; 1 colored -> [1,2] pair;
-    // 3 colored -> [3,4] pair; 5 colored -> done.
-    if (colored.size === 0) return [0];
-    if (colored.size === 1) return [1, 2];
-    if (colored.size === 3) return [3, 4];
+    // Round 2 (2+2+1): first pair (center + bottom-left) -> second pair
+    // (bottom-right + top-right) -> solo (top-left = the final +1).
+    if (colored.size === 0) return [0, 1];   // first pair "two"
+    if (colored.size === 2) return [3, 4];   // second pair "two plus two equals four"
+    if (colored.size === 4) return [2];      // solo "four plus one equals five"
     return [];
   }
   function startIdleTimers() {
@@ -688,6 +688,9 @@
         _hasTappedThisRound = false;       // show target "5" again for next partition
         round = 2;
         refreshDots();
+        // First phase of Round 2 (2+2+1) is a pair -- pulse the orange hint
+        // so the kid knows two dots are coming.
+        _showOrangeHint();
       }, 3500);
     }
   }
@@ -712,8 +715,13 @@
           el.style.pointerEvents = 'none';     // ignore further taps during flash
         });
         _cancelNarration();
-        // "two plus <existing> equals <new>" -- e.g. "2 plus 1 equals 3"
-        _playChain(['2', 'plus', String(existing), 'equals', String(newCount)]);
+        // First pair of Round 2 (2+2+1): just "two".  Second pair: full
+        // equation "two plus two equals four" (existing=2, newCount=4).
+        if (existing === 0) {
+          _playKey('2');
+        } else {
+          _playChain(['2', 'plus', String(existing), 'equals', String(newCount)]);
+        }
         addends.push(2);                            // record this +2 for the equation line
         _hasTappedThisRound = true;
         setTimeout(() => {
@@ -724,13 +732,18 @@
         }, 500);
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
-        // Solo tap (Round 1 every tap, Round 2 first dot)
+        // Solo tap (Round 1 every tap, Round 2 final +1 that finishes 2+2+1).
         nextDots.forEach(idx => colored.add(idx));
         addends.push(1);                            // record this +1
         _hasTappedThisRound = true;
         refreshDots();
         _cancelNarration();
-        _playKey(String(colored.size));
+        if (round === 2) {
+          // Final +1 in 2+2+1: "four plus one equals five"
+          _playChain([String(colored.size - 1), 'plus', '1', 'equals', String(colored.size)]);
+        } else {
+          _playKey(String(colored.size));
+        }
         if (colored.size === dots.length) onPerfectReached();
         else if (round === 2 && _getNextDots().length === 2) _showOrangeHint();
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();

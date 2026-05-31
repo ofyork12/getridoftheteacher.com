@@ -434,14 +434,15 @@
   const cx   = 105;
   const yBot = 175;
 
-  // Reading order: top-left, top-right, then bottom left-to-right.
-  // Reveal order (user 2026-05-29): bottom row fills first, centre out --
-  // bottom-centre, then bottom-left, then bottom-right, then the top row.
+  // Reveal order (user 2026-05-30): bottom-left, bottom-right, then TOP-CENTRE
+  // so count=3 forms a triangle ("looks like a three").  Then bottom-middle
+  // for count=4, and top-right finishes count=5.  Round 2 (+2) pairs up
+  // slots 1+2 (to reach 3 yellow as a triangle) and slots 3+4 (to reach 5).
   const slots = [
-    { x: cx,         y: yBot },         // 0: bottom middle  (reveal 1st)
-    { x: cx - D,     y: yBot },         // 1: bottom left    (reveal 2nd)
-    { x: cx + D,     y: yBot },         // 2: bottom right   (reveal 3rd)
-    { x: cx - DOT_R, y: yBot - H },     // 3: top left       (reveal 4th)
+    { x: cx - D,     y: yBot },         // 0: bottom left    (reveal 1st)
+    { x: cx + D,     y: yBot },         // 1: bottom right   (reveal 2nd)
+    { x: cx,         y: yBot - H },     // 2: top centre     (reveal 3rd -> triangle of 3)
+    { x: cx,         y: yBot },         // 3: bottom middle  (reveal 4th)
     { x: cx + DOT_R, y: yBot - H },     // 4: top right      (reveal 5th)
   ];
 

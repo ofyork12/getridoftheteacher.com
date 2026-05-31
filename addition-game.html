@@ -406,6 +406,11 @@
   // e.g. Round 1: [1,1,1] for count=3. Round 2 (1+2+2): [1,2,2] for count=5.
   // Cleared on reset and on Round 1 -> Round 2 transition.
   const addends = [];
+  // True once the kid has tapped at least once this partition.  Lets us
+  // show the target ("5") at the very start of every partition and switch
+  // to the running count as soon as they begin -- and still show "0" when
+  // they count all the way back down.
+  let _hasTappedThisRound = false;
 
   // 5 dot slots in the canonical ColorMyMath "5" shape: 3 dots on
   // the bottom, 2 dots on top (same arrangement used in the number
@@ -645,6 +650,7 @@
         hidePerfectBanner();
         colored.clear();
         addends.length = 0;
+        _hasTappedThisRound = false;       // show target "5" again for next partition
         round = 2;
         refreshDots();
       }, 3500);
@@ -674,6 +680,7 @@
         // "two plus <existing> equals <new>" -- e.g. "2 plus 1 equals 3"
         _playChain(['2', 'plus', String(existing), 'equals', String(newCount)]);
         addends.push(2);                            // record this +2 for the equation line
+        _hasTappedThisRound = true;
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
           refreshDots();                       // recolours all dots to the new count's colour
@@ -684,6 +691,7 @@
         // Solo tap (Round 1 every tap, Round 2 first dot)
         nextDots.forEach(idx => colored.add(idx));
         addends.push(1);                            // record this +1
+        _hasTappedThisRound = true;
         refreshDots();
         _cancelNarration();
         _playKey(String(colored.size));
@@ -721,12 +729,18 @@
   // current count, including 0 (so "0" is visible after the child counts
   // all the way back down).  Plus the small running-equation line below.
   function updateEquation() {
+    // At the very start of each partition (no taps yet), show the TARGET
+    // (5) as the big number so the kid sees what they're building toward.
+    if (count === 0 && !_hasTappedThisRound) {
+      eqEl.innerHTML = '<span class="num">' + dots.length + '</span>';
+      if (eqLineEl) eqLineEl.textContent = '';
+      return;
+    }
     eqEl.innerHTML = '<span class="num">' + count + '</span>';
     if (!eqLineEl) return;
     if (addends.length === 0 || count === 0) {
       eqLineEl.textContent = '';
     } else if (addends.length === 1) {
-      // Just "1" -- one number, no equation yet.
       eqLineEl.textContent = String(addends[0]);
     } else {
       eqLineEl.textContent = addends.join(' + ') + ' = ' + count;
@@ -738,6 +752,7 @@
     hidePerfectBanner();
     colored.clear();
     addends.length = 0;
+    _hasTappedThisRound = false;            // show target "5" again on reset
     round = 1;
     refreshDots();
     // Drop any active paint too (the palette is hidden, but be safe).

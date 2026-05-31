@@ -398,15 +398,17 @@
   const cx   = 105;
   const yBot = 175;
 
-  // Original tangent placement (user: "perfect at the beginning, don't move
-  // them").  Every adjacent dot pair is exactly 2*DOT_R apart, so circles
-  // touch tangentially.  Reveal order: bottom-middle, bottom-left, bottom-
-  // right, then top-left, top-right.
+  // Same canonical tangent 5-domino positions -- every adjacent dot pair is
+  // exactly 2*DOT_R apart so circles touch tangentially.  Reveal order
+  // (user 2026-05-30): bottom-left, bottom-middle, top-LEFT (3rd dot ON
+  // TOP -- forms a tangent triangle of 3 at count=3), then bottom-right,
+  // top-right.  Round 2 pairs are slots 1+2 (bottom-middle + top-left) and
+  // slots 3+4 (bottom-right + top-right) -- each pair is tangent.
   const slots = [
-    { x: cx,         y: yBot },         // 0: bottom middle  (reveal 1st)
-    { x: cx - D,     y: yBot },         // 1: bottom left    (reveal 2nd)
-    { x: cx + D,     y: yBot },         // 2: bottom right   (reveal 3rd)
-    { x: cx - DOT_R, y: yBot - H },     // 3: top left       (reveal 4th)
+    { x: cx - D,     y: yBot },         // 0: bottom left    (reveal 1st)
+    { x: cx,         y: yBot },         // 1: bottom middle  (reveal 2nd)
+    { x: cx - DOT_R, y: yBot - H },     // 2: top left       (reveal 3rd, ON TOP)
+    { x: cx + D,     y: yBot },         // 3: bottom right   (reveal 4th)
     { x: cx + DOT_R, y: yBot - H },     // 4: top right      (reveal 5th)
   ];
 

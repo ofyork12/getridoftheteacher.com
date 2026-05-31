@@ -120,20 +120,26 @@
     const c = _ctx;
     _chainToken++;                                    // invalidate any in-flight chain
     for (const src of _active) {
-      try { src.onended = null; } catch (e) {}
+      // Replace onended with a cleanup-only handler so the 8ms gain ramp
+      // can finish silently before src.stop() fires its 'ended' event.
+      // We MUST NOT call src.disconnect() synchronously here -- the audio
+      // thread short-circuits the scheduled ramp the moment the node leaves
+      // the graph, and the system buffer gets to play the un-faded tail.
+      const gain = src._gain;
+      src.onended = function () {
+        try { src.disconnect(); } catch (e) {}
+        if (gain) { try { gain.disconnect(); } catch (e) {} }
+      };
       try {
-        if (src._gain && c) {
+        if (gain && c) {
           const now = c.currentTime;
-          src._gain.gain.cancelScheduledValues(now);
-          src._gain.gain.setValueAtTime(src._gain.gain.value, now);
-          src._gain.gain.linearRampToValueAtTime(0, now + 0.008);   // 8ms fade
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.linearRampToValueAtTime(0.0001, now + 0.012);   // 12ms ramp to silence
         }
       } catch (e) {}
-      try { src.stop(c ? c.currentTime + 0.012 : 0); } catch (e) {
-        try { src.stop(0); } catch (e2) {}
-      }
-      try { src.disconnect(); } catch (e) {}
-      if (src._gain) { try { src._gain.disconnect(); } catch (e) {} }
+      try { src.stop(c ? c.currentTime + 0.018 : 0); }              // stop just after ramp
+      catch (e) { try { src.stop(0); } catch (e2) {} }
     }
     _active.clear();
   }

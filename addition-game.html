@@ -696,26 +696,15 @@
     return null;
   }
 
-  // Enter partition view: render once with partition colours, then
-  // PARTITION_VIEW_MS later refresh again with count colours and fire onDone
-  // (used by the Perfect check so the banner waits for the recolour).
+  // Refresh + fire callback.  Used to be a timed "partition view" that
+  // briefly showed partition colours then flipped to count colours; now
+  // refreshDots paints partition colours for Rounds 2-6 directly and
+  // keeps them through the whole round, so there's nothing to defer.
   function _enterPartitionView(onDone) {
     if (_partitionViewTimer) { clearTimeout(_partitionViewTimer); _partitionViewTimer = null; }
-    if (round === 1) {
-      // No partition view in Round 1 -- everything is +1, partition == count.
-      _partitionViewActive = false;
-      refreshDots();
-      if (onDone) onDone();
-      return;
-    }
-    _partitionViewActive = true;
-    refreshDots();                      // paints partition colours immediately
-    _partitionViewTimer = setTimeout(() => {
-      _partitionViewActive = false;
-      _partitionViewTimer = null;
-      refreshDots();                    // flips to count colours
-      if (onDone) onDone();
-    }, PARTITION_VIEW_MS);
+    _partitionViewActive = false;
+    refreshDots();
+    if (onDone) onDone();
   }
 
   // Compute the addends list FROM A DOT-COLORED SET.  The pair groupings
@@ -789,17 +778,15 @@
     chain.push(String(total));
     return chain;
   }
-  // Pick the chain to speak for a Round 2/3 tap.  ALWAYS the delta form
-  // "PREV + INC = NEW" so the spoken audio never piles up repeating ones
-  // ("plus one plus one plus one") that the kid hears as doubled-up "11".
-  // The on-screen equation line still shows the full cumulative
-  // (2 + 1 + 1 + 1 = 5) so the kid SEES the whole partition.
+  // Pick the chain for INTERMEDIATE (non-final) Round 2+ taps.
+  //   First tap of the round (one addend):  just "N"  (e.g. "two")
+  //   Subsequent intermediate tap:          "plus N"  (e.g. "plus one")
+  // The FINAL tap of every round is handled by _playFinalReveal which
+  // appends "equals five" and flips all dots to blue.
   function _chainForTap(addends, total) {
     if (addends.length === 0) return [];
-    if (addends.length === 1) return [String(addends[0])];   // pair tap "two"
-    const inc = addends[addends.length - 1];                 // 1 (solo) or 2 (pair)
-    const prev = total - inc;
-    return [String(prev), 'plus', String(inc), 'equals', String(total)];
+    if (addends.length === 1) return [String(addends[0])];
+    return ['plus', String(addends[addends.length - 1])];
   }
 
   // ---- Final cumulative reveal ----------------------------------------
@@ -836,62 +823,54 @@
     }, durationMs || 800);
   }
 
+  // FINAL-tap reveal.  Dots are ALREADY in their partition colours from
+  // every prior tap; we don't repaint anything.  Voice plays
+  // "plus <newAddend>" + pulse the last group, hold ~800ms, then
+  // "equals" + "five" with all-blue + a big shared pulse.
   function _playFinalReveal(addends, total, onDone) {
     cancelIdleTimers();
     stopHopping();
     if (_partitionViewTimer) { clearTimeout(_partitionViewTimer); _partitionViewTimer = null; }
     _partitionViewActive = false;
-    // Paint each dot in its PARTITION colour right away (don't blank out
-    // to white).  The kid sees the full partition picture immediately,
-    // then each group pulses when its addend is voiced.
-    const groups = _slotsForAddendList();
-    for (let k = 0; k < addends.length; k++) {
-      const slots = groups[k] || [];
-      const color = COUNT_COLORS[addends[k]];
-      for (const idx of slots) {
-        if (!dots[idx]) continue;
-        const el = dots[idx].el;
-        el.classList.remove('wait-dot', 'pair-ghost', 'reveal-pulse');
-        el.setAttribute('fill', color);
-        el.style.opacity = '1';
-        el.style.pointerEvents = 'none';
-        el.style.cursor = 'default';
-      }
+    // Lock every dot against further taps; hide any inner hints.
+    for (let i = 0; i < dots.length; i++) {
+      const el = dots[i].el;
+      el.classList.remove('wait-dot', 'pair-ghost', 'reveal-pulse');
+      el.style.pointerEvents = 'none';
+      el.style.cursor = 'default';
     }
     innerHints.forEach(h => h.classList.remove('show'));
-    // Big number: TARGET.  Equation line builds as each addend is voiced.
-    if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
-    if (eqLineEl) eqLineEl.textContent = '';
+    if (eqEl) eqEl.innerHTML = '<span class="num">' + total + '</span>';
 
-    const items = [];
-    for (let k = 0; k < addends.length; k++) {
-      if (k > 0) items.push({ key: 'plus' });
-      const slots   = groups[k] || [];
-      const isLast  = (k === addends.length - 1);
-      const visible = addends.slice(0, k + 1);
-      items.push({
-        key: String(addends[k]),
-        // Long hold after the last addend so the kid takes in the
-        // partition picture before the "equals" -> all-blue flip.
-        gap: isLast ? 900 : 200,
+    const groups     = _slotsForAddendList();
+    const lastSlots  = groups[groups.length - 1] || [];
+    const newAddend  = addends[addends.length - 1];
+
+    const items = [
+      { key: 'plus' },
+      {
+        key: String(newAddend),
+        // Long hold so the kid takes in the complete partition picture
+        // (e.g. 2 orange + 3 red) before the "equals" -> all-blue flip.
+        gap: 900,
         onStart: () => {
-          _pulseSlots(slots, 750);
-          if (eqLineEl) eqLineEl.textContent = visible.join(' + ');
+          _pulseSlots(lastSlots, 750);
+          if (eqLineEl) eqLineEl.textContent = addends.join(' + ');
         }
-      });
-    }
-    items.push({ key: 'equals' });
-    items.push({
-      key: String(total),
-      onStart: () => {
-        const blue = COUNT_COLORS[total];
-        for (let i = 0; i < dots.length; i++) {
-          dots[i].el.setAttribute('fill', blue);
+      },
+      { key: 'equals' },
+      {
+        key: String(total),
+        onStart: () => {
+          const blue = COUNT_COLORS[total];
+          for (let i = 0; i < dots.length; i++) {
+            dots[i].el.setAttribute('fill', blue);
+          }
+          _pulseSlots([0, 1, 2, 3, 4], 900);
+          if (eqLineEl) eqLineEl.textContent = addends.join(' + ') + ' = ' + total;
         }
-        _pulseSlots([0, 1, 2, 3, 4], 900);
-        if (eqLineEl) eqLineEl.textContent = addends.join(' + ') + ' = ' + total;
       }
-    });
+    ];
 
     if (window.AudioLib) {
       AudioLib.playChain(items, { gap: 200, onDone: () => { if (onDone) onDone(); } });
@@ -950,18 +929,17 @@
     const groupColour = COUNT_COLORS[count];
     const nextDots = _getNextDots();
     const nextSet = new Set(nextDots);
-    // Round 2 pair phase: 2 orange placeholder dots (instead of white).
-    const isRound2Pair = (round === 2 && nextDots.length === 2);
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
       el.classList.remove('wait-dot', 'pair-ghost');
       if (colored.has(i)) {
-        // Partition-view mode (set briefly after every Round 2/3 tap):
-        // colour each dot by the partition it belongs to -- pair = orange,
-        // solo = red -- so the kid sees "2 orange + 1 red" before the
-        // whole group recolours to the new count's colour.
+        // Coloured dot.  Round 1: count colour (every tap changes the
+        // whole group's colour).  Rounds 2-6: dot stays in its PARTITION
+        // colour for the entire round so the kid sees the breakdown
+        // build up -- pair = orange, triple = yellow, quad = green,
+        // solo = red.  Only the final reveal flips them all to blue.
         let fillColour = groupColour;
-        if (_partitionViewActive) {
+        if (round >= 2) {
           const pc = _partitionColorForSlot(i);
           if (pc) fillColour = pc;
         }
@@ -971,23 +949,14 @@
         el.style.cursor = 'pointer';
         dots[i].color = fillColour;
         dots[i].value = 1;
-      } else if (nextSet.has(i)) {
-        // next still-uncoloured dot(s) -- white and ready to tap.  Round 2
-        // pair dots are NOT pre-coloured orange; the orange is only the
-        // flash on tap (set in handleDotTap), then it transitions to the
-        // new count's colour via the existing CSS fill transition.
+      } else {
+        // Empty dot -- ALWAYS visible white, whether it's the next-to-tap
+        // or a later slot.  The user wants all 5 dots there from the
+        // start; empty slots show as white circles waiting to be filled.
         el.setAttribute('fill', '#ffffff');
         el.style.opacity = '1';
-        el.style.pointerEvents = 'auto';
-        el.style.cursor = 'pointer';
-        dots[i].color = '#ffffff';
-        dots[i].value = 0;
-      } else {
-        // future dot -- hidden until its turn
-        el.setAttribute('fill', '#ffffff');
-        el.style.opacity = '0';
-        el.style.pointerEvents = 'none';
-        el.style.cursor = 'default';
+        el.style.pointerEvents = nextSet.has(i) ? 'auto' : 'none';
+        el.style.cursor      = nextSet.has(i) ? 'pointer' : 'default';
         dots[i].color = '#ffffff';
         dots[i].value = 0;
       }
@@ -1131,8 +1100,13 @@
       eqLineEl.textContent = '';
     } else if (addendsNow.length === 1) {
       eqLineEl.textContent = String(addendsNow[0]);
-    } else {
+    } else if (count === dots.length) {
+      // Round complete -- show "= N" alongside the full partition.
       eqLineEl.textContent = addendsNow.join(' + ') + ' = ' + count;
+    } else {
+      // Still building -- addends only, no "=" yet (matches the audio,
+      // which doesn't say "equals" until the final tap).
+      eqLineEl.textContent = addendsNow.join(' + ');
     }
   }
 

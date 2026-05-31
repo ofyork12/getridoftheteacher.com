@@ -398,15 +398,15 @@
   const cx   = 105;
   const yBot = 175;
 
-  // Reveal order (user 2026-05-30): bottom-left, bottom-right, then TOP-CENTRE
-  // so count=3 forms a triangle ("looks like a three").  Then bottom-middle
-  // for count=4, and top-right finishes count=5.  Round 2 (+2) pairs up
-  // slots 1+2 (to reach 3 yellow as a triangle) and slots 3+4 (to reach 5).
+  // Original tangent placement (user: "perfect at the beginning, don't move
+  // them").  Every adjacent dot pair is exactly 2*DOT_R apart, so circles
+  // touch tangentially.  Reveal order: bottom-middle, bottom-left, bottom-
+  // right, then top-left, top-right.
   const slots = [
-    { x: cx - D,     y: yBot },         // 0: bottom left    (reveal 1st)
-    { x: cx + D,     y: yBot },         // 1: bottom right   (reveal 2nd)
-    { x: cx,         y: yBot - H },     // 2: top centre     (reveal 3rd -> triangle of 3)
-    { x: cx,         y: yBot },         // 3: bottom middle  (reveal 4th)
+    { x: cx,         y: yBot },         // 0: bottom middle  (reveal 1st)
+    { x: cx - D,     y: yBot },         // 1: bottom left    (reveal 2nd)
+    { x: cx + D,     y: yBot },         // 2: bottom right   (reveal 3rd)
+    { x: cx - DOT_R, y: yBot - H },     // 3: top left       (reveal 4th)
     { x: cx + DOT_R, y: yBot - H },     // 4: top right      (reveal 5th)
   ];
 
@@ -549,19 +549,15 @@
     if (nextDots.length === 0) return;
     // Phase 1: dots stay plain for EMPHASIS_DELAY_MS so the kid has time
     // to think.  Then emphasis kicks in -- hop for the solo first dot,
-    // ghost-fade on Round 2 orange pair, wait-dot stroke otherwise.
+    // wait-dot stroke on every next dot (one or both) -- white placeholders
+    // get the same soft breathing stroke; orange only appears as the tap
+    // flash, not as a placeholder colour.  First solo dot still hops.
     const isFirstSoloDot = (count === 0);
-    const isRound2Pair = (round === 2 && nextDots.length === 2);
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
       if (isFirstSoloDot && nextDots.length === 1) {
         const el = dots[nextDots[0]].el;
         if (el) _hopStop = startHopping(el);
-      } else if (isRound2Pair) {
-        nextDots.forEach(idx => {
-          const el = dots[idx] && dots[idx].el;
-          if (el) el.classList.add('pair-ghost');     // orange fade in/out
-        });
       } else {
         nextDots.forEach(idx => {
           const el = dots[idx] && dots[idx].el;
@@ -595,19 +591,15 @@
         dots[i].color = groupColour;
         dots[i].value = 1;
       } else if (nextSet.has(i)) {
-        // next still-uncoloured dot(s) -- ready to tap.  No emphasis yet;
-        // startIdleTimers adds the hop / wait-dot / ghost-fade after 5s.
-        if (isRound2Pair) {
-          el.setAttribute('fill', '#ff6200');        // orange placeholder
-          el.style.opacity = '0.45';                 // dim, visible hint
-          dots[i].color = '#ff6200';
-        } else {
-          el.setAttribute('fill', '#ffffff');         // Round 1 / Round 2 solo
-          el.style.opacity = '1';
-          dots[i].color = '#ffffff';
-        }
+        // next still-uncoloured dot(s) -- white and ready to tap.  Round 2
+        // pair dots are NOT pre-coloured orange; the orange is only the
+        // flash on tap (set in handleDotTap), then it transitions to the
+        // new count's colour via the existing CSS fill transition.
+        el.setAttribute('fill', '#ffffff');
+        el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
         el.style.cursor = 'pointer';
+        dots[i].color = '#ffffff';
         dots[i].value = 0;
       } else {
         // future dot -- hidden until its turn

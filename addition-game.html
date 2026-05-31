@@ -285,32 +285,32 @@
     50%      { stroke-width: 2.6; stroke-opacity: 1.0;  }
   }
   .wait-dot { stroke: #000; animation: dotGlowBlack 3.6s ease-in-out infinite; }
-  /* Round 2 pair "ghost-fade" -- the two orange placeholder dots oscillate
-     opacity to invite the child to tap either one. */
+  /* Round 2 pair "ghost-fade" -- vestigial; pair phases now use the soft
+     wait-dot stroke + a tiny pulsing orange dot INSIDE each pair circle
+     (see .inner-hint below).  Kept for safety so any leftover .pair-ghost
+     classes still render quietly. */
   @keyframes pairGhost {
     0%, 100% { opacity: 0.35; }
     50%      { opacity: 0.90; }
   }
   .pair-ghost { animation: pairGhost 1.4s ease-in-out infinite; }
-  /* Round 2 "+2 incoming" centre pulse: show, hide, show, hide, then one
-     big-small flourish, then disappears.  Triggered on entry to each pair
-     phase (after the solo tap, and after the first pair settles). */
-  @keyframes orangeHintPulse {
-    0%   { opacity: 0;    transform: scale(0.4); }
-    8%   { opacity: 0.95; transform: scale(1.1); }
-    18%  { opacity: 0;    transform: scale(0.5); }
-    28%  { opacity: 0.95; transform: scale(1.1); }
-    38%  { opacity: 0;    transform: scale(0.5); }
-    50%  { opacity: 1.0;  transform: scale(1.55); }
-    72%  { opacity: 0.75; transform: scale(0.7);  }
-    100% { opacity: 0;    transform: scale(0.45); }
+  /* Inner orange "tap me" dot -- a small filled circle centred inside each
+     dot slot.  When a slot is part of a pair phase, its inner hint pulses
+     bigger/smaller continuously so the kid sees which two dots go together.
+     Lives in #innerHintGroup, hidden by default; .show enables the pulse. */
+  @keyframes innerHintPulse {
+    0%, 100% { transform: scale(0.65); opacity: 0.85; }
+    50%      { transform: scale(1.25); opacity: 1.0;  }
   }
-  #orangeHint {
+  .inner-hint {
     transform-box: fill-box;
     transform-origin: center;
+    opacity: 0;
+    pointer-events: none;
   }
-  #orangeHint.show {
-    animation: orangeHintPulse 2.4s ease-in-out 1 forwards;
+  .inner-hint.show {
+    opacity: 1;
+    animation: innerHintPulse 1.1s ease-in-out infinite;
   }
 </style>
 <script src="audio-library.js"></script>
@@ -367,11 +367,10 @@
     <svg class="play-svg" id="playSvg" viewBox="0 0 210 220" preserveAspectRatio="xMidYMid meet">
       <g id="bgGroup"></g>
       <g id="dotGroup"></g>
-      <!-- Round 2 "+2 incoming" hint: tiny orange dot in the centre that
-           pulses (show/hide a few times then big/small) when the pair
-           phase begins, then disappears. -->
-      <circle id="orangeHint" cx="105" cy="145" r="13" fill="#ff6200"
-              opacity="0" style="pointer-events:none"/>
+      <!-- One tiny orange "tap me" dot per slot, sitting inside the white
+           dot circle.  Hidden by default; the JS adds .show to the two
+           pair-slot hints during a pair phase so they pulse together. -->
+      <g id="innerHintGroup"></g>
     </svg>
   </div>
 
@@ -481,6 +480,22 @@
     return { el: c, i, color: '#ffffff', value: 0 };
   });
 
+  // One tiny orange inner-hint dot per slot, centred inside the white circle.
+  // Hidden by default; .show toggles a continuous bigger/smaller pulse.  Lives
+  // in its own group so it always renders ON TOP of the dot fill.
+  const innerHintGroup = document.getElementById('innerHintGroup');
+  const innerHints = slots.map(({x, y}) => {
+    const h = document.createElementNS(SVG_NS, 'circle');
+    h.setAttribute('cx', x);
+    h.setAttribute('cy', y);
+    h.setAttribute('r', DOT_R * 0.38);          // ~13.3 -- visibly inside
+    h.setAttribute('fill', '#ff6200');
+    h.setAttribute('class', 'inner-hint');
+    h.style.pointerEvents = 'none';
+    innerHintGroup.appendChild(h);
+    return h;
+  });
+
   // --- Paint tray ----------------------------------------------------
   // Tap a slot to load the brush.  Tap the active slot again to drop it.
   let activePaint = null;          // hex colour, or null
@@ -571,24 +586,18 @@
   function stopHopping() {
     if (_hopStop) { _hopStop(); _hopStop = null; }
   }
-  // Round 2 "+2 incoming" hint: tiny centre orange dot pulses a few times,
-  // then disappears.  Re-triggers each time a fresh pair phase begins.
-  function _showOrangeHint() {
-    const el = document.getElementById('orangeHint');
-    if (!el) return;
-    el.classList.remove('show');
-    void el.offsetWidth;                   // restart the CSS animation
-    el.classList.add('show');
-    setTimeout(() => { try { el.classList.remove('show'); } catch (e) {} }, 2500);
-  }
   function cancelIdleTimers() {
     if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
     if (_emphasisTimer) { clearTimeout(_emphasisTimer); _emphasisTimer = null; }
     dots.forEach(d => d.el.classList.remove('pair-ghost'));
+    innerHints.forEach(h => h.classList.remove('show'));
   }
-  // Returns array of "next-to-tap" dot indices.  Round 1: one at a time
-  // (the first uncoloured slot).  Round 2 (2+2+1): PAIR -> PAIR -> SOLO,
-  // so the equation builds as "2", then "2+2=4", then "2+2+1=5".
+  // Returns array of "next-to-tap" dot indices.
+  //   Round 1 (1+1+1+1+1): one at a time, next uncoloured slot.
+  //   Round 2 (2+1+1+1):  pair first (center + bottom-left), then 3 solos
+  //                        (top-left, bottom-right, top-right).
+  //   Round 3 (2+2+1):    first pair (center + bottom-left), second pair
+  //                        (bottom-right + top-right), then solo (top-left).
   function _getNextDots() {
     if (round === 1) {
       for (let i = 0; i < dots.length; i++) {
@@ -596,12 +605,33 @@
       }
       return [];
     }
-    // Round 2 (2+2+1): first pair (center + bottom-left) -> second pair
-    // (bottom-right + top-right) -> solo (top-left = the final +1).
-    if (colored.size === 0) return [0, 1];   // first pair "two"
-    if (colored.size === 2) return [3, 4];   // second pair "two plus two equals four"
-    if (colored.size === 4) return [2];      // solo "four plus one equals five"
+    if (round === 2) {
+      if (colored.size === 0) return [0, 1];   // first pair: "two"
+      if (colored.size === 2) return [2];      // +1: "2 + 1 = 3"
+      if (colored.size === 3) return [3];      // +1: "2 + 1 + 1 = 4"
+      if (colored.size === 4) return [4];      // +1: "2 + 1 + 1 + 1 = 5"
+      return [];
+    }
+    if (round === 3) {
+      if (colored.size === 0) return [0, 1];   // first pair: "two"
+      if (colored.size === 2) return [3, 4];   // second pair: "2 + 2 = 4"
+      if (colored.size === 4) return [2];      // solo: "2 + 2 + 1 = 5"
+      return [];
+    }
     return [];
+  }
+
+  // Builds the audio chain for the cumulative running equation, e.g.
+  // addends=[2,1,1] -> ['2','plus','1','plus','1','equals','4'].
+  function _cumulativeEquationChain(total) {
+    const chain = [];
+    for (let k = 0; k < addends.length; k++) {
+      if (k > 0) chain.push('plus');
+      chain.push(String(addends[k]));
+    }
+    chain.push('equals');
+    chain.push(String(total));
+    return chain;
   }
   function startIdleTimers() {
     cancelIdleTimers();
@@ -609,20 +639,33 @@
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
     // Phase 1: dots stay plain for EMPHASIS_DELAY_MS so the kid has time
-    // to think.  Then emphasis kicks in -- hop for the solo first dot,
-    // wait-dot stroke on every next dot (one or both) -- white placeholders
-    // get the same soft breathing stroke; orange only appears as the tap
-    // flash, not as a placeholder colour.  First solo dot still hops.
-    const isFirstSoloDot = (count === 0);
+    // to think.  Then emphasis kicks in:
+    //   - Round 1 very first dot (count===0): full HOP
+    //   - Pair phase: wait-dot breathing stroke on BOTH dots AND a small
+    //     orange dot pulses inside each one ("press these two together")
+    //   - Solo phase (Round 2 +1s, Round 3 final +1): wait-dot stroke only
+    const isFirstHopDot = (round === 1 && count === 0);
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
-      if (isFirstSoloDot && nextDots.length === 1) {
+      if (isFirstHopDot && nextDots.length === 1) {
         const el = dots[nextDots[0]].el;
         if (el) _hopStop = startHopping(el);
-      } else {
+        return;
+      }
+      // Wait-dot stroke on all next dots (one or two).
+      nextDots.forEach(idx => {
+        const el = dots[idx] && dots[idx].el;
+        if (el) el.classList.add('wait-dot');
+      });
+      // For a pair phase, also flip on the inner orange pulse for each
+      // pair slot -- restart the animation so it begins fresh together.
+      if (nextDots.length === 2) {
         nextDots.forEach(idx => {
-          const el = dots[idx] && dots[idx].el;
-          if (el) el.classList.add('wait-dot');
+          const h = innerHints[idx];
+          if (!h) return;
+          h.classList.remove('show');
+          void h.offsetWidth;            // reflow -> animation restart
+          h.classList.add('show');
         });
       }
     }, EMPHASIS_DELAY_MS);
@@ -681,29 +724,38 @@
   function onPerfectReached() {
     showPerfectBanner();
     if (round === 1) {
+      // Round 1 (1+1+1+1+1) -> Round 2 (2+1+1+1)
       setTimeout(() => {
         hidePerfectBanner();
         colored.clear();
         addends.length = 0;
-        _hasTappedThisRound = false;       // show target "5" again for next partition
+        _hasTappedThisRound = false;
         round = 2;
         refreshDots();
-        // First phase of Round 2 (2+2+1) is a pair -- pulse the orange hint
-        // so the kid knows two dots are coming.
-        _showOrangeHint();
+      }, 3500);
+    } else if (round === 2) {
+      // Round 2 (2+1+1+1) -> Round 3 (2+2+1)
+      setTimeout(() => {
+        hidePerfectBanner();
+        colored.clear();
+        addends.length = 0;
+        _hasTappedThisRound = false;
+        round = 3;
+        refreshDots();
       }, 3500);
     }
+    // Round 3 is the last partition for now -- banner stays.
   }
 
   function handleDotTap(i) {
     const nextDots = _getNextDots();
     if (nextDots.includes(i)) {
       const isPair = nextDots.length === 2;
-      if (isPair && round === 2) {
-        // Round 2 pair tap: flash both dots SOLID ORANGE for 500ms while the
-        // voice says "two plus <existing> equals <new>", then settle into
-        // the new count's colour.  The dots aren't added to `colored` yet
-        // so refreshDots() leaves them orange during the flash.
+      if (isPair && (round === 2 || round === 3)) {
+        // Pair tap: flash BOTH dots solid orange for 500ms while the voice
+        // speaks the cumulative running equation, then settle into the new
+        // count's colour.  Inner orange hints get hidden right away so the
+        // pulse doesn't overlap the flash.
         cancelIdleTimers();
         const existing = colored.size;
         const newCount = existing + 2;
@@ -712,40 +764,42 @@
           el.classList.remove('pair-ghost', 'wait-dot');
           el.setAttribute('fill', '#ff6200');
           el.style.opacity = '1';
-          el.style.pointerEvents = 'none';     // ignore further taps during flash
+          el.style.pointerEvents = 'none';
         });
+        addends.push(2);
         _cancelNarration();
-        // First pair of Round 2 (2+2+1): just "two".  Second pair: full
-        // equation "two plus two equals four" (existing=2, newCount=4).
-        if (existing === 0) {
+        // First-ever +2 (no previous addends): just "two".  Otherwise speak
+        // the full cumulative running equation, e.g. "2 plus 2 equals 4".
+        if (addends.length === 1) {
           _playKey('2');
         } else {
-          _playChain(['2', 'plus', String(existing), 'equals', String(newCount)]);
+          _playChain(_cumulativeEquationChain(newCount));
         }
-        addends.push(2);                            // record this +2 for the equation line
         _hasTappedThisRound = true;
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
-          refreshDots();                       // recolours all dots to the new count's colour
+          refreshDots();
           if (colored.size === dots.length) onPerfectReached();
-          else if (round === 2 && _getNextDots().length === 2) _showOrangeHint();
         }, 500);
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
-        // Solo tap (Round 1 every tap, Round 2 final +1 that finishes 2+2+1).
+        // Solo tap.
+        //   Round 1: every tap is +1 counting up by ones -- voice says the
+        //            new count ("one", "two", ...).
+        //   Round 2 (+1s after the opening pair) and Round 3 (final +1):
+        //            voice speaks the FULL cumulative running equation,
+        //            e.g. "2 plus 1 equals 3", "2 plus 2 plus 1 equals 5".
         nextDots.forEach(idx => colored.add(idx));
-        addends.push(1);                            // record this +1
+        addends.push(1);
         _hasTappedThisRound = true;
         refreshDots();
         _cancelNarration();
-        if (round === 2) {
-          // Final +1 in 2+2+1: "four plus one equals five"
-          _playChain([String(colored.size - 1), 'plus', '1', 'equals', String(colored.size)]);
-        } else {
+        if (round === 1) {
           _playKey(String(colored.size));
+        } else {
+          _playChain(_cumulativeEquationChain(colored.size));
         }
         if (colored.size === dots.length) onPerfectReached();
-        else if (round === 2 && _getNextDots().length === 2) _showOrangeHint();
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
     } else if (colored.has(i)) {

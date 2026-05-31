@@ -719,6 +719,23 @@
     chain.push(String(total));
     return chain;
   }
+  // Pick the chain to speak for a Round 2/3 tap.
+  //   - FINAL tap (count hits 5):    full cumulative equation
+  //   - Intermediate, <=2 addends:   cumulative (already short, sounds right)
+  //   - Intermediate, >2 addends:    DELTA form "PREV + N = NEW" so we don't
+  //                                  say "two plus one plus one equals four"
+  //                                  with its repeating ones; instead say
+  //                                  "three plus one equals four".
+  function _chainForTap(addends, total) {
+    if (addends.length === 0) return [];
+    const isFinal = (total === dots.length);
+    if (isFinal || addends.length <= 2) {
+      return _chainFromAddends(addends, total);
+    }
+    const inc = addends[addends.length - 1];     // newly added 1 or 2
+    const prev = total - inc;
+    return [String(prev), 'plus', String(inc), 'equals', String(total)];
+  }
   function startIdleTimers() {
     cancelIdleTimers();
     if (colored.size >= dots.length) return;
@@ -866,7 +883,7 @@
           el.style.pointerEvents = 'none';
         });
         _cancelNarration();
-        _playChain(_chainFromAddends(futureAddends, futureCount));
+        _playChain(_chainForTap(futureAddends, futureCount));
         _hasTappedThisRound = true;
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
@@ -887,7 +904,7 @@
         if (round === 1) {
           _playKey(String(colored.size));
         } else {
-          _playChain(_chainFromAddends(futureAddends, futureCount));
+          _playChain(_chainForTap(futureAddends, futureCount));
         }
         _enterPartitionView(() => {
           if (colored.size === dots.length) onPerfectReached();

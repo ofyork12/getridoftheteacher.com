@@ -620,6 +620,60 @@
     return [];
   }
 
+  // ---- Partition view ------------------------------------------------
+  // After every Round 2/3 tap, render each dot in its PARTITION colour
+  // (pair members = orange, solos = red) for a beat BEFORE recolouring
+  // every dot to the new count's colour.  Lets the kid SEE "2 orange + 1
+  // red = 3 yellow" instead of the dots snapping to yellow instantly.
+  const PARTITION_VIEW_MS = 1800;
+  let _partitionViewActive = false;
+  let _partitionViewTimer = null;
+
+  // Returns the partition colour for slot `i`, or null if Round 1 (Round 1
+  // has no pair groupings -- every dot is +1, so partition view == count view).
+  function _partitionColorForSlot(i) {
+    if (round === 1) return null;
+    const has = (k) => colored.has(k);
+    if (round === 2) {
+      if (i === 0 || i === 1) {
+        return (has(0) && has(1)) ? COUNT_COLORS[2] : COUNT_COLORS[1];
+      }
+      return COUNT_COLORS[1];
+    }
+    if (round === 3) {
+      if (i === 0 || i === 1) {
+        return (has(0) && has(1)) ? COUNT_COLORS[2] : COUNT_COLORS[1];
+      }
+      if (i === 3 || i === 4) {
+        return (has(3) && has(4)) ? COUNT_COLORS[2] : COUNT_COLORS[1];
+      }
+      return COUNT_COLORS[1];          // slot 2 is the lone +1
+    }
+    return null;
+  }
+
+  // Enter partition view: render once with partition colours, then
+  // PARTITION_VIEW_MS later refresh again with count colours and fire onDone
+  // (used by the Perfect check so the banner waits for the recolour).
+  function _enterPartitionView(onDone) {
+    if (_partitionViewTimer) { clearTimeout(_partitionViewTimer); _partitionViewTimer = null; }
+    if (round === 1) {
+      // No partition view in Round 1 -- everything is +1, partition == count.
+      _partitionViewActive = false;
+      refreshDots();
+      if (onDone) onDone();
+      return;
+    }
+    _partitionViewActive = true;
+    refreshDots();                      // paints partition colours immediately
+    _partitionViewTimer = setTimeout(() => {
+      _partitionViewActive = false;
+      _partitionViewTimer = null;
+      refreshDots();                    // flips to count colours
+      if (onDone) onDone();
+    }, PARTITION_VIEW_MS);
+  }
+
   // Compute the addends list FROM A DOT-COLORED SET.  The pair groupings
   // depend on the round: Round 1 every dot is +1; Round 2 has one pair
   // (slots 0+1); Round 3 has two pairs (0+1) and (3+4).  If only ONE
@@ -720,11 +774,20 @@
       const el = dots[i].el;
       el.classList.remove('wait-dot', 'pair-ghost');
       if (colored.has(i)) {
-        el.setAttribute('fill', groupColour);
+        // Partition-view mode (set briefly after every Round 2/3 tap):
+        // colour each dot by the partition it belongs to -- pair = orange,
+        // solo = red -- so the kid sees "2 orange + 1 red" before the
+        // whole group recolours to the new count's colour.
+        let fillColour = groupColour;
+        if (_partitionViewActive) {
+          const pc = _partitionColorForSlot(i);
+          if (pc) fillColour = pc;
+        }
+        el.setAttribute('fill', fillColour);
         el.style.opacity = '1';
         el.style.pointerEvents = 'auto';
         el.style.cursor = 'pointer';
-        dots[i].color = groupColour;
+        dots[i].color = fillColour;
         dots[i].value = 1;
       } else if (nextSet.has(i)) {
         // next still-uncoloured dot(s) -- white and ready to tap.  Round 2
@@ -790,9 +853,10 @@
       const futureCount   = futureSet.size;
 
       if (isPair && (round === 2 || round === 3)) {
-        // Pair tap: flash BOTH dots solid orange for 500ms while the voice
-        // speaks the running equation, then settle into the new count's
-        // colour.
+        // Pair tap: brief 500ms orange flash on BOTH new dots while the
+        // voice speaks the running equation, then drop into PARTITION VIEW
+        // (pair members stay orange, prior solos red) for ~1.8s so the kid
+        // can SEE the grouping, then recolour to the new count's colour.
         cancelIdleTimers();
         nextDots.forEach(idx => {
           const el = dots[idx].el;
@@ -806,25 +870,28 @@
         _hasTappedThisRound = true;
         setTimeout(() => {
           nextDots.forEach(idx => colored.add(idx));
-          refreshDots();
-          if (colored.size === dots.length) onPerfectReached();
+          _enterPartitionView(() => {
+            if (colored.size === dots.length) onPerfectReached();
+          });
         }, 500);
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       } else {
         // Solo tap.
-        //   Round 1: voice says just the new count ("one", "two", ...).
-        //   Round 2/3 solos: voice speaks the running equation, e.g.
-        //   "2 plus 1 equals 3", "2 plus 2 plus 1 equals 5".
+        //   Round 1: voice says just the new count ("one", "two", ...) and
+        //   refreshDots immediately (no partition grouping in Round 1).
+        //   Round 2/3 solos: enter PARTITION VIEW so the kid sees
+        //   "2 orange + 1 red" for ~1.8s before everything turns yellow.
         nextDots.forEach(idx => colored.add(idx));
         _hasTappedThisRound = true;
-        refreshDots();
         _cancelNarration();
         if (round === 1) {
           _playKey(String(colored.size));
         } else {
           _playChain(_chainFromAddends(futureAddends, futureCount));
         }
-        if (colored.size === dots.length) onPerfectReached();
+        _enterPartitionView(() => {
+          if (colored.size === dots.length) onPerfectReached();
+        });
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
     } else if (colored.has(i)) {

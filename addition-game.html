@@ -327,6 +327,7 @@
   }
 </style>
 <script src="audio-library.js"></script>
+<script src="praise-audio.js"></script>
 </head>
 <body>
 
@@ -1332,12 +1333,19 @@
     const b = document.getElementById('perfectBanner');
     if (b) b.classList.add('show');
     // Delay the praise audio so it doesn't overlap whatever clip just
-    // finished the round -- Round 1's "five" hits perfect synchronously,
-    // and Round 2/3's reveal ends with "five" via the chain.  700ms keeps
-    // the praise feeling immediate while leaving room for "five" to clear.
-    if (window.AudioLib) {
-      setTimeout(() => { try { AudioLib.play('perfect'); } catch (e) {} }, 700);
-    }
+    // finished the round.  Pick a RANDOM praise clip from the pool
+    // (great answer / fantastic / well done / etc.) so the kid hears
+    // a fresh variant each round.  Falls back to the plain "perfect"
+    // clip if the praise pool isn't loaded yet.
+    setTimeout(() => {
+      try {
+        if (typeof window.playRandomPraise === 'function') {
+          window.playRandomPraise();
+        } else if (window.AudioLib) {
+          AudioLib.play('perfect');
+        }
+      } catch (e) {}
+    }, 700);
   }
   function hidePerfectBanner() {
     const b = document.getElementById('perfectBanner');

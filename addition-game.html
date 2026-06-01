@@ -515,12 +515,12 @@
   // Slot indices: 0=bottom-centre, 1=bottom-left, 2=top-left,
   //               3=bottom-right, 4=top-right.
   const PARTITION_GROUPS = {
-    0: [5],            // 0 + 5 = 5  (intro -- one tap fills the whole 5)
     2: [2, 1, 1, 1],
     3: [2, 2, 1],
     4: [3, 1, 1],
     5: [3, 2],
     6: [4, 1],
+    7: [5],            // 0 + 5 = 5  (outro -- one tap fills the whole 5)
   };
   // Tangent-neighbour order tuned so a BFS from each slot picks partners
   // that form a CANONICAL ColorMyMath "3" -- 2 dots on the bottom + 1
@@ -710,7 +710,7 @@
   // Round 2 (after the first Perfect): build to 5 by +2 each tap -- the
   // first dot is solo, then a PAIR of dots appears together and tapping
   // either one adds both. The kid hears "plus two" on each pair tap.
-  let round = 0;     // start at "0 + 5 = 5" intro -- one tap fills all 5
+  let round = 1;     // 0 + 5 = 5 now comes at the very end as Round 7
 
   // Match counting-to-10-game.html's pattern (user 2026-05-30): only the
   // next white dot is visible; future dots are hidden until their turn.
@@ -1049,10 +1049,14 @@
       (val === 1) ? [{ key: 'plus_one', gap: 900, onStart }]
                   : [{ key: 'plus' }, { key: String(val), gap: 900, onStart }];
 
-    const items = [
+    const items = [];
+    // Round 7's partition is "0 + 5 = 5" -- prefix the chain with the
+    // "zero" clip so the voice walks the kid through the whole equation.
+    if (round === 7) items.push({ key: '0' });
+    items.push(
       ...addPlus(newAddend, () => {
         _pulseSlots(lastSlots, 750);
-        if (eqLineEl) eqLineEl.textContent = addends.join(' + ');
+        if (eqLineEl) eqLineEl.textContent = (round === 7 ? '0 + ' : '') + addends.join(' + ');
       }),
       { key: 'equals' },
       {
@@ -1063,10 +1067,13 @@
             dots[i].el.setAttribute('fill', blue);
           }
           _pulseSlots([0, 1, 2, 3, 4], 900);
-          if (eqLineEl) eqLineEl.textContent = addends.join(' + ') + ' = ' + total;
+          if (eqLineEl) {
+            const prefix = (round === 7) ? '0 + ' : '';
+            eqLineEl.textContent = prefix + addends.join(' + ') + ' = ' + total;
+          }
         }
       }
-    ];
+    );
 
     if (window.AudioLib) {
       AudioLib.playChain(items, { gap: 200, onDone: () => { if (onDone) onDone(); } });
@@ -1236,15 +1243,21 @@
     // (e.g. "two plus two plus one equals five" with number labels 1-5
     // in LTR-TTB order).  Then advance to the next round, or just hold
     // on the final blue + labelled state for Round 6.
-    const nextRound = (round < 6) ? round + 1 : null;
+    // Round 7 (0 + 5 = 5) is the last partition: no separate walkthrough
+    // review (the reveal already voices the whole equation), just pop
+    // the Replay + Next-lesson end controls.
+    if (round === 7) {
+      setTimeout(_showEndControls, BEFORE_REVIEW_MS);
+      return;
+    }
+    const nextRound = (round < 7) ? round + 1 : null;
     setTimeout(() => {
       hidePerfectBanner();
       _playPartitionReview(_computeAddends(), dots.length, () => {
         if (nextRound != null) {
           setTimeout(() => { _advanceRound(nextRound); }, AFTER_REVIEW_MS);
         } else {
-          // Round 6 review finished -- pop the Replay button and the big
-          // next-lesson arrow so the kid can choose what to do next.
+          // Fallback in case Round 7 ever lands here.
           setTimeout(_showEndControls, AFTER_REVIEW_MS);
         }
       });
@@ -1372,17 +1385,20 @@
     // dot; Round 2: pair 0+1 then solos; Round 3: pairs 0+1 and 3+4 then
     // solo 2).  Equation line ALWAYS matches what's painted.
     const addendsNow = _computeAddends(colored);
+    // Round 7's partition is "0 + 5 = 5" -- prepend "0 + " so the kid
+    // sees the equation that's about to be voiced.
+    const r7prefix = (round === 7) ? '0 + ' : '';
     if (addendsNow.length === 0 || count === 0) {
       eqLineEl.textContent = '';
     } else if (addendsNow.length === 1) {
-      eqLineEl.textContent = String(addendsNow[0]);
+      eqLineEl.textContent = r7prefix + String(addendsNow[0]);
     } else if (count === dots.length) {
       // Round complete -- show "= N" alongside the full partition.
-      eqLineEl.textContent = addendsNow.join(' + ') + ' = ' + count;
+      eqLineEl.textContent = r7prefix + addendsNow.join(' + ') + ' = ' + count;
     } else {
       // Still building -- addends only, no "=" yet (matches the audio,
       // which doesn't say "equals" until the final tap).
-      eqLineEl.textContent = addendsNow.join(' + ');
+      eqLineEl.textContent = r7prefix + addendsNow.join(' + ');
     }
   }
 

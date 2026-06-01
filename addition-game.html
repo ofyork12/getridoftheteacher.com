@@ -979,7 +979,12 @@
     //   R4 (3+1+1):   triangle = [2,1,0],        solos = 4, 3
     //   R5 (3+2):     triangle = [2,1,0],        pair = right column
     //   R6 (4+1):     quad = [2,1,0,4],          solo = bottom-right
-    const walkOrder = [2, 1, 0, 4, 3];
+    // Round 3 zig-zags down-up-down so labels read 1 (top-left),
+    // 2 (bottom-left), 3 (top-right), 4 (bottom-centre), 5 (bottom-right).
+    // That keeps pair 1 = left column [2, 1] and pair 2 = the diagonal
+    // [4, 0] (top-right + bottom-centre), with the solo on the far
+    // bottom-right.
+    const walkOrder = (round === 3) ? [2, 1, 4, 0, 3] : [2, 1, 0, 4, 3];
     const items = [];
     let labelIdx = 0;
     let textSoFar = '';

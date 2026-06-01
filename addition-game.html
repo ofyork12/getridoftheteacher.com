@@ -809,10 +809,17 @@
         key: String(count),
         gap: 250,
         onStart: () => {
-          const el = dots[slot].el;
-          el.setAttribute('fill', color);
+          // Show this dot's number label.
           numLabels[slot].textContent = String(count);
           numLabels[slot].setAttribute('opacity', '1');
+          // Recolour EVERY revealed dot so far (including this one) to
+          // the current count's colour.  "two" -> two ORANGE dots
+          // labelled 1 and 2; "three" -> three YELLOW dots labelled
+          // 1, 2, 3; ... "five" -> five BLUE dots labelled 1-5.
+          for (let j = 0; j <= k; j++) {
+            const ds = tapOrder[j];
+            dots[ds].el.setAttribute('fill', color);
+          }
           _pulseSlots([slot], 700);
           if (eqEl) eqEl.innerHTML = '<span class="num">' + count + '</span>';
         }

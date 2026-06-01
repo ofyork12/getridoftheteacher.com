@@ -634,19 +634,24 @@
       return [];
     }
     if (round === 4) {
-      if (colored.size === 0) return [0, 1, 3];     // triple: bottom row
-      if (colored.size === 3) return [2];           // solo: top-left
-      if (colored.size === 4) return [4];           // solo: top-right
+      // 3 = right triangle (2 bottom + 1 top): bottom-center, bottom-right,
+      // top-right -- a ColorMyMath "3" shape.  Solos fill the remaining
+      // bottom-left and top-left.
+      if (colored.size === 0) return [0, 3, 4];     // triple "3" triangle
+      if (colored.size === 3) return [1];           // solo: bottom-left
+      if (colored.size === 4) return [2];           // solo: top-left
       return [];
     }
     if (round === 5) {
-      if (colored.size === 0) return [0, 1, 3];     // triple
-      if (colored.size === 3) return [2, 4];        // pair: top row
+      if (colored.size === 0) return [0, 3, 4];     // same "3" triangle
+      if (colored.size === 3) return [1, 2];        // pair: left column
       return [];
     }
     if (round === 6) {
-      if (colored.size === 0) return [0, 1, 2, 3];  // quad: all but top-right
-      if (colored.size === 4) return [4];           // solo: top-right
+      // "4" = the four corners forming a rectangle (omits bottom-center
+      // slot 0), then bottom-center is the +1 solo.
+      if (colored.size === 0) return [1, 2, 3, 4];  // quad "4" corners
+      if (colored.size === 4) return [0];           // solo: bottom-center
       return [];
     }
     return [];
@@ -681,16 +686,16 @@
       return COUNT_COLORS[1];
     }
     if (round === 4) {
-      if (i === 0 || i === 1 || i === 3) return groupColor([0, 1, 3], 3);
+      if (i === 0 || i === 3 || i === 4) return groupColor([0, 3, 4], 3);
       return COUNT_COLORS[1];
     }
     if (round === 5) {
-      if (i === 0 || i === 1 || i === 3) return groupColor([0, 1, 3], 3);
-      if (i === 2 || i === 4)             return groupColor([2, 4], 2);
+      if (i === 0 || i === 3 || i === 4) return groupColor([0, 3, 4], 3);
+      if (i === 1 || i === 2)             return groupColor([1, 2], 2);
       return null;
     }
     if (round === 6) {
-      if (i === 0 || i === 1 || i === 2 || i === 3) return groupColor([0, 1, 2, 3], 4);
+      if (i === 1 || i === 2 || i === 3 || i === 4) return groupColor([1, 2, 3, 4], 4);
       return COUNT_COLORS[1];
     }
     return null;
@@ -736,29 +741,29 @@
       return arr;
     }
     if (round === 4) {
-      // 3 + 1 + 1: triple = slots 0,1,3 (bottom row); solos = 2, 4
-      if (has(0) && has(1) && has(3)) arr.push(3);
-      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); if (has(3)) arr.push(1); }
+      // 3 + 1 + 1: triple = slots 0,3,4 ("3" triangle); solos = 1, 2
+      if (has(0) && has(3) && has(4)) arr.push(3);
+      else { if (has(0)) arr.push(1); if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
+      if (has(1)) arr.push(1);
       if (has(2)) arr.push(1);
-      if (has(4)) arr.push(1);
       return arr;
     }
     if (round === 5) {
-      // 3 + 2: triple = slots 0,1,3; pair = slots 2,4 (top row)
-      if (has(0) && has(1) && has(3)) arr.push(3);
-      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); if (has(3)) arr.push(1); }
-      if (has(2) && has(4)) arr.push(2);
-      else { if (has(2)) arr.push(1); if (has(4)) arr.push(1); }
+      // 3 + 2: triple = slots 0,3,4; pair = slots 1,2 (left column)
+      if (has(0) && has(3) && has(4)) arr.push(3);
+      else { if (has(0)) arr.push(1); if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
+      if (has(1) && has(2)) arr.push(2);
+      else { if (has(1)) arr.push(1); if (has(2)) arr.push(1); }
       return arr;
     }
     if (round === 6) {
-      // 4 + 1: quad = slots 0,1,2,3; solo = 4
-      if (has(0) && has(1) && has(2) && has(3)) arr.push(4);
+      // 4 + 1: quad = slots 1,2,3,4 (4 corners); solo = 0 (bottom-center)
+      if (has(1) && has(2) && has(3) && has(4)) arr.push(4);
       else {
-        if (has(0)) arr.push(1); if (has(1)) arr.push(1);
-        if (has(2)) arr.push(1); if (has(3)) arr.push(1);
+        if (has(1)) arr.push(1); if (has(2)) arr.push(1);
+        if (has(3)) arr.push(1); if (has(4)) arr.push(1);
       }
-      if (has(4)) arr.push(1);
+      if (has(0)) arr.push(1);
       return arr;
     }
     return arr;
@@ -800,9 +805,9 @@
   function _slotsForAddendList() {
     if (round === 2) return [[0, 1], [2], [3], [4]];           // 2 + 1 + 1 + 1
     if (round === 3) return [[0, 1], [3, 4], [2]];             // 2 + 2 + 1
-    if (round === 4) return [[0, 1, 3], [2], [4]];             // 3 + 1 + 1
-    if (round === 5) return [[0, 1, 3], [2, 4]];               // 3 + 2
-    if (round === 6) return [[0, 1, 2, 3], [4]];               // 4 + 1
+    if (round === 4) return [[0, 3, 4], [1], [2]];             // 3 + 1 + 1
+    if (round === 5) return [[0, 3, 4], [1, 2]];               // 3 + 2
+    if (round === 6) return [[1, 2, 3, 4], [0]];               // 4 + 1
     return [];
   }
 
@@ -950,13 +955,15 @@
         dots[i].color = fillColour;
         dots[i].value = 1;
       } else {
-        // Empty dot -- ALWAYS visible white, whether it's the next-to-tap
-        // or a later slot.  The user wants all 5 dots there from the
-        // start; empty slots show as white circles waiting to be filled.
+        // Empty dot -- ALWAYS visible white.  In Round 1 every uncoloured
+        // dot is tappable (the kid can pick any spot to count up at).
+        // Rounds 2-6 only let the kid tap dots in the next canonical
+        // group, so the partition picture stays intact.
         el.setAttribute('fill', '#ffffff');
         el.style.opacity = '1';
-        el.style.pointerEvents = nextSet.has(i) ? 'auto' : 'none';
-        el.style.cursor      = nextSet.has(i) ? 'pointer' : 'default';
+        const tappable = (round === 1) || nextSet.has(i);
+        el.style.pointerEvents = tappable ? 'auto' : 'none';
+        el.style.cursor      = tappable ? 'pointer' : 'default';
         dots[i].color = '#ffffff';
         dots[i].value = 0;
       }
@@ -985,11 +992,18 @@
 
   function handleDotTap(i) {
     const nextDots = _getNextDots();
-    if (nextDots.includes(i)) {
+    // Round 1 lets the kid count up by tapping ANY uncoloured dot, not
+    // just the next canonical slot.  Treat an off-list tap on an empty
+    // dot as a valid Round 1 +1.
+    const round1FreeTap = (round === 1 && !nextDots.includes(i) && !colored.has(i));
+    if (nextDots.includes(i) || round1FreeTap) {
+      // For a free Round 1 tap, the "next dots" we'll fill are just the
+      // tapped dot.  Otherwise it's whatever the canonical group says.
+      const effectiveNext = round1FreeTap ? [i] : nextDots;
       // Multi-dot group = pair, triple, or quad (Rounds 2-6).
-      const isGroup = nextDots.length >= 2 && round >= 2;
+      const isGroup = effectiveNext.length >= 2 && round >= 2;
       const futureSet = new Set(colored);
-      nextDots.forEach(idx => futureSet.add(idx));
+      effectiveNext.forEach(idx => futureSet.add(idx));
       const futureAddends = _computeAddends(futureSet);
       const futureCount   = futureSet.size;
       const isFinal       = (round >= 2 && futureCount === dots.length);
@@ -1000,9 +1014,9 @@
         // either trigger the FINAL reveal (this tap completes the round)
         // or drop into partition view.
         cancelIdleTimers();
-        const groupValue = nextDots.length;            // 2, 3, or 4
+        const groupValue = effectiveNext.length;       // 2, 3, or 4
         const flashColor = COUNT_COLORS[groupValue];
-        nextDots.forEach(idx => {
+        effectiveNext.forEach(idx => {
           const el = dots[idx].el;
           el.classList.remove('pair-ghost', 'wait-dot');
           el.setAttribute('fill', flashColor);
@@ -1016,13 +1030,13 @@
           // to the cumulative reveal so the kid sees the partition picture
           // with the voiced walkthrough.
           setTimeout(() => {
-            nextDots.forEach(idx => colored.add(idx));
+            effectiveNext.forEach(idx => colored.add(idx));
             _playFinalReveal(futureAddends, futureCount, onPerfectReached);
           }, 500);
         } else {
           _playChain(_chainForTap(futureAddends, futureCount));
           setTimeout(() => {
-            nextDots.forEach(idx => colored.add(idx));
+            effectiveNext.forEach(idx => colored.add(idx));
             _enterPartitionView(() => {
               if (colored.size === dots.length) onPerfectReached();
             });
@@ -1034,7 +1048,7 @@
         //   Round 1:   voice says the new count ("one", "two", ...).
         //   Rounds 2-6 intermediate solos: delta audio + partition view.
         //   FINAL solo of any Round 2-6: cumulative reveal animation.
-        nextDots.forEach(idx => colored.add(idx));
+        effectiveNext.forEach(idx => colored.add(idx));
         _hasTappedThisRound = true;
         _cancelNarration();
         if (isFinal) {

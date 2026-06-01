@@ -1304,16 +1304,18 @@
   const replayBtn = document.getElementById('replayBtn');
   if (replayBtn) replayBtn.addEventListener('click', _replayFromStart);
 
-  // Debounce repeat taps so a touch-misfire (two click events fired in
-  // quick succession for one finger tap, common on mobile browsers)
-  // can't accidentally trigger a SECOND group fill -- the symptom the
-  // kid sees as "I tapped once but THREE dots filled" in Round 3's
-  // second pair phase (pair 2's 2 dots + the solo's 1 dot all at once).
+  // Per-slot debounce: a touch misfire usually produces TWO click
+  // events for the SAME slot in quick succession (touchend + the
+  // browser-synthesised click).  Block only same-slot repeats inside
+  // a 320ms window.  Different-slot taps are never blocked, so the
+  // kid can still tap fast between distinct dots.
   let _lastTapAt = 0;
+  let _lastTapSlot = -1;
   function handleDotTap(i) {
     const now = Date.now();
-    if (now - _lastTapAt < 280) return;
+    if (i === _lastTapSlot && (now - _lastTapAt) < 320) return;
     _lastTapAt = now;
+    _lastTapSlot = i;
     if (!colored.has(i)) {
       cancelIdleTimers();
       _cancelNarration();

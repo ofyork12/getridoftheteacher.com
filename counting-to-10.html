@@ -65,7 +65,7 @@
     <h2 class="section-heading">Game — Tap to Count</h2>
     <p class="section-note">Tap once to start, then tap again for each number as you count up.</p>
     <div class="interactive-frame">
-      <iframe src="counting-to-10-game.html" title="Counting to 10 game" allow="autoplay"></iframe>
+      <iframe src="counting-to-10-game.html?v=2026-06-01autostart" title="Counting to 10 game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play</h2>
@@ -86,8 +86,21 @@
   </div>
   <script>
     // Auto-scroll straight to the Game on load -- the user doesn't want to
-    // scroll past the title/nav to reach the game every time.
+    // scroll past the title/nav to reach the game every time.  If the
+    // page was opened with ?autostart=1 (the arrow from the addition
+    // game), forward that flag into the game iframe so the count-up
+    // kicks off automatically.
     window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('autostart') === '1') {
+          const gameIframe = document.querySelector('.interactive-frame iframe');
+          if (gameIframe) {
+            const sep = gameIframe.getAttribute('src').includes('?') ? '&' : '?';
+            gameIframe.setAttribute('src', gameIframe.getAttribute('src') + sep + 'autostart=1');
+          }
+        }
+      } catch (e) {}
       const gameFrame = document.querySelector('.interactive-frame');
       if (gameFrame) gameFrame.scrollIntoView({ block: 'start' });
     });

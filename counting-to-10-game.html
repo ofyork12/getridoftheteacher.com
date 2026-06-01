@@ -2698,25 +2698,46 @@
     // so the document-level tap handler doesn't intercept it.
     const btn = document.createElement('button');
     btn.id = 'replayBtn';
-    btn.textContent = 'Replay';
+    btn.textContent = '↻  Replay';
     btn.style.cssText =
-      'position:absolute;top:18%;left:50%;transform:translateX(-50%);' +
-      'z-index:1001;font-family:Nunito,sans-serif;font-size:5vh;font-weight:800;' +
-      'padding:1.8vh 5vw;background:#ff6200;color:#fff;' +
-      'border:4px solid #000;border-radius:3vh;cursor:pointer;' +
+      'position:absolute;top:14%;left:50%;transform:translateX(-50%);' +
+      'z-index:1001;font-family:Nunito,sans-serif;font-size:4.5vh;font-weight:900;' +
+      'padding:1.6vh 5vw;background:#0066ff;color:#fff;' +
+      'border:4px solid #fff;border-radius:999px;cursor:pointer;' +
       'box-shadow:0 8px 25px rgba(0,0,0,0.35);' +
       'opacity:0;transition:opacity 0.5s ease 0.3s;';
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();
       board.remove();
       btn.remove();
+      if (nextBtn) nextBtn.remove();
       play();
     }, true);
     stage.appendChild(btn);
 
+    // Next-lesson arrow: advances to making-10.html with autostart so
+    // that game kicks off the same way this one did.  Sits BELOW the
+    // Replay button so they don't compete for the same tap target.
+    const nextBtn = document.createElement('a');
+    nextBtn.id = 'nextLessonBtn';
+    nextBtn.href = 'making-10.html?autostart=1';
+    nextBtn.setAttribute('target', '_top');
+    nextBtn.setAttribute('rel', 'noopener');
+    nextBtn.textContent = '→';
+    nextBtn.style.cssText =
+      'position:absolute;top:26%;left:50%;transform:translateX(-50%);' +
+      'z-index:1001;font-family:Nunito,sans-serif;font-size:9vh;font-weight:900;' +
+      'padding:1vh 7vw;background:#00a12c;color:#fff;line-height:1;' +
+      'border:4px solid #fff;border-radius:999px;cursor:pointer;text-decoration:none;' +
+      'box-shadow:0 8px 25px rgba(0,0,0,0.35);' +
+      'opacity:0;transition:opacity 0.5s ease 0.5s;';
+    nextBtn.addEventListener('click', (ev) => { ev.stopPropagation(); }, true);
+    stage.appendChild(nextBtn);
+
     requestAnimationFrame(() => {
       board.style.opacity = '1';
       btn.style.opacity = '1';
+      nextBtn.style.opacity = '1';
     });
   }
 
@@ -2773,6 +2794,18 @@
     setInitialStairs();
     // The single document 'click' listener above drives both the start tap
     // and subsequent tap-to-advance taps.
+    // If the page was loaded with ?autostart=1 (the green arrow from the
+    // addition game), simulate a single first tap so the count-up kicks
+    // off without the kid having to tap to start.  Audio may take an
+    // extra tap to unlock on iOS Safari, but the visual will roll.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('autostart') === '1') {
+        setTimeout(() => {
+          document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }, 400);
+      }
+    } catch (e) {}
   });
 </script>
 

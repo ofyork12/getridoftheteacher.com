@@ -462,14 +462,20 @@
     5: [3, 2],
     6: [4, 1],
   };
-  // Tangent-neighbour order, tweaked so a BFS from each slot picks
-  // partners that form nice triangles / pairs.
+  // Tangent-neighbour order tuned so a BFS from each slot picks partners
+  // that form a CANONICAL ColorMyMath "3" -- 2 dots on the bottom + 1
+  // dot on top -- whichever dot the kid taps first.
+  //   tap 0 -> [0, 3, 4] right triangle (2 bottom + 1 top)
+  //   tap 1 -> [1, 0, 2] left triangle  (2 bottom + 1 top-left)
+  //   tap 2 -> [2, 1, 0] (slot 2 the lone top, slots 1+0 the bottom)
+  //   tap 3 -> [3, 4, 0] (slot 4 the lone top, slots 3+0 the bottom)
+  //   tap 4 -> [4, 3, 0] (slot 4 the lone top, slots 3+0 the bottom)
   const ADJACENT = {
     0: [3, 4, 1, 2],
     1: [0, 2],
-    2: [1, 4, 0],
+    2: [1, 0, 4],     // bottom-left before any top neighbour
     3: [4, 0],
-    4: [3, 2, 0],
+    4: [3, 0, 2],     // bottom-centre before top-left
   };
   // Pick the group of slots to fill when the kid taps `tappedSlot`,
   // anchored on that slot.  groupSize=1 fills just the tapped dot.
@@ -886,7 +892,16 @@
     if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    const walkOrder = [2, 4, 1, 0, 3];   // top-left, top-right, bottom-left, bottom-centre, bottom-right
+    // Per-round walk order.  Labels still start "like reading" (top
+    // dot first), but for Rounds 4 + 5 the "3" group lands on slots
+    // that form the canonical triangle (2 bottom + 1 top) instead of
+    // a top-row-first sequence that would put 2 of the 3 on top.
+    //   R2/R3/R6: strict LTR-TTB -- pair / pair-pair / quad sit at
+    //             top + bottom-left of the layout, solo on bottom-right.
+    //   R4/R5:    triangle [slot 2, slot 1, slot 0] then right column.
+    const walkOrder =
+        (round === 4 || round === 5) ? [2, 1, 0, 4, 3]
+                                     : [2, 4, 1, 0, 3];
     const items = [];
     let labelIdx = 0;
     let textSoFar = '';

@@ -440,9 +440,20 @@
   const dotGroup = document.getElementById('dotGroup');
   const eqEl     = document.getElementById('eq');
   const eqLineEl = document.getElementById('eqLine');
-  // The addends list is DERIVED from the current dot groups -- we never
-  // store a tap history that could desync from what's on screen.  See
-  // _computeAddends() further down.
+  // The addends list is DERIVED from the kid's tap order + the round's
+  // canonical partition (how many dots are in each group).  Rounds 2-6
+  // let the kid tap ANY uncoloured dot in any order; the FIRST N taps
+  // form the biggest group, then subsequent taps fill smaller groups
+  // and solos.  See `tapOrder`, `PARTITION_GROUPS`, and _computeAddends.
+  const tapOrder = [];   // slot indices in the order the kid tapped them
+  const PARTITION_GROUPS = {
+    1: [1, 1, 1, 1, 1],     // 1 + 1 + 1 + 1 + 1
+    2: [2, 1, 1, 1],        // 2 + 1 + 1 + 1
+    3: [2, 2, 1],           // 2 + 2 + 1
+    4: [3, 1, 1],           // 3 + 1 + 1
+    5: [3, 2],              // 3 + 2
+    6: [4, 1],              // 4 + 1
+  };
   // True once the kid has tapped at least once this partition.  Lets us
   // show the target ("5") at the very start of every partition and switch
   // to the running count as soon as they begin -- and still show "0" when
@@ -605,56 +616,13 @@
     dots.forEach(d => d.el.classList.remove('pair-ghost'));
     innerHints.forEach(h => h.classList.remove('show'));
   }
-  // Returns array of "next-to-tap" dot indices.  All partitions follow
-  // the BIGGEST-FIRST rule -- the largest addend group always comes first.
-  //   Round 1 (1+1+1+1+1):  one at a time
-  //   Round 2 (2+1+1+1):    pair (0,1) -> solo 2 -> solo 3 -> solo 4
-  //   Round 3 (2+2+1):      pair (0,1) -> pair (3,4) -> solo 2
-  //   Round 4 (3+1+1):      triple (0,1,3) -> solo 2 -> solo 4
-  //   Round 5 (3+2):        triple (0,1,3) -> pair (2,4)
-  //   Round 6 (4+1):        quad (0,1,2,3) -> solo 4
+  // Every round: any uncoloured dot is tappable.  The kid picks order.
   function _getNextDots() {
-    if (round === 1) {
-      for (let i = 0; i < dots.length; i++) {
-        if (!colored.has(i)) return [i];
-      }
-      return [];
+    const arr = [];
+    for (let i = 0; i < dots.length; i++) {
+      if (!colored.has(i)) arr.push(i);
     }
-    if (round === 2) {
-      if (colored.size === 0) return [0, 1];
-      if (colored.size === 2) return [2];
-      if (colored.size === 3) return [3];
-      if (colored.size === 4) return [4];
-      return [];
-    }
-    if (round === 3) {
-      if (colored.size === 0) return [0, 1];
-      if (colored.size === 2) return [3, 4];
-      if (colored.size === 4) return [2];
-      return [];
-    }
-    if (round === 4) {
-      // 3 = right triangle (2 bottom + 1 top): bottom-center, bottom-right,
-      // top-right -- a ColorMyMath "3" shape.  Solos fill the remaining
-      // bottom-left and top-left.
-      if (colored.size === 0) return [0, 3, 4];     // triple "3" triangle
-      if (colored.size === 3) return [1];           // solo: bottom-left
-      if (colored.size === 4) return [2];           // solo: top-left
-      return [];
-    }
-    if (round === 5) {
-      if (colored.size === 0) return [0, 3, 4];     // same "3" triangle
-      if (colored.size === 3) return [1, 2];        // pair: left column
-      return [];
-    }
-    if (round === 6) {
-      // "4" = the four corners forming a rectangle (omits bottom-center
-      // slot 0), then bottom-center is the +1 solo.
-      if (colored.size === 0) return [1, 2, 3, 4];  // quad "4" corners
-      if (colored.size === 4) return [0];           // solo: bottom-center
-      return [];
-    }
-    return [];
+    return arr;
   }
 
   // ---- Partition view ------------------------------------------------
@@ -668,37 +636,32 @@
 
   // Returns the partition colour for slot `i`, or null if Round 1 (Round 1
   // has no pair groupings -- every dot is +1, so partition view == count view).
-  function _partitionColorForSlot(i) {
-    if (round === 1) return null;
-    const has = (k) => colored.has(k);
-    // Helper: if every slot in `group` is coloured, return the group's
-    // partition colour; otherwise the lone slot counts as +1 (red).
-    const groupColor = (group, value) =>
-      group.every(s => has(s)) ? COUNT_COLORS[value] : COUNT_COLORS[1];
-
-    if (round === 2) {
-      if (i === 0 || i === 1) return groupColor([0, 1], 2);
-      return COUNT_COLORS[1];
-    }
-    if (round === 3) {
-      if (i === 0 || i === 1) return groupColor([0, 1], 2);
-      if (i === 3 || i === 4) return groupColor([3, 4], 2);
-      return COUNT_COLORS[1];
-    }
-    if (round === 4) {
-      if (i === 0 || i === 3 || i === 4) return groupColor([0, 3, 4], 3);
-      return COUNT_COLORS[1];
-    }
-    if (round === 5) {
-      if (i === 0 || i === 3 || i === 4) return groupColor([0, 3, 4], 3);
-      if (i === 1 || i === 2)             return groupColor([1, 2], 2);
-      return null;
-    }
-    if (round === 6) {
-      if (i === 1 || i === 2 || i === 3 || i === 4) return groupColor([1, 2, 3, 4], 4);
-      return COUNT_COLORS[1];
+  // Map a tap index to its partition group based on tap order + round.
+  // Returns { groupSize, groupComplete } -- the group this tap belongs
+  // to in the round's PARTITION_GROUPS plan, and whether the group has
+  // all its members tapped yet.
+  function _groupForTap(tapIdx) {
+    const sizes = PARTITION_GROUPS[round] || [];
+    let pos = 0;
+    for (const size of sizes) {
+      if (tapIdx < pos + size) {
+        return { groupSize: size, groupComplete: tapOrder.length >= pos + size, start: pos };
+      }
+      pos += size;
     }
     return null;
+  }
+
+  // Partition colour for a coloured slot.  Round 1: null (count colour).
+  // Rounds 2-6: the group's value colour if the group is complete, else
+  // red (each in-progress tap shows as +1 until the group fills).
+  function _partitionColorForSlot(i) {
+    if (round === 1) return null;
+    const tapIdx = tapOrder.indexOf(i);
+    if (tapIdx < 0) return null;
+    const g = _groupForTap(tapIdx);
+    if (!g) return COUNT_COLORS[1];
+    return g.groupComplete ? COUNT_COLORS[g.groupSize] : COUNT_COLORS[1];
   }
 
   // Refresh + fire callback.  Used to be a timed "partition view" that
@@ -712,59 +675,26 @@
     if (onDone) onDone();
   }
 
-  // Compute the addends list FROM A DOT-COLORED SET.  The pair groupings
-  // depend on the round: Round 1 every dot is +1; Round 2 has one pair
-  // (slots 0+1); Round 3 has two pairs (0+1) and (3+4).  If only ONE
-  // member of a pair is coloured (kid untapped one half), that lone dot
-  // counts as +1 -- the equation always reflects what's actually visible.
-  function _computeAddends(setIn) {
-    const has = (i) => setIn.has(i);
+  // Compute the addends list from `tapOrder` + the round's group plan.
+  // A complete group voices its full value (e.g. 2, 3, 4); a partial
+  // group emits a +1 per tap until it fills.
+  function _computeAddends(/* setIn arg unused -- legacy signature */) {
+    const sizes = PARTITION_GROUPS[round] || [];
+    const tappedCount = tapOrder.length;
     const arr = [];
-    if (round === 1) {
-      for (let i = 0; i < 5; i++) if (has(i)) arr.push(1);
-      return arr;
-    }
-    if (round === 2) {
-      if (has(0) && has(1)) arr.push(2);
-      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); }
-      if (has(2)) arr.push(1);
-      if (has(3)) arr.push(1);
-      if (has(4)) arr.push(1);
-      return arr;
-    }
-    if (round === 3) {
-      if (has(0) && has(1)) arr.push(2);
-      else { if (has(0)) arr.push(1); if (has(1)) arr.push(1); }
-      if (has(3) && has(4)) arr.push(2);
-      else { if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
-      if (has(2)) arr.push(1);
-      return arr;
-    }
-    if (round === 4) {
-      // 3 + 1 + 1: triple = slots 0,3,4 ("3" triangle); solos = 1, 2
-      if (has(0) && has(3) && has(4)) arr.push(3);
-      else { if (has(0)) arr.push(1); if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
-      if (has(1)) arr.push(1);
-      if (has(2)) arr.push(1);
-      return arr;
-    }
-    if (round === 5) {
-      // 3 + 2: triple = slots 0,3,4; pair = slots 1,2 (left column)
-      if (has(0) && has(3) && has(4)) arr.push(3);
-      else { if (has(0)) arr.push(1); if (has(3)) arr.push(1); if (has(4)) arr.push(1); }
-      if (has(1) && has(2)) arr.push(2);
-      else { if (has(1)) arr.push(1); if (has(2)) arr.push(1); }
-      return arr;
-    }
-    if (round === 6) {
-      // 4 + 1: quad = slots 1,2,3,4 (4 corners); solo = 0 (bottom-center)
-      if (has(1) && has(2) && has(3) && has(4)) arr.push(4);
-      else {
-        if (has(1)) arr.push(1); if (has(2)) arr.push(1);
-        if (has(3)) arr.push(1); if (has(4)) arr.push(1);
+    let pos = 0;
+    for (const size of sizes) {
+      if (tappedCount >= pos + size) {
+        arr.push(size);                  // group complete
+        pos += size;
+      } else if (tappedCount > pos) {
+        const partial = tappedCount - pos;
+        for (let k = 0; k < partial; k++) arr.push(1);
+        pos = tappedCount;
+        break;
+      } else {
+        break;
       }
-      if (has(0)) arr.push(1);
-      return arr;
     }
     return arr;
   }
@@ -801,14 +731,22 @@
   // dots, "plus", "one" -> 1 red dot, [pause], all turn blue + "is five").
   // The on-screen equation line builds along with the voice.
 
-  // Which slot indices belong to each addend, in order, given the round.
+  // Slot indices for each addend, in tap order.  E.g. Round 3 after a
+  // full round: [[firstPairSlot0, firstPairSlot1], [secondPairSlot0,
+  // secondPairSlot1], [soloSlot]].
   function _slotsForAddendList() {
-    if (round === 2) return [[0, 1], [2], [3], [4]];           // 2 + 1 + 1 + 1
-    if (round === 3) return [[0, 1], [3, 4], [2]];             // 2 + 2 + 1
-    if (round === 4) return [[0, 3, 4], [1], [2]];             // 3 + 1 + 1
-    if (round === 5) return [[0, 3, 4], [1, 2]];               // 3 + 2
-    if (round === 6) return [[1, 2, 3, 4], [0]];               // 4 + 1
-    return [];
+    const sizes = PARTITION_GROUPS[round] || [];
+    const result = [];
+    let pos = 0;
+    for (const size of sizes) {
+      const grp = [];
+      for (let k = 0; k < size; k++) {
+        if (pos + k < tapOrder.length) grp.push(tapOrder[pos + k]);
+      }
+      result.push(grp);
+      pos += size;
+    }
+    return result;
   }
 
   // Pulse a list of slot indices: add the .reveal-pulse class, then strip
@@ -832,12 +770,11 @@
   // every prior tap; we don't repaint anything.  Voice plays
   // "plus <newAddend>" + pulse the last group, hold ~800ms, then
   // "equals" + "five" with all-blue + a big shared pulse.
-  function _playFinalReveal(addends, total, onDone) {
+  function _playFinalReveal(newAddend, total, onDone) {
     cancelIdleTimers();
     stopHopping();
     if (_partitionViewTimer) { clearTimeout(_partitionViewTimer); _partitionViewTimer = null; }
     _partitionViewActive = false;
-    // Lock every dot against further taps; hide any inner hints.
     for (let i = 0; i < dots.length; i++) {
       const el = dots[i].el;
       el.classList.remove('wait-dot', 'pair-ghost', 'reveal-pulse');
@@ -847,16 +784,14 @@
     innerHints.forEach(h => h.classList.remove('show'));
     if (eqEl) eqEl.innerHTML = '<span class="num">' + total + '</span>';
 
-    const groups     = _slotsForAddendList();
-    const lastSlots  = groups[groups.length - 1] || [];
-    const newAddend  = addends[addends.length - 1];
+    const groups    = _slotsForAddendList();
+    const lastSlots = groups[groups.length - 1] || [];
+    const addends   = _computeAddends();
 
     const items = [
       { key: 'plus' },
       {
         key: String(newAddend),
-        // Long hold so the kid takes in the complete partition picture
-        // (e.g. 2 orange + 3 red) before the "equals" -> all-blue flip.
         gap: 900,
         onStart: () => {
           _pulseSlots(lastSlots, 750);
@@ -898,34 +833,27 @@
     const isFirstHopDot = (round === 1 && count === 0);
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
-      if (isFirstHopDot && nextDots.length === 1) {
+      if (isFirstHopDot && nextDots.length >= 1) {
+        // Hop the FIRST uncoloured slot at the very start of Round 1.
         const el = dots[nextDots[0]].el;
         if (el) _hopStop = startHopping(el);
         return;
       }
-      // Wait-dot stroke on all next dots (one or two).
+      // Soft breathing stroke on every uncoloured dot -- gentle "tap any
+      // of us" hint without locking the kid into a specific slot.
       nextDots.forEach(idx => {
         const el = dots[idx] && dots[idx].el;
         if (el) el.classList.add('wait-dot');
       });
-      // For any multi-dot group (pair / triple / quad), flip on the inner
-      // orange pulse for each group slot so the kid knows they tap-fill
-      // together.  Restart the animation so they begin in sync.
-      if (nextDots.length >= 2) {
-        nextDots.forEach(idx => {
-          const h = innerHints[idx];
-          if (!h) return;
-          h.classList.remove('show');
-          void h.offsetWidth;            // reflow -> animation restart
-          h.classList.add('show');
-        });
-      }
     }, EMPHASIS_DELAY_MS);
-    // Phase 2: auto-fill at IDLE_FILL_MS total if still no tap.
-    _fillTimer = setTimeout(() => {
-      _fillTimer = null;
-      handleDotTap(nextDots[0]);
-    }, IDLE_FILL_MS);
+    // Phase 2: auto-fill at IDLE_FILL_MS for Round 1 only (Rounds 2-6
+    // leave the kid in full control of pace and order).
+    if (round === 1) {
+      _fillTimer = setTimeout(() => {
+        _fillTimer = null;
+        handleDotTap(nextDots[0]);
+      }, IDLE_FILL_MS);
+    }
   }
 
   function refreshDots() {
@@ -982,6 +910,7 @@
       setTimeout(() => {
         hidePerfectBanner();
         colored.clear();
+        tapOrder.length = 0;
         _hasTappedThisRound = false;
         round = nextRound;
         refreshDots();
@@ -991,93 +920,62 @@
   }
 
   function handleDotTap(i) {
-    const nextDots = _getNextDots();
-    // Round 1 lets the kid count up by tapping ANY uncoloured dot, not
-    // just the next canonical slot.  Treat an off-list tap on an empty
-    // dot as a valid Round 1 +1.
-    const round1FreeTap = (round === 1 && !nextDots.includes(i) && !colored.has(i));
-    if (nextDots.includes(i) || round1FreeTap) {
-      // For a free Round 1 tap, the "next dots" we'll fill are just the
-      // tapped dot.  Otherwise it's whatever the canonical group says.
-      const effectiveNext = round1FreeTap ? [i] : nextDots;
-      // Multi-dot group = pair, triple, or quad (Rounds 2-6).
-      const isGroup = effectiveNext.length >= 2 && round >= 2;
-      const futureSet = new Set(colored);
-      effectiveNext.forEach(idx => futureSet.add(idx));
-      const futureAddends = _computeAddends(futureSet);
-      const futureCount   = futureSet.size;
-      const isFinal       = (round >= 2 && futureCount === dots.length);
-
-      if (isGroup) {
-        // 500ms group flash in the group's colour (orange/yellow/green)
-        // while the voice speaks the running equation.  After the flash:
-        // either trigger the FINAL reveal (this tap completes the round)
-        // or drop into partition view.
-        cancelIdleTimers();
-        const groupValue = effectiveNext.length;       // 2, 3, or 4
-        const flashColor = COUNT_COLORS[groupValue];
-        effectiveNext.forEach(idx => {
-          const el = dots[idx].el;
-          el.classList.remove('pair-ghost', 'wait-dot');
-          el.setAttribute('fill', flashColor);
-          el.style.opacity = '1';
-          el.style.pointerEvents = 'none';
-        });
-        _cancelNarration();
-        _hasTappedThisRound = true;
-        if (isFinal) {
-          // Final tap is a group -- skip the delta audio and go straight
-          // to the cumulative reveal so the kid sees the partition picture
-          // with the voiced walkthrough.
-          setTimeout(() => {
-            effectiveNext.forEach(idx => colored.add(idx));
-            _playFinalReveal(futureAddends, futureCount, onPerfectReached);
-          }, 500);
+    if (!colored.has(i)) {
+      // Tap on an uncoloured dot.  ANY uncoloured dot is valid in every
+      // round; the kid picks order.  Each tap fills exactly that dot.
+      cancelIdleTimers();
+      colored.add(i);
+      tapOrder.push(i);
+      _hasTappedThisRound = true;
+      _cancelNarration();
+      refreshDots();
+      const newCount = colored.size;
+      const newTapIdx = tapOrder.length - 1;
+      if (newCount === dots.length) {
+        // Final tap of the round.
+        if (round === 1) {
+          // Round 1 has no partition reveal -- just say "five" and let
+          // the delayed showPerfectBanner praise kick in.
+          _playKey(String(newCount));
+          onPerfectReached();
         } else {
-          _playChain(_chainForTap(futureAddends, futureCount));
-          setTimeout(() => {
-            effectiveNext.forEach(idx => colored.add(idx));
-            _enterPartitionView(() => {
-              if (colored.size === dots.length) onPerfectReached();
-            });
-          }, 500);
+          // Rounds 2-6: voice "plus <newAddend> equals five" + all-blue
+          // flip + pulse on the final group's slots.
+          const addends = _computeAddends();
+          const newAddend = addends[addends.length - 1] || 1;
+          _playFinalReveal(newAddend, newCount, onPerfectReached);
         }
-        if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
+      } else if (round === 1) {
+        // Round 1: cumulative count audio every tap.
+        _playKey(String(newCount));
       } else {
-        // Solo tap (single dot).
-        //   Round 1:   voice says the new count ("one", "two", ...).
-        //   Rounds 2-6 intermediate solos: delta audio + partition view.
-        //   FINAL solo of any Round 2-6: cumulative reveal animation.
-        effectiveNext.forEach(idx => colored.add(idx));
-        _hasTappedThisRound = true;
-        _cancelNarration();
-        if (isFinal) {
-          _playFinalReveal(futureAddends, futureCount, onPerfectReached);
-        } else {
-          if (round === 1) {
-            _playKey(String(colored.size));
-          } else {
-            _playChain(_chainForTap(futureAddends, futureCount));
-          }
-          _enterPartitionView(() => {
-            if (colored.size === dots.length) onPerfectReached();
-          });
+        // Rounds 2-6 intermediate.  First (biggest) group's build-up
+        // voices the cumulative count ("one", "two", "three", "four").
+        // Once the first group is complete, every later tap voices
+        // "plus N" where N = 1 mid-group or the group value when this
+        // tap completes the group.
+        const g = _groupForTap(newTapIdx);
+        if (g && g.start === 0) {
+          _playKey(String(newCount));
+        } else if (g) {
+          const completes = (newTapIdx === g.start + g.groupSize - 1);
+          const N = completes ? g.groupSize : 1;
+          _playChain(['plus', String(N)]);
         }
-        if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
       }
-    } else if (colored.has(i)) {
-      // tapped a coloured dot -- it leaves, count goes back down by one.
-      // (The equation line is derived from `colored` so no manual undo of
-      // any addend history -- it'll just re-render whatever's still painted.)
+      if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
+    } else if (round === 1 && colored.has(i)) {
+      // Round 1 only: tap a coloured dot to untap it and count back down.
+      // Rounds 2-6 lock in the partition once the kid taps a dot.
       colored.delete(i);
+      const tIdx = tapOrder.indexOf(i);
+      if (tIdx >= 0) tapOrder.splice(tIdx, 1);
       hidePerfectBanner();
       refreshDots();
       _cancelNarration();
       const n = colored.size;
       if (n > 0) {
         _playKey(String(n));
-      } else if (players['0']) {
-        _playKey('0');
       } else if ("speechSynthesis" in window) {
         try { window.speechSynthesis.cancel(); } catch (e) {}
         const u = new SpeechSynthesisUtterance("zero");
@@ -1128,6 +1026,7 @@
   document.getElementById('resetBtn').addEventListener('click', () => {
     hidePerfectBanner();
     colored.clear();
+    tapOrder.length = 0;
     _hasTappedThisRound = false;            // show target "5" again on reset
     round = 1;
     refreshDots();

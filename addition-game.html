@@ -464,18 +464,19 @@
   };
   // Tangent-neighbour order tuned so a BFS from each slot picks partners
   // that form a CANONICAL ColorMyMath "3" -- 2 dots on the bottom + 1
-  // dot on top -- whichever dot the kid taps first.
-  //   tap 0 -> [0, 3, 4] right triangle (2 bottom + 1 top)
-  //   tap 1 -> [1, 0, 2] left triangle  (2 bottom + 1 top-left)
+  // dot on top.  Slot 0 (bottom-centre) defaults to the LEFT triangle
+  // [0, 1, 2] -- "left of centre, the centre, and then the left ones".
+  //   tap 0 -> [0, 1, 2] left triangle (2 bottom + 1 top-left)
+  //   tap 1 -> [1, 0, 2] left triangle
   //   tap 2 -> [2, 1, 0] (slot 2 the lone top, slots 1+0 the bottom)
-  //   tap 3 -> [3, 4, 0] (slot 4 the lone top, slots 3+0 the bottom)
-  //   tap 4 -> [4, 3, 0] (slot 4 the lone top, slots 3+0 the bottom)
+  //   tap 3 -> [3, 4, 0] right triangle (slot 4 the lone top, slots 3+0 bottom)
+  //   tap 4 -> [4, 3, 0] right triangle
   const ADJACENT = {
-    0: [3, 4, 1, 2],
+    0: [1, 2, 3, 4],   // left-side neighbours first -> default = LEFT "3"
     1: [0, 2],
-    2: [1, 0, 4],     // bottom-left before any top neighbour
+    2: [1, 0, 4],
     3: [4, 0],
-    4: [3, 0, 2],     // bottom-centre before top-left
+    4: [3, 0, 2],
   };
   // Pick the group of slots to fill when the kid taps `tappedSlot`,
   // anchored on that slot.  groupSize=1 fills just the tapped dot.
@@ -838,10 +839,11 @@
     if (eqEl) eqEl.innerHTML = '<span class="num">' + dots.length + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Walk in left-to-right, top-to-bottom order (like reading a page):
-    // top-left (2), top-right (4), bottom-left (1), bottom-centre (0),
-    // bottom-right (3).  Independent of the kid's tap order.
-    const walkOrder = [2, 4, 1, 0, 3];
+    // Walk so beat 3 forms the canonical "3" triangle (2 bottom + 1 top):
+    // bottom-centre (0) -> bottom-left (1) -> top-left (2) gives the
+    // left triangle [0, 1, 2] at the kid's third count; then bottom-right
+    // (3) builds a "4", and top-right (4) closes out the domino-5 "5".
+    const walkOrder = [0, 1, 2, 3, 4];
     const items = [];
     for (let k = 0; k < walkOrder.length; k++) {
       const slot  = walkOrder[k];
@@ -892,16 +894,20 @@
     if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Per-round walk order.  Labels still start "like reading" (top
-    // dot first), but for Rounds 4 + 5 the "3" group lands on slots
-    // that form the canonical triangle (2 bottom + 1 top) instead of
-    // a top-row-first sequence that would put 2 of the 3 on top.
-    //   R2/R3/R6: strict LTR-TTB -- pair / pair-pair / quad sit at
-    //             top + bottom-left of the layout, solo on bottom-right.
-    //   R4/R5:    triangle [slot 2, slot 1, slot 0] then right column.
-    const walkOrder =
-        (round === 4 || round === 5) ? [2, 1, 0, 4, 3]
-                                     : [2, 4, 1, 0, 3];
+    // Per-round walk order.  Beat 3 always forms the canonical "3"
+    // triangle (2 bottom + 1 top): bottom-centre (0), bottom-left (1),
+    // top-left (2).
+    //   R2 (2+1+1+1): pair on bottom + solos -- [0, 1, 2, 3, 4]
+    //   R3 (2+2+1):   bottom pair, right-column pair, top-left solo
+    //                 -- [0, 1, 3, 4, 2]
+    //   R4 (3+1+1):   triangle + right column solos -- [0, 1, 2, 3, 4]
+    //   R5 (3+2):     triangle + right column pair  -- [0, 1, 2, 3, 4]
+    //   R6 (4+1):     connected quad + bottom-right solo
+    //                 -- [0, 1, 2, 4, 3]
+    let walkOrder;
+    if (round === 3)      walkOrder = [0, 1, 3, 4, 2];
+    else if (round === 6) walkOrder = [0, 1, 2, 4, 3];
+    else                   walkOrder = [0, 1, 2, 3, 4];
     const items = [];
     let labelIdx = 0;
     let textSoFar = '';

@@ -449,29 +449,65 @@
   // let the kid tap ANY uncoloured dot in any order; the FIRST N taps
   // form the biggest group, then subsequent taps fill smaller groups
   // and solos.  See `tapOrder`, `PARTITION_GROUPS`, and _computeAddends.
-  const tapOrder = [];   // slot order, used by the Round 1 count-up reveal
-  // Canonical per-round group plans.  Each round consists of a sequence
-  // of groups; one TAP fills the whole next group at once.
-  //
+  const tapOrder = [];      // slot order, used by the Round 1 count-up reveal
+  const tappedGroups = [];  // arrays of slot indices, one per group the kid filled
+  // Per-round PARTITION sizes only (slots are chosen dynamically based
+  // on which dot the kid taps, so the tap is always part of the group).
   // Slot indices: 0=bottom-centre, 1=bottom-left, 2=top-left,
   //               3=bottom-right, 4=top-right.
-  const PARTITION_SLOTS = {
-    2: [[0, 1], [2], [3], [4]],          // 2 + 1 + 1 + 1
-    3: [[0, 1], [3, 4], [2]],            // 2 + 2 + 1
-    4: [[0, 3, 4], [1], [2]],            // 3 + 1 + 1  (right triangle)
-    5: [[0, 3, 4], [1, 2]],              // 3 + 2
-    6: [[1, 2, 3, 4], [0]],              // 4 + 1      (four corners)
+  const PARTITION_GROUPS = {
+    2: [2, 1, 1, 1],
+    3: [2, 2, 1],
+    4: [3, 1, 1],
+    5: [3, 2],
+    6: [4, 1],
   };
-  // Find the index of the next group to fill given the current count.
-  function _nextGroupIndex() {
-    const groups = PARTITION_SLOTS[round];
-    if (!groups) return -1;
-    let cum = 0;
-    for (let k = 0; k < groups.length; k++) {
-      if (colored.size === cum) return k;
-      cum += groups[k].length;
+  // Tangent-neighbour order, tweaked so a BFS from each slot picks
+  // partners that form nice triangles / pairs.
+  const ADJACENT = {
+    0: [3, 4, 1, 2],
+    1: [0, 2],
+    2: [1, 4, 0],
+    3: [4, 0],
+    4: [3, 2, 0],
+  };
+  // Pick the group of slots to fill when the kid taps `tappedSlot`,
+  // anchored on that slot.  groupSize=1 fills just the tapped dot.
+  // Round 6's quad of 4 prefers the canonical four corners when the
+  // kid taps a corner; otherwise it includes the tap and picks 3 more.
+  function _pickGroup(tappedSlot, groupSize) {
+    if (groupSize === 1) return [tappedSlot];
+    if (round === 6 && groupSize === 4) {
+      if ([1, 2, 3, 4].includes(tappedSlot)) return [1, 2, 3, 4];
+      return [0, 1, 3, 4];
     }
-    return -1;
+    const result = [tappedSlot];
+    const used = new Set([tappedSlot]);
+    while (result.length < groupSize) {
+      let added = false;
+      for (const s of result) {
+        const adj = ADJACENT[s] || [];
+        for (const a of adj) {
+          if (used.has(a) || colored.has(a)) continue;
+          result.push(a);
+          used.add(a);
+          added = true;
+          if (result.length >= groupSize) break;
+        }
+        if (result.length >= groupSize) break;
+      }
+      if (!added) break;
+    }
+    // Fallback if no tangent partners left -- pick any uncoloured slot.
+    if (result.length < groupSize) {
+      for (let i = 0; i < dots.length; i++) {
+        if (used.has(i) || colored.has(i)) continue;
+        result.push(i);
+        used.add(i);
+        if (result.length >= groupSize) break;
+      }
+    }
+    return result;
   }
   // True once the kid has tapped at least once this partition.  Lets us
   // show the target ("5") at the very start of every partition and switch
@@ -678,13 +714,11 @@
   // Returns the partition colour for slot `i`, or null if Round 1 (Round 1
   // has no pair groupings -- every dot is +1, so partition view == count view).
   // Partition colour for a coloured slot.  Round 1: null (count colour).
-  // Rounds 2-6: look up which canonical group the slot belongs to and
-  // return that group's colour (2->orange, 3->yellow, 4->green, 1->red).
+  // Rounds 2-6: find the group the kid filled containing this slot and
+  // return its colour (2->orange, 3->yellow, 4->green, 1->red).
   function _partitionColorForSlot(i) {
     if (round === 1) return null;
-    const groups = PARTITION_SLOTS[round];
-    if (!groups) return null;
-    for (const g of groups) {
+    for (const g of tappedGroups) {
       if (g.includes(i)) return COUNT_COLORS[g.length];
     }
     return null;
@@ -701,23 +735,13 @@
     if (onDone) onDone();
   }
 
-  // Compute the addends list from the colored set + round.  Round 1 is
-  // one addend per tapped dot.  Rounds 2-6 emit one addend per completed
-  // canonical group (each group fills in one tap, so partial groups
-  // shouldn't occur).
-  function _computeAddends(/* setIn arg unused -- legacy signature */) {
+  // Round 1 = one addend per tap.  Rounds 2-6 = one addend per group
+  // the kid filled (in order).
+  function _computeAddends(/* unused */) {
     if (round === 1) {
       return tapOrder.filter(i => colored.has(i)).map(() => 1);
     }
-    const groups = PARTITION_SLOTS[round] || [];
-    const arr = [];
-    let cum = 0;
-    for (const g of groups) {
-      cum += g.length;
-      if (colored.size >= cum) arr.push(g.length);
-      else break;
-    }
-    return arr;
+    return tappedGroups.map(g => g.length);
   }
   // Build an audio chain from an addends list + total, e.g.
   // [2,1,1], 4 -> ['2','plus','1','plus','1','equals','4'].
@@ -752,9 +776,9 @@
   // dots, "plus", "one" -> 1 red dot, [pause], all turn blue + "is five").
   // The on-screen equation line builds along with the voice.
 
-  // Slot indices for each addend group in canonical order.
+  // Slot indices for each addend, in the order the kid filled them.
   function _slotsForAddendList() {
-    return PARTITION_SLOTS[round] || [];
+    return tappedGroups;
   }
 
   // Pulse a list of slot indices: add the .reveal-pulse class, then strip
@@ -801,34 +825,33 @@
     if (eqEl) eqEl.innerHTML = '<span class="num">' + dots.length + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
+    // Walk in left-to-right, top-to-bottom order (like reading a page):
+    // top-left (2), top-right (4), bottom-left (1), bottom-centre (0),
+    // bottom-right (3).  Independent of the kid's tap order.
+    const walkOrder = [2, 4, 1, 0, 3];
     const items = [];
-    for (let k = 0; k < tapOrder.length; k++) {
-      const slot  = tapOrder[k];
+    for (let k = 0; k < walkOrder.length; k++) {
+      const slot  = walkOrder[k];
       const count = k + 1;
       const color = COUNT_COLORS[count];
       items.push({
         key: String(count),
-        gap: 250,
+        gap: 600,
         onStart: () => {
-          // Show this dot's number label.
           numLabels[slot].textContent = String(count);
           numLabels[slot].setAttribute('opacity', '1');
-          // Recolour EVERY revealed dot so far (including this one) to
-          // the current count's colour.  "two" -> two ORANGE dots
-          // labelled 1 and 2; "three" -> three YELLOW dots labelled
-          // 1, 2, 3; ... "five" -> five BLUE dots labelled 1-5.
           for (let j = 0; j <= k; j++) {
-            const ds = tapOrder[j];
+            const ds = walkOrder[j];
             dots[ds].el.setAttribute('fill', color);
           }
-          _pulseSlots([slot], 700);
+          _pulseSlots([slot], 800);
           if (eqEl) eqEl.innerHTML = '<span class="num">' + count + '</span>';
         }
       });
     }
 
     if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 250, onDone: () => { if (onDone) onDone(); } });
+      AudioLib.playChain(items, { gap: 600, onDone: () => { if (onDone) onDone(); } });
     } else if (onDone) {
       onDone();
     }
@@ -966,24 +989,41 @@
 
   // When Round 1 reaches Perfect, show the banner, then after a beat clear
   // the dots and switch to Round 2.  Round 2 reaches Perfect and stays.
+  // Move to the next round: clear state, hide banner + labels, refresh.
+  function _advanceRound(nextRound) {
+    hidePerfectBanner();
+    colored.clear();
+    tapOrder.length = 0;
+    tappedGroups.length = 0;
+    _hasTappedThisRound = false;
+    round = nextRound;
+    for (let i = 0; i < numLabels.length; i++) {
+      numLabels[i].setAttribute('opacity', '0');
+      numLabels[i].textContent = '';
+    }
+    refreshDots();
+  }
+
   function onPerfectReached() {
     showPerfectBanner();
-    const ROUND_TRANSITION_MS = 3000;
-    const nextRound = (round < 6) ? round + 1 : null;
-    if (nextRound != null) {
+    if (round === 1) {
+      // Round 1: pause for the Perfect praise voice, then run the
+      // count-up REVIEW (1..5 left-to-right top-to-bottom, slower),
+      // then advance to Round 2.
+      const BEFORE_REVIEW_MS = 3000;
+      const AFTER_REVIEW_MS  = 1500;
       setTimeout(() => {
         hidePerfectBanner();
-        colored.clear();
-        tapOrder.length = 0;
-        _hasTappedThisRound = false;
-        round = nextRound;
-        // Clear any number labels from the Round 1 reveal.
-        for (let i = 0; i < numLabels.length; i++) {
-          numLabels[i].setAttribute('opacity', '0');
-          numLabels[i].textContent = '';
-        }
-        refreshDots();
-      }, ROUND_TRANSITION_MS);
+        _playRound1Reveal(() => {
+          setTimeout(() => { _advanceRound(2); }, AFTER_REVIEW_MS);
+        });
+      }, BEFORE_REVIEW_MS);
+      return;
+    }
+    // Rounds 2-5 just pause for the praise voice then advance.
+    const nextRound = (round < 6) ? round + 1 : null;
+    if (nextRound != null) {
+      setTimeout(() => { _advanceRound(nextRound); }, 3000);
     }
     // Round 6 is the last partition -- banner stays.
   }
@@ -995,14 +1035,16 @@
       _hasTappedThisRound = true;
 
       if (round === 1) {
-        // Round 1: every tap fills exactly the tapped dot.  Cumulative
-        // count audio.  After 5 taps run the count-up reveal.
+        // Round 1: each tap fills exactly the tapped dot.
         colored.add(i);
         tapOrder.push(i);
         refreshDots();
         const newCount = colored.size;
         if (newCount === dots.length) {
-          _playRound1Reveal(onPerfectReached);
+          // Reach 5 -> say "five", then the Perfect celebration runs,
+          // then (after a pause) the count-up review walks 1..5.
+          _playKey(String(newCount));
+          onPerfectReached();
         } else {
           _playKey(String(newCount));
         }
@@ -1010,26 +1052,27 @@
         return;
       }
 
-      // Rounds 2-6: one tap fills the WHOLE next canonical group.
-      const groupIdx = _nextGroupIndex();
-      if (groupIdx < 0) return;
-      const groups = PARTITION_SLOTS[round];
-      const group  = groups[groupIdx];
-      const groupSize = group.length;
-      group.forEach(idx => colored.add(idx));
+      // Rounds 2-6: one tap fills the next group.  The group is anchored
+      // at the kid's tapped slot -- if it's a pair/triple/quad, the
+      // system picks tangent partners around the tap.  Solos fill just
+      // the tapped slot.
+      const sizes = PARTITION_GROUPS[round] || [];
+      const groupIdx = tappedGroups.length;
+      if (groupIdx >= sizes.length) return;
+      const groupSize = sizes[groupIdx];
+      const group = _pickGroup(i, groupSize);
+      tappedGroups.push(group);
+      group.forEach(s => colored.add(s));
       refreshDots();
 
       const newCount = colored.size;
       const isFinal  = (newCount === dots.length);
 
       if (isFinal) {
-        // Reveal: voice "plus <groupSize> equals five" + all-blue.
         _playFinalReveal(groupSize, newCount, onPerfectReached);
       } else if (groupIdx === 0) {
-        // First (biggest) group of the round -- voice the value alone.
         _playKey(String(groupSize));
       } else {
-        // Later intermediate group -- voice "plus N".
         _playChain(['plus', String(groupSize)]);
       }
       if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
@@ -1096,6 +1139,7 @@
     hidePerfectBanner();
     colored.clear();
     tapOrder.length = 0;
+    tappedGroups.length = 0;
     _hasTappedThisRound = false;            // show target "5" again on reset
     round = 1;
     for (let i = 0; i < numLabels.length; i++) {

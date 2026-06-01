@@ -1304,7 +1304,16 @@
   const replayBtn = document.getElementById('replayBtn');
   if (replayBtn) replayBtn.addEventListener('click', _replayFromStart);
 
+  // Debounce repeat taps so a touch-misfire (two click events fired in
+  // quick succession for one finger tap, common on mobile browsers)
+  // can't accidentally trigger a SECOND group fill -- the symptom the
+  // kid sees as "I tapped once but THREE dots filled" in Round 3's
+  // second pair phase (pair 2's 2 dots + the solo's 1 dot all at once).
+  let _lastTapAt = 0;
   function handleDotTap(i) {
+    const now = Date.now();
+    if (now - _lastTapAt < 280) return;
+    _lastTapAt = now;
     if (!colored.has(i)) {
       cancelIdleTimers();
       _cancelNarration();

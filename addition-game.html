@@ -936,7 +936,9 @@
       }
       labelIdx += groupSize;
     }
-    items.push({ key: 'equals' });
+    // Short gap after "equals" so the word doesn't sit alone in silence
+    // before "five" -- matches the snappier feel of the final-tap reveal.
+    items.push({ key: 'equals', gap: 220 });
     items.push({
       key: String(total),
       onStart: () => {
@@ -1004,41 +1006,84 @@
     }
   }
 
+  // Default anchor + group for the upcoming tap when the kid is idle.
+  // Used by both the idle hint and the auto-fill timer so the canonical
+  // group appears at the same slots either way.
+  function _defaultGroupForIdle() {
+    if (round === 1) return null;
+    const sizes = PARTITION_GROUPS[round] || [];
+    const groupIdx = tappedGroups.length;
+    if (groupIdx >= sizes.length) return null;
+    const size = sizes[groupIdx];
+    let anchor;
+    if (groupIdx === 0) {
+      // Canonical anchor for the round's FIRST (biggest) group.
+      if (round === 2 || round === 3)            anchor = 1;   // pair from bottom-left
+      else if (round === 4 || round === 5)       anchor = 0;   // triangle from bottom-centre
+      else if (round === 6)                      anchor = 1;   // quad from bottom-left
+      else                                        anchor = 0;
+    } else {
+      // Subsequent group: pick the first still-uncoloured slot.
+      anchor = 0;
+      for (let i = 0; i < dots.length; i++) {
+        if (!colored.has(i)) { anchor = i; break; }
+      }
+    }
+    return { slots: _pickGroup(anchor, size), color: COUNT_COLORS[size], anchor };
+  }
+
+  // Light up the canonical group slots with small coloured "hint" dots
+  // inside the white circles -- e.g. 3 small yellow dots for the "3"
+  // group, 4 small green dots for the "4" group.  Pulses to attract
+  // the eye.  Hidden when cancelIdleTimers fires.
+  function _showGroupHint(slots, color) {
+    innerHints.forEach((h, i) => {
+      if (slots.includes(i)) {
+        h.setAttribute('fill', color);
+        h.classList.remove('show');
+        void h.offsetWidth;
+        h.classList.add('show');
+      } else {
+        h.classList.remove('show');
+      }
+    });
+  }
+
   function startIdleTimers() {
     cancelIdleTimers();
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
-    // Phase 1: dots stay plain for EMPHASIS_DELAY_MS so the kid has time
-    // to think.  Then emphasis kicks in:
-    //   - Round 1 very first dot (count===0): full HOP
-    //   - Pair phase: wait-dot breathing stroke on BOTH dots AND a small
-    //     orange dot pulses inside each one ("press these two together")
-    //   - Solo phase (Round 2 +1s, Round 3 final +1): wait-dot stroke only
     const isFirstHopDot = (round === 1 && count === 0);
+    // Phase 1: after EMPHASIS_DELAY_MS show a hint.  Round 1 first dot
+    // hops; everything else gets the breathing wait-dot stroke + (for
+    // Rounds 2-6) coloured hint dots inside the next group's slots.
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
       if (isFirstHopDot && nextDots.length >= 1) {
-        // Hop the FIRST uncoloured slot at the very start of Round 1.
         const el = dots[nextDots[0]].el;
         if (el) _hopStop = startHopping(el);
         return;
       }
-      // Soft breathing stroke on every uncoloured dot -- gentle "tap any
-      // of us" hint without locking the kid into a specific slot.
       nextDots.forEach(idx => {
         const el = dots[idx] && dots[idx].el;
         if (el) el.classList.add('wait-dot');
       });
+      if (round !== 1) {
+        const g = _defaultGroupForIdle();
+        if (g) _showGroupHint(g.slots, g.color);
+      }
     }, EMPHASIS_DELAY_MS);
-    // Phase 2: auto-fill at IDLE_FILL_MS for Round 1 only (Rounds 2-6
-    // leave the kid in full control of pace and order).
-    if (round === 1) {
-      _fillTimer = setTimeout(() => {
-        _fillTimer = null;
+    // Phase 2: after IDLE_FILL_MS auto-fill.
+    _fillTimer = setTimeout(() => {
+      _fillTimer = null;
+      if (round === 1) {
         handleDotTap(nextDots[0]);
-      }, IDLE_FILL_MS);
-    }
+      } else {
+        const g = _defaultGroupForIdle();
+        if (g) handleDotTap(g.anchor);
+      }
+    }, IDLE_FILL_MS);
   }
 
   function refreshDots() {

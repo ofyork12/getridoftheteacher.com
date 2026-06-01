@@ -181,7 +181,7 @@
   </div>
 
   <div class="play-area" id="playArea">
-    <svg class="play-svg" id="playSvg" viewBox="-100 0 360 200" preserveAspectRatio="xMidYMid meet">
+    <svg class="play-svg" id="playSvg" viewBox="-100 -50 360 250" preserveAspectRatio="xMidYMid meet">
       <path id="rampPath" d="M -120,185 L 380,185" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       <g id="dotGroup"></g>
     </svg>
@@ -296,11 +296,16 @@
     6: 'magenta', 7: 'brown', 8: 'pink', 9: 'cyan', 10: 'red'
   };
 
-  const DOT_R = 28;
+  const DOT_R = 32;        // enlarged so the 10-dot triangle fills more
+                           // of the play-area horizontally and vertically
   const FLOOR_Y = 185;
   const DOT_REST_Y = FLOOR_Y - DOT_R - 1.25;
 
-  const CENTER_X = 130;
+  // Shifted right so the LEFTMOST dot of the 10-dot triangle stays at
+  // its previous on-screen position (centre x = 46 viewBox units) while
+  // the larger radius pushes the right side of the triangle outward
+  // toward the right edge of the play area.
+  const CENTER_X = 142;
   const r = DOT_R;
   const d = 2 * r;
   const triH = d * Math.sqrt(3) / 2;

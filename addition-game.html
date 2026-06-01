@@ -384,6 +384,9 @@
            dot circle.  Hidden by default; the JS adds .show to the two
            pair-slot hints during a pair phase so they pulse together. -->
       <g id="innerHintGroup"></g>
+      <!-- Per-slot number labels used by the Round 1 count-up reveal
+           ("one, two, three, four, five" walkthrough at the end). -->
+      <g id="numLabelGroup"></g>
     </svg>
   </div>
 
@@ -520,6 +523,27 @@
     return h;
   });
 
+  // Per-slot number labels (1..5).  Hidden by default; the Round 1
+  // count-up reveal fades each one in as it voices its number.
+  const numLabelGroup = document.getElementById('numLabelGroup');
+  const numLabels = slots.map(({x, y}) => {
+    const t = document.createElementNS(SVG_NS, 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('dominant-baseline', 'central');
+    t.setAttribute('font-family', 'Nunito, Arial, sans-serif');
+    t.setAttribute('font-weight', '900');
+    t.setAttribute('font-size', '34');
+    t.setAttribute('fill', '#000');
+    t.setAttribute('opacity', '0');
+    t.style.pointerEvents = 'none';
+    t.textContent = '';
+    numLabelGroup.appendChild(t);
+    return t;
+  });
+
+
   // --- Paint tray ----------------------------------------------------
   // Tap a slot to load the brush.  Tap the active slot again to drop it.
   let activePaint = null;          // hex colour, or null
@@ -653,15 +677,18 @@
   }
 
   // Partition colour for a coloured slot.  Round 1: null (count colour).
-  // Rounds 2-6: the group's value colour if the group is complete, else
-  // red (each in-progress tap shows as +1 until the group fills).
+  // Rounds 2-6: the group's DESTINED colour right away, even if the kid
+  // hasn't tapped the rest of the group yet.  So in Round 2 the first
+  // tap shows ORANGE because that dot is destined to be part of the
+  // pair; the second tap also lands as orange, and the kid sees both
+  // pair members in their pair colour together.
   function _partitionColorForSlot(i) {
     if (round === 1) return null;
     const tapIdx = tapOrder.indexOf(i);
     if (tapIdx < 0) return null;
     const g = _groupForTap(tapIdx);
     if (!g) return COUNT_COLORS[1];
-    return g.groupComplete ? COUNT_COLORS[g.groupSize] : COUNT_COLORS[1];
+    return COUNT_COLORS[g.groupSize];
   }
 
   // Refresh + fire callback.  Used to be a timed "partition view" that
@@ -770,6 +797,55 @@
   // every prior tap; we don't repaint anything.  Voice plays
   // "plus <newAddend>" + pulse the last group, hold ~800ms, then
   // "equals" + "five" with all-blue + a big shared pulse.
+  // Round 1 count-up reveal.  Walks through the kid's tap order showing
+  // a number label (1..5) on each dot, voicing the count, and recolouring
+  // each dot to its count-position colour (1=red, 2=orange, 3=yellow,
+  // 4=green, 5=blue).  Plays once after the kid's 5th Round 1 tap.
+  function _playRound1Reveal(onDone) {
+    cancelIdleTimers();
+    stopHopping();
+    // Reset every dot to white and hide every label so the walkthrough
+    // starts from a clean slate.
+    for (let i = 0; i < dots.length; i++) {
+      const el = dots[i].el;
+      el.classList.remove('wait-dot', 'pair-ghost', 'reveal-pulse');
+      el.setAttribute('fill', '#ffffff');
+      el.style.opacity = '1';
+      el.style.pointerEvents = 'none';
+      el.style.cursor = 'default';
+      numLabels[i].setAttribute('opacity', '0');
+      numLabels[i].textContent = '';
+    }
+    innerHints.forEach(h => h.classList.remove('show'));
+    if (eqEl) eqEl.innerHTML = '<span class="num">' + dots.length + '</span>';
+    if (eqLineEl) eqLineEl.textContent = '';
+
+    const items = [];
+    for (let k = 0; k < tapOrder.length; k++) {
+      const slot  = tapOrder[k];
+      const count = k + 1;
+      const color = COUNT_COLORS[count];
+      items.push({
+        key: String(count),
+        gap: 250,
+        onStart: () => {
+          const el = dots[slot].el;
+          el.setAttribute('fill', color);
+          numLabels[slot].textContent = String(count);
+          numLabels[slot].setAttribute('opacity', '1');
+          _pulseSlots([slot], 700);
+          if (eqEl) eqEl.innerHTML = '<span class="num">' + count + '</span>';
+        }
+      });
+    }
+
+    if (window.AudioLib) {
+      AudioLib.playChain(items, { gap: 250, onDone: () => { if (onDone) onDone(); } });
+    } else if (onDone) {
+      onDone();
+    }
+  }
+
   function _playFinalReveal(newAddend, total, onDone) {
     cancelIdleTimers();
     stopHopping();
@@ -913,6 +989,11 @@
         tapOrder.length = 0;
         _hasTappedThisRound = false;
         round = nextRound;
+        // Clear any number labels from the Round 1 reveal.
+        for (let i = 0; i < numLabels.length; i++) {
+          numLabels[i].setAttribute('opacity', '0');
+          numLabels[i].textContent = '';
+        }
         refreshDots();
       }, ROUND_TRANSITION_MS);
     }
@@ -934,10 +1015,11 @@
       if (newCount === dots.length) {
         // Final tap of the round.
         if (round === 1) {
-          // Round 1 has no partition reveal -- just say "five" and let
-          // the delayed showPerfectBanner praise kick in.
-          _playKey(String(newCount));
-          onPerfectReached();
+          // Round 1: walk through the count-up reveal -- number labels
+          // 1..5 fade in on each dot in tap order, voice says
+          // "one, two, three, four, five", each dot recolours to its
+          // count-position colour.  Then Perfect.
+          _playRound1Reveal(onPerfectReached);
         } else {
           // Rounds 2-6: voice "plus <newAddend> equals five" + all-blue
           // flip + pulse on the final group's slots.
@@ -1029,6 +1111,10 @@
     tapOrder.length = 0;
     _hasTappedThisRound = false;            // show target "5" again on reset
     round = 1;
+    for (let i = 0; i < numLabels.length; i++) {
+      numLabels[i].setAttribute('opacity', '0');
+      numLabels[i].textContent = '';
+    }
     refreshDots();
     // Drop any active paint too (the palette is hidden, but be safe).
     document.querySelectorAll('.paint-slot.active').forEach(s => s.classList.remove('active'));

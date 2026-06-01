@@ -912,16 +912,14 @@
     if (eqEl) eqEl.innerHTML = '<span class="num">' + dots.length + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Walk in reading order from the top-left down the LEFT column to
-    // the bottom-centre, then jump back up to the top-right and down
-    // the RIGHT column:
-    //   beat 1: top-left      (slot 2)
-    //   beat 2: bottom-left   (slot 1)
-    //   beat 3: bottom-centre (slot 0)  -> canonical "3" triangle
-    //                                     [2, 1, 0] = 2 bottom + 1 top
-    //   beat 4: top-right     (slot 4)
-    //   beat 5: bottom-right  (slot 3)  -> full domino-5
-    const walkOrder = [2, 1, 0, 4, 3];
+    // Replay the kid's EXACT tap order so the count-up review traces
+    // their steps as confirmation: dot they tapped first gets label
+    // "1", the next "2", and so on.  Fall back to reading order if for
+    // some reason tapOrder is short.
+    const fallback = [2, 1, 0, 4, 3];
+    const walkOrder = tapOrder.slice();
+    for (const s of fallback) if (walkOrder.indexOf(s) < 0) walkOrder.push(s);
+    walkOrder.length = dots.length;
     const items = [];
     for (let k = 0; k < walkOrder.length; k++) {
       const slot  = walkOrder[k];
@@ -972,23 +970,16 @@
     if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Walk in reading order matching the Round 1 review: top-left,
-    // bottom-left, bottom-centre, top-right, bottom-right.  This puts
-    // the "3" triangle on beat 3 in every round whose biggest group is
-    // a triple, and keeps each round's groups tangent / connected:
-    //   R2 (2+1+1+1): pair = left column,        solos = 0, 4, 3
-    //   R3 (2+2+1):   pair1 = left column,
-    //                 pair2 = bottom-centre + top-right (diagonal),
-    //                 solo = bottom-right
-    //   R4 (3+1+1):   triangle = [2,1,0],        solos = 4, 3
-    //   R5 (3+2):     triangle = [2,1,0],        pair = right column
-    //   R6 (4+1):     quad = [2,1,0,4],          solo = bottom-right
-    // Round 3 zig-zags down-up-down so labels read 1 (top-left),
-    // 2 (bottom-left), 3 (top-right), 4 (bottom-centre), 5 (bottom-right).
-    // That keeps pair 1 = left column [2, 1] and pair 2 = the diagonal
-    // [4, 0] (top-right + bottom-centre), with the solo on the far
-    // bottom-right.
-    const walkOrder = (round === 3) ? [2, 1, 4, 0, 3] : [2, 1, 0, 4, 3];
+    // Trace the kid's EXACT steps: flatten the groups they tapped
+    // (in tap order, with each group's dots in the order _pickGroup
+    // chose them -- the kid's tap is always first in its group).
+    // That way the review labels 1-5 land on the same dots the kid
+    // touched, in the same sequence, confirming their answer.
+    const walkOrder = [];
+    for (const g of tappedGroups) walkOrder.push(...g);
+    const fallback = [2, 1, 0, 4, 3];
+    for (const s of fallback) if (walkOrder.indexOf(s) < 0) walkOrder.push(s);
+    walkOrder.length = dots.length;
     const items = [];
     let labelIdx = 0;
     let textSoFar = '';

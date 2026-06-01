@@ -1337,9 +1337,16 @@
       if (groupIdx >= sizes.length) return;
       const groupSize = sizes[groupIdx];
       const group = _pickGroup(i, groupSize);
+      // Safety: the kid's tapped slot must always be one of the slots
+      // that fills.  If it ever isn't, force it to the front of the
+      // group so the visual confirmation matches their finger.
+      if (group.indexOf(i) < 0) group.unshift(i);
       tappedGroups.push(group);
       group.forEach(s => colored.add(s));
       refreshDots();
+      // Pulse the kid's exact tapped dot as instant feedback so they
+      // can see "yes, that's the dot I hit".
+      _pulseSlots([i], 700);
 
       const newCount = colored.size;
       const isFinal  = (newCount === dots.length);

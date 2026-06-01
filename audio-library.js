@@ -149,8 +149,17 @@
     }
   }
 
+  // Quick "are we hidden right now" check.  Used by play / playChain
+  // to drop sounds that were queued by setTimeouts that fired AFTER
+  // the page went to background (screen lock, app switch, etc.).
+  function _pageHidden() {
+    if (global.document && global.document.hidden) return true;
+    return false;
+  }
+
   // --- single-clip play (returns the BufferSource, or null) ---
   function play(key) {
+    if (_pageHidden()) return null;
     const c = getCtx();
     if (!c) return null;
     const buf = _buffers[key];
@@ -192,6 +201,7 @@
 
   function playChain(items, opts) {
     opts = opts || {};
+    if (_pageHidden()) return Promise.resolve();
     stopAll();
     const c = getCtx();
     if (!c) return Promise.resolve();
@@ -208,6 +218,7 @@
       };
       const playNext = () => {
         if (myToken !== _chainToken) { finish(); return; }
+        if (_pageHidden()) { finish(); return; }
         if (i >= items.length) { finish(); return; }
         const raw = items[i++];
         const item = typeof raw === 'string' ? { key: raw } : (raw || { key: '' });
@@ -287,6 +298,21 @@
     });
     // Also stop on pagehide (iOS Safari fires this when you swipe away).
     global.addEventListener('pagehide', () => {
+      try { stopAll(); } catch (e) {}
+      if (_ctx && _ctx.state === 'running') {
+        try { _ctx.suspend(); } catch (e) {}
+      }
+    });
+    // Screen-lock / app-switch on some Android browsers only fire blur,
+    // not visibilitychange.  Catch them too.  Also handle the
+    // Page Lifecycle "freeze" event (Chrome) for the same reason.
+    global.addEventListener('blur', () => {
+      try { stopAll(); } catch (e) {}
+      if (_ctx && _ctx.state === 'running') {
+        try { _ctx.suspend(); } catch (e) {}
+      }
+    });
+    global.document.addEventListener('freeze', () => {
       try { stopAll(); } catch (e) {}
       if (_ctx && _ctx.state === 'running') {
         try { _ctx.suspend(); } catch (e) {}

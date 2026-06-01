@@ -1482,6 +1482,18 @@
     cancelIdleTimers();
     stopHopping();
   });
+  // Some Android browsers fire 'blur' instead of 'visibilitychange'
+  // when the screen locks.  Catch that path too.
+  window.addEventListener('blur', () => {
+    _cancelNarration();
+    cancelIdleTimers();
+    stopHopping();
+  });
+  document.addEventListener('freeze', () => {
+    _cancelNarration();
+    cancelIdleTimers();
+    stopHopping();
+  });
 
   // --- Number-line cells (coloured quantity above black digit) -------
   // Layouts mirror the counting-to-10-game.html number line: each

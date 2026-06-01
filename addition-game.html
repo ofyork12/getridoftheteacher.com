@@ -535,8 +535,12 @@
     0: [1, 2, 3, 4],   // left-side neighbours first -> default = LEFT "3"
     1: [0, 2],
     2: [1, 0, 4],
-    3: [4, 0],
-    4: [3, 0, 2],
+    3: [0, 4],         // prefer bottom-centre so tap 3 pairs with slot 0
+                       // (Round 3 second pair = bottom-right + bottom-centre,
+                       //  Round 4 triangle from 3 still = [3, 0, 4] = 2 bottom + 1 top)
+    4: [0, 3, 2],      // prefer bottom-centre so tap 4 pairs with slot 0
+                       // (diagonal top-right + bottom-centre).  Triangle from 4
+                       // still works: BFS picks 0 then 3 -> [4, 0, 3] = 2 bottom + 1 top.
   };
   // Pick the group of slots to fill when the kid taps `tappedSlot`,
   // anchored on that slot.  groupSize=1 fills just the tapped dot.

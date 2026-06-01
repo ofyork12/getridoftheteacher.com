@@ -528,6 +528,10 @@
   // to the running count as soon as they begin -- and still show "0" when
   // they count all the way back down.
   let _hasTappedThisRound = false;
+  // FREE-PLAY mode: after Round 6's review finishes, the kid can poke
+  // any dot to fill / unfill it.  Each tap voices the new count number
+  // ("zero", "one", ... "five"), CLEAR restarts at Round 1.
+  let _freePlay = false;
 
   // 5 dot slots in the canonical ColorMyMath "5" shape: 3 dots on
   // the bottom, 2 dots on top (same arrangement used in the number
@@ -1111,7 +1115,7 @@
         // build up -- pair = orange, triple = yellow, quad = green,
         // solo = red.  Only the final reveal flips them all to blue.
         let fillColour = groupColour;
-        if (round >= 2) {
+        if (round >= 2 && !_freePlay) {
           const pc = _partitionColorForSlot(i);
           if (pc) fillColour = pc;
         }
@@ -1128,7 +1132,7 @@
         // group, so the partition picture stays intact.
         el.setAttribute('fill', '#ffffff');
         el.style.opacity = '1';
-        const tappable = (round === 1) || nextSet.has(i);
+        const tappable = _freePlay || (round === 1) || nextSet.has(i);
         el.style.pointerEvents = tappable ? 'auto' : 'none';
         el.style.cursor      = tappable ? 'pointer' : 'default';
         dots[i].color = '#ffffff';
@@ -1148,6 +1152,7 @@
     tapOrder.length = 0;
     tappedGroups.length = 0;
     _hasTappedThisRound = false;
+    _freePlay = false;
     round = nextRound;
     for (let i = 0; i < numLabels.length; i++) {
       numLabels[i].setAttribute('opacity', '0');
@@ -1181,12 +1186,62 @@
       _playPartitionReview(_computeAddends(), dots.length, () => {
         if (nextRound != null) {
           setTimeout(() => { _advanceRound(nextRound); }, AFTER_REVIEW_MS);
+        } else {
+          // Round 6 review just finished -- enter free play so the kid
+          // can poke the dots and hear the count, or hit CLEAR to replay.
+          setTimeout(_enterFreePlay, AFTER_REVIEW_MS);
         }
       });
     }, BEFORE_REVIEW_MS);
   }
 
+  function _enterFreePlay() {
+    _freePlay = true;
+    // Strip the review labels -- they were tied to the partition walk
+    // and would be confusing once the kid starts toggling dots freely.
+    for (let i = 0; i < numLabels.length; i++) {
+      numLabels[i].setAttribute('opacity', '0');
+      numLabels[i].textContent = '';
+    }
+    // Show a friendly "Play Again?" prompt in the Perfect banner so
+    // the kid knows they can hit CLEAR to restart from Round 1.
+    const b = document.getElementById('perfectBanner');
+    if (b) {
+      b.textContent = 'Play Again?';
+      b.classList.remove('show');
+      void b.offsetWidth;
+      b.classList.add('show');
+    }
+    refreshDots();
+  }
+
   function handleDotTap(i) {
+    if (_freePlay) {
+      // Free play: every dot toggles.  Tap a coloured dot to clear it,
+      // tap a white dot to fill it.  Voice says the new count number.
+      cancelIdleTimers();
+      _cancelNarration();
+      hidePerfectBanner();
+      if (colored.has(i)) {
+        colored.delete(i);
+        const idx = tapOrder.indexOf(i);
+        if (idx >= 0) tapOrder.splice(idx, 1);
+      } else {
+        colored.add(i);
+        tapOrder.push(i);
+      }
+      refreshDots();
+      const n = colored.size;
+      if (n > 0) {
+        _playKey(String(n));
+      } else if (window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+        const u = new SpeechSynthesisUtterance("zero");
+        u.rate = 0.95;
+        window.speechSynthesis.speak(u);
+      }
+      return;
+    }
     if (!colored.has(i)) {
       cancelIdleTimers();
       _cancelNarration();
@@ -1302,6 +1357,7 @@
     tapOrder.length = 0;
     tappedGroups.length = 0;
     _hasTappedThisRound = false;            // show target "5" again on reset
+    _freePlay = false;
     round = 1;
     for (let i = 0; i < numLabels.length; i++) {
       numLabels[i].setAttribute('opacity', '0');
@@ -1536,7 +1592,10 @@
   // === "Perfect!" banner ===================================================
   function showPerfectBanner() {
     const b = document.getElementById('perfectBanner');
-    if (b) b.classList.add('show');
+    if (b) {
+      b.textContent = 'PERFECT!';     // reset in case free-play swapped it
+      b.classList.add('show');
+    }
     // Delay the praise audio so it doesn't overlap whatever clip just
     // finished the round.  Pick a RANDOM praise clip from the pool
     // (great answer / fantastic / well done / etc.) so the kid hears

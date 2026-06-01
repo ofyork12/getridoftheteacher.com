@@ -1383,8 +1383,17 @@
       if (typeof window.bumpScoreForErase === 'function') window.bumpScoreForErase();
     }
   }
+  // Bind the click handler defensively: stamp the slot index on the
+  // SVG element itself and read it back from the event target.  This
+  // avoids any closure-capture issue and means the handler always
+  // dispatches to the EXACT dot the kid touched.
   for (let i = 0; i < dots.length; i++) {
-    dots[i].el.addEventListener('click', () => handleDotTap(i));
+    dots[i].el.dataset.slot = String(i);
+    dots[i].el.addEventListener('click', (e) => {
+      const tgt = e.currentTarget || e.target;
+      const idx = parseInt(tgt && tgt.dataset && tgt.dataset.slot, 10);
+      if (!Number.isNaN(idx)) handleDotTap(idx);
+    });
   }
   refreshDots();                  // initial state: all 5 dots visible
 

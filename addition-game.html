@@ -738,6 +738,13 @@
   // the next dot, and the voice says the running count ("one" ... "five").
   // Tapping any already-coloured dot counts the group back down by one.
   const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
+  // Order the Round-1 hint + auto-fill walk through the 5 dots when the
+  // kid pauses.  Bottom-left first (slot 1), then top-left, then bottom-
+  // centre, then top-right, then bottom-right -- left side bottom-to-top,
+  // centre, then right side top-to-bottom.  The kid can still tap any
+  // uncoloured dot in any order; this just decides where the red hint
+  // and the idle auto-tap land.
+  const R1_TAP_ORDER = [1, 2, 0, 4, 3];
   // Any dot is tappable (user 2026-05-29): the child can pick any of the
   // five positions in any order.  The slot array's order only drives
   // auto-advance -- if the child stops tapping, the pulse + auto-fill move
@@ -1213,21 +1220,20 @@
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
     // Phase 1 (emphasis hint).
-    //   * R1 + count === 0 (very first tap of the game): show IMMEDIATELY,
-    //     not after a 3s wait.  Only the bottom-left dot (slot 1) gets
-    //     the wait-dot stroke and the small red pulsing inner-hint dot
-    //     so the kid sees right away where to tap.
-    //   * Any later R1 tap: every uncoloured dot gets the breathing
-    //     wait-dot stroke after EMPHASIS_DELAY_MS (kid can tap any).
+    //   * R1, every tap: pick the next slot in R1_TAP_ORDER that isn't
+    //     coloured yet, give it the wait-dot stroke + a pulsing red
+    //     inner-hint dot.  Fires IMMEDIATELY (no setTimeout) so the kid
+    //     never stares at five identical dots wondering where to tap --
+    //     they always see one red dot pulsing for them to hit next.
     //   * Rounds 2-6: wait-dot stroke on every dot in the next group +
     //     partition-coloured hint dots inside each, after the delay.
-    const isFirstR1Tap = (round === 1 && colored.size === 0);
-    if (isFirstR1Tap) {
-      // No setTimeout -- fire the red hint the moment the game starts so
-      // the kid can never miss it.
-      const el = dots[1] && dots[1].el;
-      if (el) el.classList.add('wait-dot');
-      _showGroupHint([1], COUNT_COLORS[1]);   // red dot inside bottom-left
+    if (round === 1) {
+      const nextR1 = R1_TAP_ORDER.find(s => !colored.has(s));
+      if (nextR1 != null) {
+        const el = dots[nextR1] && dots[nextR1].el;
+        if (el) el.classList.add('wait-dot');
+        _showGroupHint([nextR1], COUNT_COLORS[1]);   // red hint
+      }
     } else {
       _emphasisTimer = setTimeout(() => {
         _emphasisTimer = null;
@@ -1235,10 +1241,8 @@
           const el = dots[idx] && dots[idx].el;
           if (el) el.classList.add('wait-dot');
         });
-        if (round !== 1) {
-          const g = _defaultGroupForIdle();
-          if (g) _showGroupHint(g.slots, g.color);
-        }
+        const g = _defaultGroupForIdle();
+        if (g) _showGroupHint(g.slots, g.color);
       }, EMPHASIS_DELAY_MS);
     }
     // Phase 2: after IDLE_FILL_MS with no real tap, simulate one so the
@@ -1250,11 +1254,10 @@
       _fillTimer = null;
       if (!window.__gamePlaying) return;
       if (round === 1) {
-        // First R1 tap auto-fills the bottom-left dot (slot 1) so the
-        // demo lines up with the red hint.  Subsequent R1 taps use the
-        // default first-uncoloured slot from _getNextDots.
-        const target = isFirstR1Tap ? 1 : nextDots[0];
-        handleDotTap(target);
+        // Auto-fill follows the same order as the red hint above so the
+        // demo lines up with what the kid was being nudged to tap.
+        const target = R1_TAP_ORDER.find(s => !colored.has(s));
+        if (target != null) handleDotTap(target);
       } else {
         const g = _defaultGroupForIdle();
         if (g) handleDotTap(g.anchor);

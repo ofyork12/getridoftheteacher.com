@@ -1223,16 +1223,9 @@
         if (g) _showGroupHint(g.slots, g.color);
       }
     }, EMPHASIS_DELAY_MS);
-    // Phase 2: after IDLE_FILL_MS auto-fill.
-    _fillTimer = setTimeout(() => {
-      _fillTimer = null;
-      if (round === 1) {
-        handleDotTap(nextDots[0]);
-      } else {
-        const g = _defaultGroupForIdle();
-        if (g) handleDotTap(g.anchor);
-      }
-    }, IDLE_FILL_MS);
+    // Phase 2 (auto-fill after IDLE_FILL_MS) has been disabled.  The game
+    // should sit still and wait for the kid -- it no longer simulates a
+    // dot tap on its own when the kid pauses to think.
   }
 
   function refreshDots() {

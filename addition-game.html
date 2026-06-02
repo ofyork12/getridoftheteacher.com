@@ -1219,32 +1219,31 @@
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
-    // Phase 1 (emphasis hint).
-    //   * R1, every tap: pick the next slot in R1_TAP_ORDER that isn't
-    //     coloured yet, give it the wait-dot stroke + a pulsing red
-    //     inner-hint dot.  Fires IMMEDIATELY (no setTimeout) so the kid
-    //     never stares at five identical dots wondering where to tap --
-    //     they always see one red dot pulsing for them to hit next.
+    // Phase 1 (emphasis hint).  Always wait EMPHASIS_DELAY_MS (3s) before
+    // showing any hint so the kid has a quiet beat to look at the dots
+    // before the screen starts trying to pull their eye to one of them.
+    //   * R1: pick the next slot in R1_TAP_ORDER that isn't coloured yet,
+    //     give it the wait-dot stroke + a pulsing red inner-hint dot.
     //   * Rounds 2-6: wait-dot stroke on every dot in the next group +
-    //     partition-coloured hint dots inside each, after the delay.
-    if (round === 1) {
-      const nextR1 = R1_TAP_ORDER.find(s => !colored.has(s));
-      if (nextR1 != null) {
-        const el = dots[nextR1] && dots[nextR1].el;
-        if (el) el.classList.add('wait-dot');
-        _showGroupHint([nextR1], COUNT_COLORS[1]);   // red hint
-      }
-    } else {
-      _emphasisTimer = setTimeout(() => {
-        _emphasisTimer = null;
+    //     partition-coloured hint dots inside each.
+    _emphasisTimer = setTimeout(() => {
+      _emphasisTimer = null;
+      if (round === 1) {
+        const nextR1 = R1_TAP_ORDER.find(s => !colored.has(s));
+        if (nextR1 != null) {
+          const el = dots[nextR1] && dots[nextR1].el;
+          if (el) el.classList.add('wait-dot');
+          _showGroupHint([nextR1], COUNT_COLORS[1]);   // red hint
+        }
+      } else {
         nextDots.forEach(idx => {
           const el = dots[idx] && dots[idx].el;
           if (el) el.classList.add('wait-dot');
         });
         const g = _defaultGroupForIdle();
         if (g) _showGroupHint(g.slots, g.color);
-      }, EMPHASIS_DELAY_MS);
-    }
+      }
+    }, EMPHASIS_DELAY_MS);
     // Phase 2: after IDLE_FILL_MS with no real tap, simulate one so the
     // narrated demo walks through the round on its own.  Gated by the
     // Play overlay (window.__gamePlaying) at the top of this function,

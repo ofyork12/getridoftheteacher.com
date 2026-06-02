@@ -148,23 +148,26 @@
     overflow: visible;
   }
 
-  /* "Clear all" pill -- bottom-left corner of the stage, below the
-     number line and to the left of the brand text.  Out of the way
-     of the scoreboard at the top and the triangle in the middle. */
+  /* "Restart" pill -- bottom-left corner of the stage, below the
+     number line and to the left of the brand text.  Sized big enough
+     for an adult finger; clearly off the dots and the number column. */
   .reset-btn {
     position: absolute;
-    bottom: 1%; left: 3%;
-    padding: 0.55vh 1.4vh;
-    border: 2px solid #000;
+    bottom: 1.2%; left: 3%;
+    padding: 1.1vh 2.6vh;
+    border: 2.5px solid #000;
     border-radius: 999px;
     background: #fff;
     color: #000;
-    font: 700 1.35vh 'Nunito', Arial, sans-serif;
-    letter-spacing: 0.08em;
+    font: 900 2vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.1em;
     cursor: pointer;
     z-index: 30;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .reset-btn:hover { background: #f4f4f4; }
+  .reset-btn:active { background: #e8e8e8; }
 
   /* Number line shifted up so the strip sits right below the big
      triangle (the user wanted it closer).  Was bottom: 4.5%; now
@@ -462,7 +465,7 @@
     </div>
   </div>
 
-  <button class="reset-btn" id="resetBtn">CLEAR</button>
+  <button class="reset-btn" id="resetBtn">RESTART</button>
 
   <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 40" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="14" y1="3" x2="14" y2="22"/><polyline points="30,3 30,22 42,22 42,36"/><polyline points="54,3 54,22 64,22"/></g></svg></div>
 </div>
@@ -1944,16 +1947,16 @@
   const _stageEl = document.querySelector('.stage');
   (_stageEl || document.body).appendChild(_resumeBtn);
 
-  // Debounce so a rapid double-event (tap on Play that synthesises a
-  // follow-up "empty-space" click on the body the moment the overlay
-  // disappears, common on iOS touch) can't immediately undo itself.
-  let _lastToggleAt = 0;
+  // _lastPlayAt is used by the document click router below to ignore
+  // the stray follow-up click that iOS synthesises right after a tap
+  // dismisses the overlay (which would otherwise land on the body as a
+  // "tap empty space -> pause" event and undo the play instantly).
+  // Real button taps are NEVER debounced, so pause/resume always fire.
+  let _lastPlayAt = 0;
   function _setPlaying(on) {
-    const now = Date.now();
-    if (now - _lastToggleAt < 350) return;
-    _lastToggleAt = now;
     _playing = !!on;
     window.__gamePlaying = _playing;
+    if (_playing) _lastPlayAt = Date.now();
     if (_playing) {
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'none';
@@ -1998,7 +2001,10 @@
       target.closest('.paint-slot')        ||
       target.closest('.end-controls')      ||
       target.closest('#replayBtn')         ||
-      target.closest('a.next-btn')
+      target.closest('a.next-btn')         ||
+      target.closest('.reset-btn')         ||   // RESTART button
+      target.closest('.scorebox-left, .scorebox-center, .scorebox-right') ||
+      target.closest('.number-line-wrap')
     );
   }
   document.addEventListener('click', (e) => {
@@ -2008,6 +2014,11 @@
     const isInteractive = _isInteractiveTarget(e.target);
     if (_playing) {
       if (isInteractive) return;
+      // Ignore the synthesised follow-up click on the body that fires
+      // right after the play overlay dismisses on touch -- otherwise it
+      // would immediately pause the game.  500ms covers iOS's worst
+      // case touch->click delay.
+      if (Date.now() - _lastPlayAt < 500) return;
       e.stopPropagation(); e.preventDefault();
       _setPlaying(false);
     } else {

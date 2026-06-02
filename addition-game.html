@@ -744,7 +744,7 @@
   // centre, then right side top-to-bottom.  The kid can still tap any
   // uncoloured dot in any order; this just decides where the red hint
   // and the idle auto-tap land.
-  const R1_TAP_ORDER = [1, 2, 0, 4, 3];
+  const R1_TAP_ORDER = [1, 0, 2, 4, 3];
   // Any dot is tappable (user 2026-05-29): the child can pick any of the
   // five positions in any order.  The slot array's order only drives
   // auto-advance -- if the child stops tapping, the pulse + auto-fill move
@@ -1875,35 +1875,26 @@
   let _playing = false;
   let _autoplayStopped = false;
 
-  // ----- One element doubles as the play-gate AND the resume button ----
-  // Initial state: full-screen "▶ TAP TO PLAY" overlay covering everything.
-  // After Play: hidden -- the game is interactive and clean.
-  // After Pause (triggered by tapping empty space): the SAME element
-  //   becomes a small "▶ TAP TO RESUME" badge at the top of the iframe,
-  //   off-center so the dots and number line below stay fully visible.
-  const _gate = document.createElement('div');
-  _gate.id = 'playPauseGate';
-  document.body.appendChild(_gate);
+  // ----- Two separate gate elements (initial overlay + resume button) --
+  // Splitting them avoids the bug the user kept hitting: morphing one
+  // element between "full overlay" and "small badge" sometimes left
+  // touchstart/click events going to the wrong target.  Now each role
+  // is its own DOM node with its own dedicated click handler.
 
-  const FULL_STYLE =
-    'position: fixed; inset: 0; z-index: 99999;' +
-    'display: flex; align-items: center; justify-content: center;' +
-    'background: rgba(0, 0, 0, 0.62); color: #fff;' +
-    'font-family: Arial, sans-serif; cursor: pointer;' +
-    'user-select: none; -webkit-tap-highlight-color: transparent;' +
-    'touch-action: manipulation;';
-  const BADGE_STYLE =
-    'position: fixed; top: 14px; left: 50%;' +
-    'transform: translateX(-50%); z-index: 99999;' +
-    'padding: 12px 22px; border-radius: 999px;' +
-    'background: rgba(0, 0, 0, 0.82); border: 3px solid #fff;' +
-    'color: #fff; font-family: Arial, sans-serif;' +
-    'font-weight: 900; font-size: 18px; letter-spacing: 1px;' +
-    'text-transform: uppercase; cursor: pointer;' +
-    'user-select: none; -webkit-tap-highlight-color: transparent;' +
-    'touch-action: manipulation; display: flex; align-items: center; gap: 10px;';
-
-  const FULL_INNER =
+  // Initial full-screen "Tap to Play" overlay -- shown once at page load,
+  // dismissed forever on first click.  Centred over the whole iframe.
+  const _bigOverlay = document.createElement('div');
+  _bigOverlay.id = 'bigPlayOverlay';
+  _bigOverlay.style.cssText = [
+    'position: fixed', 'inset: 0', 'z-index: 99999',
+    'display: flex', 'align-items: center', 'justify-content: center',
+    'background: rgba(0, 0, 0, 0.62)',
+    'color: #fff', 'font-family: Arial, sans-serif',
+    'cursor: pointer', 'user-select: none',
+    '-webkit-tap-highlight-color: transparent',
+    'touch-action: manipulation',
+  ].join('; ');
+  _bigOverlay.innerHTML =
     '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none">' +
       '<div style="width:clamp(120px,30vw,180px);height:clamp(120px,30vw,180px);' +
                   'border:6px solid #fff;border-radius:50%;display:flex;' +
@@ -1915,43 +1906,44 @@
       '<div style="font-weight:900;font-size:clamp(20px,5vw,28px);letter-spacing:2px;' +
                   'text-transform:uppercase">Tap to Play</div>' +
     '</div>';
-  const BADGE_INNER =
+  document.body.appendChild(_bigOverlay);
+
+  // Resume button -- a real <button> element, parked on the LEFT side
+  // just below the scoreboard so it never sits on top of the big number
+  // or the equation row.  Shown only when paused; click to resume.
+  const _resumeBtn = document.createElement('button');
+  _resumeBtn.type = 'button';
+  _resumeBtn.id = 'resumeBtn';
+  _resumeBtn.style.cssText = [
+    'position: fixed',
+    'top: 70px',      // below the top-1.2% scoreboard
+    'left: 10px',     // hugging the left edge
+    'z-index: 99999',
+    'padding: 10px 16px', 'border-radius: 999px',
+    'background: rgba(0, 0, 0, 0.85)',
+    'border: 3px solid #fff',
+    'color: #fff', 'font-family: Arial, sans-serif',
+    'font-weight: 900', 'font-size: 15px', 'letter-spacing: 1px',
+    'text-transform: uppercase', 'cursor: pointer',
+    'display: none',           // hidden until paused
+    'align-items: center', 'gap: 8px',
+    '-webkit-tap-highlight-color: transparent',
+    'touch-action: manipulation',
+  ].join('; ');
+  _resumeBtn.innerHTML =
     '<span style="display:inline-block;width:0;height:0;' +
-                 'border-style:solid;border-width:9px 0 9px 14px;' +
+                 'border-style:solid;border-width:7px 0 7px 11px;' +
                  'border-color:transparent transparent transparent #fff;' +
                  'pointer-events:none"></span>' +
     '<span style="pointer-events:none">Tap to Resume</span>';
-
-  function _showGateFull() {
-    _gate.style.cssText = FULL_STYLE;
-    _gate.innerHTML     = FULL_INNER;
-    _gate.style.display = 'flex';
-  }
-  function _showGateBadge() {
-    _gate.style.cssText = BADGE_STYLE;
-    _gate.innerHTML     = BADGE_INNER;
-    _gate.style.display = 'flex';
-  }
-  function _hideGate() {
-    _gate.style.display = 'none';
-  }
-
-  // Start with the full-screen Play gate.
-  _showGateFull();
+  document.body.appendChild(_resumeBtn);
 
   function _setPlaying(on) {
     _playing = !!on;
-    // Mirror to a window property so startIdleTimers() (which lives
-    // earlier in the script, before this `let _playing` is declared)
-    // can read the state without hitting the temporal dead zone.
     window.__gamePlaying = _playing;
     if (_playing) {
-      _hideGate();
-      // Kick the idle timers NOW so the auto-walk countdown begins as
-      // soon as the kid taps Play.  Without this, the timer only arms
-      // on the next refreshDots() (which doesn't fire until the kid
-      // taps a real dot) -- so a "play and just watch" session never
-      // started anything.
+      _bigOverlay.style.display = 'none';
+      _resumeBtn.style.display  = 'none';
       try { startIdleTimers(); } catch (e) {}
     } else {
       if (window.AudioLib && AudioLib.stopAll) {
@@ -1959,22 +1951,35 @@
       }
       try { cancelIdleTimers(); } catch (e) {}
       try { stopHopping(); }     catch (e) {}
-      _showGateBadge();
+      // Big overlay only ever shows on initial load; once we've played
+      // anything, pause shows only the small left-side button.
+      _bigOverlay.style.display = 'none';
+      _resumeBtn.style.display  = 'inline-flex';
     }
   }
-  // Initial state: paused -- nothing fires until the user taps the gate.
+  // Initial state: paused, big overlay visible.
   window.__gamePlaying = false;
 
-  // ----- Single click router (capture phase) ---------------------------
-  // One handler does it all so there's no double-listener race between
-  // a separate gate listener and the document listener.
-  //   * Tap inside the gate (full overlay or resume badge) -> if paused,
-  //     resume; if playing, pause.  Either way, the click stops here.
-  //   * While PLAYING: clicks on dots / paint slots / end controls pass
-  //     through to their existing handlers (the kid plays normally).
-  //     Clicks on empty space pause the game.
-  //   * While PAUSED: dot/paint taps are swallowed (no accidental counts).
-  //     Taps on empty space resume.
+  // Dedicated click handlers on each gate element.  Plain `click` works
+  // reliably here because they're real interactive elements (a <div>
+  // with cursor:pointer and a <button>) -- no capture-phase routing
+  // interference, no need for pointerdown shims.
+  _bigOverlay.addEventListener('click', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    _setPlaying(true);
+  });
+  _resumeBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); e.preventDefault();
+    _setPlaying(true);
+  });
+
+  // ----- Document-level click router (capture phase) -------------------
+  // Handles clicks OUTSIDE the dedicated overlay + resume button:
+  //   * Tap on a dot / paint slot / replay or next button -> pass through
+  //     to the existing handler when playing; swallow when paused.
+  //   * Tap on empty space (anywhere not interactive) -> toggle pause.
+  // The overlay and resume button have their own listeners and call
+  // _setPlaying directly, so they don't need to be routed here.
   function _isInteractiveTarget(target) {
     if (!target || !target.closest) return false;
     return !!(
@@ -1985,54 +1990,19 @@
       target.closest('a.next-btn')
     );
   }
-  function _routeClick(e) {
-    // Tap inside the gate -> toggle play state.  Important: this branch
-    // ALSO fires when the kid taps the "Tap to Resume" badge, which was
-    // the bug -- the previous code only resumed if (!_playing), but the
-    // capture-phase handler had already stopped propagation on a
-    // separate path and the badge tap silently did nothing.
-    if (_gate && _gate.contains(e.target)) {
-      e.stopPropagation();
-      e.preventDefault();
-      // Debounce: a single user tap fires both pointerdown and click; we
-      // only want to toggle once.  The pointerdown handler below stamps
-      // _gate.__lastToggleAt -- skip if we're within 400ms of that.
-      const now = Date.now();
-      if (now - (_gate.__lastToggleAt || 0) < 400) return;
-      _gate.__lastToggleAt = now;
-      _setPlaying(!_playing);
-      return;
-    }
+  document.addEventListener('click', (e) => {
+    // Gate elements have their own handlers; ignore them here.
+    if (_bigOverlay.contains(e.target)) return;
+    if (_resumeBtn.contains(e.target))  return;
     const isInteractive = _isInteractiveTarget(e.target);
     if (_playing) {
       if (isInteractive) return;
-      e.stopPropagation();
-      e.preventDefault();
+      e.stopPropagation(); e.preventDefault();
       _setPlaying(false);
     } else {
-      e.stopPropagation();
-      e.preventDefault();
+      // Paused.  Dots/paints are off-limits; empty taps resume.
+      e.stopPropagation(); e.preventDefault();
       if (!isInteractive) _setPlaying(true);
-    }
-  }
-  document.addEventListener('click', _routeClick, true);
-  // pointerdown as a backup so the resume tap fires even on touch-only
-  // browsers that delay or swallow the synthesized click.  We only act
-  // on it if the matching click hasn't already done the work (tracked
-  // via _routeClick).  In practice this is rare; click() almost always
-  // fires, but the belt+suspenders covers the case the user reported
-  // where the resume badge wasn't responding.
-  document.addEventListener('pointerdown', (e) => {
-    if (_gate && _gate.contains(e.target)) {
-      // Mirror the click behaviour preemptively.  If a subsequent
-      // click fires, _routeClick will re-toggle -- guard against
-      // that by remembering the timestamp.
-      const now = Date.now();
-      if (now - (_gate.__lastToggleAt || 0) < 400) return;
-      _gate.__lastToggleAt = now;
-      e.stopPropagation();
-      e.preventDefault();
-      _setPlaying(!_playing);
     }
   }, true);
 

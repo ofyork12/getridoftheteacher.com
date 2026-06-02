@@ -928,9 +928,15 @@
     }
     if (n === 0) return;
     const gcx = cxSum / n, gcy = cySum / n;
+    // Pulse both the dot AND its number label so the digits shrink and
+    // grow back with the circle -- the answer feels like one combined
+    // gesture instead of just the colour pulsing under a static "5".
+    const pulsedTargets = [];
     for (const idx of slotList) {
-      if (!dots[idx]) continue;
-      const el = dots[idx].el;
+      if (dots[idx])     pulsedTargets.push(dots[idx].el);
+      if (numLabels[idx]) pulsedTargets.push(numLabels[idx]);
+    }
+    for (const el of pulsedTargets) {
       el.classList.remove('reveal-pulse');
       el.style.transformBox  = 'view-box';
       el.style.transformOrigin = gcx + 'px ' + gcy + 'px';
@@ -938,9 +944,7 @@
       el.classList.add('reveal-pulse');
     }
     setTimeout(() => {
-      for (const idx of slotList) {
-        if (!dots[idx]) continue;
-        const el = dots[idx].el;
+      for (const el of pulsedTargets) {
         el.classList.remove('reveal-pulse');
         el.style.transformBox    = '';
         el.style.transformOrigin = '';
@@ -1123,7 +1127,19 @@
       el.style.cursor = 'default';
     }
     innerHints.forEach(h => h.classList.remove('show'));
-    if (eqEl) eqEl.innerHTML = '<span class="num">' + total + '</span>';
+    // Round 7 is special -- the partition is 0 + 5 = 5, so the kid should
+    // see and hear "zero" with the dots back to WHITE first, then "plus
+    // five" lights the dots blue, then "equals five" emphasises them.
+    // Every other round leaves the dots in whatever partition colour the
+    // gameplay already painted them.
+    if (round === 7) {
+      for (let i = 0; i < dots.length; i++) {
+        dots[i].el.setAttribute('fill', '#ffffff');
+      }
+      if (eqEl) eqEl.innerHTML = '<span class="num">0</span>';
+    } else {
+      if (eqEl) eqEl.innerHTML = '<span class="num">' + total + '</span>';
+    }
 
     const groups    = _slotsForAddendList();
     const lastSlots = groups[groups.length - 1] || [];
@@ -1140,9 +1156,29 @@
     const items = [];
     // Round 7's partition is "0 + 5 = 5" -- prefix the chain with the
     // "zero" clip so the voice walks the kid through the whole equation.
-    if (round === 7) items.push({ key: '0' });
+    // The dots stay WHITE through the "zero" beat (set above) and only
+    // turn blue when "plus five" plays so the visual matches the audio.
+    if (round === 7) {
+      items.push({
+        key: '0',
+        onStart: () => {
+          if (eqEl) eqEl.innerHTML = '<span class="num">0</span>';
+          // Pulse the all-white "you are at zero" state.
+          _pulseSlots([0, 1, 2, 3, 4], 800);
+        }
+      });
+    }
     items.push(
       ...addPlus(newAddend, () => {
+        // For R7, "plus five" is the moment the dots turn blue and the big
+        // count jumps from 0 to 5.  Other rounds just pulse the last group.
+        if (round === 7) {
+          const blue = COUNT_COLORS[total];
+          for (let i = 0; i < dots.length; i++) {
+            dots[i].el.setAttribute('fill', blue);
+          }
+          if (eqEl) eqEl.innerHTML = '<span class="num">' + total + '</span>';
+        }
         _pulseSlots(lastSlots, 800);
         if (eqLineEl) eqLineEl.textContent = (round === 7 ? '0 + ' : '') + addends.join(' + ');
       }),
@@ -1186,10 +1222,17 @@
       else if (round === 6)                      anchor = 1;   // quad from bottom-left
       else                                        anchor = 0;
     } else {
-      // Subsequent group: pick the first still-uncoloured slot.
+      // Subsequent group: walk in a round-specific reading order so the
+      // auto-fill visits the dots in the order the user wants to see them
+      // light up.  R2 (2+1+1+1): after the bottom-left pair, the next solo
+      // is top-left, then top-right, then bottom-right -- so the four
+      // taps land on slots [1, 2, 4, 3] in order.  Other rounds fall back
+      // to "first uncoloured" since they were already correct.
+      const order = (round === 2) ? [1, 2, 0, 4, 3]
+                                  : [0, 1, 2, 3, 4];
       anchor = 0;
-      for (let i = 0; i < dots.length; i++) {
-        if (!colored.has(i)) { anchor = i; break; }
+      for (const s of order) {
+        if (!colored.has(s)) { anchor = s; break; }
       }
     }
     return { slots: _pickGroup(anchor, size), color: COUNT_COLORS[size], anchor };

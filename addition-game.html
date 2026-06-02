@@ -1960,23 +1960,16 @@
   // Initial state: paused -- nothing fires until the user taps the gate.
   window.__gamePlaying = false;
 
-  // Direct tap on the gate (whether the full overlay or the resume badge)
-  // toggles to playing.
-  _gate.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!_playing) _setPlaying(true);
-  });
-
-  // ----- Capture-phase click router -------------------------------------
-  // Decides what every other click means based on the current state.
-  // While PLAYING: clicks on dots / paint slots / end controls go through
-  //   to the existing handlers (the kid interacts with the game).  Clicks
-  //   ELSEWHERE (empty space inside the iframe) PAUSE the game.
-  // While PAUSED: every click that isn't on the gate itself either
-  //   resumes (if it lands on empty space) or is swallowed (if it lands
-  //   on a dot / paint slot -- the kid mustn't accidentally count while
-  //   the game is paused).
+  // ----- Single click router (capture phase) ---------------------------
+  // One handler does it all so there's no double-listener race between
+  // a separate gate listener and the document listener.
+  //   * Tap inside the gate (full overlay or resume badge) -> if paused,
+  //     resume; if playing, pause.  Either way, the click stops here.
+  //   * While PLAYING: clicks on dots / paint slots / end controls pass
+  //     through to their existing handlers (the kid plays normally).
+  //     Clicks on empty space pause the game.
+  //   * While PAUSED: dot/paint taps are swallowed (no accidental counts).
+  //     Taps on empty space resume.
   function _isInteractiveTarget(target) {
     if (!target || !target.closest) return false;
     return !!(
@@ -1987,20 +1980,54 @@
       target.closest('a.next-btn')
     );
   }
-  document.addEventListener('click', (e) => {
-    if (_gate.contains(e.target)) return;          // gate handles itself
+  function _routeClick(e) {
+    // Tap inside the gate -> toggle play state.  Important: this branch
+    // ALSO fires when the kid taps the "Tap to Resume" badge, which was
+    // the bug -- the previous code only resumed if (!_playing), but the
+    // capture-phase handler had already stopped propagation on a
+    // separate path and the badge tap silently did nothing.
+    if (_gate && _gate.contains(e.target)) {
+      e.stopPropagation();
+      e.preventDefault();
+      // Debounce: a single user tap fires both pointerdown and click; we
+      // only want to toggle once.  The pointerdown handler below stamps
+      // _gate.__lastToggleAt -- skip if we're within 400ms of that.
+      const now = Date.now();
+      if (now - (_gate.__lastToggleAt || 0) < 400) return;
+      _gate.__lastToggleAt = now;
+      _setPlaying(!_playing);
+      return;
+    }
     const isInteractive = _isInteractiveTarget(e.target);
     if (_playing) {
-      if (isInteractive) return;                   // let dot/paint click through
-      // Empty-space click -> pause.
+      if (isInteractive) return;
       e.stopPropagation();
       e.preventDefault();
       _setPlaying(false);
     } else {
-      // Paused: dots / paints are off-limits.  Empty-space click resumes.
       e.stopPropagation();
       e.preventDefault();
       if (!isInteractive) _setPlaying(true);
+    }
+  }
+  document.addEventListener('click', _routeClick, true);
+  // pointerdown as a backup so the resume tap fires even on touch-only
+  // browsers that delay or swallow the synthesized click.  We only act
+  // on it if the matching click hasn't already done the work (tracked
+  // via _routeClick).  In practice this is rare; click() almost always
+  // fires, but the belt+suspenders covers the case the user reported
+  // where the resume badge wasn't responding.
+  document.addEventListener('pointerdown', (e) => {
+    if (_gate && _gate.contains(e.target)) {
+      // Mirror the click behaviour preemptively.  If a subsequent
+      // click fires, _routeClick will re-toggle -- guard against
+      // that by remembering the timestamp.
+      const now = Date.now();
+      if (now - (_gate.__lastToggleAt || 0) < 400) return;
+      _gate.__lastToggleAt = now;
+      e.stopPropagation();
+      e.preventDefault();
+      _setPlaying(!_playing);
     }
   }, true);
 

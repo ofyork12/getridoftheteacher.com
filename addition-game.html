@@ -1784,12 +1784,18 @@
   window.hidePerfectBanner = hidePerfectBanner;
 
   // ===================================================================
-  // AUTO-PLAY MODE   (?auto=1 in the URL)
+  // PLAY / PAUSE GATE   (both interactive and ?auto=1 modes)
   // -------------------------------------------------------------------
-  // The computer taps through Rounds 1-7 on its own.  Used for the
-  // "watch it play" iframe embedded below the kid's interactive game.
-  // Every timing knob lives in AUTOPLAY_TIMING so you can tune the
-  // pacing of each round without hunting through the rest of the file.
+  // Every iframe -- the kid's interactive one AND the auto-play demo --
+  // starts paused with a big centred "Play" overlay.  Two iframes
+  // embedded on the same lesson page were stepping on each other's
+  // audio, so we just refuse to make ANY sound until the user explicitly
+  // taps "Play".
+  //
+  // After the gate opens, a small Pause button sits in the top-right
+  // corner (off the dots and numbers).  Click it to pause -- audio
+  // cuts immediately and dot taps are ignored.  Click it again to
+  // resume.
   // ===================================================================
   const AUTOPLAY_TIMING = {
     initialDelayMs: 1500,          // pause before the very first tap
@@ -1822,10 +1828,111 @@
     loopAfterEndMs: 6000,
   };
 
-  function _autoplayShouldStart() {
-    return /[?&]auto=1\b/.test(window.location.search);
+  const _isAutoplay = /[?&]auto=1\b/.test(window.location.search);
+
+  // ----- Play / Pause state ---------------------------------------------
+  // `_playing` is the single source of truth.  When false, all audio is
+  // silenced and dot taps are ignored.  Both iframes start at false so
+  // neither makes a sound on page load.
+  let _playing = false;
+  let _autoplayStopped = false;
+
+  // ----- Centred "Play" gate overlay (covers the whole iframe) ---------
+  const _bigOverlay = document.createElement('div');
+  _bigOverlay.id = 'bigPlayOverlay';
+  _bigOverlay.setAttribute('aria-label', 'Tap to play');
+  _bigOverlay.style.cssText = [
+    'position: fixed', 'inset: 0', 'z-index: 99999',
+    'display: flex', 'align-items: center', 'justify-content: center',
+    'background: rgba(0, 0, 0, 0.55)',
+    'color: #fff', 'font-family: Arial, sans-serif',
+    'cursor: pointer', 'user-select: none',
+    '-webkit-tap-highlight-color: transparent',
+  ].join('; ');
+  _bigOverlay.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none">' +
+      '<div style="width:clamp(120px,30vw,180px);height:clamp(120px,30vw,180px);' +
+                  'border:6px solid #fff;border-radius:50%;display:flex;' +
+                  'align-items:center;justify-content:center;background:rgba(0,0,0,0.45)">' +
+        '<div style="margin-left:14px;width:0;height:0;' +
+                    'border-style:solid;border-width:36px 0 36px 56px;' +
+                    'border-color:transparent transparent transparent #fff"></div>' +
+      '</div>' +
+      '<div style="font-weight:900;font-size:clamp(20px,5vw,28px);letter-spacing:2px;' +
+                  'text-transform:uppercase">Tap to Play</div>' +
+    '</div>';
+  document.body.appendChild(_bigOverlay);
+
+  // ----- Small corner pause/play button (top-right, off the dots) ------
+  const _cornerBtn = document.createElement('button');
+  _cornerBtn.type = 'button';
+  _cornerBtn.id = 'cornerPlayPauseBtn';
+  _cornerBtn.setAttribute('aria-label', 'Pause');
+  _cornerBtn.style.cssText = [
+    'position: fixed', 'top: 12px', 'right: 12px', 'z-index: 99998',
+    'width: 52px', 'height: 52px',
+    'border-radius: 999px', 'border: 2px solid #fff',
+    'background: rgba(0, 0, 0, 0.7)',
+    'color: #fff', 'font-family: Arial, sans-serif',
+    'font-size: 22px', 'line-height: 1', 'padding: 0',
+    'cursor: pointer', 'display: none',
+    '-webkit-tap-highlight-color: transparent',
+  ].join('; ');
+  // Pause-icon SVG (so it renders identically on every platform).
+  const PAUSE_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true">' +
+                    '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const PLAY_SVG  = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true">' +
+                    '<polygon points="7,5 19,12 7,19"/></svg>';
+  _cornerBtn.innerHTML = PAUSE_SVG;
+  document.body.appendChild(_cornerBtn);
+
+  function _setPlaying(on) {
+    _playing = !!on;
+    if (_playing) {
+      _bigOverlay.style.display = 'none';
+      _cornerBtn.style.display  = '';
+      _cornerBtn.innerHTML = PAUSE_SVG;
+      _cornerBtn.setAttribute('aria-label', 'Pause');
+    } else {
+      // Pause: silence everything and stop the idle timers + hop loop.
+      if (window.AudioLib && AudioLib.stopAll) {
+        try { AudioLib.stopAll(); } catch (e) {}
+      }
+      try { cancelIdleTimers(); } catch (e) {}
+      try { stopHopping(); }     catch (e) {}
+      _cornerBtn.innerHTML = PLAY_SVG;
+      _cornerBtn.setAttribute('aria-label', 'Play');
+      _cornerBtn.style.display  = '';
+    }
   }
 
+  // Big overlay click -> start.
+  _bigOverlay.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _setPlaying(true);
+  });
+  // Corner button click -> toggle.  stopPropagation so the click
+  // doesn't bubble to the body / any dot-area click handler.
+  _cornerBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    _setPlaying(!_playing);
+  });
+
+  // ----- Block dot taps while paused -----------------------------------
+  // Capture-phase click listener: if we're paused, swallow the event
+  // before it reaches the dot's own click handler.  This lets the kid
+  // tap a dot to do nothing while paused -- they have to use the corner
+  // button to resume.
+  document.addEventListener('click', (e) => {
+    if (_playing) return;
+    // Let the big overlay and corner button handle their own clicks.
+    if (_bigOverlay.contains(e.target)) return;
+    if (_cornerBtn.contains(e.target))  return;
+    e.stopPropagation();
+    e.preventDefault();
+  }, true);
+
+  // ----- Auto-play loop (only when ?auto=1) -----------------------------
   function _autoplayTap(slot) {
     const el = document.querySelector('#dotGroup circle[data-slot="' + slot + '"]');
     if (!el) return false;
@@ -1841,69 +1948,23 @@
 
   async function _autoplayWaitForDots() {
     for (let i = 0; i < 200; i++) {
-      const ready = document.querySelectorAll('#dotGroup circle[data-slot]').length >= 5;
-      if (ready) return true;
+      if (document.querySelectorAll('#dotGroup circle[data-slot]').length >= 5) return true;
       await new Promise(r => setTimeout(r, 50));
     }
     return false;
   }
 
-  // Off-screen pause: the parent page (addition.html) watches this iframe
-  // with IntersectionObserver and posts an `iframeVisibility` message
-  // whenever the user scrolls us in or out of view.  When we're off
-  // screen we silence audio AND, if the autoplay is running, freeze the
-  // tap loop -- so when the user is reading the kid's interactive game
-  // up top, the demo iframe down below isn't talking over it (and vice
-  // versa).  Resume is automatic when the user scrolls back to us.
-  let _parentVisibility = true;        // assume visible until told otherwise
-  function _iframeOnScreen() {
-    return _parentVisibility && !document.hidden;
-  }
-  window.addEventListener('message', (ev) => {
-    if (!ev || !ev.data || ev.data.type !== 'iframeVisibility') return;
-    const wasVisible = _iframeOnScreen();
-    _parentVisibility = !!ev.data.visible;
-    const isVisible = _iframeOnScreen();
-    if (wasVisible && !isVisible) {
-      // Going off-screen -- stop any current sound.
-      if (window.AudioLib && AudioLib.stopAll) {
-        try { AudioLib.stopAll(); } catch (e) {}
-      }
-      cancelIdleTimers();
-      stopHopping();
-    }
-    // Going on-screen needs no explicit action: AudioLib.getCtx
-    // auto-resumes its AudioContext on the next play, and the
-    // autoplay loop checks _iframeOnScreen() on each sleep tick.
-  });
-
-  // Tell the parent we're loaded so it sends us our initial visibility
-  // (the IntersectionObserver entries don't always fire on first load
-  // if the iframe is below the fold).
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'iframeReady' }, '*');
-    }
-  } catch (e) {}
-
-  // Pause-aware sleep: if the user pauses mid-sleep OR the iframe goes
-  // off-screen, the promise stays pending until we're back in play.
-  // We poll every 200ms; total elapsed time excludes the paused portion.
-  let _autoplayPaused = false;
-  let _autoplayStopped = false;
+  // Pause-aware sleep: while _playing is false, the elapsed-time
+  // accounting freezes, so a pause-then-resume picks up where the
+  // round left off (no skipped beats, no double-fast catchup).
   function _autoplaySleep(ms) {
     return new Promise(resolve => {
-      const start = Date.now();
       let remaining = ms;
-      let lastTick = start;
+      let lastTick = Date.now();
       const tick = () => {
         if (_autoplayStopped) { resolve(); return; }
         const now = Date.now();
-        // Off-screen counts as paused too -- the demo waits for the
-        // user to scroll back before consuming any more of its budget.
-        if (!_autoplayPaused && _iframeOnScreen()) {
-          remaining -= (now - lastTick);
-        }
+        if (_playing) remaining -= (now - lastTick);
         lastTick = now;
         if (remaining <= 0) { resolve(); return; }
         setTimeout(tick, Math.min(200, remaining + 10));
@@ -1919,10 +1980,8 @@
       const slots = T.tapSequence[r];
       for (let i = 0; i < slots.length; i++) {
         if (_autoplayStopped) return;
-        // Don't dispatch a tap while paused (by the user) OR off-screen
-        // (the user is looking at the other iframe, so we shouldn't be
-        // making sounds).
-        while ((_autoplayPaused || !_iframeOnScreen()) && !_autoplayStopped) {
+        // Don't dispatch a tap while paused.
+        while (!_playing && !_autoplayStopped) {
           await new Promise(r => setTimeout(r, 100));
         }
         if (_autoplayStopped) return;
@@ -1933,83 +1992,27 @@
     }
   }
 
-  // Build the "Tap to start" / "Tap to pause" overlay so the iframe
-  // doesn't blast audio the moment it loads (two iframes on the same
-  // lesson page would otherwise talk over each other) and so the user
-  // can pause the demo with a single tap.
-  function _autoplayBuildOverlay() {
-    const ov = document.createElement('div');
-    ov.id = 'autoplayOverlay';
-    ov.style.cssText =
-      'position: fixed; inset: 0; z-index: 9999;' +
-      'display: flex; align-items: center; justify-content: center;' +
-      'background: rgba(0, 0, 0, 0.62); color: #fff;' +
-      'font-family: Arial, sans-serif; font-weight: 900;' +
-      'font-size: clamp(28px, 8vw, 56px); letter-spacing: 2px;' +
-      'text-transform: uppercase; cursor: pointer;' +
-      'user-select: none; -webkit-tap-highlight-color: transparent;';
-    ov.textContent = 'Tap to Start';
-    document.body.appendChild(ov);
-    return ov;
-  }
-
   async function _autoplayMain() {
-    if (!_autoplayShouldStart()) return;
-    const ok = await _autoplayWaitForDots();
-    if (!ok) return;
-
-    const overlay = _autoplayBuildOverlay();
-
-    // First click: dismiss overlay and begin the loop.
-    await new Promise(resolve => {
-      const onFirst = () => {
-        overlay.removeEventListener('click', onFirst);
-        overlay.style.display = 'none';
-        resolve();
-      };
-      overlay.addEventListener('click', onFirst);
-    });
-
-    // After the demo is running, taps anywhere on the iframe toggle
-    // pause / resume.  We catch them in the capture phase so the game's
-    // own dot-tap handlers don't see the tap while we're paused.
-    document.addEventListener('click', (e) => {
-      if (_autoplayStopped) return;
-      // Ignore the click that just dismissed the overlay (already gone).
-      if (e.target && e.target.id === 'autoplayOverlay') return;
-      _autoplayPaused = !_autoplayPaused;
-      if (_autoplayPaused) {
-        // Silence whatever's playing right now and show a "paused" overlay.
-        if (window.AudioLib && AudioLib.stopAll) {
-          try { AudioLib.stopAll(); } catch (e) {}
-        }
-        overlay.textContent = 'Tap to Resume';
-        overlay.style.display = 'flex';
-        // Block this same click from waking the resume path.
-        e.stopPropagation();
-        e.preventDefault();
-      } else {
-        overlay.style.display = 'none';
-      }
-    }, true);
-
-    // Loop forever (or play once if loopAfterEndMs is 0).
+    if (!_isAutoplay) return;
+    if (!await _autoplayWaitForDots()) return;
+    // Wait for the first user click on the big overlay.
+    while (!_playing && !_autoplayStopped) {
+      await new Promise(r => setTimeout(r, 100));
+    }
     while (!_autoplayStopped) {
       await _autoplayRunOnce();
       const after = AUTOPLAY_TIMING.loopAfterEndMs;
       if (!after) return;
       await _autoplaySleep(after);
-      // Click the Replay button to reset state cleanly.
       const replay = document.getElementById('replayBtn');
       if (replay) {
         replay.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       } else {
-        return;            // no replay button -> give up
+        return;
       }
       await _autoplaySleep(400);
     }
   }
-
   _autoplayMain();
 </script>
 

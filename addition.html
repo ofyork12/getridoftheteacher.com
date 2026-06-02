@@ -65,13 +65,13 @@
     <h2 class="section-heading">Game — Build 5</h2>
     <p class="section-note">Tap the red paint, then tap dots to count 1, 2, 3, 4, 5.  White paint erases.</p>
     <div class="interactive-frame">
-      <iframe src="addition-game.html?v=2026-06-02four2" title="Addition 1 to 5 Game" allow="autoplay"></iframe>
+      <iframe src="addition-game.html?v=2026-06-02vis" title="Addition 1 to 5 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Watch It Play</h2>
     <p class="section-note">Tap once to start.  Tap again to pause; tap to resume.</p>
     <div class="interactive-frame">
-      <iframe src="addition-game.html?auto=1&amp;v=2026-06-02tapstart" title="Addition 1 to 5 Auto-Play" allow="autoplay"></iframe>
+      <iframe src="addition-game.html?auto=1&amp;v=2026-06-02vis" title="Addition 1 to 5 Auto-Play" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Watch</h2>
@@ -96,6 +96,56 @@
       const gameFrame = document.querySelector('.interactive-frame');
       if (gameFrame) gameFrame.scrollIntoView({ block: 'start' });
     });
+
+    // Per-iframe visibility tracking: only the iframe the user has on
+    // screen should be making any sound.  When the kid is looking at
+    // the interactive game up top, the auto-play demo iframe down
+    // below mustn't talk over it (and vice versa).  We watch each
+    // .interactive-frame with IntersectionObserver and forward the
+    // visible/hidden state to the iframe via postMessage; the iframe
+    // calls AudioLib.stopAll() (and pauses its autoplay loop) the
+    // moment it leaves the viewport, then resumes when scrolled back.
+    (function setupIframeVisibilityRelay() {
+      const VISIBLE_RATIO = 0.35;   // count as "visible" once >= 35% is in view
+      const frames = Array.from(document.querySelectorAll('.interactive-frame'));
+      const visibilityByFrame = new WeakMap();
+      const sendStateTo = (frame) => {
+        const iframe = frame.querySelector('iframe');
+        if (!iframe || !iframe.contentWindow) return;
+        const visible = !!visibilityByFrame.get(frame);
+        try {
+          iframe.contentWindow.postMessage(
+            { type: 'iframeVisibility', visible }, '*'
+          );
+        } catch (e) {}
+      };
+
+      const obs = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          visibilityByFrame.set(entry.target, entry.intersectionRatio >= VISIBLE_RATIO);
+          sendStateTo(entry.target);
+        }
+      }, { threshold: [0, VISIBLE_RATIO, 1] });
+
+      frames.forEach(f => {
+        visibilityByFrame.set(f, false);    // default: hidden until observer says otherwise
+        obs.observe(f);
+      });
+
+      // Each iframe posts {type: 'iframeReady'} when it loads.  Reply
+      // with the current visibility so the iframe knows whether to
+      // start muted or audible.
+      window.addEventListener('message', (ev) => {
+        if (!ev || !ev.data || ev.data.type !== 'iframeReady') return;
+        for (const frame of frames) {
+          const iframe = frame.querySelector('iframe');
+          if (iframe && iframe.contentWindow === ev.source) {
+            sendStateTo(frame);
+            break;
+          }
+        }
+      });
+    })();
   </script>
 </body>
 </html>

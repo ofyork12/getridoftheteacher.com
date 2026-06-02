@@ -1848,9 +1848,47 @@
     return false;
   }
 
-  // Pause-aware sleep: if the user pauses mid-sleep, the promise stays
-  // pending until they resume.  We poll every 200ms; total elapsed
-  // time excludes the paused portion.
+  // Off-screen pause: the parent page (addition.html) watches this iframe
+  // with IntersectionObserver and posts an `iframeVisibility` message
+  // whenever the user scrolls us in or out of view.  When we're off
+  // screen we silence audio AND, if the autoplay is running, freeze the
+  // tap loop -- so when the user is reading the kid's interactive game
+  // up top, the demo iframe down below isn't talking over it (and vice
+  // versa).  Resume is automatic when the user scrolls back to us.
+  let _parentVisibility = true;        // assume visible until told otherwise
+  function _iframeOnScreen() {
+    return _parentVisibility && !document.hidden;
+  }
+  window.addEventListener('message', (ev) => {
+    if (!ev || !ev.data || ev.data.type !== 'iframeVisibility') return;
+    const wasVisible = _iframeOnScreen();
+    _parentVisibility = !!ev.data.visible;
+    const isVisible = _iframeOnScreen();
+    if (wasVisible && !isVisible) {
+      // Going off-screen -- stop any current sound.
+      if (window.AudioLib && AudioLib.stopAll) {
+        try { AudioLib.stopAll(); } catch (e) {}
+      }
+      cancelIdleTimers();
+      stopHopping();
+    }
+    // Going on-screen needs no explicit action: AudioLib.getCtx
+    // auto-resumes its AudioContext on the next play, and the
+    // autoplay loop checks _iframeOnScreen() on each sleep tick.
+  });
+
+  // Tell the parent we're loaded so it sends us our initial visibility
+  // (the IntersectionObserver entries don't always fire on first load
+  // if the iframe is below the fold).
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'iframeReady' }, '*');
+    }
+  } catch (e) {}
+
+  // Pause-aware sleep: if the user pauses mid-sleep OR the iframe goes
+  // off-screen, the promise stays pending until we're back in play.
+  // We poll every 200ms; total elapsed time excludes the paused portion.
   let _autoplayPaused = false;
   let _autoplayStopped = false;
   function _autoplaySleep(ms) {
@@ -1861,7 +1899,9 @@
       const tick = () => {
         if (_autoplayStopped) { resolve(); return; }
         const now = Date.now();
-        if (!_autoplayPaused) {
+        // Off-screen counts as paused too -- the demo waits for the
+        // user to scroll back before consuming any more of its budget.
+        if (!_autoplayPaused && _iframeOnScreen()) {
           remaining -= (now - lastTick);
         }
         lastTick = now;
@@ -1879,8 +1919,10 @@
       const slots = T.tapSequence[r];
       for (let i = 0; i < slots.length; i++) {
         if (_autoplayStopped) return;
-        // Don't dispatch a tap while the user has the autoplay paused.
-        while (_autoplayPaused && !_autoplayStopped) {
+        // Don't dispatch a tap while paused (by the user) OR off-screen
+        // (the user is looking at the other iframe, so we shouldn't be
+        // making sounds).
+        while ((_autoplayPaused || !_iframeOnScreen()) && !_autoplayStopped) {
           await new Promise(r => setTimeout(r, 100));
         }
         if (_autoplayStopped) return;

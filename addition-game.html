@@ -1168,17 +1168,13 @@
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
-    const isFirstHopDot = (round === 1 && count === 0);
-    // Phase 1: after EMPHASIS_DELAY_MS show a hint.  Round 1 first dot
-    // hops; everything else gets the breathing wait-dot stroke + (for
-    // Rounds 2-6) coloured hint dots inside the next group's slots.
+    // Phase 1: after EMPHASIS_DELAY_MS show a hint.  Every dot (including
+    // Round 1's first dot) gets the breathing wait-dot stroke -- the kid
+    // shouldn't see one dot bouncing and feel pulled to a specific slot,
+    // because tapping ANY slot is fine.  Rounds 2-6 also get coloured hint
+    // dots inside the next group's slots.
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
-      if (isFirstHopDot && nextDots.length >= 1) {
-        const el = dots[nextDots[0]].el;
-        if (el) _hopStop = startHopping(el);
-        return;
-      }
       nextDots.forEach(idx => {
         const el = dots[idx] && dots[idx].el;
         if (el) el.classList.add('wait-dot');

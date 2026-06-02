@@ -1212,13 +1212,24 @@
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
-    // Phase 1: after EMPHASIS_DELAY_MS show a hint.  Every dot (including
-    // Round 1's first dot) gets the breathing wait-dot stroke -- the kid
-    // shouldn't see one dot bouncing and feel pulled to a specific slot,
-    // because tapping ANY slot is fine.  Rounds 2-6 also get coloured hint
-    // dots inside the next group's slots.
+    // Phase 1: after EMPHASIS_DELAY_MS show a hint.
+    //   * R1 + count === 0 (the very first tap of the whole game): only the
+    //     bottom-left dot (slot 1) gets the wait-dot stroke AND a small
+    //     red dot inside it -- the kid sees exactly which spot to tap to
+    //     start counting.
+    //   * Any later R1 tap: every uncoloured dot gets the breathing
+    //     wait-dot stroke (kid can tap any of them).
+    //   * Rounds 2-6: wait-dot stroke on every dot in the next group, plus
+    //     the partition-coloured hint dots inside each.
+    const isFirstR1Tap = (round === 1 && colored.size === 0);
     _emphasisTimer = setTimeout(() => {
       _emphasisTimer = null;
+      if (isFirstR1Tap) {
+        const el = dots[1] && dots[1].el;
+        if (el) el.classList.add('wait-dot');
+        _showGroupHint([1], COUNT_COLORS[1]);   // red dot inside bottom-left
+        return;
+      }
       nextDots.forEach(idx => {
         const el = dots[idx] && dots[idx].el;
         if (el) el.classList.add('wait-dot');
@@ -1237,7 +1248,11 @@
       _fillTimer = null;
       if (!window.__gamePlaying) return;
       if (round === 1) {
-        handleDotTap(nextDots[0]);
+        // First R1 tap auto-fills the bottom-left dot (slot 1) so the
+        // demo lines up with the red hint.  Subsequent R1 taps use the
+        // default first-uncoloured slot from _getNextDots.
+        const target = isFirstR1Tap ? 1 : nextDots[0];
+        handleDotTap(target);
       } else {
         const g = _defaultGroupForIdle();
         if (g) handleDotTap(g.anchor);

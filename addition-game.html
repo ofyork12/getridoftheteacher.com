@@ -1831,105 +1831,131 @@
   const _isAutoplay = /[?&]auto=1\b/.test(window.location.search);
 
   // ----- Play / Pause state ---------------------------------------------
-  // `_playing` is the single source of truth.  When false, all audio is
-  // silenced and dot taps are ignored.  Both iframes start at false so
-  // neither makes a sound on page load.
+  // `_playing` is the single source of truth.  Both iframes start paused
+  // so the page never makes a sound until the user explicitly taps Play.
   let _playing = false;
   let _autoplayStopped = false;
 
-  // ----- Centred "Play" gate overlay (covers the whole iframe) ---------
-  const _bigOverlay = document.createElement('div');
-  _bigOverlay.id = 'bigPlayOverlay';
-  _bigOverlay.setAttribute('aria-label', 'Tap to play');
-  _bigOverlay.style.cssText = [
-    'position: fixed', 'inset: 0', 'z-index: 99999',
-    'display: flex', 'align-items: center', 'justify-content: center',
-    'background: rgba(0, 0, 0, 0.55)',
-    'color: #fff', 'font-family: Arial, sans-serif',
-    'cursor: pointer', 'user-select: none',
-    '-webkit-tap-highlight-color: transparent',
-  ].join('; ');
-  _bigOverlay.innerHTML =
+  // ----- One element doubles as the play-gate AND the resume button ----
+  // Initial state: full-screen "▶ TAP TO PLAY" overlay covering everything.
+  // After Play: hidden -- the game is interactive and clean.
+  // After Pause (triggered by tapping empty space): the SAME element
+  //   becomes a small "▶ TAP TO RESUME" badge at the top of the iframe,
+  //   off-center so the dots and number line below stay fully visible.
+  const _gate = document.createElement('div');
+  _gate.id = 'playPauseGate';
+  document.body.appendChild(_gate);
+
+  const FULL_STYLE =
+    'position: fixed; inset: 0; z-index: 99999;' +
+    'display: flex; align-items: center; justify-content: center;' +
+    'background: rgba(0, 0, 0, 0.62); color: #fff;' +
+    'font-family: Arial, sans-serif; cursor: pointer;' +
+    'user-select: none; -webkit-tap-highlight-color: transparent;' +
+    'touch-action: manipulation;';
+  const BADGE_STYLE =
+    'position: fixed; top: 14px; left: 50%;' +
+    'transform: translateX(-50%); z-index: 99999;' +
+    'padding: 12px 22px; border-radius: 999px;' +
+    'background: rgba(0, 0, 0, 0.82); border: 3px solid #fff;' +
+    'color: #fff; font-family: Arial, sans-serif;' +
+    'font-weight: 900; font-size: 18px; letter-spacing: 1px;' +
+    'text-transform: uppercase; cursor: pointer;' +
+    'user-select: none; -webkit-tap-highlight-color: transparent;' +
+    'touch-action: manipulation; display: flex; align-items: center; gap: 10px;';
+
+  const FULL_INNER =
     '<div style="display:flex;flex-direction:column;align-items:center;gap:14px;pointer-events:none">' +
       '<div style="width:clamp(120px,30vw,180px);height:clamp(120px,30vw,180px);' +
                   'border:6px solid #fff;border-radius:50%;display:flex;' +
                   'align-items:center;justify-content:center;background:rgba(0,0,0,0.45)">' +
         '<div style="margin-left:14px;width:0;height:0;' +
-                    'border-style:solid;border-width:36px 0 36px 56px;' +
+                    'border-style:solid;border-width:34px 0 34px 54px;' +
                     'border-color:transparent transparent transparent #fff"></div>' +
       '</div>' +
       '<div style="font-weight:900;font-size:clamp(20px,5vw,28px);letter-spacing:2px;' +
                   'text-transform:uppercase">Tap to Play</div>' +
     '</div>';
-  document.body.appendChild(_bigOverlay);
+  const BADGE_INNER =
+    '<span style="display:inline-block;width:0;height:0;' +
+                 'border-style:solid;border-width:9px 0 9px 14px;' +
+                 'border-color:transparent transparent transparent #fff;' +
+                 'pointer-events:none"></span>' +
+    '<span style="pointer-events:none">Tap to Resume</span>';
 
-  // ----- Small corner pause/play button (top-right, off the dots) ------
-  const _cornerBtn = document.createElement('button');
-  _cornerBtn.type = 'button';
-  _cornerBtn.id = 'cornerPlayPauseBtn';
-  _cornerBtn.setAttribute('aria-label', 'Pause');
-  _cornerBtn.style.cssText = [
-    'position: fixed', 'top: 12px', 'right: 12px', 'z-index: 99998',
-    'width: 52px', 'height: 52px',
-    'border-radius: 999px', 'border: 2px solid #fff',
-    'background: rgba(0, 0, 0, 0.7)',
-    'color: #fff', 'font-family: Arial, sans-serif',
-    'font-size: 22px', 'line-height: 1', 'padding: 0',
-    'cursor: pointer', 'display: none',
-    '-webkit-tap-highlight-color: transparent',
-  ].join('; ');
-  // Pause-icon SVG (so it renders identically on every platform).
-  const PAUSE_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true">' +
-                    '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-  const PLAY_SVG  = '<svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" aria-hidden="true">' +
-                    '<polygon points="7,5 19,12 7,19"/></svg>';
-  _cornerBtn.innerHTML = PAUSE_SVG;
-  document.body.appendChild(_cornerBtn);
+  function _showGateFull() {
+    _gate.style.cssText = FULL_STYLE;
+    _gate.innerHTML     = FULL_INNER;
+    _gate.style.display = 'flex';
+  }
+  function _showGateBadge() {
+    _gate.style.cssText = BADGE_STYLE;
+    _gate.innerHTML     = BADGE_INNER;
+    _gate.style.display = 'flex';
+  }
+  function _hideGate() {
+    _gate.style.display = 'none';
+  }
+
+  // Start with the full-screen Play gate.
+  _showGateFull();
 
   function _setPlaying(on) {
     _playing = !!on;
     if (_playing) {
-      _bigOverlay.style.display = 'none';
-      _cornerBtn.style.display  = '';
-      _cornerBtn.innerHTML = PAUSE_SVG;
-      _cornerBtn.setAttribute('aria-label', 'Pause');
+      _hideGate();
     } else {
-      // Pause: silence everything and stop the idle timers + hop loop.
       if (window.AudioLib && AudioLib.stopAll) {
         try { AudioLib.stopAll(); } catch (e) {}
       }
       try { cancelIdleTimers(); } catch (e) {}
       try { stopHopping(); }     catch (e) {}
-      _cornerBtn.innerHTML = PLAY_SVG;
-      _cornerBtn.setAttribute('aria-label', 'Play');
-      _cornerBtn.style.display  = '';
+      _showGateBadge();
     }
   }
 
-  // Big overlay click -> start.
-  _bigOverlay.addEventListener('click', (e) => {
-    e.stopPropagation();
-    _setPlaying(true);
-  });
-  // Corner button click -> toggle.  stopPropagation so the click
-  // doesn't bubble to the body / any dot-area click handler.
-  _cornerBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    _setPlaying(!_playing);
-  });
-
-  // ----- Block dot taps while paused -----------------------------------
-  // Capture-phase click listener: if we're paused, swallow the event
-  // before it reaches the dot's own click handler.  This lets the kid
-  // tap a dot to do nothing while paused -- they have to use the corner
-  // button to resume.
-  document.addEventListener('click', (e) => {
-    if (_playing) return;
-    // Let the big overlay and corner button handle their own clicks.
-    if (_bigOverlay.contains(e.target)) return;
-    if (_cornerBtn.contains(e.target))  return;
+  // Direct tap on the gate (whether the full overlay or the resume badge)
+  // toggles to playing.
+  _gate.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
+    if (!_playing) _setPlaying(true);
+  });
+
+  // ----- Capture-phase click router -------------------------------------
+  // Decides what every other click means based on the current state.
+  // While PLAYING: clicks on dots / paint slots / end controls go through
+  //   to the existing handlers (the kid interacts with the game).  Clicks
+  //   ELSEWHERE (empty space inside the iframe) PAUSE the game.
+  // While PAUSED: every click that isn't on the gate itself either
+  //   resumes (if it lands on empty space) or is swallowed (if it lands
+  //   on a dot / paint slot -- the kid mustn't accidentally count while
+  //   the game is paused).
+  function _isInteractiveTarget(target) {
+    if (!target || !target.closest) return false;
+    return !!(
+      target.closest('#dotGroup circle')   ||
+      target.closest('.paint-slot')        ||
+      target.closest('.end-controls')      ||
+      target.closest('#replayBtn')         ||
+      target.closest('a.next-btn')
+    );
+  }
+  document.addEventListener('click', (e) => {
+    if (_gate.contains(e.target)) return;          // gate handles itself
+    const isInteractive = _isInteractiveTarget(e.target);
+    if (_playing) {
+      if (isInteractive) return;                   // let dot/paint click through
+      // Empty-space click -> pause.
+      e.stopPropagation();
+      e.preventDefault();
+      _setPlaying(false);
+    } else {
+      // Paused: dots / paints are off-limits.  Empty-space click resumes.
+      e.stopPropagation();
+      e.preventDefault();
+      if (!isInteractive) _setPlaying(true);
+    }
   }, true);
 
   // ----- Auto-play loop (only when ?auto=1) -----------------------------

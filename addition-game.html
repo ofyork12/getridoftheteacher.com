@@ -1223,9 +1223,21 @@
         if (g) _showGroupHint(g.slots, g.color);
       }
     }, EMPHASIS_DELAY_MS);
-    // Phase 2 (auto-fill after IDLE_FILL_MS) has been disabled.  The game
-    // should sit still and wait for the kid -- it no longer simulates a
-    // dot tap on its own when the kid pauses to think.
+    // Phase 2: after IDLE_FILL_MS with no real tap, simulate one so the
+    // narrated demo walks through the round on its own.  Gated by the
+    // Play overlay (window.__gamePlaying) at the top of this function,
+    // so it never fires before the kid taps Play -- and re-checks at
+    // the moment of firing in case Pause was hit during the countdown.
+    _fillTimer = setTimeout(() => {
+      _fillTimer = null;
+      if (!window.__gamePlaying) return;
+      if (round === 1) {
+        handleDotTap(nextDots[0]);
+      } else {
+        const g = _defaultGroupForIdle();
+        if (g) handleDotTap(g.anchor);
+      }
+    }, IDLE_FILL_MS);
   }
 
   function refreshDots() {
@@ -1910,6 +1922,12 @@
     window.__gamePlaying = _playing;
     if (_playing) {
       _hideGate();
+      // Kick the idle timers NOW so the auto-walk countdown begins as
+      // soon as the kid taps Play.  Without this, the timer only arms
+      // on the next refreshDots() (which doesn't fire until the kid
+      // taps a real dot) -- so a "play and just watch" session never
+      // started anything.
+      try { startIdleTimers(); } catch (e) {}
     } else {
       if (window.AudioLib && AudioLib.stopAll) {
         try { AudioLib.stopAll(); } catch (e) {}

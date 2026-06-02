@@ -317,7 +317,7 @@
      throughout -- the pulse just highlights "this group, right now". */
   @keyframes revealPulse {
     0%   { transform: scale(1.0);  filter: brightness(1.0); }
-    50%  { transform: scale(1.18); filter: brightness(1.35); }
+    50%  { transform: scale(0.72); filter: brightness(1.25); }
     100% { transform: scale(1.0);  filter: brightness(1.0); }
   }
   .reveal-pulse {
@@ -998,13 +998,19 @@
     if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Trace the kid's EXACT steps: flatten the groups they tapped
-    // (in tap order, with each group's dots in the order _pickGroup
-    // chose them -- the kid's tap is always first in its group).
-    // That way the review labels 1-5 land on the same dots the kid
-    // touched, in the same sequence, confirming their answer.
+    // Trace the kid's EXACT steps: walk the groups they tapped in the
+    // order they tapped them.  BUT within each group, sort the dots in
+    // left-to-right reading order -- so a pair built from {bottom-centre,
+    // bottom-left} reviews as "left then centre", not "centre then left".
+    // Reading-order rank for the 5-dot domino layout:
+    //   slot 2 (top-left)=0,  slot 1 (bot-left)=1,  slot 0 (bot-centre)=2,
+    //   slot 4 (top-right)=3, slot 3 (bot-right)=4
+    const READING_RANK = { 2: 0, 1: 1, 0: 2, 4: 3, 3: 4 };
     const walkOrder = [];
-    for (const g of tappedGroups) walkOrder.push(...g);
+    for (const g of tappedGroups) {
+      const sorted = g.slice().sort((a, b) => READING_RANK[a] - READING_RANK[b]);
+      walkOrder.push(...sorted);
+    }
     const fallback = [2, 1, 0, 4, 3];
     for (const s of fallback) if (walkOrder.indexOf(s) < 0) walkOrder.push(s);
     walkOrder.length = dots.length;
@@ -1380,9 +1386,10 @@
       tappedGroups.push(group);
       group.forEach(s => colored.add(s));
       refreshDots();
-      // Pulse the kid's exact tapped dot as instant feedback so they
-      // can see "yes, that's the dot I hit".
-      _pulseSlots([i], 700);
+      // Pulse the WHOLE group together as instant feedback -- if the kid
+      // picked a 2, both dots flash together; a 3, all three flash; etc.
+      // The kid sees the whole partition group light up at once.
+      _pulseSlots(group, 700);
 
       const newCount = colored.size;
       const isFinal  = (newCount === dots.length);

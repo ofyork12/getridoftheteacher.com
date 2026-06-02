@@ -988,6 +988,7 @@
       const slot  = walkOrder[k];
       const count = k + 1;
       const color = COUNT_COLORS[count];
+      const isFinal = (k === walkOrder.length - 1);
       items.push({
         key: String(count),
         gap: 600,
@@ -998,7 +999,10 @@
             const ds = walkOrder[j];
             dots[ds].el.setAttribute('fill', color);
           }
-          _pulseSlots([slot], 800);
+          // On the final beat ("five"), pulse ALL five dots together so
+          // the emphasis on the answer feels like one shared gesture.
+          // Otherwise pulse just the current dot.
+          _pulseSlots(isFinal ? walkOrder.slice() : [slot], 800);
           if (eqEl) eqEl.innerHTML = '<span class="num">' + count + '</span>';
         }
       });

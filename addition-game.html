@@ -587,14 +587,15 @@
       return [tappedSlot];
     }
     if (round === 6 && groupSize === 4) {
-      // Round 6: slot 0 (bottom-centre) is ALWAYS one of the 4 green
-      // dots.  The +1 solo lands on bottom-left or bottom-right based
-      // on which side the kid tapped, so the "4" stays connected
-      // without an empty middle.
-      //   left  tap  (1 or 2) -> 4 = [0,1,2,4],  +1 solo = bottom-right (3)
-      //   right tap  (3 or 4) -> 4 = [0,2,3,4],  +1 solo = bottom-left  (1)
-      //   centre tap (0)      -> default to left arrangement.
-      if (tappedSlot === 3 || tappedSlot === 4) return [0, 2, 3, 4];
+      // Round 6: the hint shows the canonical [0, 1, 2, 4] quartet (bottom-
+      // centre + bottom-left + top-left + top-right) and the +1 solo lands
+      // on bottom-right (slot 3).  Tapping any of those four hinted slots
+      // -- INCLUDING slot 4 (top-right) -- fills the exact same quartet so
+      // the visual matches the hint the kid was looking at.  ONLY a tap on
+      // slot 3 (the dot the hint left out) is interpreted as "I'd rather
+      // count the right side", which swings the quad to [0, 2, 3, 4] and
+      // makes the solo slot 1 instead.
+      if (tappedSlot === 3) return [0, 2, 3, 4];
       return [0, 1, 2, 4];
     }
     const result = [tappedSlot];
@@ -2011,6 +2012,11 @@
     if (_playing) {
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'none';
+      // Force a refresh so any pointer-events / wait-dot / hint state
+      // that got stuck during the pause is reset.  This is the fix for
+      // "resume button doesn't work and the game stops" -- after a
+      // mid-round pause the dots could be left non-interactive.
+      try { refreshDots(); } catch (e) {}
       try { startIdleTimers(); } catch (e) {}
     } else {
       if (window.AudioLib && AudioLib.stopAll) {

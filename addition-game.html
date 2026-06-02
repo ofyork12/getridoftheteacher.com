@@ -153,14 +153,14 @@
      for an adult finger; clearly off the dots and the number column. */
   .reset-btn {
     position: absolute;
-    bottom: 1.2%; left: 3%;
-    padding: 1.1vh 2.6vh;
-    border: 2.5px solid #000;
+    bottom: 1.2%; left: 2%;
+    padding: 0.6vh 1.5vh;
+    border: 2px solid #000;
     border-radius: 999px;
     background: #fff;
     color: #000;
-    font: 900 2vh 'Nunito', Arial, sans-serif;
-    letter-spacing: 0.1em;
+    font: 800 1.4vh 'Nunito', Arial, sans-serif;
+    letter-spacing: 0.08em;
     cursor: pointer;
     z-index: 30;
     -webkit-tap-highlight-color: transparent;
@@ -1099,13 +1099,13 @@
         for (let i = 0; i < dots.length; i++) {
           dots[i].el.setAttribute('fill', blue);
         }
-        _pulseSlots([0, 1, 2, 3, 4], 900);
+        _pulseSlots([0, 1, 2, 3, 4], 800);
         if (eqLineEl) eqLineEl.textContent = addends.join(' + ') + ' = ' + total;
       }
     });
 
     if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 500, onDone: () => { if (onDone) onDone(); } });
+      AudioLib.playChain(items, { gap: 600, onDone: () => { if (onDone) onDone(); } });
     } else if (onDone) {
       onDone();
     }
@@ -1132,9 +1132,9 @@
     // R7's 0 + 5 = 5 uses the fused 'plus_five' clip; R6's +1 uses
     // 'plus_one'.  Everything else chains 'plus' + the digit.
     const addPlus = (val, onStart) => {
-      if (val === 1) return [{ key: 'plus_one',  gap: 900, onStart }];
-      if (val === 5) return [{ key: 'plus_five', gap: 900, onStart }];
-      return [{ key: 'plus' }, { key: String(val), gap: 900, onStart }];
+      if (val === 1) return [{ key: 'plus_one',  gap: 600, onStart }];
+      if (val === 5) return [{ key: 'plus_five', gap: 600, onStart }];
+      return [{ key: 'plus' }, { key: String(val), gap: 600, onStart }];
     };
 
     const items = [];
@@ -1143,7 +1143,7 @@
     if (round === 7) items.push({ key: '0' });
     items.push(
       ...addPlus(newAddend, () => {
-        _pulseSlots(lastSlots, 750);
+        _pulseSlots(lastSlots, 800);
         if (eqLineEl) eqLineEl.textContent = (round === 7 ? '0 + ' : '') + addends.join(' + ');
       }),
       {
@@ -1153,7 +1153,7 @@
           for (let i = 0; i < dots.length; i++) {
             dots[i].el.setAttribute('fill', blue);
           }
-          _pulseSlots([0, 1, 2, 3, 4], 900);
+          _pulseSlots([0, 1, 2, 3, 4], 800);
           if (eqLineEl) {
             const prefix = (round === 7) ? '0 + ' : '';
             eqLineEl.textContent = prefix + addends.join(' + ') + ' = ' + total;
@@ -1163,7 +1163,7 @@
     );
 
     if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 200, onDone: () => { if (onDone) onDone(); } });
+      AudioLib.playChain(items, { gap: 600, onDone: () => { if (onDone) onDone(); } });
     } else if (onDone) {
       onDone();
     }
@@ -1428,12 +1428,16 @@
         refreshDots();
         const newCount = colored.size;
         if (newCount === dots.length) {
-          // Reach 5 -> say "five", then the Perfect celebration runs,
-          // then (after a pause) the count-up review walks 1..5.
+          // Reach 5 -> say "five".  Pulse ALL five dots together so the
+          // emphasis on the final count is a single shared gesture (the
+          // earlier code only pulsed the just-tapped dot).
           _playKey(String(newCount));
+          _pulseSlots([0, 1, 2, 3, 4], 800);
           onPerfectReached();
         } else {
           _playKey(String(newCount));
+          // Pulse only the just-tapped dot for the running count.
+          _pulseSlots([i], 800);
         }
         if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
         return;
@@ -1458,7 +1462,7 @@
       // Pulse the WHOLE group together as instant feedback -- if the kid
       // picked a 2, both dots flash together; a 3, all three flash; etc.
       // The kid sees the whole partition group light up at once.
-      _pulseSlots(group, 700);
+      _pulseSlots(group, 800);
 
       const newCount = colored.size;
       const isFinal  = (newCount === dots.length);

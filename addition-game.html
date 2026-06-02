@@ -1848,8 +1848,28 @@
     return false;
   }
 
+  // Pause-aware sleep: if the user pauses mid-sleep, the promise stays
+  // pending until they resume.  We poll every 200ms; total elapsed
+  // time excludes the paused portion.
+  let _autoplayPaused = false;
+  let _autoplayStopped = false;
   function _autoplaySleep(ms) {
-    return new Promise(r => setTimeout(r, ms));
+    return new Promise(resolve => {
+      const start = Date.now();
+      let remaining = ms;
+      let lastTick = start;
+      const tick = () => {
+        if (_autoplayStopped) { resolve(); return; }
+        const now = Date.now();
+        if (!_autoplayPaused) {
+          remaining -= (now - lastTick);
+        }
+        lastTick = now;
+        if (remaining <= 0) { resolve(); return; }
+        setTimeout(tick, Math.min(200, remaining + 10));
+      };
+      setTimeout(tick, Math.min(200, ms));
+    });
   }
 
   async function _autoplayRunOnce() {
@@ -1858,6 +1878,12 @@
     for (let r = 0; r < T.tapSequence.length; r++) {
       const slots = T.tapSequence[r];
       for (let i = 0; i < slots.length; i++) {
+        if (_autoplayStopped) return;
+        // Don't dispatch a tap while the user has the autoplay paused.
+        while (_autoplayPaused && !_autoplayStopped) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+        if (_autoplayStopped) return;
         _autoplayTap(slots[i]);
         const isLast = (i === slots.length - 1);
         await _autoplaySleep(isLast ? (T.afterRoundMs[r] || 5000) : T.tapGapMs);
@@ -1865,12 +1891,68 @@
     }
   }
 
+  // Build the "Tap to start" / "Tap to pause" overlay so the iframe
+  // doesn't blast audio the moment it loads (two iframes on the same
+  // lesson page would otherwise talk over each other) and so the user
+  // can pause the demo with a single tap.
+  function _autoplayBuildOverlay() {
+    const ov = document.createElement('div');
+    ov.id = 'autoplayOverlay';
+    ov.style.cssText =
+      'position: fixed; inset: 0; z-index: 9999;' +
+      'display: flex; align-items: center; justify-content: center;' +
+      'background: rgba(0, 0, 0, 0.62); color: #fff;' +
+      'font-family: Arial, sans-serif; font-weight: 900;' +
+      'font-size: clamp(28px, 8vw, 56px); letter-spacing: 2px;' +
+      'text-transform: uppercase; cursor: pointer;' +
+      'user-select: none; -webkit-tap-highlight-color: transparent;';
+    ov.textContent = 'Tap to Start';
+    document.body.appendChild(ov);
+    return ov;
+  }
+
   async function _autoplayMain() {
     if (!_autoplayShouldStart()) return;
     const ok = await _autoplayWaitForDots();
     if (!ok) return;
+
+    const overlay = _autoplayBuildOverlay();
+
+    // First click: dismiss overlay and begin the loop.
+    await new Promise(resolve => {
+      const onFirst = () => {
+        overlay.removeEventListener('click', onFirst);
+        overlay.style.display = 'none';
+        resolve();
+      };
+      overlay.addEventListener('click', onFirst);
+    });
+
+    // After the demo is running, taps anywhere on the iframe toggle
+    // pause / resume.  We catch them in the capture phase so the game's
+    // own dot-tap handlers don't see the tap while we're paused.
+    document.addEventListener('click', (e) => {
+      if (_autoplayStopped) return;
+      // Ignore the click that just dismissed the overlay (already gone).
+      if (e.target && e.target.id === 'autoplayOverlay') return;
+      _autoplayPaused = !_autoplayPaused;
+      if (_autoplayPaused) {
+        // Silence whatever's playing right now and show a "paused" overlay.
+        if (window.AudioLib && AudioLib.stopAll) {
+          try { AudioLib.stopAll(); } catch (e) {}
+        }
+        overlay.textContent = 'Tap to Resume';
+        overlay.style.display = 'flex';
+        // Block this same click from waking the resume path.
+        e.stopPropagation();
+        e.preventDefault();
+      } else {
+        overlay.style.display = 'none';
+      }
+    }, true);
+
     // Loop forever (or play once if loopAfterEndMs is 0).
-    while (true) {
+    while (!_autoplayStopped) {
       await _autoplayRunOnce();
       const after = AUTOPLAY_TIMING.loopAfterEndMs;
       if (!after) return;

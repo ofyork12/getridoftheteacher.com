@@ -756,8 +756,8 @@
   // The VERY FIRST dot hops (gentle bounce, like counting-to-10's dot 1).
   // Dots 2-5 use the soft "wait-dot" breathing stroke instead.  After
   // IDLE_FILL_MS with no tap the auto-fill simulates a tap.
-  const EMPHASIS_DELAY_MS = 5000;       // dot stays plain for 5s before emphasis
-  const IDLE_FILL_MS      = 10000;      // total time before auto-fill
+  const EMPHASIS_DELAY_MS = 3000;       // dot stays plain for 3s before emphasis
+  const IDLE_FILL_MS      = 5000;       // total time before auto-fill (2s of hint then tap)
   let _fillTimer = null;
   let _emphasisTimer = null;
   let _hopStop = null;

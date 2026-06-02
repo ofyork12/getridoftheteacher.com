@@ -1195,6 +1195,15 @@
 
   function startIdleTimers() {
     cancelIdleTimers();
+    // Don't arm auto-fill / emphasis timers until the user has tapped the
+    // Play gate.  This was the bug behind "I loaded the page and both
+    // games started playing on their own": refreshDots() runs at page
+    // load, fires startIdleTimers(), and 10s later the idle-fill timer
+    // simulates a dot tap even though the kid never tapped Play.  The
+    // play/pause gate at the bottom of the script flips
+    // window.__gamePlaying to true on the first Play tap, and back to
+    // false on any pause.
+    if (!window.__gamePlaying) return;
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
@@ -1902,6 +1911,10 @@
 
   function _setPlaying(on) {
     _playing = !!on;
+    // Mirror to a window property so startIdleTimers() (which lives
+    // earlier in the script, before this `let _playing` is declared)
+    // can read the state without hitting the temporal dead zone.
+    window.__gamePlaying = _playing;
     if (_playing) {
       _hideGate();
     } else {
@@ -1913,6 +1926,8 @@
       _showGateBadge();
     }
   }
+  // Initial state: paused -- nothing fires until the user taps the gate.
+  window.__gamePlaying = false;
 
   // Direct tap on the gate (whether the full overlay or the resume badge)
   // toggles to playing.

@@ -1378,8 +1378,31 @@
     // Round 7 (0 + 5 = 5) intro: voice "zero" right as the blank dots
     // appear so the kid hears the starting number alongside the big "0".
     if (nextRound === 7) {
-      setTimeout(() => { _playKey('0'); }, 350);
+      _pgTimeout(() => { _playKey('0'); }, 350);
     }
+  }
+
+  // Pause-guard timer registry.  Every setTimeout that drives the game
+  // loop -- Perfect celebration, review-walk start, round advance,
+  // praise audio delay -- goes through _pgTimeout so a single
+  // _pgClearAll() at pause time cancels every pending step.  Without
+  // this, tapping Pause while a 3-second BEFORE_REVIEW_MS timer was
+  // pending would leave the reveal walk firing 3 seconds later and
+  // the game would carry on as if nothing had happened.
+  const _pgTimers = new Set();
+  function _pgTimeout(fn, ms) {
+    const id = setTimeout(() => {
+      _pgTimers.delete(id);
+      try { fn(); } catch (e) {}
+    }, ms);
+    _pgTimers.add(id);
+    return id;
+  }
+  function _pgClearAll() {
+    for (const id of _pgTimers) {
+      try { clearTimeout(id); } catch (e) {}
+    }
+    _pgTimers.clear();
   }
 
   function onPerfectReached() {
@@ -1389,10 +1412,10 @@
     if (round === 1) {
       // Round 1: pause for praise voice, then count-up REVIEW (1..5),
       // then advance to Round 2.
-      setTimeout(() => {
+      _pgTimeout(() => {
         hidePerfectBanner();
         _playRound1Reveal(() => {
-          setTimeout(() => { _advanceRound(2); }, AFTER_REVIEW_MS);
+          _pgTimeout(() => { _advanceRound(2); }, AFTER_REVIEW_MS);
         });
       }, BEFORE_REVIEW_MS);
       return;
@@ -1405,18 +1428,18 @@
     // review (the reveal already voices the whole equation), just pop
     // the Replay + Next-lesson end controls.
     if (round === 7) {
-      setTimeout(_showEndControls, BEFORE_REVIEW_MS);
+      _pgTimeout(_showEndControls, BEFORE_REVIEW_MS);
       return;
     }
     const nextRound = (round < 7) ? round + 1 : null;
-    setTimeout(() => {
+    _pgTimeout(() => {
       hidePerfectBanner();
       _playPartitionReview(_computeAddends(), dots.length, () => {
         if (nextRound != null) {
-          setTimeout(() => { _advanceRound(nextRound); }, AFTER_REVIEW_MS);
+          _pgTimeout(() => { _advanceRound(nextRound); }, AFTER_REVIEW_MS);
         } else {
           // Fallback in case Round 7 ever lands here.
-          setTimeout(_showEndControls, AFTER_REVIEW_MS);
+          _pgTimeout(_showEndControls, AFTER_REVIEW_MS);
         }
       });
     }, BEFORE_REVIEW_MS);
@@ -1859,7 +1882,7 @@
     // (great answer / fantastic / well done / etc.) so the kid hears
     // a fresh variant each round.  Falls back to the plain "perfect"
     // clip if the praise pool isn't loaded yet.
-    setTimeout(() => {
+    _pgTimeout(() => {
       try {
         if (typeof window.playRandomPraise === 'function') {
           window.playRandomPraise();
@@ -2024,6 +2047,11 @@
       }
       try { cancelIdleTimers(); } catch (e) {}
       try { stopHopping(); }     catch (e) {}
+      // Cancel every pending game-flow timer (Perfect celebration wait,
+      // review-walk wait, round advance, praise audio delay).  Without
+      // this, those would keep firing after the user paused and the
+      // game would silently roll forward in the background.
+      try { _pgClearAll(); } catch (e) {}
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'flex';
     }

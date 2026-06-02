@@ -1212,33 +1212,35 @@
     if (colored.size >= dots.length) return;
     const nextDots = _getNextDots();
     if (nextDots.length === 0) return;
-    // Phase 1: after EMPHASIS_DELAY_MS show a hint.
-    //   * R1 + count === 0 (the very first tap of the whole game): only the
-    //     bottom-left dot (slot 1) gets the wait-dot stroke AND a small
-    //     red dot inside it -- the kid sees exactly which spot to tap to
-    //     start counting.
+    // Phase 1 (emphasis hint).
+    //   * R1 + count === 0 (very first tap of the game): show IMMEDIATELY,
+    //     not after a 3s wait.  Only the bottom-left dot (slot 1) gets
+    //     the wait-dot stroke and the small red pulsing inner-hint dot
+    //     so the kid sees right away where to tap.
     //   * Any later R1 tap: every uncoloured dot gets the breathing
-    //     wait-dot stroke (kid can tap any of them).
-    //   * Rounds 2-6: wait-dot stroke on every dot in the next group, plus
-    //     the partition-coloured hint dots inside each.
+    //     wait-dot stroke after EMPHASIS_DELAY_MS (kid can tap any).
+    //   * Rounds 2-6: wait-dot stroke on every dot in the next group +
+    //     partition-coloured hint dots inside each, after the delay.
     const isFirstR1Tap = (round === 1 && colored.size === 0);
-    _emphasisTimer = setTimeout(() => {
-      _emphasisTimer = null;
-      if (isFirstR1Tap) {
-        const el = dots[1] && dots[1].el;
-        if (el) el.classList.add('wait-dot');
-        _showGroupHint([1], COUNT_COLORS[1]);   // red dot inside bottom-left
-        return;
-      }
-      nextDots.forEach(idx => {
-        const el = dots[idx] && dots[idx].el;
-        if (el) el.classList.add('wait-dot');
-      });
-      if (round !== 1) {
-        const g = _defaultGroupForIdle();
-        if (g) _showGroupHint(g.slots, g.color);
-      }
-    }, EMPHASIS_DELAY_MS);
+    if (isFirstR1Tap) {
+      // No setTimeout -- fire the red hint the moment the game starts so
+      // the kid can never miss it.
+      const el = dots[1] && dots[1].el;
+      if (el) el.classList.add('wait-dot');
+      _showGroupHint([1], COUNT_COLORS[1]);   // red dot inside bottom-left
+    } else {
+      _emphasisTimer = setTimeout(() => {
+        _emphasisTimer = null;
+        nextDots.forEach(idx => {
+          const el = dots[idx] && dots[idx].el;
+          if (el) el.classList.add('wait-dot');
+        });
+        if (round !== 1) {
+          const g = _defaultGroupForIdle();
+          if (g) _showGroupHint(g.slots, g.color);
+        }
+      }, EMPHASIS_DELAY_MS);
+    }
     // Phase 2: after IDLE_FILL_MS with no real tap, simulate one so the
     // narrated demo walks through the round on its own.  Gated by the
     // Play overlay (window.__gamePlaying) at the top of this function,

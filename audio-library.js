@@ -218,7 +218,9 @@
       };
       const playNext = () => {
         if (myToken !== _chainToken) { finish(); return; }
-        if (_pageHidden()) { finish(); return; }
+        // No _pageHidden() bail-out here -- the AudioContext suspend
+        // handles the pause, and the chain should pick up where it
+        // left off when the screen comes back on.
         if (i >= items.length) { finish(); return; }
         const raw = items[i++];
         const item = typeof raw === 'string' ? { key: raw } : (raw || { key: '' });
@@ -281,41 +283,30 @@
     isReady: isReady
   };
 
-  // Auto-pause: when the tab/page goes hidden (kid switched apps, scrolled
-  // the YouTube tab into view, locked the phone, etc.), cut every active
-  // sound source AND cancel any pending TTS so the page never keeps
-  // talking when it isn't visible.  Resume is implicit -- the next user
-  // tap restarts audio on demand.
+  // Pause when the SCREEN actually goes off (page becomes hidden) and
+  // RESUME from exactly where the audio left off when the screen wakes
+  // up.  We suspend the AudioContext -- this preserves every in-flight
+  // buffer source's playback position, so a chain mid-sentence picks up
+  // at the same syllable when the screen comes back on.  No stopAll()
+  // here -- that would discard the active sources and the chain would
+  // just end silently.
+  //
+  // We deliberately do NOT listen for `blur` or `pagehide` or `freeze`.
+  // A window can lose focus while the screen is still on (notification
+  // slid down, another app peek, the kid scrolled past, etc.) and the
+  // kid expects audio to keep playing in that case.  The earlier "stop
+  // on everything" was too aggressive and cut audio in normal use.
   if (global.document) {
     global.document.addEventListener('visibilitychange', () => {
+      if (!_ctx) return;
       if (global.document.hidden) {
-        try { stopAll(); } catch (e) {}
-        // Suspend the AudioContext too so even buffered samples stop.
-        if (_ctx && _ctx.state === 'running') {
+        if (_ctx.state === 'running') {
           try { _ctx.suspend(); } catch (e) {}
         }
-      }
-    });
-    // Also stop on pagehide (iOS Safari fires this when you swipe away).
-    global.addEventListener('pagehide', () => {
-      try { stopAll(); } catch (e) {}
-      if (_ctx && _ctx.state === 'running') {
-        try { _ctx.suspend(); } catch (e) {}
-      }
-    });
-    // Screen-lock / app-switch on some Android browsers only fire blur,
-    // not visibilitychange.  Catch them too.  Also handle the
-    // Page Lifecycle "freeze" event (Chrome) for the same reason.
-    global.addEventListener('blur', () => {
-      try { stopAll(); } catch (e) {}
-      if (_ctx && _ctx.state === 'running') {
-        try { _ctx.suspend(); } catch (e) {}
-      }
-    });
-    global.document.addEventListener('freeze', () => {
-      try { stopAll(); } catch (e) {}
-      if (_ctx && _ctx.state === 'running') {
-        try { _ctx.suspend(); } catch (e) {}
+      } else {
+        if (_ctx.state === 'suspended') {
+          try { _ctx.resume(); } catch (e) {}
+        }
       }
     });
   }

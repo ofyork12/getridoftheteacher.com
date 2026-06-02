@@ -317,12 +317,14 @@
      throughout -- the pulse just highlights "this group, right now". */
   @keyframes revealPulse {
     0%   { transform: scale(1.0);  filter: brightness(1.0); }
-    50%  { transform: scale(0.86); filter: brightness(1.2); }
+    50%  { transform: scale(0.94); filter: brightness(1.15); }
     100% { transform: scale(1.0);  filter: brightness(1.0); }
   }
+  /* transform-box and transform-origin are set INLINE per pulse so each
+     dot in the group scales around the GROUP's centroid in viewBox
+     coords -- the whole group shrinks toward the same point and stays
+     tangent.  See _pulseSlots in the script below. */
   .reveal-pulse {
-    transform-box: fill-box;
-    transform-origin: center;
     animation: revealPulse 750ms ease-in-out;
   }
   /* End-of-game controls: a "Replay" button + a big "Next" arrow that
@@ -896,19 +898,40 @@
     return tappedGroups;
   }
 
-  // Pulse a list of slot indices: add the .reveal-pulse class, then strip
-  // it after the animation finishes so the next call can re-trigger.
+  // Pulse a list of slot indices as a GROUP.  Every dot in the group
+  // scales around the SAME point -- the group's centroid in viewBox
+  // coords -- so a pair shrinks toward the midpoint between the two
+  // dots, a triple toward the triangle centre, etc.  Since each dot
+  // moves the same proportion toward the same point and its radius
+  // scales by the same factor, dots that were tangent before stay
+  // tangent during the pulse.
   function _pulseSlots(slotList, durationMs) {
+    if (!slotList || slotList.length === 0) return;
+    let cxSum = 0, cySum = 0, n = 0;
+    for (const idx of slotList) {
+      if (!dots[idx]) continue;
+      cxSum += parseFloat(dots[idx].el.getAttribute('cx'));
+      cySum += parseFloat(dots[idx].el.getAttribute('cy'));
+      n++;
+    }
+    if (n === 0) return;
+    const gcx = cxSum / n, gcy = cySum / n;
     for (const idx of slotList) {
       if (!dots[idx]) continue;
       const el = dots[idx].el;
       el.classList.remove('reveal-pulse');
+      el.style.transformBox  = 'view-box';
+      el.style.transformOrigin = gcx + 'px ' + gcy + 'px';
       void el.offsetWidth;                       // reflow -> restart animation
       el.classList.add('reveal-pulse');
     }
     setTimeout(() => {
       for (const idx of slotList) {
-        if (dots[idx]) dots[idx].el.classList.remove('reveal-pulse');
+        if (!dots[idx]) continue;
+        const el = dots[idx].el;
+        el.classList.remove('reveal-pulse');
+        el.style.transformBox    = '';
+        el.style.transformOrigin = '';
       }
     }, durationMs || 800);
   }

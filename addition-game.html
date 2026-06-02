@@ -1511,11 +1511,11 @@
     // At the very start of each partition (no taps yet), show the TARGET
     // (5) as the big number so the kid sees what they're building toward.
     if (count === 0 && !_hasTappedThisRound) {
-      // Round 7's intro shows ZERO (the starting number of the
-      // 0 + 5 = 5 partition) instead of the target.  Every other round
-      // shows the target 5 so the kid sees what they're building toward.
-      const intro = (round === 7) ? 0 : dots.length;
-      eqEl.innerHTML = '<span class="num">' + intro + '</span>';
+      // Intro state -- the kid hasn't tapped a dot yet, so the big number
+      // shows ZERO (the starting count, what they're building UP from).
+      // Previously every round except R7 showed the target 5, which
+      // looked wrong because the kid had counted nothing.
+      eqEl.innerHTML = '<span class="num">0</span>';
       if (eqLineEl) eqLineEl.textContent = '';
       return;
     }
@@ -1908,37 +1908,51 @@
     '</div>';
   document.body.appendChild(_bigOverlay);
 
-  // Resume button -- a real <button> element, parked on the LEFT side
-  // just below the scoreboard so it never sits on top of the big number
-  // or the equation row.  Shown only when paused; click to resume.
+  // Resume button -- a real <button> parked at the TOP-LEFT inside .stage
+  // (which has position: relative, so absolute positioning works
+  // predictably).  Sits just below the scoreboard, well off the big
+  // count number that lives in the upper-centre.
   const _resumeBtn = document.createElement('button');
   _resumeBtn.type = 'button';
   _resumeBtn.id = 'resumeBtn';
   _resumeBtn.style.cssText = [
-    'position: fixed',
-    'top: 70px',      // below the top-1.2% scoreboard
-    'left: 10px',     // hugging the left edge
+    'position: absolute',
+    'top: 6%',
+    'left: 4%',
+    'right: auto', 'bottom: auto',
     'z-index: 99999',
     'padding: 10px 16px', 'border-radius: 999px',
     'background: rgba(0, 0, 0, 0.85)',
     'border: 3px solid #fff',
     'color: #fff', 'font-family: Arial, sans-serif',
-    'font-weight: 900', 'font-size: 15px', 'letter-spacing: 1px',
+    'font-weight: 900', 'font-size: 14px', 'letter-spacing: 1px',
     'text-transform: uppercase', 'cursor: pointer',
-    'display: none',           // hidden until paused
+    'display: none',
     'align-items: center', 'gap: 8px',
     '-webkit-tap-highlight-color: transparent',
     'touch-action: manipulation',
+    'margin: 0',
   ].join('; ');
   _resumeBtn.innerHTML =
     '<span style="display:inline-block;width:0;height:0;' +
                  'border-style:solid;border-width:7px 0 7px 11px;' +
                  'border-color:transparent transparent transparent #fff;' +
                  'pointer-events:none"></span>' +
-    '<span style="pointer-events:none">Tap to Resume</span>';
-  document.body.appendChild(_resumeBtn);
+    '<span style="pointer-events:none">Resume</span>';
+  // Append inside .stage so absolute positioning is relative to the game
+  // area, not the iframe viewport.  Falls back to body if .stage hasn't
+  // rendered yet (the script runs at end-of-body, so it should exist).
+  const _stageEl = document.querySelector('.stage');
+  (_stageEl || document.body).appendChild(_resumeBtn);
 
+  // Debounce so a rapid double-event (tap on Play that synthesises a
+  // follow-up "empty-space" click on the body the moment the overlay
+  // disappears, common on iOS touch) can't immediately undo itself.
+  let _lastToggleAt = 0;
   function _setPlaying(on) {
+    const now = Date.now();
+    if (now - _lastToggleAt < 350) return;
+    _lastToggleAt = now;
     _playing = !!on;
     window.__gamePlaying = _playing;
     if (_playing) {
@@ -1951,10 +1965,8 @@
       }
       try { cancelIdleTimers(); } catch (e) {}
       try { stopHopping(); }     catch (e) {}
-      // Big overlay only ever shows on initial load; once we've played
-      // anything, pause shows only the small left-side button.
       _bigOverlay.style.display = 'none';
-      _resumeBtn.style.display  = 'inline-flex';
+      _resumeBtn.style.display  = 'flex';
     }
   }
   // Initial state: paused, big overlay visible.

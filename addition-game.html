@@ -1781,6 +1781,111 @@
   }
   window.showPerfectBanner = showPerfectBanner;
   window.hidePerfectBanner = hidePerfectBanner;
+
+  // ===================================================================
+  // AUTO-PLAY MODE   (?auto=1 in the URL)
+  // -------------------------------------------------------------------
+  // The computer taps through Rounds 1-7 on its own.  Used for the
+  // "watch it play" iframe embedded below the kid's interactive game.
+  // Every timing knob lives in AUTOPLAY_TIMING so you can tune the
+  // pacing of each round without hunting through the rest of the file.
+  // ===================================================================
+  const AUTOPLAY_TIMING = {
+    initialDelayMs: 1500,          // pause before the very first tap
+    tapGapMs:        1600,         // gap between dots within a round
+    // Pause AFTER the last tap of each round (lets Perfect + the
+    // partition review play out before the next round starts).
+    afterRoundMs: [
+      /* R1 */ 7000,
+      /* R2 */ 6500,
+      /* R3 */ 5500,
+      /* R4 */ 5500,
+      /* R5 */ 4800,
+      /* R6 */ 4500,
+      /* R7 */ 4500,
+    ],
+    // Slot order the computer taps for each round.  Matches the
+    // PARTITION_GROUPS sizes: R1=1+1+1+1+1, R2=2+1+1+1, R3=2+2+1,
+    // R4=3+1+1, R5=3+2, R6=4+1, R7=0+5=5.
+    tapSequence: [
+      /* R1 */ [2, 1, 0, 4, 3],
+      /* R2 */ [1, 0, 3, 4],
+      /* R3 */ [1, 4, 0],
+      /* R4 */ [0, 3, 4],
+      /* R5 */ [0, 4],
+      /* R6 */ [1, 3],
+      /* R7 */ [0],
+    ],
+    // After the final reveal, hold this long then restart the loop.
+    // 0 (or falsey) = play once and stop on the end screen.
+    loopAfterEndMs: 6000,
+  };
+
+  function _autoplayShouldStart() {
+    return /[?&]auto=1\b/.test(window.location.search);
+  }
+
+  function _autoplayTap(slot) {
+    const el = document.querySelector('#dotGroup circle[data-slot="' + slot + '"]');
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    el.dispatchEvent(new MouseEvent('click', {
+      bubbles: true, cancelable: true,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top  + rect.height / 2,
+      button: 0,
+    }));
+    return true;
+  }
+
+  async function _autoplayWaitForDots() {
+    for (let i = 0; i < 200; i++) {
+      const ready = document.querySelectorAll('#dotGroup circle[data-slot]').length >= 5;
+      if (ready) return true;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    return false;
+  }
+
+  function _autoplaySleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  async function _autoplayRunOnce() {
+    const T = AUTOPLAY_TIMING;
+    await _autoplaySleep(T.initialDelayMs);
+    for (let r = 0; r < T.tapSequence.length; r++) {
+      const slots = T.tapSequence[r];
+      for (let i = 0; i < slots.length; i++) {
+        _autoplayTap(slots[i]);
+        const isLast = (i === slots.length - 1);
+        await _autoplaySleep(isLast ? (T.afterRoundMs[r] || 5000) : T.tapGapMs);
+      }
+    }
+  }
+
+  async function _autoplayMain() {
+    if (!_autoplayShouldStart()) return;
+    const ok = await _autoplayWaitForDots();
+    if (!ok) return;
+    // Loop forever (or play once if loopAfterEndMs is 0).
+    while (true) {
+      await _autoplayRunOnce();
+      const after = AUTOPLAY_TIMING.loopAfterEndMs;
+      if (!after) return;
+      await _autoplaySleep(after);
+      // Click the Replay button to reset state cleanly.
+      const replay = document.getElementById('replayBtn');
+      if (replay) {
+        replay.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      } else {
+        return;            // no replay button -> give up
+      }
+      await _autoplaySleep(400);
+    }
+  }
+
+  _autoplayMain();
 </script>
 
 </body>

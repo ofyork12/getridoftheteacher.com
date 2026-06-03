@@ -1306,7 +1306,10 @@
       // logic in _pickGroup takes it from there).  Other rounds fall back
       // to "first uncoloured" since they were already correct.
       let order;
-      if (round === 2)                                       order = [1, 2, 0, 4, 3];
+      // R2 (2+1+1+1): after the bottom-row pair fills [1, 0], the three
+      // solos walk left-to-right -- bottom-right (3), then top-left (2),
+      // then top-right (4) -- so the dots light up in true reading order.
+      if (round === 2)                                       order = [1, 0, 3, 2, 4];
       else if (round === 3 && groupIdx === 1)                order = [0, 2, 4, 1, 3];
       else                                                    order = [0, 1, 2, 3, 4];
       anchor = 0;

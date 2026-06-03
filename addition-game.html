@@ -1677,6 +1677,12 @@
       if (!Number.isNaN(idx)) handleDotTap(idx);
     });
   }
+  // Expose the tap handler directly so external drivers (the renderer)
+  // can fire taps without going through synthetic MouseEvents.  Synthetic
+  // events were silently dropping on Round 3's slot-2 tap during recording
+  // and the idle auto-fill (6.5s) was driving the round instead -- huge
+  // pauses between dots.
+  window.__additionTap = handleDotTap;
   refreshDots();                  // initial state: all 5 dots visible
 
   // Big centre count -- the same number the voice says, shown huge above

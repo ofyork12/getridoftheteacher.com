@@ -995,16 +995,48 @@
   // a number label (1..5) on each dot, voicing the count, and recolouring
   // each dot to its count-position colour (1=red, 2=orange, 3=yellow,
   // 4=green, 5=blue).  Plays once after the kid's 5th Round 1 tap.
-  // Tracks whether a review walk is currently mid-play.  Set by
-  // _playRound1Reveal and _playPartitionReview at the START, cleared in
-  // their onDone callbacks.  When the user hits Pause mid-review, this
-  // sticks around so _setPlaying(true) can RESTART the review from the
-  // top on Resume -- the kid hears the whole walk again and the round
-  // advances cleanly afterwards, rather than the game getting stuck.
+  // Tracks the review chain currently being played, including which
+  // beat (chain-item index) is the most recently started one.  When the
+  // user hits Pause mid-review, this sticks around so _setPlaying(true)
+  // can resume the chain from EXACTLY the beat that was playing, rather
+  // than restarting from the top.  The wrapper updates `currentBeat`
+  // each time the next chain item starts.
   let _pendingReview = null;
 
+  function _startReviewChain(originalItems, startOffset, onDone) {
+    startOffset = startOffset || 0;
+    if (!window.AudioLib) {
+      if (onDone) onDone();
+      return;
+    }
+    let currentBeat = startOffset;
+    const slice = originalItems.slice(startOffset);
+    const wrappedItems = slice.map((item, localIdx) => {
+      const wrapped = Object.assign({}, item);
+      const origOnStart = item.onStart;
+      wrapped.onStart = () => {
+        currentBeat = startOffset + localIdx;
+        if (origOnStart) try { origOnStart(); } catch (e) {}
+      };
+      return wrapped;
+    });
+    _pendingReview = {
+      originalItems: originalItems,
+      getBeat: () => currentBeat,
+      onDone: onDone,
+    };
+    AudioLib.playChain(wrappedItems, {
+      gap: 600,
+      onDone: () => {
+        if (_pendingReview && _pendingReview.originalItems === originalItems) {
+          _pendingReview = null;
+        }
+        if (onDone) try { onDone(); } catch (e) {}
+      },
+    });
+  }
+
   function _playRound1Reveal(onDone) {
-    _pendingReview = { kind: 'r1', onDone };
     cancelIdleTimers();
     stopHopping();
     // Reset every dot to white and hide every label so the walkthrough
@@ -1056,15 +1088,7 @@
       });
     }
 
-    if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 600, onDone: () => {
-        _pendingReview = null;
-        if (onDone) onDone();
-      } });
-    } else {
-      _pendingReview = null;
-      if (onDone) onDone();
-    }
+    _startReviewChain(items, 0, onDone);
   }
 
   // Rounds 2-6 end-of-round REVIEW.  Resets the dots, then walks through
@@ -1073,7 +1097,6 @@
   // and each addend's slots filling in the addend's count colour.  The
   // final "five" flips every dot to blue with a shared pulse.
   function _playPartitionReview(addends, total, onDone) {
-    _pendingReview = { kind: 'partition', addends: addends.slice(), total, onDone };
     cancelIdleTimers();
     stopHopping();
     for (let i = 0; i < dots.length; i++) {
@@ -1153,15 +1176,7 @@
       }
     });
 
-    if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 600, onDone: () => {
-        _pendingReview = null;
-        if (onDone) onDone();
-      } });
-    } else {
-      _pendingReview = null;
-      if (onDone) onDone();
-    }
+    _startReviewChain(items, 0, onDone);
   }
 
   function _playFinalReveal(newAddend, total, onDone) {
@@ -2088,19 +2103,21 @@
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'none';
       // Resume from review walk: if a review was mid-play when pause hit,
-      // restart it from the top.  The kid hears the full review again and
-      // the round advances cleanly when it finishes -- no stuck states.
+      // pick up at the SAME beat the chain was on -- not the top.  The
+      // wrapper inside _startReviewChain tracks currentBeat, so we just
+      // re-run the chain starting at that index.  The slot fills and
+      // number labels for already-played beats stay on screen (their
+      // onStart already ran), so the visual is continuous.
       try {
         if (_pendingReview) {
           const r = _pendingReview;
-          _pendingReview = null;     // cleared again by the new run's onDone
+          const beat = r.getBeat();
+          const items = r.originalItems;
+          const onDone = r.onDone;
+          _pendingReview = null;
           hidePerfectBanner();
-          if (r.kind === 'r1') {
-            _playRound1Reveal(r.onDone);
-          } else if (r.kind === 'partition') {
-            _playPartitionReview(r.addends, r.total, r.onDone);
-          }
-          return;                    // skip the rest -- the review owns it now
+          _startReviewChain(items, beat, onDone);
+          return;
         }
       } catch (e) {}
       // Stuck-transition recovery without a saved review (Perfect-banner

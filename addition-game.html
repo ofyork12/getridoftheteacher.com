@@ -577,20 +577,22 @@
         // clean right column [3, 4] stays available for pair 2.
         return [0, 1];
       }
-      // Second pair: prefer a CONNECTED 4-group where every dot touches
-      // at least TWO of the other three.  The two valid 4-subsets are
-      // [0, 1, 2, 4] (left column + centre + top-right) and [0, 2, 3, 4]
-      // (right column + centre + top-left).  Slot 0 (bottom-centre) is
-      // always in the 4-group; the solo is slot 1 or slot 3.
-      //   * If the kid taps one of the canonical pair slots, return the
-      //     canonical pair with their tap first.
-      //   * If the kid taps a NON-canonical slot (e.g. slot 3 when the
-      //     canonical pair is [0, 4]), we honour their tap so they see
-      //     visual feedback on the dot they actually touched: return
-      //     their tap + slot 0 if 0 is uncoloured, else + best adjacent.
-      //     The resulting 4-shape may be less symmetric than the
-      //     canonical one, but the kid never feels like the tap was
-      //     swallowed.
+      // Second pair: ALWAYS force the canonical CONNECTED 4-group where
+      // every dot touches at least TWO of the other three.  Slot 0
+      // (bottom-centre) is always in the 4-group; the solo is slot 1 OR
+      // slot 3, depending on which column was filled first.  When the
+      // first pair was the left column [1, 2], the canonical second
+      // pair is [0, 4] -- so the bottom-right (slot 3) stays WHITE
+      // through "two plus two" and gets filled red as the +1 solo at
+      // the end.
+      //   * Tap on a canonical slot -> canonical pair, tap first.
+      //   * Tap on a NON-canonical slot (e.g. slot 3 when the canonical
+      //     pair is [0, 4]) -> still returns the canonical pair so the
+      //     visual is right.  The handleDotTap safety-unshift is
+      //     suppressed for this case (see the `skipUnshift` branch
+      //     there) so the pair stays at 2 elements; the kid's tap
+      //     "registers" (no pause from the click router) but doesn't
+      //     drag a non-canonical dot into the group.
       let pair = null;
       if (filled(1) && filled(2))      pair = [0, 4];
       else if (filled(3) && filled(4)) pair = [0, 2];
@@ -598,10 +600,10 @@
       if (pair) {
         if (tappedSlot === pair[0]) return [pair[0], pair[1]];
         if (tappedSlot === pair[1]) return [pair[1], pair[0]];
-        // Non-canonical tap -- honour it.  Prefer slot 0 as the partner
-        // since it keeps the most adjacency relationships intact.
-        if (!filled(0) && tappedSlot !== 0) return [tappedSlot, 0];
+        return pair;
       }
+      // Fallback when first pair was something unusual (shouldn't
+      // happen given the first-pair logic above).
       const adj = ADJACENT[tappedSlot] || [];
       for (const a of adj) {
         if (a !== tappedSlot && !filled(a)) return [tappedSlot, a];
@@ -1606,9 +1608,13 @@
       const groupSize = sizes[groupIdx];
       const group = _pickGroup(i, groupSize);
       // Safety: the kid's tapped slot must always be one of the slots
-      // that fills.  If it ever isn't, force it to the front of the
-      // group so the visual confirmation matches their finger.
-      if (group.indexOf(i) < 0) group.unshift(i);
+      // that fills -- EXCEPT for R3's second pair, where _pickGroup
+      // forces the canonical [0, 4] / [0, 2] / [2, 4] shape so the
+      // bottom-right (or top-left) stays white through "two plus two".
+      // For that case we WANT the kid's tap to be absorbed without
+      // adding a third slot to the group.
+      const skipUnshift = (round === 3 && groupIdx === 1);
+      if (!skipUnshift && group.indexOf(i) < 0) group.unshift(i);
       tappedGroups.push(group);
       group.forEach(s => colored.add(s));
       refreshDots();

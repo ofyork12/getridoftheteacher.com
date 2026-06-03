@@ -575,30 +575,33 @@
         // clean right column [3, 4] stays available for pair 2.
         return [0, 1];
       }
-      // Second pair: try to complete a CONNECTED 4-corner rectangle
-      // (slots 1, 2, 3, 4) so the round's "two + two" looks like a 4.
-      //   * If the first pair filled the LEFT column [1, 2], the second
-      //     pair should be the RIGHT column [3, 4] -- so any tap on 3 or
-      //     4 returns the right column.  Tapping slot 0 falls back to
-      //     pairing with whichever of 3 or 4 is still uncoloured.
-      //   * If the first pair filled the RIGHT column [3, 4], mirror it.
-      //   * If the first pair was [0, 1] (slot 0 tap on first pair), the
-      //     4-corner shape isn't reachable; fall through to "tap + best
-      //     uncoloured adjacent" so the pair stays connected.
-      if (filled(1) && filled(2)) {
-        if (tappedSlot === 3) return [3, 4];
-        if (tappedSlot === 4) return [4, 3];
-        if (tappedSlot === 0) return [0, filled(4) ? 3 : 4];
-      } else if (filled(3) && filled(4)) {
-        if (tappedSlot === 1) return [1, 2];
-        if (tappedSlot === 2) return [2, 1];
-        if (tappedSlot === 0) return [0, filled(2) ? 1 : 2];
+      // Second pair: force a CONNECTED 4-group where every dot touches
+      // at least TWO of the other three.  Only two such 4-subsets exist
+      // in the 5-dot domino layout: [0, 1, 2, 4] (bottom-centre + bottom-
+      // left + top-left + top-right) and [0, 2, 3, 4] (bottom-centre +
+      // top-left + bottom-right + top-right).  Slot 0 (bottom-centre)
+      // must always be in the 4-group; the solo lands on whichever of
+      // slot 1 or slot 3 is left over.  Tap on either slot of the
+      // canonical pair anchors the order; any other tap is mapped onto
+      // the canonical pair so the visual is always one of the good
+      // shapes.  (Non-canonical slots are also marked non-tappable in
+      // _getNextDots so the kid can't tap them in the first place.)
+      let pair = null;
+      if (filled(1) && filled(2))      pair = [0, 4];  // left column done -> [0,1,2,4]
+      else if (filled(3) && filled(4)) pair = [0, 2];  // right column done -> [0,2,3,4]
+      else if (filled(0) && filled(1)) pair = [2, 4];  // [0,1] done -> [0,1,2,4]
+      if (pair) {
+        if (tappedSlot === pair[0]) return [pair[0], pair[1]];
+        if (tappedSlot === pair[1]) return [pair[1], pair[0]];
+        return pair;
       }
+      // Fallback: any other first-pair shape -- tap + best uncoloured
+      // adjacent.  Should not happen in practice given the first-pair
+      // logic above, but kept for safety.
       const adj = ADJACENT[tappedSlot] || [];
       for (const a of adj) {
         if (a !== tappedSlot && !filled(a)) return [tappedSlot, a];
       }
-      // Fallback: any uncoloured slot.
       for (let s = 0; s < dots.length; s++) {
         if (s !== tappedSlot && !filled(s)) return [tappedSlot, s];
       }
@@ -836,7 +839,20 @@
     innerHints.forEach(h => h.classList.remove('show'));
   }
   // Every round: any uncoloured dot is tappable.  The kid picks order.
+  // EXCEPT R3's second pair, where we restrict tappable dots to the
+  // canonical pair slots so the resulting 4-group is always one of the
+  // good connected shapes ([0, 1, 2, 4] or [0, 2, 3, 4]) where every
+  // dot touches at least two of the other three.
   function _getNextDots() {
+    if (round === 3 && tappedGroups.length === 1) {
+      const first = tappedGroups[0];
+      const inFirst = (s) => first.includes(s);
+      let pair = null;
+      if (inFirst(1) && inFirst(2))      pair = [0, 4];
+      else if (inFirst(3) && inFirst(4)) pair = [0, 2];
+      else if (inFirst(0) && inFirst(1)) pair = [2, 4];
+      if (pair) return pair.filter(s => !colored.has(s));
+    }
     const arr = [];
     for (let i = 0; i < dots.length; i++) {
       if (!colored.has(i)) arr.push(i);
@@ -1259,10 +1275,14 @@
       // auto-fill visits the dots in the order the user wants to see them
       // light up.  R2 (2+1+1+1): after the bottom-left pair, the next solo
       // is top-left, then top-right, then bottom-right -- so the four
-      // taps land on slots [1, 2, 4, 3] in order.  Other rounds fall back
+      // taps land on slots [1, 2, 4, 3] in order.  R3 second pair: anchor
+      // on slot 0 so the canonical good-shape 4-group fills (pair-completing
+      // logic in _pickGroup takes it from there).  Other rounds fall back
       // to "first uncoloured" since they were already correct.
-      const order = (round === 2) ? [1, 2, 0, 4, 3]
-                                  : [0, 1, 2, 3, 4];
+      let order;
+      if (round === 2)                                       order = [1, 2, 0, 4, 3];
+      else if (round === 3 && groupIdx === 1)                order = [0, 2, 4, 1, 3];
+      else                                                    order = [0, 1, 2, 3, 4];
       anchor = 0;
       for (const s of order) {
         if (!colored.has(s)) { anchor = s; break; }

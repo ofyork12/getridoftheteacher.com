@@ -1293,7 +1293,8 @@
     if (groupIdx === 0) {
       // Canonical anchor for the round's FIRST (biggest) group.
       if (round === 2 || round === 3)            anchor = 1;   // pair from bottom-left
-      else if (round === 4 || round === 5)       anchor = 0;   // triangle from bottom-centre
+      else if (round === 4 || round === 5)       anchor = 2;   // triangle from TOP-LEFT
+                                                                // (top-left=1, bot-left=2, bot-centre=3)
       else if (round === 6)                      anchor = 1;   // quad from bottom-left
       else                                        anchor = 0;
     } else {

@@ -1042,19 +1042,15 @@
     if (eqEl)     eqEl.innerHTML = '<span class="num">' + total + '</span>';
     if (eqLineEl) eqLineEl.textContent = '';
 
-    // Trace the kid's EXACT steps: walk the groups they tapped in the
-    // order they tapped them.  BUT within each group, sort the dots in
-    // left-to-right reading order -- so a pair built from {bottom-centre,
-    // bottom-left} reviews as "left then centre", not "centre then left".
-    // Reading-order rank for the 5-dot domino layout:
-    //   slot 2 (top-left)=0,  slot 1 (bot-left)=1,  slot 0 (bot-centre)=2,
-    //   slot 4 (top-right)=3, slot 3 (bot-right)=4
-    const READING_RANK = { 2: 0, 1: 1, 0: 2, 4: 3, 3: 4 };
+    // Trace the kid's EXACT steps.  Walk each group's dots in the order
+    // they were added to the group -- which puts the slot the kid
+    // actually TAPPED first (handleDotTap unshifts the tap if it wasn't
+    // already in the group, and _pickGroup returns it as element 0).
+    // So a pair built by tapping bottom-centre reviews as "centre then
+    // partner", not "partner then centre" -- the dot the finger touched
+    // always gets the lower number.
     const walkOrder = [];
-    for (const g of tappedGroups) {
-      const sorted = g.slice().sort((a, b) => READING_RANK[a] - READING_RANK[b]);
-      walkOrder.push(...sorted);
-    }
+    for (const g of tappedGroups) walkOrder.push(...g);
     const fallback = [2, 1, 0, 4, 3];
     for (const s of fallback) if (walkOrder.indexOf(s) < 0) walkOrder.push(s);
     walkOrder.length = dots.length;
@@ -2035,10 +2031,25 @@
     if (_playing) {
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'none';
+      // Stuck-transition recovery.  If pause was tapped AFTER the round's
+      // last dot was filled (during Perfect celebration, review walk, or
+      // the wait-before-advance), the game-flow timer that would have
+      // advanced the round was cancelled by _pgClearAll() -- so without
+      // this, the kid would resume to a fully-coloured screen with no way
+      // forward.  Jump to the next round (or end controls for R7) so the
+      // game keeps moving.
+      try {
+        if (colored.size >= dots.length) {
+          hidePerfectBanner();
+          if (round < 7) {
+            _advanceRound(round + 1);
+          } else {
+            _showEndControls();
+          }
+        }
+      } catch (e) {}
       // Force a refresh so any pointer-events / wait-dot / hint state
-      // that got stuck during the pause is reset.  This is the fix for
-      // "resume button doesn't work and the game stops" -- after a
-      // mid-round pause the dots could be left non-interactive.
+      // that got stuck during the pause is reset.
       try { refreshDots(); } catch (e) {}
       try { startIdleTimers(); } catch (e) {}
     } else {

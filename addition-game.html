@@ -768,12 +768,14 @@
   // Tapping any already-coloured dot counts the group back down by one.
   const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
   // Order the Round-1 hint + auto-fill walk through the 5 dots when the
-  // kid pauses.  Bottom-left first (slot 1), then top-left, then bottom-
-  // centre, then top-right, then bottom-right -- left side bottom-to-top,
-  // centre, then right side top-to-bottom.  The kid can still tap any
-  // uncoloured dot in any order; this just decides where the red hint
-  // and the idle auto-tap land.
-  const R1_TAP_ORDER = [1, 0, 2, 4, 3];
+  // kid pauses.  Left-to-right across the BOTTOM row (slot 1 -> slot 0
+  // -> slot 3), then left-to-right across the TOP row (slot 2 -> slot 4)
+  // -- so the labels land in reading order:
+  //   1 = bottom-left, 2 = bottom-centre, 3 = bottom-right,
+  //   4 = top-left,    5 = top-right.
+  // The kid can still tap any uncoloured dot in any order; this just
+  // decides where the red hint and the idle auto-tap land.
+  const R1_TAP_ORDER = [1, 0, 3, 2, 4];
   // Any dot is tappable (user 2026-05-29): the child can pick any of the
   // five positions in any order.  The slot array's order only drives
   // auto-advance -- if the child stops tapping, the pulse + auto-fill move

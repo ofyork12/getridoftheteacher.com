@@ -377,8 +377,10 @@
   }
   .end-controls .next-btn {
     background: #00a12c;
-    font-size: clamp(44px, 11vw, 80px);
-    line-height: 1;
+    font-size: clamp(20px, 5vw, 32px);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    padding: clamp(16px, 4vw, 24px) clamp(20px, 5vw, 36px);
   }
 </style>
 <script src="audio-library.js"></script>
@@ -395,7 +397,7 @@
        in the top-level window (we're inside an iframe). -->
   <div class="end-controls" id="endControls">
     <button class="replay-btn" id="replayBtn">↻  Replay</button>
-    <a class="next-btn" id="nextLessonLink" href="counting-to-10.html?autostart=1" target="_top" rel="noopener">→</a>
+    <a class="next-btn" id="nextLessonLink" href="counting-to-10.html?autostart=1" target="_top" rel="noopener">Play Next Game  →</a>
   </div>
 
   <div class="scorebox-left" id="scorebox-left">

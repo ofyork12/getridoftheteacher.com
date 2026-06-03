@@ -961,7 +961,16 @@
   // a number label (1..5) on each dot, voicing the count, and recolouring
   // each dot to its count-position colour (1=red, 2=orange, 3=yellow,
   // 4=green, 5=blue).  Plays once after the kid's 5th Round 1 tap.
+  // Tracks whether a review walk is currently mid-play.  Set by
+  // _playRound1Reveal and _playPartitionReview at the START, cleared in
+  // their onDone callbacks.  When the user hits Pause mid-review, this
+  // sticks around so _setPlaying(true) can RESTART the review from the
+  // top on Resume -- the kid hears the whole walk again and the round
+  // advances cleanly afterwards, rather than the game getting stuck.
+  let _pendingReview = null;
+
   function _playRound1Reveal(onDone) {
+    _pendingReview = { kind: 'r1', onDone };
     cancelIdleTimers();
     stopHopping();
     // Reset every dot to white and hide every label so the walkthrough
@@ -1014,9 +1023,13 @@
     }
 
     if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 600, onDone: () => { if (onDone) onDone(); } });
-    } else if (onDone) {
-      onDone();
+      AudioLib.playChain(items, { gap: 600, onDone: () => {
+        _pendingReview = null;
+        if (onDone) onDone();
+      } });
+    } else {
+      _pendingReview = null;
+      if (onDone) onDone();
     }
   }
 
@@ -1026,6 +1039,7 @@
   // and each addend's slots filling in the addend's count colour.  The
   // final "five" flips every dot to blue with a shared pulse.
   function _playPartitionReview(addends, total, onDone) {
+    _pendingReview = { kind: 'partition', addends: addends.slice(), total, onDone };
     cancelIdleTimers();
     stopHopping();
     for (let i = 0; i < dots.length; i++) {
@@ -1106,9 +1120,13 @@
     });
 
     if (window.AudioLib) {
-      AudioLib.playChain(items, { gap: 600, onDone: () => { if (onDone) onDone(); } });
-    } else if (onDone) {
-      onDone();
+      AudioLib.playChain(items, { gap: 600, onDone: () => {
+        _pendingReview = null;
+        if (onDone) onDone();
+      } });
+    } else {
+      _pendingReview = null;
+      if (onDone) onDone();
     }
   }
 
@@ -2031,13 +2049,25 @@
     if (_playing) {
       _bigOverlay.style.display = 'none';
       _resumeBtn.style.display  = 'none';
-      // Stuck-transition recovery.  If pause was tapped AFTER the round's
-      // last dot was filled (during Perfect celebration, review walk, or
-      // the wait-before-advance), the game-flow timer that would have
-      // advanced the round was cancelled by _pgClearAll() -- so without
-      // this, the kid would resume to a fully-coloured screen with no way
-      // forward.  Jump to the next round (or end controls for R7) so the
-      // game keeps moving.
+      // Resume from review walk: if a review was mid-play when pause hit,
+      // restart it from the top.  The kid hears the full review again and
+      // the round advances cleanly when it finishes -- no stuck states.
+      try {
+        if (_pendingReview) {
+          const r = _pendingReview;
+          _pendingReview = null;     // cleared again by the new run's onDone
+          hidePerfectBanner();
+          if (r.kind === 'r1') {
+            _playRound1Reveal(r.onDone);
+          } else if (r.kind === 'partition') {
+            _playPartitionReview(r.addends, r.total, r.onDone);
+          }
+          return;                    // skip the rest -- the review owns it now
+        }
+      } catch (e) {}
+      // Stuck-transition recovery without a saved review (Perfect-banner
+      // window before the review even started, or the wait-to-advance
+      // after the review's onDone fired).
       try {
         if (colored.size >= dots.length) {
           hidePerfectBanner();

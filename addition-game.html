@@ -836,11 +836,24 @@
   function stopHopping() {
     if (_hopStop) { _hopStop(); _hopStop = null; }
   }
-  function cancelIdleTimers() {
-    if (_fillTimer) { clearTimeout(_fillTimer); _fillTimer = null; }
+  // Cancel just the pending idle setTimeouts.  Used by Pause so the
+  // hint visuals (inner-hint dots, pair-ghost ring) stay frozen on
+  // screen instead of disappearing.
+  function _stopIdleTimerCallbacks() {
+    if (_fillTimer)     { clearTimeout(_fillTimer);     _fillTimer = null; }
     if (_emphasisTimer) { clearTimeout(_emphasisTimer); _emphasisTimer = null; }
+  }
+  // Strip the hint visuals.  Called when the kid taps (hint did its
+  // job), when state resets (replay / advance round), and at the start
+  // of every review.  NOT called by Pause -- pause freezes whatever's
+  // currently showing.
+  function _clearIdleVisuals() {
     dots.forEach(d => d.el.classList.remove('pair-ghost'));
     innerHints.forEach(h => h.classList.remove('show'));
+  }
+  function cancelIdleTimers() {
+    _stopIdleTimerCallbacks();
+    _clearIdleVisuals();
   }
   // Every round: any uncoloured dot is tappable.  The kid picks order.
   // The 4-shape preference for R3 lives in _pickGroup -- canonical taps
@@ -1320,7 +1333,11 @@
   }
 
   function startIdleTimers() {
-    cancelIdleTimers();
+    // _stopIdleTimerCallbacks (not cancelIdleTimers) -- keep the inner-
+    // hint dots and pair-ghost visuals intact across pause-resume cycles
+    // so the kid sees the same picture they paused on, not a flash to
+    // blank before the 3s emphasis timer re-fires.
+    _stopIdleTimerCallbacks();
     // Don't arm auto-fill / emphasis timers until the user has tapped the
     // Play gate.  This was the bug behind "I loaded the page and both
     // games started playing on their own": refreshDots() runs at page
@@ -2137,8 +2154,11 @@
       if (window.AudioLib && AudioLib.stopAll) {
         try { AudioLib.stopAll(); } catch (e) {}
       }
-      try { cancelIdleTimers(); } catch (e) {}
-      try { stopHopping(); }     catch (e) {}
+      // _stopIdleTimerCallbacks (NOT cancelIdleTimers) so the inner-hint
+      // dots and pair-ghost rings stay frozen exactly where the kid
+      // paused -- they should see the same picture on resume.
+      try { _stopIdleTimerCallbacks(); } catch (e) {}
+      try { stopHopping(); }            catch (e) {}
       // Cancel every pending game-flow timer (Perfect celebration wait,
       // review-walk wait, round advance, praise audio delay).  Without
       // this, those would keep firing after the user paused and the

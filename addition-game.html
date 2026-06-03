@@ -575,29 +575,31 @@
         // clean right column [3, 4] stays available for pair 2.
         return [0, 1];
       }
-      // Second pair: force a CONNECTED 4-group where every dot touches
-      // at least TWO of the other three.  Only two such 4-subsets exist
-      // in the 5-dot domino layout: [0, 1, 2, 4] (bottom-centre + bottom-
-      // left + top-left + top-right) and [0, 2, 3, 4] (bottom-centre +
-      // top-left + bottom-right + top-right).  Slot 0 (bottom-centre)
-      // must always be in the 4-group; the solo lands on whichever of
-      // slot 1 or slot 3 is left over.  Tap on either slot of the
-      // canonical pair anchors the order; any other tap is mapped onto
-      // the canonical pair so the visual is always one of the good
-      // shapes.  (Non-canonical slots are also marked non-tappable in
-      // _getNextDots so the kid can't tap them in the first place.)
+      // Second pair: prefer a CONNECTED 4-group where every dot touches
+      // at least TWO of the other three.  The two valid 4-subsets are
+      // [0, 1, 2, 4] (left column + centre + top-right) and [0, 2, 3, 4]
+      // (right column + centre + top-left).  Slot 0 (bottom-centre) is
+      // always in the 4-group; the solo is slot 1 or slot 3.
+      //   * If the kid taps one of the canonical pair slots, return the
+      //     canonical pair with their tap first.
+      //   * If the kid taps a NON-canonical slot (e.g. slot 3 when the
+      //     canonical pair is [0, 4]), we honour their tap so they see
+      //     visual feedback on the dot they actually touched: return
+      //     their tap + slot 0 if 0 is uncoloured, else + best adjacent.
+      //     The resulting 4-shape may be less symmetric than the
+      //     canonical one, but the kid never feels like the tap was
+      //     swallowed.
       let pair = null;
-      if (filled(1) && filled(2))      pair = [0, 4];  // left column done -> [0,1,2,4]
-      else if (filled(3) && filled(4)) pair = [0, 2];  // right column done -> [0,2,3,4]
-      else if (filled(0) && filled(1)) pair = [2, 4];  // [0,1] done -> [0,1,2,4]
+      if (filled(1) && filled(2))      pair = [0, 4];
+      else if (filled(3) && filled(4)) pair = [0, 2];
+      else if (filled(0) && filled(1)) pair = [2, 4];
       if (pair) {
         if (tappedSlot === pair[0]) return [pair[0], pair[1]];
         if (tappedSlot === pair[1]) return [pair[1], pair[0]];
-        return pair;
+        // Non-canonical tap -- honour it.  Prefer slot 0 as the partner
+        // since it keeps the most adjacency relationships intact.
+        if (!filled(0) && tappedSlot !== 0) return [tappedSlot, 0];
       }
-      // Fallback: any other first-pair shape -- tap + best uncoloured
-      // adjacent.  Should not happen in practice given the first-pair
-      // logic above, but kept for safety.
       const adj = ADJACENT[tappedSlot] || [];
       for (const a of adj) {
         if (a !== tappedSlot && !filled(a)) return [tappedSlot, a];
@@ -839,20 +841,12 @@
     innerHints.forEach(h => h.classList.remove('show'));
   }
   // Every round: any uncoloured dot is tappable.  The kid picks order.
-  // EXCEPT R3's second pair, where we restrict tappable dots to the
-  // canonical pair slots so the resulting 4-group is always one of the
-  // good connected shapes ([0, 1, 2, 4] or [0, 2, 3, 4]) where every
-  // dot touches at least two of the other three.
+  // The 4-shape preference for R3 lives in _pickGroup -- canonical taps
+  // produce the connected shape, non-canonical taps produce a less-
+  // ideal but still valid pair.  We don't disable any dots here because
+  // that would make stray taps pass through to the body and trigger the
+  // "tap empty space -> pause" path in the click router.
   function _getNextDots() {
-    if (round === 3 && tappedGroups.length === 1) {
-      const first = tappedGroups[0];
-      const inFirst = (s) => first.includes(s);
-      let pair = null;
-      if (inFirst(1) && inFirst(2))      pair = [0, 4];
-      else if (inFirst(3) && inFirst(4)) pair = [0, 2];
-      else if (inFirst(0) && inFirst(1)) pair = [2, 4];
-      if (pair) return pair.filter(s => !colored.has(s));
-    }
     const arr = [];
     for (let i = 0; i < dots.length; i++) {
       if (!colored.has(i)) arr.push(i);

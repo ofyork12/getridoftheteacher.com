@@ -1636,12 +1636,11 @@
         _playKey('plus_one');
       } else {
         // Subsequent (non-first, non-final) group of size >= 2.
-        // The "plus N" chain would put ~1.3s of "plus" + chain-gap between
-        // the previous N audio and the new one ("two ... plus, two") --
-        // the user said the gap is too long.  Drop the "plus" and just
-        // voice the count again -- the dots filling in already show what
-        // got added, and the rhythm stays even at one count per tap.
-        _playKey(String(groupSize));
+        // Play "plus" then the count with a TIGHT gap so it sounds like
+        // one phrase ("plus-two") -- the user wants to hear the "plus"
+        // word, but the gap between clips should be short so the rhythm
+        // stays close to the 1.6s tap pace.
+        _playChain(['plus', String(groupSize)], 100);
       }
       if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
     } else if (round === 1 && colored.has(i)) {

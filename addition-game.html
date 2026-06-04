@@ -768,7 +768,11 @@
   // 4 green, 5 blue -- the same colours the number line below uses), reveals
   // the next dot, and the voice says the running count ("one" ... "five").
   // Tapping any already-coloured dot counts the group back down by one.
-  const COUNT_COLORS = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
+  // Classic rainbow: 1=red, 2=orange, 3=yellow, 4=green, 5=blue.  Was
+  // using a muddy mustard for yellow (#e6c800) -- swapped to a vivid
+  // school-bus yellow so the 3-yellow group reads as YELLOW on phone
+  // screens.  Red/green slightly brightened to match the energy.
+  const COUNT_COLORS = { 1: '#ed2939', 2: '#ff7a00', 3: '#ffd400', 4: '#1fb84c', 5: '#1670e6' };
   // Order the Round-1 hint + auto-fill walk through the 5 dots when the
   // kid pauses.  Left-to-right across the BOTTOM row (slot 1 -> slot 0
   // -> slot 3), then left-to-right across the TOP row (slot 2 -> slot 4)

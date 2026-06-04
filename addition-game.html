@@ -1376,11 +1376,17 @@
           _showGroupHint([nextR1], COUNT_COLORS[1]);   // red hint
         }
       } else {
-        nextDots.forEach(idx => {
+        // Only highlight the dots that will ACTUALLY fill on the next
+        // tap (the canonical group), not every uncoloured dot.  Before,
+        // R3's second pair pulled wait-dot strokes onto slot 3 too, but
+        // tapping slot 3 would fill [2, 4] instead -- the kid saw three
+        // "tap me" dots but only two filled, which read as a mismatch.
+        const g = _defaultGroupForIdle();
+        const hintSlots = (g && g.slots && g.slots.length) ? g.slots : nextDots;
+        hintSlots.forEach(idx => {
           const el = dots[idx] && dots[idx].el;
           if (el) el.classList.add('wait-dot');
         });
-        const g = _defaultGroupForIdle();
         if (g) _showGroupHint(g.slots, g.color);
       }
     }, EMPHASIS_DELAY_MS);

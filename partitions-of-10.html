@@ -59,6 +59,31 @@
       background: #fff; border: 2px solid #fff;
     }
     .interactive-frame iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    /* Click-to-load gate -- without this, every iframe on the page
+       loads at once and the kid hears 13 voices talking over each
+       other.  The gate replaces each iframe with a big 'Tap to Play'
+       button until the user actually picks one. */
+    .iframe-gate {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      background: #ffe600;
+      color: #000;
+      font-family: Arial, sans-serif;
+      font-weight: 800; font-size: clamp(20px, 4vw, 28px);
+      text-align: center; padding: 16px;
+      cursor: pointer;
+      border: 0;
+      transition: background 0.15s ease;
+    }
+    .iframe-gate:hover { background: #ffd000; }
+    .iframe-gate .play-icon {
+      width: clamp(54px, 12vw, 80px); height: clamp(54px, 12vw, 80px);
+      border-radius: 50%; background: #000;
+      display: flex; align-items: center; justify-content: center;
+      color: #ffe600; font-size: clamp(28px, 6vw, 40px);
+      font-weight: 900;
+    }
     .video-frame {
       position: relative; width: 100%; max-width: 460px; margin: 0 auto;
       aspect-ratio: 9 / 16; border-radius: 12px; overflow: hidden;
@@ -80,79 +105,79 @@
     <h2 class="section-heading">Game — Follow Me</h2>
     <p class="section-note">Watch the partition light up, then reproduce it.  Cycles through all six.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-follow.html?v=2026-05-27nudge" title="42 — Follow-Me Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-follow.html?v=2026-05-27nudge" title="42 — Follow-Me Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Build your own</h2>
     <p class="section-note">Pick a paint colour and tap dots to build any partition of 10 you like.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game.html?v=2026-06-02n13" title="42 — Every Way to Make 10 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game.html?v=2026-06-02n13" title="42 — Every Way to Make 10 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Partition 2</h2>
     <p class="section-note">White, red, and orange paints — build 10 with 2's and 1's.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-2.html?v=2026-05-26v5" title="42 — Partition 2 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-2.html?v=2026-05-26v5" title="42 — Partition 2 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Partition 3</h2>
     <p class="section-note">Two 2's and six 1's — build 2 + 2 + 1 + 1 + 1 + 1 + 1 + 1 = 10.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-3.html?v=2026-05-26v5" title="42 — Partition 3 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-3.html?v=2026-05-26v5" title="42 — Partition 3 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Partition 4</h2>
     <p class="section-note">Three 2's and four 1's — build 2 + 2 + 2 + 1 + 1 + 1 + 1 = 10.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-4.html?v=2026-05-26v5" title="42 — Partition 4 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-4.html?v=2026-05-26v5" title="42 — Partition 4 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Partition 5</h2>
     <p class="section-note">Four 2's and two 1's — build 2 + 2 + 2 + 2 + 1 + 1 = 10.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-5.html?v=2026-05-26v5" title="42 — Partition 5 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-5.html?v=2026-05-26v5" title="42 — Partition 5 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Game — Partition 6</h2>
     <p class="section-note">Five 2's only — build 2 + 2 + 2 + 2 + 2 = 10.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game-6.html?v=2026-05-26v5" title="42 — Partition 6 Game" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-game-6.html?v=2026-05-26v5" title="42 — Partition 6 Game" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 1 of 42</h2>
     <p class="section-note">1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play.html?v=2026-05-27nostart" title="42 — Partition 1" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play.html?v=2026-05-27nostart" title="42 — Partition 1" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 2 of 42</h2>
     <p class="section-note">2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play-2.html?v=2026-05-27nostart" title="42 — Partition 2" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play-2.html?v=2026-05-27nostart" title="42 — Partition 2" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 3 of 42</h2>
     <p class="section-note">2 + 2 + 1 + 1 + 1 + 1 + 1 + 1 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play-3.html?v=2026-05-27nostart" title="42 — Partition 3" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play-3.html?v=2026-05-27nostart" title="42 — Partition 3" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 4 of 42</h2>
     <p class="section-note">2 + 2 + 2 + 1 + 1 + 1 + 1 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play-4.html?v=2026-05-27nostart" title="42 — Partition 4" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play-4.html?v=2026-05-27nostart" title="42 — Partition 4" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 5 of 42</h2>
     <p class="section-note">2 + 2 + 2 + 2 + 1 + 1 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play-5.html?v=2026-05-27nostart" title="42 — Partition 5" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play-5.html?v=2026-05-27nostart" title="42 — Partition 5" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Play — Partition 6 of 42</h2>
     <p class="section-note">2 + 2 + 2 + 2 + 2 = 10. Tap once to start.</p>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-play-6.html?v=2026-05-27nostart" title="42 — Partition 6" allow="autoplay"></iframe>
+      <iframe data-src="partitions-of-10-play-6.html?v=2026-05-27nostart" title="42 — Partition 6" allow="autoplay"></iframe>
     </div>
 
     <h2 class="section-heading">Watch</h2>
@@ -166,5 +191,39 @@
         allowfullscreen></iframe>
     </div>
   </div>
+  <script>
+    // Click-to-load gate for every embedded game iframe.  Without this,
+    // all 13 iframes load at once and the kid hears every game's voice
+    // talking over the others on page load.  With it, each game stays
+    // a silent "Tap to Play" card until that specific one is tapped.
+    (function () {
+      const frames = document.querySelectorAll('.interactive-frame > iframe[data-src]');
+      frames.forEach((iframe) => {
+        const wrap = iframe.parentNode;
+        const src   = iframe.getAttribute('data-src');
+        const title = iframe.getAttribute('title') || 'Tap to Play';
+        // Build a placeholder button that replaces the iframe.
+        const gate = document.createElement('button');
+        gate.type = 'button';
+        gate.className = 'iframe-gate';
+        gate.setAttribute('aria-label', 'Play ' + title);
+        gate.innerHTML =
+          '<div class="play-icon">▶</div>' +
+          '<div>Tap to Play</div>' +
+          '<div style="font-size: 0.7em; font-weight: 600; opacity: 0.8;">' + title + '</div>';
+        gate.addEventListener('click', () => {
+          // Swap the gate for a fresh iframe with the real src so the
+          // game starts loading + playing only at this moment.
+          const real = document.createElement('iframe');
+          real.setAttribute('src', src);
+          real.setAttribute('title', title);
+          real.setAttribute('allow', 'autoplay');
+          wrap.replaceChild(real, gate);
+        });
+        // Replace the silent <iframe data-src="..."> with the gate.
+        wrap.replaceChild(gate, iframe);
+      });
+    })();
+  </script>
 </body>
 </html>

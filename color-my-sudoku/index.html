@@ -224,6 +224,7 @@
         <label class="flip"><input type="checkbox" id="setAutoNotes"><span class="rail"></span></label></div>
       <div class="knob-row"><div><span>Show colored dots</span><small>ColorMyMath style: each number as that many colored dots. Off = plain numbers.</small></div>
         <label class="flip"><input type="checkbox" id="setDots"><span class="rail"></span></label></div>
+      <button class="seal" id="settingsInstall" style="background:var(--accent); color:#10243e; margin-bottom:8px;">📲 Add to Home Screen</button>
       <button class="seal" id="setClose">Done</button>
     </div>
   </div>
@@ -347,7 +348,7 @@
 
   // ---------- Game state ----------
   let state=null;
-  const defaults={wrong:true, peers:false, same:false, totals:true, autoNotes:true, visual:'dots'};
+  const defaults={wrong:true, peers:false, same:false, totals:false, autoNotes:true, visual:'dots'};
   let settings=loadSettings();
 
   // ColorMyMath representation: each number = that many colored dots (or plain number glyph)
@@ -360,9 +361,9 @@
     catch(e){ s=Object.assign({}, defaults); }
     // one-time migration: turn the row/col/box + matching-number highlights OFF for
     // existing players (they read as "the whole board fills in"). Still re-enable-able in Settings.
-    if(localStorage.getItem('cms_hl_reset_v1')!=='1'){
-      s.peers=false; s.same=false;
-      localStorage.setItem('cms_hl_reset_v1','1');
+    if(localStorage.getItem('cms_pref_migrate_v2')!=='1'){
+      s.peers=false; s.same=false; s.totals=false;
+      localStorage.setItem('cms_pref_migrate_v2','1');
       localStorage.setItem('cms_settings', JSON.stringify(s));
     }
     return s;
@@ -647,10 +648,8 @@
     document.querySelectorAll('.tier[data-diff]').forEach(b=>b.addEventListener('click',()=>startNew(b.dataset.diff)));
     document.querySelectorAll('.veil').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) hide(o.id); }));
 
-    // install button
-    maybeShowInstallBar();
-    if(isIOS()) maybeShowInstallBar(); // iOS never fires beforeinstallprompt
-    $('installBtn').addEventListener('click',()=>{
+    // install — reachable from the top bar AND always from Settings
+    function triggerInstall(){
       if(deferredPrompt){
         deferredPrompt.prompt();
         deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; $('installBar').classList.remove('open'); });
@@ -660,7 +659,11 @@
           : 'Open your browser menu (<b>⋮</b>), then tap <b>Install app</b> or <b>Add to Home screen</b>.';
         show('installOverlay');
       }
-    });
+    }
+    maybeShowInstallBar();
+    if(isStandalone()) $('settingsInstall').style.display='none'; // already installed
+    $('installBtn').addEventListener('click', triggerInstall);
+    $('settingsInstall').addEventListener('click',()=>{ hide('setOverlay'); triggerInstall(); });
     $('installX').addEventListener('click',()=>{ $('installBar').classList.remove('open'); localStorage.setItem('cms_install_dismissed','1'); });
     $('installClose').addEventListener('click',()=>hide('installOverlay'));
 

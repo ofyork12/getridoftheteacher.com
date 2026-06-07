@@ -347,7 +347,7 @@
 
   // ---------- Game state ----------
   let state=null;
-  const defaults={wrong:true, peers:true, same:true, totals:true, autoNotes:true, visual:'dots'};
+  const defaults={wrong:true, peers:false, same:false, totals:true, autoNotes:true, visual:'dots'};
   let settings=loadSettings();
 
   // ColorMyMath representation: each number = that many colored dots (or plain number glyph)
@@ -355,8 +355,17 @@
   function repSrc(n){ return 'img/'+repPrefix()+n+'.png'; }
 
   function loadSettings(){
-    try{ return Object.assign({}, defaults, JSON.parse(localStorage.getItem('cms_settings')||'{}')); }
-    catch(e){ return Object.assign({}, defaults); }
+    let s;
+    try{ s=Object.assign({}, defaults, JSON.parse(localStorage.getItem('cms_settings')||'{}')); }
+    catch(e){ s=Object.assign({}, defaults); }
+    // one-time migration: turn the row/col/box + matching-number highlights OFF for
+    // existing players (they read as "the whole board fills in"). Still re-enable-able in Settings.
+    if(localStorage.getItem('cms_hl_reset_v1')!=='1'){
+      s.peers=false; s.same=false;
+      localStorage.setItem('cms_hl_reset_v1','1');
+      localStorage.setItem('cms_settings', JSON.stringify(s));
+    }
+    return s;
   }
   function saveSettings(){ localStorage.setItem('cms_settings', JSON.stringify(settings)); }
 

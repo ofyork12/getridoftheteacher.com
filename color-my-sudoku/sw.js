@@ -1,5 +1,5 @@
 /* Color My Sudoku service worker — offline cache */
-const CACHE = 'cms-v3';
+const CACHE = 'cms-v4';
 const DOTS = [];
 for (let n = 1; n <= 9; n++) { DOTS.push('./img/dot' + n + '.png', './img/num' + n + '.png'); }
 DOTS.push('./img/dotc.png', './img/numc.png');

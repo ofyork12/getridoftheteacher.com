@@ -67,9 +67,9 @@
   .swatch.grout-r{border-right:2.5px solid var(--grout-thick);}
   .swatch.grout-b{border-bottom:2.5px solid var(--grout-thick);}
   .swatch.etched{background:var(--etched-bg); font-weight:800;}
-  .swatch.echo{background:var(--echo-bg);}
-  .swatch.twin{background:var(--twin-bg);}
-  .swatch.spotlight{background:var(--spotlight-bg); box-shadow:inset 0 0 0 2px var(--hue5);}
+  .swatch.echo{background:#f3f7fc;}                                  /* row/col/box: barely-there wash */
+  .swatch.twin{box-shadow:inset 0 0 0 2.5px #f3c969;}               /* matching number: a ring, not a fill */
+  .swatch.spotlight{background:var(--spotlight-bg); box-shadow:inset 0 0 0 3px var(--hue5);}  /* the ONE active cell */
   .swatch.clash{background:var(--clash-bg) !important; color:var(--hue1) !important;}
   .swatch .glyph.hue1{color:var(--hue1);} .swatch .glyph.hue2{color:var(--hue2);} .swatch .glyph.hue3{color:var(--hue3);}
   .swatch .glyph.hue4{color:var(--hue4);} .swatch .glyph.hue5{color:var(--hue5);} .swatch .glyph.hue6{color:var(--hue6);}
@@ -83,10 +83,10 @@
   .murmurs span.hue4{color:var(--hue4);} .murmurs span.hue5{color:var(--hue5);} .murmurs span.hue6{color:var(--hue6);}
   .murmurs span.hue7{color:var(--hue7);} .murmurs span.hue8{color:var(--hue8);} .murmurs span.hue9{color:var(--hue9);}
 
-  /* Crayon pad */
-  .palette{display:grid; grid-template-columns:repeat(9,1fr); gap:6px;}
+  /* Crayon pad — large, fills the room below the board */
+  .palette{display:grid; grid-template-columns:repeat(9,1fr); gap:7px;}
   .crayon{
-    position:relative; aspect-ratio:1/1.18; border:none; border-radius:10px; background:var(--panel2);
+    position:relative; aspect-ratio:1/1.72; border:none; border-radius:12px; background:var(--panel2);
     font-weight:800; font-size:clamp(18px,5.5vw,26px); cursor:pointer; padding:0;
     display:flex; align-items:center; justify-content:center; transition:transform .05s;
   }
@@ -94,8 +94,8 @@
   .crayon.hue1{color:var(--hue1);} .crayon.hue2{color:var(--hue2);} .crayon.hue3{color:var(--hue3);}
   .crayon.hue4{color:var(--hue4);} .crayon.hue5{color:var(--hue5);} .crayon.hue6{color:var(--hue6);}
   .crayon.hue7{color:var(--hue7);} .crayon.hue8{color:var(--hue8);} .crayon.hue9{color:var(--hue9);}
-  .crayon .tally{position:absolute; bottom:3px; right:0; left:0; font-size:9px; font-weight:600; color:var(--muted);}
-  .crayon .speck{width:66%; height:66%; object-fit:contain; pointer-events:none; margin-top:-2px;}
+  .crayon .tally{position:absolute; bottom:5px; right:0; left:0; font-size:11px; font-weight:600; color:var(--muted);}
+  .crayon .speck{width:78%; height:78%; object-fit:contain; pointer-events:none; margin-top:-4px;}
   .crayon .speck.inked{filter:invert(1);} /* black number glyphs -> white on dark keys */
   .crayon.spent{opacity:.28;}
   .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
@@ -104,18 +104,18 @@
   /* Tool kit */
   .kit{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .gizmo{
-    border:none; border-radius:10px; background:var(--panel); color:#eaf1fb; cursor:pointer;
-    padding:11px 4px 8px; font-size:12px; font-weight:600; display:flex; flex-direction:column;
-    align-items:center; gap:3px; transition:transform .05s, background .15s;
+    border:none; border-radius:12px; background:var(--panel); color:#eaf1fb; cursor:pointer;
+    padding:14px 4px 11px; font-size:13px; font-weight:600; display:flex; flex-direction:column;
+    align-items:center; gap:4px; transition:transform .05s, background .15s;
   }
   .gizmo:active{transform:scale(.95);}
-  .gizmo .emblem{font-size:19px;}
+  .gizmo .emblem{font-size:23px;}
   .gizmo.lit{background:var(--accent); color:#10243e;}
   .gizmo .tag{font-size:10px; color:var(--accent); font-weight:700; min-height:12px;}
   .gizmo.lit .tag{color:#10243e;}
 
   .tray{display:flex; gap:8px;}
-  .slab{flex:1; border:none; border-radius:10px; padding:12px; font-weight:700; font-size:14px; cursor:pointer;}
+  .slab{flex:1; border:none; border-radius:12px; padding:15px; font-weight:700; font-size:15px; cursor:pointer;}
   .slab.bold{background:var(--accent); color:#10243e;}
   .slab.faint{background:var(--panel); color:#eaf1fb;}
 

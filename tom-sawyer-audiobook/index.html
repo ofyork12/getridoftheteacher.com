@@ -706,6 +706,22 @@ let readerWords = [], readerFrac = [], readerChapter = -1, lastWord = -1;
 const readerEl = () => document.getElementById('reader');
 function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+// Rough syllable count — a better predictor of speaking time than letter count.
+function syllables(w){
+  w = w.toLowerCase().replace(/[^a-z]/g, '');
+  if(!w) return 1;
+  w = w.replace(/e\b/g, '');               // drop common silent trailing e
+  const m = w.match(/[aeiouy]+/g);
+  return Math.max(1, m ? m.length : 1);
+}
+// Extra time the reader spends pausing after punctuation.
+function tailPause(tok){
+  if(/[.!?…][)"'”’\]]*$/.test(tok)) return 6;   // end of sentence
+  if(/[,;:][)"'”’\]]*$/.test(tok)) return 2.5;  // clause pause
+  if(/[—–-]$/.test(tok)) return 2;              // dash
+  return 0;
+}
+
 function toggleReader(){ readerEl().classList.contains('show') ? closeReader() : openReader(); }
 function openReader(){
   if(currentIndex < 0){ currentIndex = 0; highlight(0); }
@@ -730,14 +746,19 @@ function renderReader(){
   }
   const weights = [];
   let html = '', wi = 0;
-  for(const para of txt.split(/\n\n+/)){
+  const paras = txt.split(/\n\n+/);
+  for(const para of paras){
     const words = para.split(/\s+/).filter(Boolean);
     if(!words.length) continue;
     html += '<p>';
-    for(const w of words){
-      const shown = w.replace(/_/g, '');   // Gutenberg uses _word_ for italics
+    for(let j=0;j<words.length;j++){
+      const tok = words[j];
+      const shown = tok.replace(/_/g, '');   // Gutenberg uses _word_ for italics
       html += '<span class="w" data-i="'+wi+'">' + escapeHtml(shown) + '</span> ';
-      weights.push(shown.length + 1); wi++;
+      // Estimated speaking time: syllables + pauses at punctuation / paragraph ends.
+      let weight = 0.5 + syllables(shown) + tailPause(tok);
+      if(j === words.length-1) weight += 5;   // pause at end of paragraph
+      weights.push(weight); wi++;
     }
     html += '</p>';
   }
@@ -761,6 +782,17 @@ function chapterSpan(i){
   return [start, end];
 }
 
+// The span actually used for the words: trims the spoken "Chapter N…"
+// announcement at the start and a little silence at the end.
+function effectiveSpan(i){
+  const [s,e] = chapterSpan(i);
+  const dur = e - s;
+  const lead = i === 0 ? Math.min(2, dur*0.04) : Math.min(7, Math.max(2.5, dur*0.013));
+  const tail = Math.min(2, dur*0.01);
+  const a = s + lead, b = Math.max(a + 1, e - tail);
+  return [a, b];
+}
+
 function setWord(k){
   if(k === lastWord) return;
   if(readerWords[lastWord]) readerWords[lastWord].classList.remove('on');
@@ -774,7 +806,7 @@ function autoScroll(el){
 }
 function jumpToWord(k){
   if(readerChapter !== currentIndex || audio.readyState === 0){ playChapter(readerChapter); }
-  const [s,e] = chapterSpan(readerChapter);
+  const [s,e] = effectiveSpan(readerChapter);
   const t = s + (readerFrac[k] || 0)*(e - s);
   const go = () => { try{ audio.currentTime = t; }catch(_){} audio.play().catch(()=>{}); };
   if(audio.readyState > 0) go();
@@ -786,7 +818,7 @@ function jumpToWord(k){
 audio.addEventListener('timeupdate', () => {
   if(!readerEl().classList.contains('show') || !readerWords.length) return;
   if(readerChapter !== currentIndex || seeking) return;
-  const [s,e] = chapterSpan(currentIndex);
+  const [s,e] = effectiveSpan(currentIndex);
   let f = (audio.currentTime - s)/(e - s);
   if(!isFinite(f)) return;
   f = Math.max(0, Math.min(0.9999, f));

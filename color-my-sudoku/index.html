@@ -495,7 +495,7 @@
       const want=repSrc(n);
       if(!img.getAttribute('src').endsWith(want)) img.setAttribute('src', want);
       img.classList.toggle('inked', isNum);
-      cnt.textContent = settings.totals ? (9-counts[n]) : '';
+      cnt.textContent = settings.totals ? counts[n] : '';   // how many of this number are on the board
       btn.classList.toggle('spent', counts[n]>=9);
       btn.classList.toggle('glow', selVal===n);
     }

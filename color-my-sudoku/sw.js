@@ -1,8 +1,5 @@
-/* Color My Sudoku service worker — offline cache */
-const CACHE = 'cms-v4';
-const DOTS = [];
-for (let n = 1; n <= 9; n++) { DOTS.push('./img/dot' + n + '.png', './img/num' + n + '.png'); }
-DOTS.push('./img/dotc.png', './img/numc.png');
+/* Color My Sudoku service worker — network-first so updates show up immediately when online */
+const CACHE = 'cms-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -10,9 +7,10 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',
-  './icons/apple-touch-icon.png',
-  ...DOTS
+  './icons/apple-touch-icon.png'
 ];
+for (let n = 1; n <= 9; n++) { ASSETS.push('./img/dot' + n + '.png', './img/num' + n + '.png'); }
+ASSETS.push('./img/dotc.png', './img/numc.png');
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -20,19 +18,23 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-// cache-first, fall back to network, then cache the response
+// Network-first: try the network (and refresh the cache); fall back to cache only when offline.
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
-      return res;
-    }).catch(() => caches.match('./index.html')))
+    fetch(req)
+      .then(res => {
+        const copy = res.clone();
+        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+        return res;
+      })
+      .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
   );
 });

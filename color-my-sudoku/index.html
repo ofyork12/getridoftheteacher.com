@@ -36,7 +36,7 @@
     min-height:100%; overflow-x:hidden; user-select:none; -webkit-user-select:none;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  .easel{width:100%; max-width:520px; padding:10px 12px 18px; display:flex; flex-direction:column; gap:10px;}
+  .easel{width:100%; max-width:520px; padding:8px 12px 12px; display:flex; flex-direction:column; gap:7px;}
 
   header{display:flex; align-items:center; justify-content:space-between; gap:8px;}
   .maestro{font-weight:800; font-size:20px; letter-spacing:.3px; display:flex; gap:2px;}
@@ -83,10 +83,10 @@
   .murmurs span.hue4{color:var(--hue4);} .murmurs span.hue5{color:var(--hue5);} .murmurs span.hue6{color:var(--hue6);}
   .murmurs span.hue7{color:var(--hue7);} .murmurs span.hue8{color:var(--hue8);} .murmurs span.hue9{color:var(--hue9);}
 
-  /* Crayon pad — large, fills the room below the board */
-  .palette{display:grid; grid-template-columns:repeat(9,1fr); gap:7px;}
+  /* Crayon pad — big 3x3 dialpad that fills the room below the board */
+  .palette{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
   .crayon{
-    position:relative; aspect-ratio:1/1.72; border:none; border-radius:12px; background:var(--panel2);
+    position:relative; aspect-ratio:1.95; border:none; border-radius:14px; background:var(--panel2);
     font-weight:800; font-size:clamp(18px,5.5vw,26px); cursor:pointer; padding:0;
     display:flex; align-items:center; justify-content:center; transition:transform .05s;
   }
@@ -94,8 +94,8 @@
   .crayon.hue1{color:var(--hue1);} .crayon.hue2{color:var(--hue2);} .crayon.hue3{color:var(--hue3);}
   .crayon.hue4{color:var(--hue4);} .crayon.hue5{color:var(--hue5);} .crayon.hue6{color:var(--hue6);}
   .crayon.hue7{color:var(--hue7);} .crayon.hue8{color:var(--hue8);} .crayon.hue9{color:var(--hue9);}
-  .crayon .tally{position:absolute; bottom:5px; right:0; left:0; font-size:11px; font-weight:600; color:var(--muted);}
-  .crayon .speck{width:78%; height:78%; object-fit:contain; pointer-events:none; margin-top:-4px;}
+  .crayon .tally{position:absolute; bottom:6px; right:0; left:0; font-size:12px; font-weight:600; color:var(--muted);}
+  .crayon .speck{width:48%; height:74%; object-fit:contain; pointer-events:none; margin-top:-4px;}
   .crayon .speck.inked{filter:invert(1);} /* black number glyphs -> white on dark keys */
   .crayon.spent{opacity:.28;}
   .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
@@ -148,11 +148,25 @@
   .blip.bared{opacity:1; transform:translateX(-50%) translateY(0);}
   .triumph .plate{text-align:center;}
   .burst{font-size:54px; margin-bottom:6px;}
-  @media (max-height:720px){ .gizmo{padding:8px 4px 6px;} .crayon{aspect-ratio:1/1;} }
+  @media (max-height:720px){ .easel{gap:7px;} .gizmo{padding:10px 4px 8px;} .crayon{aspect-ratio:2.2;} }
+
+  /* Install banner */
+  .installbar{display:none; align-items:center; gap:8px; background:var(--accent); color:#10243e;
+    border-radius:12px; padding:9px 8px 9px 14px; font-weight:700; font-size:14px;}
+  .installbar.open{display:flex;}
+  .installbar span{flex:1; line-height:1.2;}
+  .installbar button{border:none; cursor:pointer; font-weight:800; border-radius:9px;}
+  .installbar .go{background:#10243e; color:#fff; padding:9px 16px; font-size:14px;}
+  .installbar .x{background:transparent; color:#10243e; font-size:22px; padding:0 6px; line-height:1;}
 </style>
 </head>
 <body>
   <div class="easel">
+    <div class="installbar" id="installBar">
+      <span>📲 Install this app</span>
+      <button class="go" id="installBtn">Install</button>
+      <button class="x" id="installX" aria-label="dismiss">×</button>
+    </div>
     <header>
       <div class="maestro"><span>C</span><span>o</span><span>l</span><span>o</span><span>r</span><span>!</span>&nbsp;<span style="color:#eaf1fb">Sudoku</span></div>
       <div class="scoreboard">
@@ -227,6 +241,15 @@
     </div>
   </div>
 
+  <!-- Install instructions veil -->
+  <div class="veil" id="installOverlay">
+    <div class="plate">
+      <h2>Add to Home Screen</h2>
+      <p id="installHow">&nbsp;</p>
+      <button class="seal" id="installClose">Got it</button>
+    </div>
+  </div>
+
   <div class="blip" id="toast"></div>
 
 <script>
@@ -234,6 +257,17 @@
 (function(){
   const SIZE=9, BOXES=3, CELLS=81;
   const $=id=>document.getElementById(id);
+
+  // ---------- Install (Add to Home Screen) ----------
+  let deferredPrompt=null;
+  function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
+  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+  function maybeShowInstallBar(){
+    if(isStandalone() || localStorage.getItem('cms_install_dismissed')==='1') return;
+    const b=$('installBar'); if(b) b.classList.add('open');
+  }
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; maybeShowInstallBar(); });
+  window.addEventListener('appinstalled',()=>{ const b=$('installBar'); if(b) b.classList.remove('open'); deferredPrompt=null; });
 
   // ---------- Sudoku engine: solver + generator ----------
   function deepEmpty(){ return new Array(CELLS).fill(0); }
@@ -604,6 +638,23 @@
     document.querySelectorAll('.tier[data-diff]').forEach(b=>b.addEventListener('click',()=>startNew(b.dataset.diff)));
     document.querySelectorAll('.veil').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) hide(o.id); }));
 
+    // install button
+    maybeShowInstallBar();
+    if(isIOS()) maybeShowInstallBar(); // iOS never fires beforeinstallprompt
+    $('installBtn').addEventListener('click',()=>{
+      if(deferredPrompt){
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; $('installBar').classList.remove('open'); });
+      } else {
+        $('installHow').innerHTML = isIOS()
+          ? 'In <b>Safari</b>: tap the <b>Share</b> button (the box with an ↑ arrow) at the bottom, then choose <b>Add to Home Screen</b>.'
+          : 'Open your browser menu (<b>⋮</b>), then tap <b>Install app</b> or <b>Add to Home screen</b>.';
+        show('installOverlay');
+      }
+    });
+    $('installX').addEventListener('click',()=>{ $('installBar').classList.remove('open'); localStorage.setItem('cms_install_dismissed','1'); });
+    $('installClose').addEventListener('click',()=>hide('installOverlay'));
+
     // physical keyboard support (desktop testing)
     document.addEventListener('keydown',e=>{
       if(!state) return;
@@ -628,8 +679,13 @@
     // pause timer save when backgrounded
     document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
 
-    // register service worker for offline / installability
+    // register service worker; auto-reload once when a new version takes over
     if('serviceWorker' in navigator){
+      let refreshing=false;
+      const hadController=!!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(refreshing || !hadController) return; refreshing=true; location.reload();
+      });
       window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
     }
   }

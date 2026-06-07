@@ -166,6 +166,44 @@
   .chap .dl.saved{color:#6fcf7f; border-color:rgba(111,207,127,.5); background:rgba(111,207,127,.10);}
   .chap .dl.busy{color:var(--gold);}
   .chap .dl .ring{position:absolute; font-size:9px; bottom:-1px; right:-1px;}
+
+  /* ---------- Extra player buttons (Read Along + Speed) ---------- */
+  .xrow{display:flex; gap:10px; justify-content:center; margin-top:11px;}
+  .xbtn{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:11px; padding:8px 14px; font-family:inherit; font-size:13px; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .xbtn:active{transform:scale(.95);}
+  #btnSpeed{min-width:74px; justify-content:center; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Read-Along reader ---------- */
+  #reader{
+    position:fixed; left:0; right:0; top:0; z-index:40; display:none; flex-direction:column;
+    background:linear-gradient(180deg,#1b2c4d,#13203a);
+    /* leave room for the player bar at the bottom */
+    bottom:166px; padding-top:env(safe-area-inset-top);
+  }
+  #reader.show{display:flex;}
+  #reader .rhead{
+    display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line);
+  }
+  #reader .rhead .rtitle{flex:1; text-align:center; color:var(--gold); font-size:17px; font-weight:bold;}
+  #reader .rnav{
+    background:rgba(216,178,90,.13); border:1px solid var(--line); color:var(--gold-soft);
+    width:40px; height:40px; border-radius:10px; font-size:18px; cursor:pointer; flex:0 0 auto;
+  }
+  #reader .rnav:active{transform:scale(.92);}
+  #readerText{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:18px 20px 28px; font-size:19px; line-height:1.7; color:var(--ink);
+    max-width:720px; margin:0 auto; width:100%;
+  }
+  #readerText p{margin:0 0 16px;}
+  #readerText .w{border-radius:4px; padding:0 1px; cursor:pointer; transition:background .12s,color .12s;}
+  #readerText .w.on{background:var(--gold); color:var(--navy2);}
+  #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic;
+    padding:6px 16px 0;}
 </style>
 </head>
 <body>
@@ -212,6 +250,17 @@
     </footer>
   </main>
 
+  <div id="reader">
+    <div class="rhead">
+      <button class="rnav" onclick="readerPrev()" title="Previous chapter">&#8249;</button>
+      <div class="rtitle" id="readerTitle">Read Along</div>
+      <button class="rnav" onclick="readerNext()" title="Next chapter">&#8250;</button>
+      <button class="rnav" onclick="closeReader()" title="Close">&#10005;</button>
+    </div>
+    <div id="readerText"></div>
+    <div id="readerHint">Tap any word to jump the narrator there.</div>
+  </div>
+
   <div id="player">
     <div class="wrap">
       <div id="nowPlaying">Choose a chapter to begin</div>
@@ -226,6 +275,10 @@
         <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
         <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
         <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
+      </div>
+      <div class="xrow">
+        <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
+        <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
       </div>
     </div>
   </div>
@@ -368,6 +421,7 @@ function playChapter(i, resumeTime){
     }, {once:true});
   }
   if(saveSpaceOn) manageSpace(c.file);   // auto-download current, delete the rest
+  if(readerEl().classList.contains('show')) renderReader();
 }
 
 // Play source: a downloaded blob (works offline) if we have it, otherwise stream.
@@ -475,21 +529,27 @@ const downloaded = {};       // file -> { url, size }
 const downloading = {};      // file -> true while in progress
 let saveSpaceOn = localStorage.getItem('tomsawyer.savespace') === '1';
 
+let _dbPromise = null;
 function idb(){
-  return new Promise((res, rej)=>{
+  if(_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((res, rej)=>{
+    let settled = false;
+    const done = (fn, v) => { if(!settled){ settled = true; fn(v); } };
     const r = indexedDB.open('tomsawyer-audio', 1);
     r.onupgradeneeded = ()=> r.result.createObjectStore('files');
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
+    r.onsuccess = ()=> done(res, r.result);
+    r.onerror   = ()=> done(rej, r.error);
+    r.onblocked = ()=> done(rej, new Error('idb blocked'));
+    setTimeout(()=> done(rej, new Error('idb timeout')), 2500);  // never hang the app
+  }).catch(e => { _dbPromise = null; throw e; });   // allow a later retry
+  return _dbPromise;
 }
 function idbDo(mode, fn){
   return idb().then(db => new Promise((res, rej)=>{
     const tx = db.transaction('files', mode);
-    const st = tx.objectStore('files');
-    const out = fn(st);
-    tx.oncomplete = ()=> res(out && out.result !== undefined ? out.result : out);
-    tx.onerror = ()=> rej(tx.error);
+    const req = fn(tx.objectStore('files'));
+    req.onsuccess = ()=> res(req.result);   // undefined when no record (correct)
+    req.onerror   = ()=> rej(req.error);
   }));
 }
 const idbGet  = k => idbDo('readonly',  st => st.get(k));
@@ -604,11 +664,136 @@ function updateStoreInfo(){
 (async function init(){
   document.getElementById('saveSpace').checked = saveSpaceOn;
   document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
+  applyRate();
   await loadDownloads();
+  loadText();              // load Gutenberg text (cached for offline)
   updateStoreInfo();
   const p = loadPos();
   if(p && CHAPTERS[p.index]){ highlight(p.index); showResume(p); }
 })();
+
+/* =====================================================================
+   PLAYBACK SPEED
+   ===================================================================== */
+const RATES = [0.75, 1, 1.25, 1.5, 2];
+let rate = parseFloat(localStorage.getItem('tomsawyer.rate')) || 1;
+function applyRate(){
+  try{ audio.playbackRate = rate; }catch(e){}
+  document.getElementById('btnSpeed').innerHTML = 'Speed ' + rate + '&times;';
+}
+function cycleSpeed(){
+  rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length];
+  localStorage.setItem('tomsawyer.rate', rate);
+  applyRate();
+}
+audio.addEventListener('play', applyRate);   // some browsers reset rate on new src
+
+/* =====================================================================
+   READ ALONG — Project Gutenberg text (#74), shown per chapter, with a
+   follow-along highlight. Text is cached in IndexedDB so it works offline
+   once it has been loaded a single time.
+   ===================================================================== */
+let TEXT = null;
+async function loadText(){
+  try{ const cached = await idbGet('__text__'); if(cached){ TEXT = cached; return; } }catch(e){}
+  try{
+    const res = await fetch('text.json');
+    if(res.ok){ TEXT = await res.json(); try{ await idbPut('__text__', TEXT); }catch(e){} }
+  }catch(e){}
+}
+
+let readerWords = [], readerFrac = [], readerChapter = -1, lastWord = -1;
+const readerEl = () => document.getElementById('reader');
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function toggleReader(){ readerEl().classList.contains('show') ? closeReader() : openReader(); }
+function openReader(){
+  if(currentIndex < 0){ currentIndex = 0; highlight(0); }
+  readerEl().classList.add('show');
+  readerEl().style.bottom = document.getElementById('player').offsetHeight + 'px';
+  renderReader();
+}
+function closeReader(){ readerEl().classList.remove('show'); }
+function readerPrev(){ if(currentIndex > 0) playChapter(currentIndex - 1); }
+function readerNext(){ if(currentIndex < CHAPTERS.length - 1) playChapter(currentIndex + 1); }
+
+function renderReader(){
+  if(!readerEl().classList.contains('show')) return;
+  const i = currentIndex < 0 ? 0 : currentIndex;
+  readerChapter = i; lastWord = -1;
+  document.getElementById('readerTitle').textContent = CHAPTERS[i].label;
+  const cont = document.getElementById('readerText');
+  const txt = TEXT && TEXT[i];
+  if(!txt){
+    cont.innerHTML = '<p style="color:var(--muted)">The text hasn’t loaded yet. Connect to the internet once and reopen — after that it works offline.</p>';
+    readerWords = []; readerFrac = []; return;
+  }
+  const weights = [];
+  let html = '', wi = 0;
+  for(const para of txt.split(/\n\n+/)){
+    const words = para.split(/\s+/).filter(Boolean);
+    if(!words.length) continue;
+    html += '<p>';
+    for(const w of words){
+      const shown = w.replace(/_/g, '');   // Gutenberg uses _word_ for italics
+      html += '<span class="w" data-i="'+wi+'">' + escapeHtml(shown) + '</span> ';
+      weights.push(shown.length + 1); wi++;
+    }
+    html += '</p>';
+  }
+  cont.innerHTML = html;
+  readerWords = Array.from(cont.querySelectorAll('.w'));
+  const total = weights.reduce((a,b)=>a+b, 0) || 1;
+  readerFrac = new Array(weights.length); let acc = 0;
+  for(let k=0;k<weights.length;k++){ readerFrac[k] = acc/total; acc += weights[k]; }
+  readerWords.forEach((el,k) => el.addEventListener('click', () => jumpToWord(k)));
+  cont.scrollTop = 0;
+}
+
+// Audio time span [start,end] (seconds) for a chapter inside its shared MP3.
+function chapterSpan(i){
+  const start = CHAPTERS[i].entry/1000;
+  const sameNext = CHAPTERS[i+1] && CHAPTERS[i+1].file === CHAPTERS[i].file;
+  let end = sameNext ? CHAPTERS[i+1].entry/1000
+          : (isFinite(audio.duration) && audio.duration > start ? audio.duration
+             : start + (readerWords.length ? readerWords.length*0.4 : 600));
+  if(!(end > start)) end = start + 600;
+  return [start, end];
+}
+
+function setWord(k){
+  if(k === lastWord) return;
+  if(readerWords[lastWord]) readerWords[lastWord].classList.remove('on');
+  if(readerWords[k]){ readerWords[k].classList.add('on'); autoScroll(readerWords[k]); }
+  lastWord = k;
+}
+function autoScroll(el){
+  const cont = document.getElementById('readerText');
+  const top = el.offsetTop, h = cont.clientHeight, st = cont.scrollTop;
+  if(top < st + h*0.2 || top > st + h*0.7) cont.scrollTop = top - h*0.4;
+}
+function jumpToWord(k){
+  if(readerChapter !== currentIndex || audio.readyState === 0){ playChapter(readerChapter); }
+  const [s,e] = chapterSpan(readerChapter);
+  const t = s + (readerFrac[k] || 0)*(e - s);
+  const go = () => { try{ audio.currentTime = t; }catch(_){} audio.play().catch(()=>{}); };
+  if(audio.readyState > 0) go();
+  else audio.addEventListener('loadedmetadata', function o(){ audio.removeEventListener('loadedmetadata', o); go(); }, {once:true});
+  setWord(k);
+}
+
+// Follow-along highlight as the narrator reads.
+audio.addEventListener('timeupdate', () => {
+  if(!readerEl().classList.contains('show') || !readerWords.length) return;
+  if(readerChapter !== currentIndex || seeking) return;
+  const [s,e] = chapterSpan(currentIndex);
+  let f = (audio.currentTime - s)/(e - s);
+  if(!isFinite(f)) return;
+  f = Math.max(0, Math.min(0.9999, f));
+  let lo = 0, hi = readerFrac.length - 1, ans = 0;
+  while(lo <= hi){ const mid = (lo+hi)>>1; if(readerFrac[mid] <= f){ ans = mid; lo = mid+1; } else hi = mid-1; }
+  setWord(ans);
+});
 
 function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
 setTimeout(dismissSplash, 2600);

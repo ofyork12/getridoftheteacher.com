@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#16243f">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tom Sawyer">
@@ -204,6 +207,27 @@
   #readerText .w.on{background:var(--gold); color:var(--navy2);}
   #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic;
     padding:6px 16px 0;}
+
+  /* ---------- Install banner + popup ---------- */
+  #installBar{max-width:620px; margin:0 auto 14px;}
+  #installBtn{
+    width:100%; background:linear-gradient(180deg, rgba(216,178,90,.22), rgba(216,178,90,.10));
+    border:1px solid var(--gold); color:var(--gold-soft); border-radius:12px;
+    padding:13px 16px; font-family:inherit; font-size:15px; cursor:pointer;
+  }
+  #installModal{position:fixed; inset:0; z-index:60; display:none; align-items:center;
+    justify-content:center; background:rgba(0,0,0,.65); padding:20px;}
+  #installModal.show{display:flex;}
+  .imodal{background:#13203a; border:1px solid var(--gold); border-radius:16px; max-width:430px;
+    width:100%; padding:22px; color:var(--ink); box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .imodal h3{margin:0 0 16px; color:var(--gold); text-align:center; font-size:20px;}
+  .imodal .isteps p{font-size:15px; line-height:1.6; margin:0 0 16px;}
+  .imodal .isteps b{color:var(--gold-soft);}
+  #androidInstallWrap{margin-bottom:16px; display:none;}   /* shown only if the browser offers it */
+  #androidInstallBtn{width:100%; background:var(--gold); color:var(--navy2); border:none;
+    border-radius:10px; padding:13px; font-weight:bold; font-size:15px; cursor:pointer;}
+  .iclose{width:100%; margin-top:4px; background:rgba(255,255,255,.06); border:1px solid var(--line);
+    color:var(--ink); border-radius:10px; padding:12px; font-family:inherit; font-size:14px; cursor:pointer;}
 </style>
 </head>
 <body>
@@ -220,6 +244,10 @@
   </header>
 
   <main>
+    <div id="installBar">
+      <button id="installBtn" onclick="showInstall()">&#128241; Add this to your phone as an app</button>
+    </div>
+
     <div id="resumeBar">
       <button id="resumeBtn" onclick="resumeLast()">
         <span class="big">&#9654;</span>
@@ -280,6 +308,24 @@
         <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
         <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
       </div>
+    </div>
+  </div>
+
+  <div id="installModal" onclick="hideInstall()">
+    <div class="imodal" onclick="event.stopPropagation()">
+      <h3>Get the app on your phone</h3>
+      <div id="androidInstallWrap">
+        <button id="androidInstallBtn" onclick="androidInstall()">&#11015; Install app</button>
+      </div>
+      <div class="isteps">
+        <p><b>&#127822; iPhone &amp; iPad</b><br>
+          Open this page in <b>Safari</b>, tap the <b>Share</b> button
+          (the square with an up-arrow), then choose <b>“Add to Home Screen.”</b></p>
+        <p><b>&#129302; Android</b><br>
+          Open this page in <b>Chrome</b>, tap the <b>&#8942;</b> menu (top-right),
+          then choose <b>“Install app”</b> or <b>“Add to Home screen.”</b></p>
+      </div>
+      <button class="iclose" onclick="hideInstall()">Got it</button>
     </div>
   </div>
 
@@ -614,6 +660,7 @@ function toggleDownload(file){
 }
 
 async function downloadAll(){
+  try{ await loadText(); }catch(e){}            // download the read-along text too
   const files = uniqueFiles().filter(f=>!downloaded[f]);
   const bar = document.getElementById('dlAllProg');
   bar.classList.add('show');
@@ -665,8 +712,9 @@ function updateStoreInfo(){
   document.getElementById('saveSpace').checked = saveSpaceOn;
   document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
   applyRate();
+  if(isInstalled()) document.getElementById('installBar').style.display = 'none';
   await loadDownloads();
-  loadText();              // load Gutenberg text (cached for offline)
+  loadText().catch(()=>{});   // load Gutenberg text early (cached for offline)
   updateStoreInfo();
   const p = loadPos();
   if(p && CHAPTERS[p.index]){ highlight(p.index); showResume(p); }
@@ -694,12 +742,23 @@ audio.addEventListener('play', applyRate);   // some browsers reset rate on new 
    once it has been loaded a single time.
    ===================================================================== */
 let TEXT = null;
+let textLoading = null;
 async function loadText(){
-  try{ const cached = await idbGet('__text__'); if(cached){ TEXT = cached; return; } }catch(e){}
-  try{
-    const res = await fetch('text.json');
-    if(res.ok){ TEXT = await res.json(); try{ await idbPut('__text__', TEXT); }catch(e){} }
-  }catch(e){}
+  if(TEXT && TEXT['1']) return TEXT;            // already good
+  if(textLoading) return textLoading;           // a load is in progress — share it
+  textLoading = (async () => {
+    // Use a cached copy only if it actually contains chapters (guards bad/old caches).
+    try{ const c = await idbGet('__text__'); if(c && c['1']){ TEXT = c; return TEXT; } }catch(e){}
+    // Otherwise fetch fresh from the site.
+    const res = await fetch('text.json', { cache: 'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if(!(j && j['1'])) throw new Error('bad text');
+    TEXT = j;
+    try{ await idbPut('__text__', j); }catch(e){}   // cache for offline (best effort)
+    return TEXT;
+  })().finally(() => { textLoading = null; });
+  return textLoading;
 }
 
 let readerWords = [], readerFrac = [], readerChapter = -1, lastWord = -1;
@@ -741,8 +800,17 @@ function renderReader(){
   const cont = document.getElementById('readerText');
   const txt = TEXT && TEXT[i];
   if(!txt){
-    cont.innerHTML = '<p style="color:var(--muted)">The text hasn’t loaded yet. Connect to the internet once and reopen — after that it works offline.</p>';
-    readerWords = []; readerFrac = []; return;
+    // Load the text on demand (handles first open, a slow start, or a stale cache).
+    cont.innerHTML = '<p style="color:var(--muted)">Loading the text…</p>';
+    readerWords = []; readerFrac = [];
+    loadText()
+      .then(() => { if(readerChapter === i) renderReader(); })
+      .catch(() => {
+        if(readerChapter !== i) return;
+        cont.innerHTML = '<p style="color:var(--muted)">Couldn’t load the text. '
+          + '<a onclick="renderReader()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Tap to try again</a></p>';
+      });
+    return;
   }
   const weights = [];
   let html = '', wi = 0;
@@ -826,6 +894,30 @@ audio.addEventListener('timeupdate', () => {
   while(lo <= hi){ const mid = (lo+hi)>>1; if(readerFrac[mid] <= f){ ans = mid; lo = mid+1; } else hi = mid-1; }
   setWord(ans);
 });
+
+/* =====================================================================
+   INSTALL — "Add to Home Screen" help for iPhone & Android.
+   ===================================================================== */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {   // Android/Chrome only
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('androidInstallWrap').style.display = 'block';
+});
+function isInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+function showInstall(){ document.getElementById('installModal').classList.add('show'); }
+function hideInstall(){ document.getElementById('installModal').classList.remove('show'); }
+async function androidInstall(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  try{ await deferredPrompt.userChoice; }catch(e){}
+  deferredPrompt = null;
+  document.getElementById('androidInstallWrap').style.display = 'none';
+  hideInstall();
+}
+window.addEventListener('appinstalled', ()=>{ document.getElementById('installBar').style.display='none'; });
 
 function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
 setTimeout(dismissSplash, 2600);

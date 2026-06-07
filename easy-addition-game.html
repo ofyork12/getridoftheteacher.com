@@ -28,14 +28,12 @@
   .tagline { text-align: center; margin: 0 0 14px; color: #7c6a55; font-weight: 600;
              font-size: clamp(13px, 3.6vw, 16px); }
 
-  /* ---------- mode toggle ---------- */
-  .mode-toggle { display: flex; gap: 8px; justify-content: center; margin: 0 auto 16px;
-                 background: #fff; border-radius: 999px; padding: 5px; max-width: 340px;
-                 box-shadow: 0 4px 14px rgba(0,0,0,.08); }
-  .mode-toggle button { flex: 1; border: 0; background: transparent; cursor: pointer;
-                        padding: 11px 8px; border-radius: 999px; font-weight: 800;
-                        font-size: clamp(13px, 3.6vw, 15px); color: #8a7a66; }
-  .mode-toggle button.on { background: #f97316; color: #fff; box-shadow: 0 3px 8px rgba(249,115,22,.4); }
+  /* ---------- sound toggle ---------- */
+  .sound-row { display: flex; justify-content: center; margin: 0 auto 16px; }
+  .sound-btn { border: 0; cursor: pointer; padding: 11px 22px; border-radius: 999px;
+               font-weight: 800; font-size: clamp(13px, 3.6vw, 15px);
+               background: #fff; color: #8a7a66; box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+  .sound-btn.on { background: #f97316; color: #fff; box-shadow: 0 3px 8px rgba(249,115,22,.4); }
 
   /* ---------- deck menu ---------- */
   .decks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
@@ -56,14 +54,14 @@
   .c-check  { background: linear-gradient(150deg,#facc15,#d97706); }
 
   /* ---------- play header ---------- */
-  .play-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .play-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .icon-btn { border: 0; background: #fff; color: #c2410c; width: 42px; height: 42px;
               border-radius: 14px; font-size: 20px; cursor: pointer; font-weight: 900;
               box-shadow: 0 3px 8px rgba(0,0,0,.1); flex: none; }
   .deck-title { font-weight: 800; font-size: clamp(14px,4vw,17px); flex: 1; text-align: center;
                 color: #5b4a37; }
   .stars-count { font-weight: 800; color: #d97706; font-size: clamp(14px,4vw,17px); flex: none;
-                 min-width: 54px; text-align: right; }
+                 min-width: 50px; text-align: right; }
   .progress { height: 10px; background: #ffe3c4; border-radius: 999px; overflow: hidden; margin-bottom: 4px; }
   .progress > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg,#fb923c,#f43f8e);
                   border-radius: 999px; transition: width .3s; }
@@ -72,9 +70,7 @@
   .card-area { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
   .mathcard { background: #fff; border-radius: 26px; box-shadow: 0 12px 30px rgba(0,0,0,.13);
               width: min(86%, 360px); aspect-ratio: 4 / 3; max-height: 100%;
-              display: flex; align-items: center; justify-content: center;
-              position: relative; cursor: pointer; }
-  .mathcard.flip { cursor: pointer; }
+              display: flex; align-items: center; justify-content: center; position: relative; }
   .sum {
     font-family: Georgia, "Times New Roman", serif; color: #111;
     display: grid; grid-template-columns: auto auto;
@@ -108,17 +104,6 @@
   .pad button:active { transform: translateY(3px); box-shadow: 0 1px 0 #f0c9a6; }
   .pad button.zero { grid-column: span 2; }
 
-  /* ---------- flashcard controls ---------- */
-  .flip-controls { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; }
-  .big-btn { border: 0; cursor: pointer; padding: 16px; border-radius: 18px; font-weight: 800;
-             font-size: clamp(16px,4.6vw,19px); color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.14); }
-  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.14); }
-  .btn-show { background: linear-gradient(150deg,#fb923c,#ea580c); }
-  .judge { display: flex; gap: 10px; }
-  .judge .big-btn { flex: 1; }
-  .btn-yes { background: linear-gradient(150deg,#34d399,#059669); }
-  .btn-no  { background: linear-gradient(150deg,#fb7185,#e11d48); }
-
   /* ---------- end screen ---------- */
   .end { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
          text-align: center; gap: 6px; }
@@ -126,19 +111,27 @@
   .end h2 { margin: 4px 0; color: #c2410c; font-size: clamp(24px,7vw,34px); }
   .end .score { font-size: clamp(18px,5vw,22px); font-weight: 800; color: #5b4a37; }
   .end .row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .big-btn { border: 0; cursor: pointer; padding: 16px; border-radius: 18px; font-weight: 800;
+             font-size: clamp(16px,4.6vw,19px); color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.14); }
+  .big-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.14); }
+  .btn-show { background: linear-gradient(150deg,#fb923c,#ea580c); }
+  .btn-yes  { background: linear-gradient(150deg,#34d399,#059669); }
 
   /* confetti */
   #confetti { position: absolute; inset: 0; pointer-events: none; }
 
-  .toast { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%);
-           font-size: clamp(34px,11vw,60px); font-weight: 900; color: #16a34a;
-           text-shadow: 0 3px 0 #fff, 0 0 18px rgba(255,255,255,.8);
-           opacity: 0; pointer-events: none; }
-  .toast.show { animation: toastpop .9s ease; }
-  @keyframes toastpop { 0%{opacity:0; transform: translate(-50%,-30%) scale(.6)}
-                        25%{opacity:1; transform: translate(-50%,-50%) scale(1.1)}
-                        70%{opacity:1}
-                        100%{opacity:0; transform: translate(-50%,-60%) scale(1)} }
+  /* flashing star */
+  .starflash { position: absolute; top: 38%; left: 50%; transform: translate(-50%,-50%);
+               font-size: clamp(54px,16vw,90px); opacity: 0; pointer-events: none;
+               filter: drop-shadow(0 0 14px rgba(255,210,80,.9)); }
+  .starflash.show { animation: starflash .85s ease; }
+  @keyframes starflash {
+    0%   { opacity:0; transform: translate(-50%,-50%) scale(.4) rotate(-20deg); }
+    20%  { opacity:1; transform: translate(-50%,-50%) scale(1.25) rotate(0deg); }
+    40%  { opacity:.25; }
+    60%  { opacity:1; transform: translate(-50%,-50%) scale(1.05); }
+    100% { opacity:0; transform: translate(-50%,-50%) scale(1.15); }
+  }
 </style>
 </head>
 <body>
@@ -149,9 +142,8 @@
   <section id="menu" class="screen active">
     <h1>Easy Addition</h1>
     <p class="tagline">Pick a set, then play!</p>
-    <div class="mode-toggle">
-      <button id="m-quiz" class="on" data-mode="quiz">✏️ Tap the Answer</button>
-      <button id="m-flip" data-mode="flip">🔄 Flashcards</button>
+    <div class="sound-row">
+      <button id="soundToggle" class="sound-btn">🔇 Sound off</button>
     </div>
     <div class="decks" id="deckList"></div>
   </section>
@@ -161,6 +153,7 @@
     <div class="play-head">
       <button class="icon-btn" id="backBtn" title="Back">‹</button>
       <div class="deck-title" id="deckTitle">—</div>
+      <button class="icon-btn" id="soundBtn" title="Sound">🔇</button>
       <div class="stars-count" id="starCount">⭐0</div>
     </div>
     <div class="progress"><i id="progBar"></i></div>
@@ -173,17 +166,7 @@
 
     <div class="prompt" id="prompt"></div>
 
-    <!-- quiz pad -->
     <div class="pad" id="pad"></div>
-
-    <!-- flip controls -->
-    <div class="flip-controls" id="flipControls" style="display:none">
-      <button class="big-btn btn-show" id="showBtn">Show Answer 👀</button>
-      <div class="judge" id="judgeRow" style="display:none">
-        <button class="big-btn btn-no"  id="noBtn">Practice again 🔁</button>
-        <button class="big-btn btn-yes" id="yesBtn">I got it! 👍</button>
-      </div>
-    </div>
   </section>
 
   <!-- ===== END ===== -->
@@ -199,18 +182,17 @@
     </div>
   </section>
 
-  <div class="toast" id="toast"></div>
+  <div class="starflash" id="starFlash">⭐</div>
 </div>
 
 <script>
 (function(){
   "use strict";
 
-  /* ---------------- DATA ---------------- *
+  /* ---------------- DATA ----------------
    * type "sum"   : top + bottom, answer = top+bottom
    * type "buddy" : top + ___ = 10, answer = 10 - top  (make-ten partners)
-   * Source: Hughes "Easy Addition" flash-card sets (G1 Add 1, G2 Doubles,
-   * G3 Buddy / Make 10, G4 Add 2-3-4).  Answers computed (always correct).
+   * Source: Hughes "Easy Addition" flash-card sets. Answers computed (correct).
    */
   function sum(a,b){ return {a:a, b:b, type:'sum'}; }
   function buddy(a){ return {a:a, type:'buddy'}; }
@@ -225,7 +207,6 @@
     add234: { name:'Adding 2, 3, 4', emoji:'🧮', cls:'c-add234',
               cards:[sum(3,2),sum(4,2),sum(5,2),sum(6,2),sum(7,2),sum(4,3),sum(5,3),sum(6,3),sum(5,4)] }
   };
-  // Mixed / Check decks are built from the core pool.
   function pool(){
     return SETS.add1.cards.concat(SETS.doubles.cards, SETS.make10.cards, SETS.add234.cards);
   }
@@ -242,16 +223,17 @@
   function answerOf(c){ return c.type==='buddy' ? (10 - c.a) : (c.a + c.b); }
 
   /* ---------------- STATE ---------------- */
-  var mode = 'quiz';          // 'quiz' | 'flip'
-  var deck = [];              // current list of cards
+  var deck = [];
   var idx = 0;
   var stars = 0;
   var gotRight = 0, total = 0;
   var currentDeckKey = '';
-  var revealed = false;
   var locked = false;
 
-  /* ---------------- AUDIO (Android-safe) ---------------- */
+  var soundOn = false;
+  try { soundOn = (localStorage.getItem('ezadd_sound') === '1'); } catch(e){}
+
+  /* ---------------- AUDIO (off by default, Android-safe) ---------------- */
   var actx = null;
   function audio(){
     if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
@@ -259,6 +241,7 @@
     return actx;
   }
   function tone(freq, start, dur, type, vol){
+    if(!soundOn) return;
     var a = audio(); if(!a) return;
     var t = a.currentTime + start;
     var o = a.createOscillator(), g = a.createGain();
@@ -271,18 +254,7 @@
   }
   function sndRight(){ tone(660,0,0.14,'triangle',.3); tone(880,0.10,0.18,'triangle',.3); tone(1320,0.22,0.25,'sine',.25); }
   function sndWrong(){ tone(200,0,0.22,'sine',.25); }
-  function sndStar(){  tone(1046,0,0.10,'sine',.25); tone(1568,0.09,0.22,'sine',.22); }
-  function sndWin(){
-    [523,659,784,1046,1318].forEach(function(f,i){ tone(f, i*0.12, 0.3,'triangle',.28); });
-  }
-  function speak(txt){
-    try{
-      if(!window.speechSynthesis) return;
-      var u = new SpeechSynthesisUtterance(txt);
-      u.rate = 0.95; u.pitch = 1.25; u.volume = 1;
-      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
-    }catch(e){}
-  }
+  function sndWin(){ [523,659,784,1046,1318].forEach(function(f,i){ tone(f, i*0.12, 0.3,'triangle',.28); }); }
 
   /* ---------------- helpers ---------------- */
   function $(id){ return document.getElementById(id); }
@@ -293,6 +265,20 @@
     arr = arr.slice();
     for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i];arr[i]=arr[j];arr[j]=t; }
     return arr;
+  }
+
+  /* ---------------- sound toggle ---------------- */
+  function updateSoundUI(){
+    var t = $('soundToggle');
+    t.textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off';
+    t.classList.toggle('on', soundOn);
+    $('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+  }
+  function setSound(on){
+    soundOn = on;
+    try { localStorage.setItem('ezadd_sound', on ? '1':'0'); } catch(e){}
+    updateSoundUI();
+    if(on) audio();
   }
 
   /* ---------------- MENU build ---------------- */
@@ -308,15 +294,14 @@
       btn.innerHTML = '<span class="emoji">'+emoji+'</span>'+
                       '<span class="dname">'+name+'</span>'+
                       '<span class="dsub">'+d.sub+'</span>';
-      btn.addEventListener('click', function(){ audio(); startDeck(d.key); });
+      btn.addEventListener('click', function(){ if(soundOn) audio(); startDeck(d.key); });
       list.appendChild(btn);
     });
   }
 
   /* ---------------- start a deck ---------------- */
   function buildDeck(key){
-    if(key==='shuffle') return shuffle(pool());
-    if(key==='check')   return shuffle(pool());
+    if(key==='shuffle' || key==='check') return shuffle(pool());
     return shuffle(SETS[key].cards);
   }
   function startDeck(key){
@@ -325,15 +310,9 @@
     idx = 0; stars = 0; gotRight = 0; total = deck.length;
     var meta = SETS[key];
     var dorder = DECK_ORDER.filter(function(d){return d.key===key;})[0];
-    $('deckTitle').textContent = (meta? meta.name : dorder.name);
+    $('deckTitle').textContent = (meta ? meta.name : dorder.name);
     show('play');
-    applyModeUI();
     renderCard();
-  }
-
-  function applyModeUI(){
-    $('pad').style.display          = (mode==='quiz') ? 'grid' : 'none';
-    $('flipControls').style.display = (mode==='flip') ? 'flex' : 'none';
   }
 
   /* ---------------- render the math card ---------------- */
@@ -361,24 +340,17 @@
 
   function renderCard(){
     if(idx >= deck.length){ return finish(); }
-    locked = false; revealed = false;
+    locked = false;
     var c = deck[idx];
     $('sumBox').innerHTML = cardHTML(c, false);
     $('mathcard').className = 'mathcard';
     $('progBar').style.width = (idx/deck.length*100)+'%';
     $('starCount').textContent = '⭐'+stars;
-
-    if(mode==='quiz'){
-      $('prompt').textContent = (c.type==='buddy') ? 'What is the missing buddy?' : 'What is the answer?';
-      buildPad();
-    } else {
-      $('prompt').textContent = 'Card '+(idx+1)+' of '+deck.length+' — think, then flip!';
-      $('showBtn').style.display='block';
-      $('judgeRow').style.display='none';
-    }
+    $('prompt').textContent = (c.type==='buddy') ? 'What is the missing buddy?' : 'What is the answer?';
+    buildPad();
   }
 
-  /* ---------------- quiz: number pad ---------------- */
+  /* ---------------- number pad ---------------- */
   function buildPad(){
     var pad = $('pad'); pad.innerHTML='';
     for(var n=0;n<=10;n++){
@@ -398,15 +370,14 @@
     var correct = answerOf(c);
     if(n===correct){
       locked = true;
-      gotRight++;
-      stars++;
+      gotRight++; stars++;
       $('starCount').textContent='⭐'+stars;
       $('sumBox').innerHTML = cardHTML(c, true);
-      var mc=$('mathcard'); mc.className='mathcard good';
-      sndRight(); sndStar();
-      toast(pickPraise());
+      $('mathcard').className='mathcard good';
+      sndRight();
+      starFlash();
       confettiBurst();
-      setTimeout(function(){ idx++; renderCard(); }, 1050);
+      setTimeout(function(){ idx++; renderCard(); }, 1000);
     } else {
       sndWrong();
       var mc=$('mathcard'); mc.className='mathcard'; void mc.offsetWidth; mc.className='mathcard bad';
@@ -415,34 +386,9 @@
     }
   }
 
-  /* ---------------- flashcard mode ---------------- */
-  function doShow(){
-    if(revealed) return;
-    revealed = true;
-    var c = deck[idx];
-    $('sumBox').innerHTML = cardHTML(c, true);
-    $('mathcard').className='mathcard good';
-    sndStar();
-    speak(spoken(c));
-    $('showBtn').style.display='none';
-    $('judgeRow').style.display='flex';
-    $('prompt').textContent='Did you get it right?';
-  }
-  function spoken(c){
-    var ans=answerOf(c);
-    if(c.type==='buddy') return c.a+' plus '+ans+' makes 10';
-    return c.a+' plus '+c.b+' equals '+ans;
-  }
-  function judge(got){
-    if(got){ gotRight++; stars++; sndRight(); confettiBurst(); }
-    idx++; renderCard();
-  }
-
-  /* ---------------- praise + toast ---------------- */
-  var PRAISE=['Yes!','Nice!','Great!','Star!','Wow!','You got it!','Super!','💛'];
-  function pickPraise(){ return PRAISE[Math.floor(Math.random()*PRAISE.length)]; }
-  function toast(txt){
-    var t=$('toast'); t.textContent=txt; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+  /* ---------------- flashing star ---------------- */
+  function starFlash(){
+    var s=$('starFlash'); s.classList.remove('show'); void s.offsetWidth; s.classList.add('show');
   }
 
   /* ---------------- finish ---------------- */
@@ -452,9 +398,7 @@
     var perfect = (gotRight===total);
     $('endEmoji').textContent = perfect ? '🏆' : '🎉';
     $('endTitle').textContent = perfect ? 'Perfect!' : 'Great job!';
-    $('endScore').textContent = (mode==='quiz' || mode==='flip')
-      ? ('You got '+gotRight+' out of '+total+'  •  ⭐'+stars)
-      : ('⭐'+stars);
+    $('endScore').textContent = 'You got '+gotRight+' out of '+total+'  •  ⭐'+stars;
     sndWin();
     if(perfect) confettiBurst(true);
   }
@@ -488,22 +432,13 @@
   }
 
   /* ---------------- wire up ---------------- */
-  $('m-quiz').addEventListener('click', function(){ setMode('quiz'); });
-  $('m-flip').addEventListener('click', function(){ setMode('flip'); });
-  function setMode(m){
-    mode=m;
-    $('m-quiz').classList.toggle('on', m==='quiz');
-    $('m-flip').classList.toggle('on', m==='flip');
-  }
-
+  $('soundToggle').addEventListener('click', function(){ setSound(!soundOn); });
+  $('soundBtn').addEventListener('click', function(){ setSound(!soundOn); });
   $('backBtn').addEventListener('click', function(){ show('menu'); });
-  $('showBtn').addEventListener('click', doShow);
-  $('mathcard').addEventListener('click', function(){ if(mode==='flip') doShow(); });
-  $('yesBtn').addEventListener('click', function(){ judge(true); });
-  $('noBtn').addEventListener('click', function(){ judge(false); });
   $('againBtn').addEventListener('click', function(){ startDeck(currentDeckKey); });
   $('menuBtn').addEventListener('click', function(){ show('menu'); });
 
+  updateSoundUI();
   buildMenu();
   sizeCanvas();
 })();

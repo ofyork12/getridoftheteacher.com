@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#16243f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tom Sawyer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>The Adventures of Tom Sawyer — Audiobook</title>
+<style>
+  :root{
+    --navy:#16243f; --navy2:#0f1a2e; --gold:#d8b25a; --gold-soft:#e7cf95;
+    --ink:#ede6d3; --muted:#9fb0c8; --red:#e0524a; --line:rgba(216,178,90,.25);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:Georgia,'Times New Roman',serif;
+    background:radial-gradient(120% 100% at 50% 0%, #1d3157 0%, var(--navy) 45%, var(--navy2) 100%);
+    color:var(--ink);
+    display:flex; flex-direction:column; min-height:100%;
+    padding-top:env(safe-area-inset-top);
+  }
+  /* ---------- Splash ---------- */
+  #splash{
+    position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px;
+    background:radial-gradient(120% 100% at 50% 0%, #1d3157 0%, var(--navy) 60%, var(--navy2) 100%);
+    transition:opacity .6s ease; text-align:center; padding:24px;
+  }
+  #splash.hide{opacity:0; pointer-events:none;}
+  #splash img{width:210px; max-width:62vw; border-radius:6px;
+    box-shadow:0 18px 50px rgba(0,0,0,.55); border:1px solid var(--line);}
+  #splash .tap{color:var(--gold-soft); font-size:15px; letter-spacing:.12em;
+    text-transform:uppercase; opacity:.85; animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ---------- Header ---------- */
+  header{padding:18px 20px 8px; text-align:center; border-bottom:1px solid var(--line);}
+  header h1{margin:0; font-size:21px; color:var(--gold); letter-spacing:.04em;
+    text-shadow:0 1px 0 rgba(0,0,0,.4);}
+  header .by{margin:3px 0 0; font-size:13px; color:var(--muted); font-style:italic;}
+  #quote{margin:12px auto 2px; max-width:560px; font-size:14px; font-style:italic;
+    color:var(--gold-soft); min-height:34px; line-height:1.4; padding:0 6px;}
+
+  /* ---------- Chapter list ---------- */
+  main{flex:1; overflow-y:auto; padding:10px 14px 190px; -webkit-overflow-scrolling:touch;}
+  .chapters{max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:8px;}
+  .chap{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    border:1px solid var(--line); color:var(--ink);
+    border-radius:12px; padding:14px 16px; font-family:inherit; font-size:16px;
+    cursor:pointer; transition:transform .08s, border-color .2s, background .2s;
+  }
+  .chap:active{transform:scale(.985);}
+  .chap .nbox{
+    flex:0 0 42px; height:42px; border-radius:9px; display:flex; align-items:center;
+    justify-content:center; font-size:15px; font-weight:bold;
+    background:rgba(216,178,90,.13); color:var(--gold); border:1px solid var(--line);
+  }
+  .chap .ctitle{flex:1;}
+  .chap .play-ic{flex:0 0 auto; color:var(--muted); font-size:18px;}
+  .chap.active{border-color:var(--gold); background:rgba(216,178,90,.12);}
+  .chap.active .ctitle{color:var(--gold-soft);}
+  .chap.active .nbox{background:var(--gold); color:var(--navy2);}
+  .chap.active .play-ic{color:var(--gold);}
+
+  /* ---------- Player bar ---------- */
+  #player{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:linear-gradient(180deg, rgba(15,26,46,.92), rgba(15,26,46,.99));
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding:12px 16px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px rgba(0,0,0,.4);
+  }
+  #player .wrap{max-width:620px; margin:0 auto;}
+  #nowPlaying{font-size:14px; color:var(--gold-soft); text-align:center;
+    margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .seekrow{display:flex; align-items:center; gap:10px;}
+  .seekrow time{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:42px;}
+  .seekrow time:last-child{text-align:right;}
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; flex:1; height:5px; border-radius:5px;
+    background:rgba(255,255,255,.18); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+    width:17px; height:17px; border-radius:50%; background:var(--gold);
+    border:2px solid #fff3; box-shadow:0 2px 6px rgba(0,0,0,.5); cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:17px; height:17px; border-radius:50%;
+    background:var(--gold); border:2px solid #fff3; cursor:pointer;}
+  .controls{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px;}
+  .ctrl{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--ink);
+    border-radius:11px; padding:9px 12px; font-family:inherit; font-size:13px;
+    cursor:pointer; min-width:60px; transition:background .15s, transform .08s;
+  }
+  .ctrl:active{transform:scale(.93); background:rgba(216,178,90,.18);}
+  .ctrl small{display:block; font-size:10px; color:var(--muted); letter-spacing:.05em;}
+  #btnPlay{
+    background:var(--gold); color:var(--navy2); border:none; font-weight:bold;
+    width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 18px rgba(216,178,90,.4); transition:transform .08s;
+  }
+  #btnPlay:active{transform:scale(.92);}
+  #spinner{display:none; width:22px; height:22px; border:3px solid rgba(22,36,63,.3);
+    border-top-color:var(--navy2); border-radius:50%; animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #player.loading #spinner{display:block;}
+  #player.loading #playGlyph{display:none;}
+
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:14px 16px 4px; opacity:.8;}
+  footer a{color:var(--gold-soft);}
+</style>
+</head>
+<body>
+
+  <div id="splash" onclick="dismissSplash()">
+    <img src="cover.png" alt="The Adventures of Tom Sawyer">
+    <div class="tap">Tap to begin</div>
+  </div>
+
+  <header>
+    <h1>The Adventures of Tom Sawyer</h1>
+    <p class="by">by Mark Twain &middot; read by LibriVox volunteers</p>
+    <div id="quote"></div>
+  </header>
+
+  <main>
+    <div class="chapters" id="chapterList"></div>
+    <footer>
+      Audio: public-domain LibriVox recording via archive.org.<br>
+      Read the text free at <a href="https://www.gutenberg.org/ebooks/74" target="_blank" rel="noopener">Project Gutenberg</a>.
+    </footer>
+  </main>
+
+  <div id="player">
+    <div class="wrap">
+      <div id="nowPlaying">Choose a chapter to begin</div>
+      <div class="seekrow">
+        <time id="curTime">0:00</time>
+        <input type="range" id="seek" min="0" max="100" value="0" step="1">
+        <time id="totTime">0:00</time>
+      </div>
+      <div class="controls">
+        <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
+        <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
+        <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
+        <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
+        <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+
+<script>
+// ---- Audio source + chapter map (faithful to the original 2014 app) ----
+const BASE = "https://archive.org/download/tom_sawyer_librivox/";
+const FILES = {
+  A:"TSawyer_01-02_twain_64kb.mp3",   B:"TSawyer_03-04_twain_64kb.mp3",
+  C:"TSawyer_05-06_twain_64kb.mp3",   D:"TSawyer_07-08_twain_64kb.mp3",
+  E:"TSawyer_09-10_twain_64kb.mp3",   F:"TSawyer_11-12_twain_64kb.mp3",
+  G:"TSawyer_13-14-15_twain_64kb.mp3",H:"TSawyer_16-17_twain_64kb.mp3",
+  I:"TSawyer_18-19-20_twain_64kb.mp3",J:"TSawyer_21-22-23_twain_64kb.mp3",
+  K:"TSawyer_24-25_twain_64kb.mp3",   L:"TSawyer_26_twain_64kb.mp3",
+  M:"TSawyer_27-28_twain_64kb.mp3",   N:"TSawyer_29_twain_64kb.mp3",
+  O:"TSawyer_30_twain_64kb.mp3",      P:"TSawyer_31-32_twain_64kb.mp3",
+  Q:"TSawyer_33-34-35_twain_64kb.mp3"
+};
+// {label, file, entry(ms into that file)}  — entry points from the original app
+const CHAPTERS = [
+  {label:"Dedication & Preface", file:"A", entry:11000},
+  {label:"Chapter 1",  file:"A", entry:85500},
+  {label:"Chapter 2",  file:"A", entry:894000},
+  {label:"Chapter 3",  file:"B", entry:13500},
+  {label:"Chapter 4",  file:"B", entry:784000},
+  {label:"Chapter 5",  file:"C", entry:13100},
+  {label:"Chapter 6",  file:"C", entry:687000},
+  {label:"Chapter 7",  file:"D", entry:14500},
+  {label:"Chapter 8",  file:"D", entry:657000},
+  {label:"Chapter 9",  file:"E", entry:14200},
+  {label:"Chapter 10", file:"E", entry:733000},
+  {label:"Chapter 11", file:"F", entry:13500},
+  {label:"Chapter 12", file:"F", entry:535000},
+  {label:"Chapter 13", file:"G", entry:14400},
+  {label:"Chapter 14", file:"G", entry:851500},
+  {label:"Chapter 15", file:"G", entry:1565000},
+  {label:"Chapter 16", file:"H", entry:14400},
+  {label:"Chapter 17", file:"H", entry:1081900},
+  {label:"Chapter 18", file:"I", entry:14100},
+  {label:"Chapter 19", file:"I", entry:957000},
+  {label:"Chapter 20", file:"I", entry:1198000},
+  {label:"Chapter 21", file:"J", entry:13200},
+  {label:"Chapter 22", file:"J", entry:850000},
+  {label:"Chapter 23", file:"J", entry:1206000},
+  {label:"Chapter 24", file:"K", entry:14500},
+  {label:"Chapter 25", file:"K", entry:169000},
+  {label:"Chapter 26", file:"L", entry:13200},
+  {label:"Chapter 27", file:"M", entry:14300},
+  {label:"Chapter 28", file:"M", entry:339500},
+  {label:"Chapter 29", file:"N", entry:13000},
+  {label:"Chapter 30", file:"O", entry:13600},
+  {label:"Chapter 31", file:"P", entry:13500},
+  {label:"Chapter 32", file:"P", entry:1052000},
+  {label:"Chapter 33", file:"Q", entry:14100},
+  {label:"Chapter 34", file:"Q", entry:1096000},
+  {label:"Chapter 35", file:"Q", entry:1385000}
+];
+
+const QUOTES = [
+  "I can live for two months on a good compliment. — Mark Twain",
+  "Go to Heaven for the climate, Hell for the company. — Mark Twain",
+  "Get your facts first, then you can distort them as you please. — Mark Twain",
+  "If you tell the truth, you don't have to remember anything. — Mark Twain",
+  "Kindness is the language which the deaf can hear and the blind can see. — Mark Twain",
+  "Good friends, good books and a sleepy conscience: this is the ideal life. — Mark Twain",
+  "To succeed in life, you need two things: ignorance and confidence. — Mark Twain",
+  "A person who won't read has no advantage over one who can't read. — Mark Twain",
+  "Courage is resistance to fear, mastery of fear, not absence of fear. — Mark Twain",
+  "The secret of getting ahead is getting started. — Mark Twain",
+  "My mother had a great deal of trouble with me, but I think she enjoyed it. — Mark Twain",
+  "Do the right thing. It will gratify some people and astonish the rest. — Mark Twain",
+  "The best way to cheer yourself up is to try to cheer somebody else up. — Mark Twain"
+];
+
+const audio   = document.getElementById('audio');
+const player  = document.getElementById('player');
+const seek    = document.getElementById('seek');
+const curTime = document.getElementById('curTime');
+const totTime = document.getElementById('totTime');
+const nowPlaying = document.getElementById('nowPlaying');
+const playGlyph  = document.getElementById('playGlyph');
+let currentIndex = -1;
+let seeking = false;
+
+// Build chapter list
+const list = document.getElementById('chapterList');
+CHAPTERS.forEach((c, i) => {
+  const b = document.createElement('button');
+  b.className = 'chap';
+  b.innerHTML = `<span class="nbox">${i===0?'★':i}</span>`
+              + `<span class="ctitle">${c.label}</span>`
+              + `<span class="play-ic">▶</span>`;
+  b.onclick = () => playChapter(i);
+  list.appendChild(b);
+});
+
+// Random quote, refreshed every 12s
+function newQuote(){ document.getElementById('quote').textContent =
+  QUOTES[Math.floor(Math.random()*QUOTES.length)]; }
+newQuote(); setInterval(newQuote, 12000);
+
+function fmt(sec){
+  if(!isFinite(sec)||sec<0) sec=0;
+  const m=Math.floor(sec/60), s=Math.floor(sec%60);
+  return m+':'+String(s).padStart(2,'0');
+}
+
+function playChapter(i){
+  const c = CHAPTERS[i];
+  const url = BASE + FILES[c.file];
+  const sameFile = currentIndex>=0 && CHAPTERS[currentIndex].file===c.file;
+  currentIndex = i;
+  highlight(i);
+  nowPlaying.textContent = c.label;
+
+  const seekToEntry = () => { try{ audio.currentTime = c.entry/1000; }catch(e){} };
+
+  if(sameFile && audio.readyState>0){
+    seekToEntry();
+    audio.play().catch(()=>{});
+  } else {
+    player.classList.add('loading');
+    audio.src = url;
+    audio.load();
+    // iOS/Safari: play() MUST run inside the tap that triggered this, or the
+    // browser blocks audio. So start it now; jump to the chapter once metadata loads.
+    audio.play().catch(()=>{});
+    audio.addEventListener('loadedmetadata', function once(){
+      audio.removeEventListener('loadedmetadata', once);
+      seekToEntry();
+      audio.play().catch(()=>{});
+    }, {once:true});
+  }
+}
+
+function highlight(i){
+  document.querySelectorAll('.chap').forEach((el,idx)=>
+    el.classList.toggle('active', idx===i));
+}
+
+function togglePlay(){
+  if(currentIndex<0){ playChapter(0); return; }
+  if(audio.paused) audio.play(); else audio.pause();
+}
+
+function skip(sec){
+  if(currentIndex<0) return;
+  audio.currentTime = Math.max(0, Math.min(audio.duration||1e9, audio.currentTime+sec));
+}
+
+// ---- audio events ----
+audio.addEventListener('playing', ()=>{ player.classList.remove('loading'); playGlyph.innerHTML='&#10074;&#10074;'; });
+audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; });
+audio.addEventListener('waiting', ()=>{ player.classList.add('loading'); });
+audio.addEventListener('canplay', ()=>{ player.classList.remove('loading'); });
+audio.addEventListener('error',   ()=>{
+  player.classList.remove('loading');
+  nowPlaying.textContent = '⚠ Could not load audio — check your internet connection';
+});
+audio.addEventListener('loadedmetadata', ()=>{ seek.max = Math.floor(audio.duration||100); totTime.textContent = fmt(audio.duration); });
+audio.addEventListener('timeupdate', ()=>{
+  if(seeking) return;
+  seek.value = Math.floor(audio.currentTime);
+  curTime.textContent = fmt(audio.currentTime);
+  if(audio.duration) totTime.textContent = fmt(audio.duration);
+});
+
+// ---- seek bar ----
+seek.addEventListener('input', ()=>{ seeking=true; curTime.textContent = fmt(seek.value); });
+seek.addEventListener('change',()=>{ audio.currentTime = +seek.value; seeking=false; });
+
+// ---- Media Session (lock-screen controls on phones) ----
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play',  ()=>audio.play());
+  navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
+  navigator.mediaSession.setActionHandler('seekbackward', ()=>skip(-10));
+  navigator.mediaSession.setActionHandler('seekforward',  ()=>skip(10));
+}
+audio.addEventListener('playing', ()=>{
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: CHAPTERS[currentIndex]?.label || 'Tom Sawyer',
+      artist: 'Mark Twain', album: 'The Adventures of Tom Sawyer',
+      artwork:[{src:'cover.png', sizes:'240x300', type:'image/png'}]
+    });
+  }
+});
+
+function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
+setTimeout(dismissSplash, 2600);
+
+// Register service worker for offline shell / installability
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

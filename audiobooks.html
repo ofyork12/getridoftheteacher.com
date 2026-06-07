@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Audio Books — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 40px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    h1 {
+      text-align: center;
+      font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .sub {
+      text-align: center;
+      color: #aaa;
+      margin: 0 0 40px;
+      font-size: 16px;
+    }
+    .top-nav { display: flex; justify-content: center; margin-bottom: 30px; }
+    .top-nav a {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 10px;
+    }
+    .book {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      padding: 20px;
+      background: transparent;
+      color: #fff;
+      border: 3px solid #fff;
+      border-radius: 16px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .book:hover { background: #fff; color: #000; transform: translateY(-2px); }
+    .book img {
+      width: 84px;
+      height: 105px;
+      object-fit: cover;
+      border-radius: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.5);
+      flex: 0 0 auto;
+    }
+    .book .meta { display: flex; flex-direction: column; gap: 5px; }
+    .book .title { font-size: 19px; font-weight: 800; letter-spacing: .5px; line-height: 1.2; }
+    .book .author { font-size: 14px; opacity: .75; font-style: italic; }
+    .book .note { font-size: 12px; opacity: .55; margin-top: 4px; }
+    .book:hover .author, .book:hover .note { opacity: .9; }
+
+    .tip {
+      max-width: 640px;
+      margin: 44px auto 0;
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav">
+      <a href="index.html">← Back to Home</a>
+    </div>
+
+    <h1>Audio Books</h1>
+    <p class="sub">Free, classic stories read aloud. Tap a book to start listening.</p>
+
+    <div class="grid">
+      <a href="tom-sawyer-audiobook/index.html" class="book">
+        <img src="tom-sawyer-audiobook/cover.png" alt="The Adventures of Tom Sawyer">
+        <div class="meta">
+          <span class="title">The Adventures of Tom Sawyer</span>
+          <span class="author">by Mark Twain</span>
+          <span class="note">35 chapters · read by LibriVox volunteers</span>
+        </div>
+      </a>
+    </div>
+
+    <p class="tip">
+      On a phone you can install any book as an app:<br>
+      <strong>iPhone / iPad</strong> — open the book in Safari, tap the Share button, then “Add to Home Screen.”<br>
+      <strong>Android</strong> — open in Chrome, tap the ⋮ menu, then “Add to Home screen.”
+    </p>
+  </div>
+</body>
+</html>

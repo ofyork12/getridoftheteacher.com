@@ -86,7 +86,7 @@
   /* Crayon pad — big 3x3 dialpad that fills the room below the board */
   .palette{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
   .crayon{
-    position:relative; aspect-ratio:1.95; border:none; border-radius:14px; background:var(--panel2);
+    position:relative; aspect-ratio:1; border:none; border-radius:16px; background:var(--panel2);
     font-weight:800; font-size:clamp(18px,5.5vw,26px); cursor:pointer; padding:0;
     display:flex; align-items:center; justify-content:center; transition:transform .05s;
   }
@@ -95,7 +95,7 @@
   .crayon.hue4{color:var(--hue4);} .crayon.hue5{color:var(--hue5);} .crayon.hue6{color:var(--hue6);}
   .crayon.hue7{color:var(--hue7);} .crayon.hue8{color:var(--hue8);} .crayon.hue9{color:var(--hue9);}
   .crayon .tally{position:absolute; bottom:6px; right:0; left:0; font-size:12px; font-weight:600; color:var(--muted);}
-  .crayon .speck{width:48%; height:74%; object-fit:contain; pointer-events:none; margin-top:-4px;}
+  .crayon .speck{width:82%; height:82%; object-fit:contain; pointer-events:none;}
   .crayon .speck.inked{filter:invert(1);} /* black number glyphs -> white on dark keys */
   .crayon.spent{opacity:.28;}
   .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
@@ -104,18 +104,18 @@
   /* Tool kit */
   .kit{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .gizmo{
-    border:none; border-radius:12px; background:var(--panel); color:#eaf1fb; cursor:pointer;
-    padding:14px 4px 11px; font-size:13px; font-weight:600; display:flex; flex-direction:column;
-    align-items:center; gap:4px; transition:transform .05s, background .15s;
+    border:none; border-radius:16px; background:var(--panel); color:#eaf1fb; cursor:pointer;
+    padding:18px 4px 14px; font-size:14px; font-weight:600; display:flex; flex-direction:column;
+    align-items:center; gap:6px; transition:transform .05s, background .15s;
   }
   .gizmo:active{transform:scale(.95);}
-  .gizmo .emblem{font-size:23px;}
+  .gizmo .emblem{font-size:30px;}
   .gizmo.lit{background:var(--accent); color:#10243e;}
   .gizmo .tag{font-size:10px; color:var(--accent); font-weight:700; min-height:12px;}
   .gizmo.lit .tag{color:#10243e;}
 
   .tray{display:flex; gap:8px;}
-  .slab{flex:1; border:none; border-radius:12px; padding:15px; font-weight:700; font-size:15px; cursor:pointer;}
+  .slab{flex:1; border:none; border-radius:14px; padding:18px; font-weight:700; font-size:17px; cursor:pointer;}
   .slab.bold{background:var(--accent); color:#10243e;}
   .slab.faint{background:var(--panel); color:#eaf1fb;}
 
@@ -148,7 +148,7 @@
   .blip.bared{opacity:1; transform:translateX(-50%) translateY(0);}
   .triumph .plate{text-align:center;}
   .burst{font-size:54px; margin-bottom:6px;}
-  @media (max-height:720px){ .easel{gap:7px;} .gizmo{padding:10px 4px 8px;} .crayon{aspect-ratio:2.2;} }
+  @media (max-height:720px){ .easel{gap:7px;} }
 
   /* Install banner */
   .installbar{display:none; align-items:center; gap:8px; background:var(--accent); color:#10243e;

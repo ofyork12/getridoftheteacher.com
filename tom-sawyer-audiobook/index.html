@@ -81,6 +81,7 @@
   #player .wrap{max-width:620px; margin:0 auto;}
   #nowPlaying{font-size:14px; color:var(--gold-soft); text-align:center;
     margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #nowPlaying.err{color:var(--red); cursor:pointer; text-decoration:underline; white-space:normal;}
   .seekrow{display:flex; align-items:center; gap:10px;}
   .seekrow time{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:42px;}
   .seekrow time:last-child{text-align:right;}
@@ -268,6 +269,7 @@ function playChapter(i){
   const sameFile = currentIndex>=0 && CHAPTERS[currentIndex].file===c.file;
   currentIndex = i;
   highlight(i);
+  clearError();
   nowPlaying.textContent = c.label;
 
   const seekToEntry = () => { try{ audio.currentTime = c.entry/1000; }catch(e){} };
@@ -290,6 +292,15 @@ function playChapter(i){
   }
 }
 
+function clearError(){ nowPlaying.classList.remove('err'); }
+function showError(){
+  player.classList.remove('loading');
+  nowPlaying.classList.add('err');
+  nowPlaying.textContent = '⚠ Couldn’t load audio — tap here to try again';
+}
+// Tap the status line to retry the current chapter
+nowPlaying.addEventListener('click', ()=>{ if(nowPlaying.classList.contains('err') && currentIndex>=0) playChapter(currentIndex); });
+
 function highlight(i){
   document.querySelectorAll('.chap').forEach((el,idx)=>
     el.classList.toggle('active', idx===i));
@@ -311,8 +322,10 @@ audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; });
 audio.addEventListener('waiting', ()=>{ player.classList.add('loading'); });
 audio.addEventListener('canplay', ()=>{ player.classList.remove('loading'); });
 audio.addEventListener('error',   ()=>{
-  player.classList.remove('loading');
-  nowPlaying.textContent = '⚠ Could not load audio — check your internet connection';
+  // Ignore spurious/abort errors (e.g. when switching chapters); only flag real failures.
+  const code = audio.error && audio.error.code;
+  if(!audio.src || code === 1) return;        // 1 = MEDIA_ERR_ABORTED
+  showError();
 });
 audio.addEventListener('loadedmetadata', ()=>{ seek.max = Math.floor(audio.duration||100); totTime.textContent = fmt(audio.duration); });
 audio.addEventListener('timeupdate', ()=>{
@@ -346,9 +359,16 @@ audio.addEventListener('playing', ()=>{
 function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
 setTimeout(dismissSplash, 2600);
 
-// Register service worker for offline shell / installability
+// NOTE: No service worker. On iPhone, an installed web app with a service worker
+// has a WebKit bug that blocks audio loaded from another site (archive.org).
+// The app still installs to the home screen via the manifest + Apple meta tags.
+// Clean up any service worker a previous version registered, so old installs self-heal.
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.getRegistrations()
+    .then(rs => rs.forEach(r => r.unregister())).catch(()=>{});
+}
+if(window.caches && caches.keys){
+  caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
 }
 </script>
 </body>

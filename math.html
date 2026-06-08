@@ -116,6 +116,15 @@
       font-size: 30px;
       line-height: 1;
       margin-bottom: 2px;
+      cursor: pointer;
+      display: inline-block;
+      transform-origin: left center;
+      transition: transform 0.25s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .card .emoji.big {
+      transform: scale(2.6);
     }
   </style>
 </head>
@@ -262,5 +271,16 @@
       </a>
     </div>
   </div>
+
+  <script>
+    // Tap a figure to make it grow; tap again to shrink. Don't open the lesson.
+    document.querySelectorAll('.card .emoji').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        el.classList.toggle('big');
+      });
+    });
+  </script>
 </body>
 </html>

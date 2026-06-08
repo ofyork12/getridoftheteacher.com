@@ -346,6 +346,115 @@
       </div>
     </details>
 
+    <h2 class="section-heading">Bonus — 512 ways with walls</h2>
+    <p class="section-note">There are 10 dots in a row.  Between them are 9 spaces.  Each space can hold a wall (or not) — that's <strong>2 &times; 2 &times; ... &times; 2 = 512</strong> ways.  Tap a space to put a wall in or take it out.  The numbers add up to 10 every time.</p>
+    <div class="comp-game">
+      <div class="comp-stats">
+        <span>Found <strong id="compFound">0</strong> / 512</span>
+        <span class="comp-eq" id="compEq">10 = 10</span>
+        <button type="button" id="compReset" class="comp-reset">Take walls down</button>
+      </div>
+      <div class="comp-row" id="compRow"></div>
+    </div>
+
+    <style>
+      .comp-game {
+        max-width: 720px; margin: 0 auto 16px; padding: 18px 14px;
+        background: #111; border: 2px solid #fff; border-radius: 14px;
+      }
+      .comp-stats {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: 10px 16px; margin-bottom: 14px; font-size: 15px; color: #ddd;
+      }
+      .comp-stats strong { color: #ffe600; font-size: 18px; }
+      .comp-eq {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: clamp(15px, 3vw, 18px); color: #fff;
+      }
+      .comp-reset {
+        background: transparent; color: #fff; border: 2px solid #fff;
+        border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: bold;
+        cursor: pointer; letter-spacing: 0.5px;
+      }
+      .comp-reset:hover { background: #fff; color: #000; }
+      .comp-row {
+        display: flex; align-items: center; justify-content: center; gap: 0;
+        padding: 14px 4px; background: #000; border-radius: 10px; flex-wrap: nowrap;
+      }
+      .comp-dot {
+        width: clamp(20px, 5vw, 32px); height: clamp(20px, 5vw, 32px); border-radius: 50%;
+        background: #e63946; border: 2px solid #ffe600; flex: 0 0 auto;
+      }
+      .comp-gap {
+        width: clamp(18px, 3.5vw, 26px); height: clamp(32px, 7vw, 46px);
+        background: transparent; border: none; cursor: pointer; padding: 0;
+        position: relative; flex: 0 0 auto;
+      }
+      .comp-gap::before {
+        content: ""; position: absolute; top: 50%; left: 50%;
+        width: 2px; height: 60%; background: #555; transform: translate(-50%, -50%);
+        border-radius: 2px; transition: all 0.15s ease;
+      }
+      .comp-gap.on::before { width: 6px; height: 100%; background: #ffe600; }
+      .comp-gap:hover::before { background: #fff; }
+      .comp-gap.on:hover::before { background: #ffe600; }
+    </style>
+
+    <script>
+    (function(){
+      const row = document.getElementById('compRow');
+      const eqEl = document.getElementById('compEq');
+      const foundEl = document.getElementById('compFound');
+      const resetBtn = document.getElementById('compReset');
+      const walls = [false,false,false,false,false,false,false,false,false]; // 9 gaps
+      const seenKey = 'comp512_seen';
+      let seen = new Set();
+      try { seen = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]')); } catch (e) {}
+      function _save() { try { localStorage.setItem(seenKey, JSON.stringify([...seen])); } catch (e) {} }
+      function _render() {
+        row.innerHTML = '';
+        for (let i = 0; i < 10; i++) {
+          const dot = document.createElement('span');
+          dot.className = 'comp-dot';
+          row.appendChild(dot);
+          if (i < 9) {
+            const gap = document.createElement('button');
+            gap.type = 'button';
+            gap.className = 'comp-gap' + (walls[i] ? ' on' : '');
+            gap.setAttribute('aria-label', 'wall after dot ' + (i + 1));
+            gap.addEventListener('click', () => { walls[i] = !walls[i]; _updateAll(); });
+            row.appendChild(gap);
+          }
+        }
+      }
+      function _equation() {
+        // Walls split the 10 ones into groups; each group's size is the term.
+        const parts = [];
+        let run = 1; // dot 0 already counted
+        for (let i = 0; i < 9; i++) {
+          if (walls[i]) { parts.push(run); run = 1; } else { run++; }
+        }
+        parts.push(run);
+        return parts.join(' + ') + ' = 10';
+      }
+      function _key() { return walls.map(w => w ? '1' : '0').join(''); }
+      function _updateAll() {
+        // re-render only the gap classes (don't rebuild the whole row)
+        [...row.querySelectorAll('.comp-gap')].forEach((g, i) => g.classList.toggle('on', walls[i]));
+        eqEl.textContent = _equation();
+        seen.add(_key());
+        _save();
+        foundEl.textContent = seen.size;
+      }
+      resetBtn.addEventListener('click', () => {
+        for (let i = 0; i < 9; i++) walls[i] = false;
+        _updateAll();
+      });
+      _render();
+      _updateAll(); // counts the all-no-walls composition too
+    })();
+    </script>
+
     <h2 class="section-heading">Watch</h2>
     <p class="section-note">The narrated video version (coming soon).</p>
     <div class="video-frame">

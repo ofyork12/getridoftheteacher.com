@@ -203,8 +203,8 @@
     max-width:720px; margin:0 auto; width:100%;
   }
   #readerText p{margin:0 0 16px;}
-  #readerText .w{border-radius:4px; padding:0 1px; cursor:pointer; transition:background .12s,color .12s;}
-  #readerText .w.on{background:var(--gold); color:var(--navy2);}
+  #readerText .w{border-radius:4px; padding:0 1px; cursor:pointer;}
+  #readerText .w:active{background:var(--gold); color:var(--navy2);}  /* brief feedback on tap */
   #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic;
     padding:6px 16px 0;}
 
@@ -837,6 +837,8 @@ function renderReader(){
   for(let k=0;k<weights.length;k++){ readerFrac[k] = acc/total; acc += weights[k]; }
   readerWords.forEach((el,k) => el.addEventListener('click', () => jumpToWord(k)));
   cont.scrollTop = 0;
+  userScrollAt = 0; lastSetTop = -1;
+  scheduleScroll();   // glide to the current spot in the narration
 }
 
 // Audio time span [start,end] (seconds) for a chapter inside its shared MP3.
@@ -861,17 +863,6 @@ function effectiveSpan(i){
   return [a, b];
 }
 
-function setWord(k){
-  if(k === lastWord) return;
-  if(readerWords[lastWord]) readerWords[lastWord].classList.remove('on');
-  if(readerWords[k]){ readerWords[k].classList.add('on'); autoScroll(readerWords[k]); }
-  lastWord = k;
-}
-function autoScroll(el){
-  const cont = document.getElementById('readerText');
-  const top = el.offsetTop, h = cont.clientHeight, st = cont.scrollTop;
-  if(top < st + h*0.2 || top > st + h*0.7) cont.scrollTop = top - h*0.4;
-}
 function jumpToWord(k){
   if(readerChapter !== currentIndex || audio.readyState === 0){ playChapter(readerChapter); }
   const [s,e] = effectiveSpan(readerChapter);
@@ -879,21 +870,50 @@ function jumpToWord(k){
   const go = () => { try{ audio.currentTime = t; }catch(_){} audio.play().catch(()=>{}); };
   if(audio.readyState > 0) go();
   else audio.addEventListener('loadedmetadata', function o(){ audio.removeEventListener('loadedmetadata', o); go(); }, {once:true});
-  setWord(k);
 }
 
-// Follow-along highlight as the narrator reads.
-audio.addEventListener('timeupdate', () => {
-  if(!readerEl().classList.contains('show') || !readerWords.length) return;
-  if(readerChapter !== currentIndex || seeking) return;
+/* Move-along auto-scroll: glide the page so the spot being read stays in the
+   upper third of the screen. No per-word highlight — the narrator timing is
+   only estimated, so a smooth scroll reads far better than flashing words. */
+let scrollRAF = null, lastSetTop = -1, userScrollAt = 0;
+
+function readerTargetTop(){
+  const cont = document.getElementById('readerText');
+  if(!readerWords.length) return null;
   const [s,e] = effectiveSpan(currentIndex);
   let f = (audio.currentTime - s)/(e - s);
-  if(!isFinite(f)) return;
+  if(!isFinite(f)) return null;
   f = Math.max(0, Math.min(0.9999, f));
   let lo = 0, hi = readerFrac.length - 1, ans = 0;
   while(lo <= hi){ const mid = (lo+hi)>>1; if(readerFrac[mid] <= f){ ans = mid; lo = mid+1; } else hi = mid-1; }
-  setWord(ans);
-});
+  const el = readerWords[ans];
+  if(!el) return null;
+  const max = Math.max(0, cont.scrollHeight - cont.clientHeight);
+  return Math.max(0, Math.min(max, el.offsetTop - cont.clientHeight*0.38));
+}
+
+function scrollFrame(){
+  scrollRAF = null;
+  const cont = document.getElementById('readerText');
+  if(!readerEl().classList.contains('show') || readerChapter !== currentIndex || seeking) return;
+  if(Date.now() - userScrollAt > 3500){              // don't fight a hand-scroll
+    const target = readerTargetTop();
+    if(target != null){
+      const cur = cont.scrollTop;
+      const ease = audio.paused ? 1 : 0.1;           // snap when paused, glide when playing
+      cont.scrollTop = lastSetTop = (Math.abs(target - cur) < 1.5 ? target : cur + (target - cur)*ease);
+    }
+  }
+  if(!audio.paused) scheduleScroll();
+}
+function scheduleScroll(){ if(scrollRAF == null) scrollRAF = requestAnimationFrame(scrollFrame); }
+
+audio.addEventListener('play', scheduleScroll);
+audio.addEventListener('timeupdate', scheduleScroll);
+document.getElementById('readerText').addEventListener('scroll', () => {
+  const cont = document.getElementById('readerText');
+  if(lastSetTop >= 0 && Math.abs(cont.scrollTop - lastSetTop) > 8) userScrollAt = Date.now();
+}, {passive:true});
 
 /* =====================================================================
    INSTALL — "Add to Home Screen" help for iPhone & Android.

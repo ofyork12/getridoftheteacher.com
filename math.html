@@ -68,6 +68,30 @@
     }
     .stage-banner + .section-heading { margin-top: 8px; border-top: none; }
 
+    /* Parent prompt: only shown once, under the Crawling stage.  Big and
+       yellow so the adult can't miss it. */
+    .parent-prompt {
+      border: 3px solid #ffe600;
+      background: rgba(255, 230, 0, 0.10);
+      border-radius: 14px;
+      padding: 18px 22px;
+      margin: 14px 0 22px;
+      color: #fff;
+    }
+    .parent-prompt .pp-tag {
+      display: inline-block;
+      background: #ffe600; color: #000;
+      font-weight: bold; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .parent-prompt h3 {
+      margin: 0 0 8px; font-size: clamp(18px, 3vw, 22px);
+      color: #ffe600; letter-spacing: 1px; text-transform: uppercase;
+    }
+    .parent-prompt p { margin: 0; color: #ddd; font-size: 15px; line-height: 1.45; }
+    .parent-prompt strong { color: #fff; }
+
     .section-heading {
       font-size: clamp(18px, 3vw, 22px);
       letter-spacing: 1.5px;
@@ -167,8 +191,14 @@
         <div class="stage-name">Crawling — Easiest</div>
       </div>
     </div>
+
+    <div class="parent-prompt" role="note">
+      <span class="pp-tag">Parents</span>
+      <h3>This is your turn to teach</h3>
+      <p>Crawling is where <strong>you sit beside your child</strong> and walk them through the very first ideas — bigger vs. smaller, the numbers 1 to 10.  Once they've got it, you can step back: <strong>everything after Crawling, they can do on their own.</strong></p>
+    </div>
+
     <h2 class="section-heading">Start Here</h2>
-    <p class="section-note">First Mom shows you how, then it's your turn to try.</p>
     <div class="grid">
       <a href="bigger-smaller.html" class="card start">
         <span class="emoji">🧎</span>

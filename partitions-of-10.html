@@ -371,6 +371,11 @@
         font-family: 'SF Mono', Menlo, Consolas, monospace;
         font-size: clamp(15px, 3vw, 18px); color: #fff;
       }
+      .comp-term {
+        display: inline-block; padding: 1px 7px; margin: 0 2px; border-radius: 6px;
+        color: #fff; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.45);
+      }
+      .comp-plus, .comp-eqsign { color: #888; margin: 0 4px; font-weight: normal; }
       .comp-reset {
         background: transparent; color: #fff; border: 2px solid #fff;
         border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: bold;
@@ -407,15 +412,28 @@
       const foundEl = document.getElementById('compFound');
       const resetBtn = document.getElementById('compReset');
       const walls = [false,false,false,false,false,false,false,false,false]; // 9 gaps
+      // Canonical ColorMyMath number-line colours (matches making-10-game.html).
+      const NUM_COLOR = {
+        1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
+        6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
+      };
       const seenKey = 'comp512_seen';
       let seen = new Set();
       try { seen = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]')); } catch (e) {}
       function _save() { try { localStorage.setItem(seenKey, JSON.stringify([...seen])); } catch (e) {} }
+      // Group dots by the walls -> array of arrays of dot indices.
+      function _groups() {
+        const groups = []; let cur = [0];
+        for (let i = 0; i < 9; i++) {
+          if (walls[i]) { groups.push(cur); cur = [i + 1]; } else { cur.push(i + 1); }
+        }
+        groups.push(cur); return groups;
+      }
       function _render() {
         row.innerHTML = '';
         for (let i = 0; i < 10; i++) {
           const dot = document.createElement('span');
-          dot.className = 'comp-dot';
+          dot.className = 'comp-dot'; dot.dataset.i = i;
           row.appendChild(dot);
           if (i < 9) {
             const gap = document.createElement('button');
@@ -427,23 +445,21 @@
           }
         }
       }
-      function _equation() {
-        // Walls split the 10 ones into groups; each group's size is the term.
-        const parts = [];
-        let run = 1; // dot 0 already counted
-        for (let i = 0; i < 9; i++) {
-          if (walls[i]) { parts.push(run); run = 1; } else { run++; }
-        }
-        parts.push(run);
-        return parts.join(' + ') + ' = 10';
-      }
       function _key() { return walls.map(w => w ? '1' : '0').join(''); }
       function _updateAll() {
-        // re-render only the gap classes (don't rebuild the whole row)
+        const groups = _groups();
+        // Recolour each dot by its group's size.
+        const dots = [...row.querySelectorAll('.comp-dot')];
+        groups.forEach(g => { const c = NUM_COLOR[g.length] || '#e63946'; g.forEach(i => dots[i].style.background = c); });
+        // Colour-coded equation: each term gets its number-line colour.
+        const eqHtml = groups.map(g => {
+          const n = g.length;
+          return '<span class="comp-term" style="background:' + NUM_COLOR[n] + '">' + n + '</span>';
+        }).join('<span class="comp-plus">+</span>') + '<span class="comp-eqsign">=</span><span class="comp-term" style="background:' + NUM_COLOR[10] + '">10</span>';
+        eqEl.innerHTML = eqHtml;
+        // Gap visual sync.
         [...row.querySelectorAll('.comp-gap')].forEach((g, i) => g.classList.toggle('on', walls[i]));
-        eqEl.textContent = _equation();
-        seen.add(_key());
-        _save();
+        seen.add(_key()); _save();
         foundEl.textContent = seen.size;
       }
       resetBtn.addEventListener('click', () => {

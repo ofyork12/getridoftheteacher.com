@@ -383,26 +383,36 @@
       }
       .comp-reset:hover { background: #fff; color: #000; }
       .comp-row {
-        display: flex; align-items: center; justify-content: center; gap: 0;
-        padding: 14px 4px; background: #000; border-radius: 10px; flex-wrap: nowrap;
+        display: flex; align-items: flex-end; justify-content: center; gap: 0;
+        padding: 18px 6px 10px; background: #fff; border-radius: 10px; flex-wrap: nowrap;
+        min-height: 220px;
       }
-      .comp-dot {
-        width: clamp(20px, 5vw, 32px); height: clamp(20px, 5vw, 32px); border-radius: 50%;
-        background: #e63946; border: 2px solid #ffe600; flex: 0 0 auto;
+      .comp-group {
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        padding: 0 8px; flex: 0 0 auto;
+      }
+      .comp-group .nl-shape {
+        width: clamp(70px, 12vw, 110px); height: clamp(140px, 24vw, 220px);
+        display: block;
+      }
+      .comp-group .nl-label {
+        font-family: 'Nunito', Arial, sans-serif; font-weight: 700;
+        font-size: clamp(28px, 5vw, 40px); color: #000;
+        line-height: 1; margin-top: 4px;
       }
       .comp-gap {
-        width: clamp(18px, 3.5vw, 26px); height: clamp(32px, 7vw, 46px);
+        align-self: stretch; width: clamp(16px, 3vw, 26px);
         background: transparent; border: none; cursor: pointer; padding: 0;
         position: relative; flex: 0 0 auto;
       }
       .comp-gap::before {
-        content: ""; position: absolute; top: 50%; left: 50%;
-        width: 2px; height: 60%; background: #555; transform: translate(-50%, -50%);
+        content: ""; position: absolute; top: 12px; bottom: 56px; left: 50%;
+        width: 3px; background: #ddd; transform: translateX(-50%);
         border-radius: 2px; transition: all 0.15s ease;
       }
-      .comp-gap.on::before { width: 6px; height: 100%; background: #ffe600; }
-      .comp-gap:hover::before { background: #fff; }
-      .comp-gap.on:hover::before { background: #ffe600; }
+      .comp-gap.on::before { width: 7px; background: #000; }
+      .comp-gap:hover::before { background: #999; }
+      .comp-gap.on:hover::before { background: #000; }
     </style>
 
     <script>
@@ -429,36 +439,156 @@
         }
         groups.push(cur); return groups;
       }
-      function _render() {
-        row.innerHTML = '';
-        for (let i = 0; i < 10; i++) {
-          const dot = document.createElement('span');
-          dot.className = 'comp-dot'; dot.dataset.i = i;
-          row.appendChild(dot);
-          if (i < 9) {
-            const gap = document.createElement('button');
-            gap.type = 'button';
-            gap.className = 'comp-gap' + (walls[i] ? ' on' : '');
-            gap.setAttribute('aria-label', 'wall after dot ' + (i + 1));
-            gap.addEventListener('click', () => { walls[i] = !walls[i]; _updateAll(); });
-            row.appendChild(gap);
-          }
+      // Canonical ColorMyMath number-line shapes (1..10).  Centers are in a
+      // 100x100 viewBox with the cluster bottom-aligned.  R, D, H mirror the
+      // existing nl layout used in making-10-game.html.
+      const R = 8, D = 16, H = D * Math.sqrt(3) / 2, CX = 50, YB = 92;
+      const SHAPES = {
+        1:  [[CX, YB]],
+        2:  [[CX-R,YB],[CX+R,YB]],
+        3:  [[CX-R,YB],[CX+R,YB],[CX,YB-H]],
+        4:  [[CX-R,YB],[CX+R,YB],[CX-R,YB-D],[CX+R,YB-D]],
+        5:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-R,YB-H],[CX+R,YB-H]],
+        6:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-R,YB-H],[CX+R,YB-H],[CX,YB-2*H]],
+        7:  [[CX-R,YB],[CX+R,YB],[CX-D,YB-H],[CX,YB-H],[CX+D,YB-H],[CX-R,YB-2*H],[CX+R,YB-2*H]],
+        8:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-D,YB-D],[CX+D,YB-D],[CX-D,YB-2*D],[CX,YB-2*D],[CX+D,YB-2*D]],
+        9:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-D,YB-D],[CX,YB-D],[CX+D,YB-D],[CX-D,YB-2*D],[CX,YB-2*D],[CX+D,YB-2*D]],
+        10: [[CX-3*R,YB],[CX-R,YB],[CX+R,YB],[CX+3*R,YB],[CX-D,YB-H],[CX,YB-H],[CX+D,YB-H],[CX-R,YB-2*H],[CX+R,YB-2*H],[CX,YB-3*H]]
+      };
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      function _buildShape(n) {
+        const svg = document.createElementNS(SVG_NS, 'svg');
+        svg.setAttribute('class', 'nl-shape');
+        // Tighten viewBox to the actual cluster's bounds so the shape fills
+        // the box (no big empty vertical strip).
+        const pts = SHAPES[n];
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const [x, y] of pts) {
+          if (x - R < minX) minX = x - R;
+          if (x + R > maxX) maxX = x + R;
+          if (y - R < minY) minY = y - R;
+          if (y + R > maxY) maxY = y + R;
         }
+        const pad = 2;
+        svg.setAttribute('viewBox', (minX - pad) + ' ' + (minY - pad) + ' ' + (maxX - minX + 2 * pad) + ' ' + (maxY - minY + 2 * pad));
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        const color = NUM_COLOR[n] || '#e63946';
+        // For 10, draw the canonical big-triangle outline too.
+        if (n === 10) {
+          const halfW = 3 * R + R * Math.sqrt(3);
+          const baseY = YB + R;
+          const topY  = baseY - halfW * Math.sqrt(3);
+          const tri = document.createElementNS(SVG_NS, 'polygon');
+          tri.setAttribute('points',
+            (CX - halfW) + ',' + baseY + ' ' +
+            (CX + halfW) + ',' + baseY + ' ' +
+            CX + ',' + topY);
+          tri.setAttribute('fill', 'none');
+          tri.setAttribute('stroke', '#000');
+          tri.setAttribute('stroke-width', '1.5');
+          svg.appendChild(tri);
+        }
+        for (const [cx, cy] of SHAPES[n]) {
+          const c = document.createElementNS(SVG_NS, 'circle');
+          c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', R);
+          c.setAttribute('fill', color);
+          c.setAttribute('stroke', '#000'); c.setAttribute('stroke-width', '1');
+          svg.appendChild(c);
+        }
+        return svg;
       }
       function _key() { return walls.map(w => w ? '1' : '0').join(''); }
-      function _updateAll() {
+      function _render() {
         const groups = _groups();
-        // Recolour each dot by its group's size.
-        const dots = [...row.querySelectorAll('.comp-dot')];
-        groups.forEach(g => { const c = NUM_COLOR[g.length] || '#e63946'; g.forEach(i => dots[i].style.background = c); });
+        row.innerHTML = '';
+        groups.forEach((g, gi) => {
+          const cell = document.createElement('div');
+          cell.className = 'comp-group';
+          cell.appendChild(_buildShape(g.length));
+          const lbl = document.createElement('div');
+          lbl.className = 'nl-label';
+          lbl.textContent = g.length;
+          cell.appendChild(lbl);
+          row.appendChild(cell);
+          // After each group except the last, render the corresponding "wall on"
+          // gap button.  Between-group gaps correspond to the wall index =
+          // sum of group sizes so far - 1.
+          if (gi < groups.length - 1) {
+            // Wall index: last dot index of this group (groups index up).
+            const wallIdx = g[g.length - 1];
+            const gap = document.createElement('button');
+            gap.type = 'button';
+            gap.className = 'comp-gap on';
+            gap.setAttribute('aria-label', 'wall after dot ' + (wallIdx + 1));
+            gap.addEventListener('click', () => { walls[wallIdx] = false; _updateAll(); });
+            row.appendChild(gap);
+          }
+        });
+        // Insert "off" gap buttons within each group (between adjacent dots
+        // that have no wall) so the kid can also ADD a wall.
+        // Strategy: rebuild row with per-dot anchoring instead.
+        // (Simpler approach: scrap the above and render dot-by-dot.)
+      }
+      // Simpler renderer: lay out the row left-to-right as alternating
+      // group blocks and tap-targets for every one of the 9 gaps, walls or not.
+      function _render2() {
+        const groups = _groups();
+        row.innerHTML = '';
+        let gapIdx = 0;
+        groups.forEach((g, gi) => {
+          const cell = document.createElement('div');
+          cell.className = 'comp-group';
+          cell.appendChild(_buildShape(g.length));
+          const lbl = document.createElement('div');
+          lbl.className = 'nl-label';
+          lbl.textContent = g.length;
+          cell.appendChild(lbl);
+          row.appendChild(cell);
+          // Add a tap-gap after this group unless it's the last group.
+          if (gi < groups.length - 1) {
+            const wallIdx = g[g.length - 1]; // wall sits right after this dot
+            const gap = document.createElement('button');
+            gap.type = 'button';
+            gap.className = 'comp-gap on';
+            gap.dataset.wall = wallIdx;
+            gap.setAttribute('aria-label', 'remove wall after dot ' + (wallIdx + 1));
+            gap.addEventListener('click', () => { walls[wallIdx] = false; _updateAll(); });
+            row.appendChild(gap);
+          }
+        });
+        // Also add an "add-wall" tap for each off-gap inside groups.  We do
+        // this by overlaying invisible-but-clickable strips between adjacent
+        // dots of the same group.  Skip for now: instead, we add a small
+        // "add wall" button between each pair of adjacent dots inside the
+        // shape SVG would be complex.  Simpler UX: a row of 9 small gap
+        // buttons under the shapes that always exist.
+        const adder = document.createElement('div');
+        adder.className = 'comp-adder';
+        adder.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:2px;margin-top:8px;flex-wrap:wrap;';
+        for (let i = 0; i < 9; i++) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.textContent = (i + 1) + (walls[i] ? ' |' : '');
+          b.style.cssText = 'background:' + (walls[i] ? '#000' : '#eee') + ';color:' + (walls[i] ? '#fff' : '#333') + ';border:1px solid #999;padding:4px 8px;border-radius:6px;font-size:12px;cursor:pointer;font-family:Nunito,Arial,sans-serif;font-weight:700;min-width:38px;';
+          b.title = 'Toggle wall after dot ' + (i + 1);
+          b.addEventListener('click', () => { walls[i] = !walls[i]; _updateAll(); });
+          adder.appendChild(b);
+        }
+        // Place the adder *outside* the row so it doesn't disturb layout.
+        row.parentElement.appendChild(adder);
+      }
+      function _updateAll() {
+        // Remove any prior adder bar.
+        const prevAdder = row.parentElement.querySelector('.comp-adder');
+        if (prevAdder) prevAdder.remove();
+        _render2();
         // Colour-coded equation: each term gets its number-line colour.
+        const groups = _groups();
         const eqHtml = groups.map(g => {
           const n = g.length;
           return '<span class="comp-term" style="background:' + NUM_COLOR[n] + '">' + n + '</span>';
         }).join('<span class="comp-plus">+</span>') + '<span class="comp-eqsign">=</span><span class="comp-term" style="background:' + NUM_COLOR[10] + '">10</span>';
         eqEl.innerHTML = eqHtml;
-        // Gap visual sync.
-        [...row.querySelectorAll('.comp-gap')].forEach((g, i) => g.classList.toggle('on', walls[i]));
         seen.add(_key()); _save();
         foundEl.textContent = seen.size;
       }
@@ -466,8 +596,7 @@
         for (let i = 0; i < 9; i++) walls[i] = false;
         _updateAll();
       });
-      _render();
-      _updateAll(); // counts the all-no-walls composition too
+      _updateAll(); // initial render + counts the all-no-walls composition
     })();
     </script>
 

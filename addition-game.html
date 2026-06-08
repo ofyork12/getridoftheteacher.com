@@ -382,6 +382,9 @@
     line-height: 1.1;
     padding: clamp(16px, 4vw, 24px) clamp(20px, 5vw, 36px);
   }
+
+  /* No white slot -- a tap on a coloured dot erases it back to white. */
+  .paint-slot[data-value="0"] { display: none !important; }
 </style>
 <script src="audio-library.js"></script>
 <script src="praise-audio.js?v=2026-06-02trim"></script>

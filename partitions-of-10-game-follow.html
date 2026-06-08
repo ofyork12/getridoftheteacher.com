@@ -372,6 +372,9 @@
     transform: translateY(4px);
     box-shadow: 0 2px 0 #000, 0 4px 10px rgba(0,0,0,0.4);
   }
+
+  /* No white slot -- a tap on a coloured dot erases it back to white. */
+  .paint-slot[data-value="0"] { display: none !important; }
 </style>
 </head>
 <body>
@@ -764,6 +767,7 @@
   for (const d of dots) {
     d.el.addEventListener('click', () => {
       bumpIdleTimer();
+      if (d.value > 0) { paintDot(d, '#ffffff', 0); return; }  // tap erases
       if (activePaint == null) return;
       paintDot(d, activePaint, activeValue);
     });

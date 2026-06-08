@@ -2366,6 +2366,8 @@ function updateInstructionsLanguage() {
 const gameToggle = document.getElementById('gameToggle');
 if (gameToggle) {
   gameToggle.addEventListener('click', () => {
+    window.location.href = 'math.html';
+    return;
     gameMode = !gameMode;
     const practiceMode = document.getElementById('practiceMode');
     const gameArea = document.getElementById('gameArea');
@@ -2406,6 +2408,8 @@ if (gameToggle) {
 const backToPracticeBtn = document.getElementById('backToPractice');
 if (backToPracticeBtn) {
   backToPracticeBtn.addEventListener('click', () => {
+    window.location.href = 'math.html';
+    return;
     gameMode = false;
     const practiceMode = document.getElementById('practiceMode');
     const gameArea = document.getElementById('gameArea');

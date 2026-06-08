@@ -337,6 +337,9 @@
     color: #ffe600;
   }
 
+
+  /* No white slot -- a tap on a coloured dot erases it back to white. */
+  .paint-slot[data-value="0"] { display: none !important; }
 </style>
 </head>
 <body>
@@ -682,9 +685,32 @@
   // any leftover whites by index.  This guarantees the
   // partition-completing stroke always succeeds, so e.g. 5+5, 6+4,
   // 4+4+2 don't silently no-op when the first stroke wasn't optimal.
+  // Canonical shapes that match the ColorMyMath number line.  Each pattern
+  // is an array of dot indices in the 10-dot triangle:
+  //         0           <- apex
+  //        1 2
+  //       3 4 5
+  //      6 7 8 9
+  const PAINT_SHAPES = {
+    2: [ [1,2], [3,4], [4,5], [6,7], [7,8], [8,9] ],            // horizontal pair
+    3: [ [0,1,2], [1,3,4], [2,4,5], [3,6,7], [4,7,8], [5,8,9] ], // small triangle (apex + 2 below)
+    6: [ [0,1,2,3,4,5] ],                                      // triangle of 6 (top 3 rows)
+    10:[ [0,1,2,3,4,5,6,7,8,9] ]                               // full triangle
+  };
   function findPaintTargets(d, count) {
     const targets = [d];
     if (count <= 1) return targets;
+    // Try a canonical number-line shape first.  Each shape includes the
+    // tapped dot and uses only currently-white dots.
+    const shapes = PAINT_SHAPES[count];
+    if (shapes) {
+      for (const pat of shapes) {
+        if (!pat.includes(d.i)) continue;
+        if (pat.every(i => dots[i].value === 0)) {
+          return pat.map(i => dots[i]);
+        }
+      }
+    }
     let remaining = count - 1;
     const visited = new Set([d.i]);
     const queue = [d.i];
@@ -809,6 +835,7 @@
   }
   for (const d of dots) {
     d.el.addEventListener('click', () => {
+      if (d.value > 0) { paintDot(d, '#ffffff', 0); return; }  // tap erases
       if (activePaint == null) return;
       paintDot(d, activePaint, activeValue);
     });
@@ -1144,5 +1171,19 @@
   window.hidePerfectBanner = hidePerfectBanner;
 </script>
 
+
+<script>
+// URL ?max=N -> hide paint slots above value N (white stays hidden via CSS).
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  var m=parseInt(p.get("max"),10);
+  if(isNaN(m)||m<1||m>9) return;
+  document.querySelectorAll(".paint-slot[data-value]").forEach(function(sl){
+    var v=parseInt(sl.dataset.value,10);
+    if(v===0) return;
+    if(v<=m) sl.classList.remove("disabled"); else sl.classList.add("disabled");
+  });
+})();
+</script>
 </body>
 </html>

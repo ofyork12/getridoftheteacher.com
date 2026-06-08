@@ -267,11 +267,56 @@
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
+
+  /* Horizontal palette tray applied via ?max=N -- slots flow across the top */
+  .paint-tray.tray-horizontal {
+    display: flex; flex-direction: row; flex-wrap: nowrap; justify-content: center;
+    top: 1%; left: 4%; right: 4%; width: auto;
+    gap: 1.5%;
+  }
+  .paint-tray.tray-horizontal .paint-slot {
+    grid-column: auto !important; grid-row: auto !important;
+    flex: 1 1 0; min-width: 0; max-width: 60px;
+  }
+  /* Partition tracker UI */
+  .partition-tracker { position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:5;
+    background:rgba(0,0,0,0.55); color:#ffe600; font-weight:bold; font-size:13px; letter-spacing:1px;
+    padding:4px 12px; border-radius:14px; border:1px solid rgba(255,230,0,0.5); pointer-events:none; }
+  .show-missed-btn { display:block; margin:6px auto 0; padding:6px 14px; font-size:12px; font-weight:bold;
+    letter-spacing:1px; text-transform:uppercase; background:transparent; color:#fff;
+    border:2px solid #fff; border-radius:999px; cursor:pointer; }
+  .show-missed-btn:hover { background:#fff; color:#000; }
+  .missed-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000;
+    display:none; align-items:center; justify-content:center; padding:20px; }
+  .missed-overlay.show { display:flex; }
+  .missed-card { background:#111; border:3px solid #ffe600; border-radius:18px; padding:22px;
+    max-width:520px; width:100%; max-height:88vh; overflow-y:auto; color:#fff; font-family:Arial,sans-serif; }
+  .missed-card h3 { margin:0 0 6px; color:#ffe600; text-align:center; font-size:18px; letter-spacing:1px; }
+  .missed-card .summary { text-align:center; color:#aaa; font-size:13px; margin-bottom:14px; }
+  .missed-list { display:grid; gap:8px; }
+  .missed-entry { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+    border:1px solid #333; font-family:"SF Mono",Menlo,Consolas,monospace; font-size:15px; }
+  .missed-entry.found { border-color:#2d8c2d; color:#7dd07d; background:rgba(45,140,45,0.10); }
+  .missed-entry.todo  { border-color:#444; color:#888; background:rgba(255,255,255,0.02); }
+  .missed-entry .idx { color:#666; width:32px; flex:0 0 32px; text-align:right; font-size:12px; }
+  .missed-entry.found .idx { color:#2d8c2d; }
+  .close-missed-btn { display:block; margin:16px auto 0; padding:10px 28px; font-weight:bold;
+    background:#ffe600; color:#000; border:none; border-radius:999px; cursor:pointer; font-size:14px; }
+
+  /* No white slot -- a tap on a coloured dot erases it back to white. */
+  .paint-slot[data-value="0"] { display: none !important; }
+
+  /* Palette-mode (?max=N): palette across the top below the existing text. */
+  body.palette-mode .paint-tray.tray-horizontal { top: 11%; }
+  body.palette-mode .equation { top: 17%; left: 4%; right: 4%; }
+  body.palette-mode .play-area { top: 24%; }
+  body.palette-mode .partition-tracker { top: 5.5%; bottom: auto; left: auto; right: 3%; transform: none; font-size: 11px; padding: 3px 9px; }
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage">
+  <div class="partition-tracker" id="partitionTracker">Found: 0 / 0</div>
   <div class="perfect-banner" id="perfectBanner">PERFECT!</div>
 
 
@@ -340,6 +385,7 @@
   </div>
 
   <button class="reset-btn" id="resetBtn">CLEAR</button>
+  <button class="show-missed-btn" id="showMissedBtn" type="button">Show what I missed</button>
 
   <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 40" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="14" y1="3" x2="14" y2="22"/><polyline points="30,3 30,22 42,22 42,36"/><polyline points="54,3 54,22 64,22"/></g></svg></div>
 </div>
@@ -528,6 +574,7 @@
       if (sum === 10) {
         _speak(['equals_ten']);
         showPerfectBanner();
+        if (typeof recordPartitionFromDots === "function") recordPartitionFromDots();
       }
       if (typeof window.bumpScoreForPaint === 'function') window.bumpScoreForPaint();
     } else if (value === 0 && previousValue > 0) {
@@ -539,6 +586,7 @@
   }
   for (const d of dots) {
     d.el.addEventListener('click', () => {
+      if (d.value > 0) { paintDot(d, '#ffffff', 0); return; }  // tap erases
       if (activePaint == null) return;
       paintDot(d, activePaint, activeValue);
     });
@@ -795,5 +843,135 @@
   window.hidePerfectBanner = hidePerfectBanner;
 </script>
 
+
+<script>
+// URL ?max=N -> hide paint slots above value N (white always visible).
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  var m=parseInt(p.get("max"),10);
+  if(isNaN(m)||m<0||m>9) return;
+  document.querySelectorAll(".paint-slot[data-value]").forEach(function(sl){
+    var v=parseInt(sl.dataset.value,10);
+    if(v===0){ sl.classList.remove("disabled"); return; }
+    if(v<=m) sl.classList.remove("disabled"); else sl.classList.add("disabled");
+  });
+  var tray = document.getElementById("paintTray") || document.querySelector(".paint-tray");
+  if (tray) {
+    tray.classList.add("tray-horizontal");
+    document.body.classList.add("palette-mode");
+    document.querySelectorAll(".paint-slot[data-value]").forEach(function(sl){
+      sl.style.order = sl.dataset.value;
+    });
+  }
+})();
+</script>
+<div class="missed-overlay" id="missedOverlay" role="dialog" aria-hidden="true">
+  <div class="missed-card">
+    <h3 id="missedTitle">Partitions to find</h3>
+    <p class="summary" id="missedSummary"></p>
+    <div class="missed-list" id="missedList"></div>
+    <button class="close-missed-btn" id="closeMissedBtn" type="button">Keep building</button>
+  </div>
+</div>
+<script>
+// === Partition tracker (42 partitions of 10) ===========================
+// PARTITIONS_OF_10_CANON: each entry is the partition as a sorted-descending
+// array, in the canonical order the user wants:
+//   #1 = 1+1+...+1 (ten ones), #2..#6 = with-twos family, ..., #42 = 10.
+const PARTITIONS_OF_10_CANON = [
+  [1,1,1,1,1,1,1,1,1,1],
+  [2,1,1,1,1,1,1,1,1],[2,2,1,1,1,1,1,1],[2,2,2,1,1,1,1],[2,2,2,2,1,1],[2,2,2,2,2],
+  [3,1,1,1,1,1,1,1],[3,2,1,1,1,1,1],[3,2,2,1,1,1],[3,2,2,2,1],[3,3,1,1,1,1],[3,3,2,1,1],[3,3,2,2],[3,3,3,1],
+  [4,1,1,1,1,1,1],[4,2,1,1,1,1],[4,2,2,1,1],[4,2,2,2],[4,3,1,1,1],[4,3,2,1],[4,3,3],[4,4,1,1],[4,4,2],
+  [5,1,1,1,1,1],[5,2,1,1,1],[5,2,2,1],[5,3,1,1],[5,3,2],[5,4,1],[5,5],
+  [6,1,1,1,1],[6,2,1,1],[6,2,2],[6,3,1],[6,4],
+  [7,1,1,1],[7,2,1],[7,3],
+  [8,1,1],[8,2],
+  [9,1],
+  [10]
+];
+const _pkey = p => p.slice().sort((a,b)=>b-a).join(",");
+const PARTITION_INDEX_BY_KEY = {};
+PARTITIONS_OF_10_CANON.forEach((p,i) => { PARTITION_INDEX_BY_KEY[_pkey(p)] = i + 1; });
+
+// Scope: if ?max=N, scope = partitions whose biggest part is exactly N;
+// otherwise the whole 42.
+const _qMax = parseInt(new URLSearchParams(location.search).get("max"), 10);
+const SCOPE_MAX = (isNaN(_qMax) || _qMax < 1 || _qMax > 10) ? null : _qMax;
+const SCOPE_INDICES = PARTITIONS_OF_10_CANON
+  .map((p,i) => ({ p, idx: i + 1 }))
+  .filter(({p}) => SCOPE_MAX === null || p[0] === SCOPE_MAX)
+  .map(({idx}) => idx);
+const SCOPE_TOTAL = SCOPE_INDICES.length;
+
+// localStorage key includes scope so each button has its own progress.
+const _storeKey = "p10_collected_" + (SCOPE_MAX === null ? "all" : "max" + SCOPE_MAX);
+const collectedPartitions = new Set();
+try {
+  const saved = JSON.parse(localStorage.getItem(_storeKey) || "[]");
+  saved.forEach(n => { if (SCOPE_INDICES.includes(n)) collectedPartitions.add(n); });
+} catch (e) {}
+function _saveCollected() {
+  try { localStorage.setItem(_storeKey, JSON.stringify([...collectedPartitions])); } catch (e) {}
+}
+
+const _trackerEl = document.getElementById("partitionTracker");
+function _renderTracker() {
+  if (!_trackerEl) return;
+  _trackerEl.textContent = "Found: " + collectedPartitions.size + " / " + SCOPE_TOTAL;
+}
+_renderTracker();
+
+// Called from paintDot when sum reaches 10.  Reads the painted dot values
+// directly so it works regardless of how the game lays them out.
+function recordPartitionFromDots() {
+  if (typeof dots === "undefined" || !Array.isArray(dots)) return;
+  const values = dots.filter(d => d.value > 0).map(d => d.value);
+  if (values.reduce((a,b)=>a+b,0) !== 10) return;
+  const key = _pkey(values);
+  const idx = PARTITION_INDEX_BY_KEY[key];
+  if (!idx || !SCOPE_INDICES.includes(idx) || collectedPartitions.has(idx)) return;
+  collectedPartitions.add(idx);
+  _saveCollected();
+  _renderTracker();
+}
+
+// "Show what I missed" modal
+function _eqText(p) { return p.join(" + ") + " = 10"; }
+function _openMissed() {
+  const ov = document.getElementById("missedOverlay");
+  const list = document.getElementById("missedList");
+  const summary = document.getElementById("missedSummary");
+  const title = document.getElementById("missedTitle");
+  if (!ov || !list) return;
+  title.textContent = SCOPE_MAX === null
+    ? "All 42 partitions of 10"
+    : "Partitions with biggest = " + SCOPE_MAX;
+  summary.textContent = collectedPartitions.size + " of " + SCOPE_TOTAL + " found";
+  list.innerHTML = "";
+  SCOPE_INDICES.forEach(idx => {
+    const p = PARTITIONS_OF_10_CANON[idx - 1];
+    const got = collectedPartitions.has(idx);
+    const row = document.createElement("div");
+    row.className = "missed-entry " + (got ? "found" : "todo");
+    row.innerHTML = "<span class=\"idx\">#" + idx + "</span>"
+                  + "<span class=\"check\">" + (got ? "\u2713" : "\u00b7") + "</span>"
+                  + "<span class=\"eq\">" + _eqText(p) + "</span>";
+    list.appendChild(row);
+  });
+  ov.classList.add("show");
+  ov.setAttribute("aria-hidden", "false");
+}
+function _closeMissed() {
+  const ov = document.getElementById("missedOverlay");
+  if (!ov) return;
+  ov.classList.remove("show");
+  ov.setAttribute("aria-hidden", "true");
+}
+document.getElementById("showMissedBtn")?.addEventListener("click", _openMissed);
+document.getElementById("closeMissedBtn")?.addEventListener("click", _closeMissed);
+document.getElementById("missedOverlay")?.addEventListener("click", e => { if (e.target.id === "missedOverlay") _closeMissed(); });
+// === end partition tracker ============================================
+</script>
 </body>
 </html>

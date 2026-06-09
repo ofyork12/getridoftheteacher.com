@@ -16,6 +16,7 @@
 const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3192',7:'#F7941D',8:'#FFF200',9:'#C724B1'};
 const TENCOL=[COLOR[3],COLOR[7],COLOR[8],COLOR[5],COLOR[4],COLOR[9]]; // 6 ten-groups, easy to tell apart
 const HOURCOL='#E8B923';
+const DOT=27;                      // every dot is the same size
 const ctx=document.getElementById('c').getContext('2d');
 const sig=new Image(); sig.src='signature.png';
 const W=1080,H=1920;
@@ -36,8 +37,8 @@ function addDot(jar,c,r){
 function build(h,m){
   dots=[];
   const h12=((h%12)===0?12:(h%12));
-  for(let i=0;i<h12;i++) addDot('h',HOURCOL,30);
-  for(let i=0;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],26);
+  for(let i=0;i<h12;i++) addDot('h',HOURCOL,DOT);
+  for(let i=0;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],DOT);
   lastHour=h12; lastMin=m;
 }
 function step(){
@@ -84,7 +85,7 @@ function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
   const h12=((h%12)===0?12:h%12);
   if(h12!==lastHour){ build(h,m); }                 // new hour: rebuild
   else if(m!==lastMin){                              // new minute: drop dots to match
-    if(m>lastMin){ for(let i=lastMin;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],26); }
+    if(m>lastMin){ for(let i=lastMin;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],DOT); }
     else build(h,m);                                 // minute went backwards (top of hour handled above)
     lastMin=m;
   }

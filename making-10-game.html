@@ -700,17 +700,12 @@
   function findPaintTargets(d, count) {
     const targets = [d];
     if (count <= 1) return targets;
-    // Try a canonical number-line shape first.  Each shape includes the
-    // tapped dot and uses only currently-white dots.
-    const shapes = PAINT_SHAPES[count];
-    if (shapes) {
-      for (const pat of shapes) {
-        if (!pat.includes(d.i)) continue;
-        if (pat.every(i => dots[i].value === 0)) {
-          return pat.map(i => dots[i]);
-        }
-      }
-    }
+    // Painting grows OUTWARD from the dot the kid actually tapped (BFS
+    // through adjacency).  The tapped dot is always in the cluster and
+    // the partner(s) always touch it -- even if a canonical number-line
+    // shape would fit somewhere else on the triangle.  Per user:
+    // "whatever ones touching that persons touching thats gonna turn
+    // orange, not a different one even if it messes up the structure."
     let remaining = count - 1;
     const visited = new Set([d.i]);
     const queue = [d.i];

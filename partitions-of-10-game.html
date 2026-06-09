@@ -286,6 +286,16 @@
     letter-spacing:1px; text-transform:uppercase; background:transparent; color:#fff;
     border:2px solid #fff; border-radius:999px; cursor:pointer; }
   .show-missed-btn:hover { background:#fff; color:#000; }
+  .hint-btn { display:block; margin:8px auto 0; padding:7px 18px; font-size:12px; font-weight:bold;
+    letter-spacing:1px; text-transform:uppercase; background:#ffe600; color:#000;
+    border:2px solid #ffe600; border-radius:999px; cursor:pointer; }
+  .hint-btn:hover { background:#fff; border-color:#fff; }
+  .hint-msg { display:none; max-width:380px; margin:10px auto 0; padding:12px 16px; text-align:center;
+    background:rgba(255,230,0,0.10); border:2px solid #ffe600; border-radius:14px;
+    color:#fff; font-size:15px; line-height:1.4; }
+  .hint-msg.show { display:block; }
+  .hint-msg .eq { font-family:"SF Mono",Menlo,Consolas,monospace; color:#ffe600; font-weight:bold;
+    font-size:19px; display:block; margin-top:6px; }
   .missed-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000;
     display:none; align-items:center; justify-content:center; padding:20px; }
   .missed-overlay.show { display:flex; }
@@ -385,6 +395,8 @@
   </div>
 
   <button class="reset-btn" id="resetBtn">CLEAR</button>
+  <button class="hint-btn" id="hintBtn" type="button">💡 Hint — show me one I missed</button>
+  <div class="hint-msg" id="hintMsg"></div>
   <button class="show-missed-btn" id="showMissedBtn" type="button">Show what I missed</button>
 
   <div class="brand">✦ ColorMyMath ✦<svg class="brand-sig" viewBox="0 0 72 40" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="miter"><line x1="14" y1="3" x2="14" y2="22"/><polyline points="30,3 30,22 42,22 42,36"/><polyline points="54,3 54,22 64,22"/></g></svg></div>
@@ -915,6 +927,12 @@ function _saveCollected() {
   try { localStorage.setItem(_storeKey, JSON.stringify([...collectedPartitions])); } catch (e) {}
 }
 
+// Remember the last partition the child actually built, so a hint can point
+// to a missing one NEAR where they were working.
+const _lastKey = _storeKey + "_last";
+let _lastBuiltIdx = null;
+try { const v = parseInt(localStorage.getItem(_lastKey), 10); if (!isNaN(v)) _lastBuiltIdx = v; } catch (e) {}
+
 const _trackerEl = document.getElementById("partitionTracker");
 function _renderTracker() {
   if (!_trackerEl) return;
@@ -930,7 +948,12 @@ function recordPartitionFromDots() {
   if (values.reduce((a,b)=>a+b,0) !== 10) return;
   const key = _pkey(values);
   const idx = PARTITION_INDEX_BY_KEY[key];
-  if (!idx || !SCOPE_INDICES.includes(idx) || collectedPartitions.has(idx)) return;
+  if (!idx || !SCOPE_INDICES.includes(idx)) return;
+  // Always remember where the child just was, even if it's a repeat.
+  _lastBuiltIdx = idx;
+  try { localStorage.setItem(_lastKey, String(idx)); } catch (e) {}
+  _hideHint();
+  if (collectedPartitions.has(idx)) return;
   collectedPartitions.add(idx);
   _saveCollected();
   _renderTracker();
@@ -968,6 +991,43 @@ function _closeMissed() {
   ov.classList.remove("show");
   ov.setAttribute("aria-hidden", "true");
 }
+// === Hint: reveal ONE missing partition, nearest to where they were =====
+const _hintShown = new Set();   // indices already hinted this session
+function _hideHint() {
+  const m = document.getElementById("hintMsg");
+  if (m) { m.classList.remove("show"); m.innerHTML = ""; }
+}
+function _giveHint() {
+  const m = document.getElementById("hintMsg");
+  if (!m) return;
+  // Which of this scope's partitions are still missing?
+  let missing = SCOPE_INDICES.filter(idx => !collectedPartitions.has(idx));
+  if (missing.length === 0) {
+    m.innerHTML = "🎉 You found them all — every way to make 10!";
+    m.classList.add("show");
+    return;
+  }
+  // Prefer ones we haven't hinted yet this round; if we've shown them all,
+  // start over so the button always gives something.
+  let pool = missing.filter(idx => !_hintShown.has(idx));
+  if (pool.length === 0) { _hintShown.clear(); pool = missing.slice(); }
+  // Anchor: the last partition the child built (else the first missing one).
+  const anchor = (_lastBuiltIdx != null) ? _lastBuiltIdx : pool[0];
+  // Pick the missing one closest to the anchor in the canonical order;
+  // ties go to the smaller index.
+  pool.sort((a, b) => {
+    const da = Math.abs(a - anchor), db = Math.abs(b - anchor);
+    return da !== db ? da - db : a - b;
+  });
+  const pick = pool[0];
+  _hintShown.add(pick);
+  const p = PARTITIONS_OF_10_CANON[pick - 1];
+  m.innerHTML = "Here's one you haven't built yet:<span class=\"eq\">"
+              + p.join(" + ") + " = 10</span>";
+  m.classList.add("show");
+}
+document.getElementById("hintBtn")?.addEventListener("click", _giveHint);
+
 document.getElementById("showMissedBtn")?.addEventListener("click", _openMissed);
 document.getElementById("closeMissedBtn")?.addEventListener("click", _closeMissed);
 document.getElementById("missedOverlay")?.addEventListener("click", e => { if (e.target.id === "missedOverlay") _closeMissed(); });

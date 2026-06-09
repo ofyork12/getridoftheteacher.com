@@ -71,30 +71,28 @@
     /* === Colour the page using ColorMyMath number-line palette =========== */
     /* 1=red, 2=orange, 3=yellow, 4=green, 5=blue, 6=purple, 7=brown, 8=pink, 9=cyan */
 
-    /* Hero spheres -- ColorMyMath number-line 1..9 rendered as 3D balls.
-       Sets up the visual vocabulary for the under-5 facts work later:
-       every quantity reads as a real sphere you could pick up. */
-    .hero-stripe {
-      display: flex; justify-content: center; align-items: flex-end;
-      gap: clamp(8px, 1.6vw, 14px);
-      margin: 0 auto 22px; flex-wrap: wrap;
+    /* Hero number line -- the canonical ColorMyMath 1..10 cell layout.
+       Each cell shows N spheres in their number-line shape, with the
+       digit below.  Sets up the visual vocabulary for the under-5
+       facts work: every quantity reads as a real ball you could pick up. */
+    .hero-numline {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: clamp(2px, 0.8vw, 8px);
+      align-items: end;
+      margin: 0 auto 28px;
+      max-width: 980px;
     }
-    .hero-stripe .dot {
-      width: clamp(34px, 6.5vw, 56px); height: clamp(34px, 6.5vw, 56px);
-      border-radius: 50%;
-      background:
-        /* specular highlight (top-left) */
-        radial-gradient(circle at 32% 28%, rgba(255,255,255,0.85), rgba(255,255,255,0) 36%),
-        /* main colour body with darkened edge (shading) */
-        radial-gradient(circle at 50% 50%, var(--ball-color) 55%, color-mix(in srgb, var(--ball-color) 60%, #000) 100%);
-      box-shadow:
-        inset 0 -6px 10px rgba(0,0,0,0.35),               /* underside shading */
-        inset 0 4px 6px rgba(255,255,255,0.18),           /* rim light */
-        0 6px 10px rgba(0,0,0,0.45),                      /* drop shadow on the page */
-        0 1px 0 rgba(255,255,255,0.10);
-      transition: transform 0.2s ease;
+    .nl-cell {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px;
     }
-    .hero-stripe .dot:hover { transform: translateY(-2px) scale(1.06); }
+    .nl-cell svg { width: 100%; height: auto; max-height: clamp(60px, 11vw, 110px); }
+    .nl-cell .nl-digit {
+      font-family: 'Nunito', Arial, sans-serif; font-weight: 800;
+      font-size: clamp(14px, 2.4vw, 22px); color: #fff;
+      line-height: 1;
+    }
 
     /* Each stage owns a colour from the palette */
     .stage-1 { --stage-color: #e63946; }  /* crawling = red   */
@@ -312,17 +310,10 @@
 
     <h1>Math</h1>
     <p class="sub">Pick a lesson.  Watch, play, and try the game on each page.</p>
-    <div class="hero-stripe" aria-hidden="true">
-      <span class="dot" style="--ball-color:#e63946"></span>
-      <span class="dot" style="--ball-color:#ff6200"></span>
-      <span class="dot" style="--ball-color:#e6c800"></span>
-      <span class="dot" style="--ball-color:#00a12c"></span>
-      <span class="dot" style="--ball-color:#0066ff"></span>
-      <span class="dot" style="--ball-color:#7700dd"></span>
-      <span class="dot" style="--ball-color:#7a3b00"></span>
-      <span class="dot" style="--ball-color:#ff3fa6"></span>
-      <span class="dot" style="--ball-color:#38c7ff"></span>
-    </div>
+    <!-- Canonical ColorMyMath number line: 1..10 cells, each a sphere
+         cluster in the number-line shape + the digit below.  Built once
+         on load by the script at the end of <body>. -->
+    <div class="hero-numline" id="heroNumLine" aria-hidden="true"></div>
 
     <div class="stage-banner stage-1" aria-hidden="true">
       <!-- Stage 1: crawling baby -->
@@ -546,5 +537,85 @@
       });
     });
   </script>
+<script>
+// Build the hero number line: 10 cells, each a sphere cluster in the
+// canonical ColorMyMath shape + a digit below.  Same shape map used
+// elsewhere on the site (making-10-game.html, the 512 game).
+(function(){
+  const NUM_COLOR = {
+    1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
+    6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
+  };
+  // Bottom-aligned cluster centers in a 100x100 viewBox (R=8, D=16, H=D*sqrt(3)/2)
+  const R = 8, D = 16, H = D * Math.sqrt(3) / 2, CX = 50, YB = 92;
+  const SHAPES = {
+    1:  [[CX, YB]],
+    2:  [[CX-R,YB],[CX+R,YB]],
+    3:  [[CX-R,YB],[CX+R,YB],[CX,YB-H]],
+    4:  [[CX-R,YB],[CX+R,YB],[CX-R,YB-D],[CX+R,YB-D]],
+    5:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-R,YB-H],[CX+R,YB-H]],
+    6:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-R,YB-H],[CX+R,YB-H],[CX,YB-2*H]],
+    7:  [[CX-R,YB],[CX+R,YB],[CX-D,YB-H],[CX,YB-H],[CX+D,YB-H],[CX-R,YB-2*H],[CX+R,YB-2*H]],
+    8:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-D,YB-D],[CX+D,YB-D],[CX-D,YB-2*D],[CX,YB-2*D],[CX+D,YB-2*D]],
+    9:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-D,YB-D],[CX,YB-D],[CX+D,YB-D],[CX-D,YB-2*D],[CX,YB-2*D],[CX+D,YB-2*D]],
+    10: [[CX-3*R,YB],[CX-R,YB],[CX+R,YB],[CX+3*R,YB],[CX-D,YB-H],[CX,YB-H],[CX+D,YB-H],[CX-R,YB-2*H],[CX+R,YB-2*H],[CX,YB-3*H]]
+  };
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const root = document.getElementById('heroNumLine');
+  if (!root) return;
+  // A single shared <defs> block for the radial-highlight + drop-shadow filter.
+  const defs = '<defs>' +
+    '<radialGradient id="ballHi" cx="32%" cy="28%" r="55%">' +
+      '<stop offset="0%" stop-color="#fff" stop-opacity="0.85"/>' +
+      '<stop offset="55%" stop-color="#fff" stop-opacity="0"/>' +
+    '</radialGradient>' +
+  '</defs>';
+  function darken(hex) {
+    // 60/40 blend with black -- "color-mix" without depending on CSS support.
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const m = v => Math.round(v * 0.6).toString(16).padStart(2,'0');
+    return '#' + m(r) + m(g) + m(b);
+  }
+  function buildCell(n) {
+    const color = NUM_COLOR[n];
+    const dark = darken(color);
+    // Tighten viewBox to the cluster's bounds so each cell fills its column.
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of SHAPES[n]) {
+      if (x - R < minX) minX = x - R;
+      if (x + R > maxX) maxX = x + R;
+      if (y - R < minY) minY = y - R;
+      if (y + R > maxY) maxY = y + R;
+    }
+    const pad = 3;
+    const vb = (minX-pad) + ' ' + (minY-pad) + ' ' + (maxX-minX+2*pad) + ' ' + (maxY-minY+2*pad);
+    let svg = '<svg viewBox="' + vb + '" preserveAspectRatio="xMidYMax meet">' + defs;
+    // For 10, draw the canonical big-triangle outline before the balls.
+    if (n === 10) {
+      const halfW = 3 * R + R * Math.sqrt(3);
+      const baseY = YB + R;
+      const topY = baseY - halfW * Math.sqrt(3);
+      svg += '<polygon points="' + (CX-halfW)+','+baseY + ' ' + (CX+halfW)+','+baseY + ' ' + CX+','+topY +
+             '" fill="none" stroke="#fff" stroke-width="1.4" stroke-opacity="0.4"/>';
+    }
+    for (const [cx, cy] of SHAPES[n]) {
+      // Build a 3D ball: tiny soft shadow ellipse beneath, shaded base,
+      // highlight on top, then a thin dark outline.  No SVG filters --
+      // they choke some renderers when there are 55 balls on the page.
+      svg += '<ellipse cx="' + cx + '" cy="' + (cy + R - 0.5) + '" rx="' + (R*0.78) + '" ry="' + (R*0.22) + '" fill="#000" opacity="0.32"/>' +
+             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="' + color + '"/>' +
+             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="url(#ballHi)"/>' +
+             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + dark + '" stroke-width="0.9" stroke-opacity="0.95"/>';
+    }
+    svg += '</svg>';
+    const cell = document.createElement('div');
+    cell.className = 'nl-cell';
+    cell.innerHTML = svg + '<div class="nl-digit">' + n + '</div>';
+    return cell;
+  }
+  for (let n = 1; n <= 10; n++) root.appendChild(buildCell(n));
+})();
+</script>
 </body>
 </html>

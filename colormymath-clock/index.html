@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ColorMyMath Clock</title>
+<style>
+  html,body{margin:0;height:100%;background:#222;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:none}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{height:100%;max-width:100%;background:#fff;display:block;box-shadow:0 0 40px #000a}
+  #bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;display:flex;gap:14px}
+  .btn{padding:0 22px;height:60px;border-radius:30px;border:none;background:#0009;color:#fff;font-size:20px;font-family:Georgia;cursor:pointer}
+  .btn:active{background:#000d}
+</style></head>
+<body><div id="wrap"><canvas id="c" width="1080" height="1920"></canvas></div>
+<div id="bar"><button class="btn" id="shake">🤚 Shake</button><button class="btn" id="tilt">📱 Tilt on</button></div>
+<script>
+const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3192',7:'#F7941D',8:'#FFF200',9:'#C724B1'};
+const TENCOL=[COLOR[3],COLOR[7],COLOR[8],COLOR[5],COLOR[4],COLOR[9]]; // 6 ten-groups, easy to tell apart
+const HOURCOL='#E8B923';
+const ctx=document.getElementById('c').getContext('2d');
+const sig=new Image(); sig.src='signature.png';
+const W=1080,H=1920;
+
+// two chambers (jars): hour on top, minutes below
+const HOUR={x0:60,y0:300,x1:1020,y1:620};
+const MIN ={x0:60,y0:760,x1:1020,y1:1780};
+let dots=[];                       // {x,y,vx,vy,r,c,jar}
+let gx=0, gy=0.9;                  // gravity (tilt changes it)
+let tiltOn=false;
+let lastMin=-1, lastHour=-1;
+
+function addDot(jar,c,r){
+  const J=jar==='h'?HOUR:MIN;
+  dots.push({x:J.x0+20+Math.random()*(J.x1-J.x0-40), y:J.y0+20+Math.random()*40,
+             vx:(Math.random()-.5)*4, vy:Math.random()*3, r:r, c:c, jar:jar});
+}
+function build(h,m){
+  dots=[];
+  const h12=((h%12)===0?12:(h%12));
+  for(let i=0;i<h12;i++) addDot('h',HOURCOL,30);
+  for(let i=0;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],26);
+  lastHour=h12; lastMin=m;
+}
+function step(){
+  // gravity
+  for(const d of dots){ d.vx+=gx; d.vy+=gy; d.x+=d.vx; d.y+=d.vy; }
+  // walls per chamber
+  for(const d of dots){ const J=d.jar==='h'?HOUR:MIN;
+    if(d.x<J.x0+d.r){d.x=J.x0+d.r;d.vx*=-0.4;} if(d.x>J.x1-d.r){d.x=J.x1-d.r;d.vx*=-0.4;}
+    if(d.y<J.y0+d.r){d.y=J.y0+d.r;d.vy*=-0.4;} if(d.y>J.y1-d.r){d.y=J.y1-d.r;d.vy*=-0.4;}
+  }
+  // collisions (a few positional-correction passes) — only within same chamber
+  for(let it=0;it<4;it++){
+    for(let i=0;i<dots.length;i++) for(let j=i+1;j<dots.length;j++){
+      const a=dots[i],b=dots[j]; if(a.jar!==b.jar) continue;
+      let dx=b.x-a.x, dy=b.y-a.y, dd=Math.hypot(dx,dy), mn=a.r+b.r;
+      if(dd>0 && dd<mn){ const ov=(mn-dd)/2, nx=dx/dd, ny=dy/dd;
+        a.x-=nx*ov; a.y-=ny*ov; b.x+=nx*ov; b.y+=ny*ov;
+        const rvn=((b.vx-a.vx)*nx+(b.vy-a.vy)*ny); if(rvn<0){ const im=rvn*0.5;
+          a.vx+=im*nx; a.vy+=im*ny; b.vx-=im*nx; b.vy-=im*ny; }
+      }
+    }
+  }
+  for(const d of dots){ d.vx*=0.985; d.vy*=0.99; }   // friction -> settle
+}
+function dot(d){ ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fillStyle=d.c;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#161616';ctx.stroke(); }
+function jarBox(J,label){ ctx.strokeStyle='#bbb';ctx.lineWidth=3;ctx.strokeRect(J.x0,J.y0,J.x1-J.x0,J.y1-J.y0);
+  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.textAlign='left';ctx.fillText(label,J.x0+6,J.y0-12); }
+
+function draw(){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 74px Georgia';ctx.fillText('ColorMyMath Clock',540,120);
+  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('count the dots · tilt or shake them',540,166);
+  jarBox(HOUR,'hours'); jarBox(MIN,'minutes');
+  for(const d of dots) dot(d);
+  const now=new Date(), h12=((now.getHours()%12)===0?12:now.getHours()%12);
+  ctx.fillStyle='#333';ctx.font='bold 70px Georgia';ctx.textAlign='center';
+  ctx.fillText(h12+' : '+String(now.getMinutes()).padStart(2,'0'),540,710);
+  if(sig.complete&&sig.naturalWidth) ctx.drawImage(sig,900,1800,150,80);
+}
+function loop(){ step(); draw(); requestAnimationFrame(loop); }
+
+// keep in sync with the real time
+function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
+  const h12=((h%12)===0?12:h%12);
+  if(h12!==lastHour){ build(h,m); }                 // new hour: rebuild
+  else if(m!==lastMin){                              // new minute: drop dots to match
+    if(m>lastMin){ for(let i=lastMin;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],26); }
+    else build(h,m);                                 // minute went backwards (top of hour handled above)
+    lastMin=m;
+  }
+}
+build(new Date().getHours(), new Date().getMinutes());
+loop(); setInterval(tick,1000);
+
+// interaction
+document.getElementById('shake').onclick=()=>{ for(const d of dots){ d.vx+=(Math.random()-.5)*40; d.vy-=Math.random()*30; } };
+document.getElementById('tilt').onclick=async ()=>{
+  if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
+    try{ const p=await DeviceOrientationEvent.requestPermission(); if(p!=='granted') return; }catch(e){}
+  }
+  tiltOn=true; document.getElementById('tilt').textContent='📱 Tilting';
+  window.addEventListener('deviceorientation',e=>{ if(!tiltOn)return;
+    gx=Math.max(-1.4,Math.min(1.4,(e.gamma||0)/45)); gy=Math.max(0.2,Math.min(1.4,(e.beta||45)/45)); });
+};
+// desktop: drag to stir
+let drag=false;
+const cv=document.getElementById('c');
+function toCanvas(ev){ const r=cv.getBoundingClientRect(); return {x:(ev.clientX-r.left)/r.width*W, y:(ev.clientY-r.top)/r.height*H}; }
+cv.addEventListener('pointerdown',()=>drag=true);
+window.addEventListener('pointerup',()=>drag=false);
+cv.addEventListener('pointermove',ev=>{ if(!drag)return; const p=toCanvas(ev);
+  for(const d of dots){ const dx=d.x-p.x,dy=d.y-p.y,dd=Math.hypot(dx,dy); if(dd<140){ d.vx+=dx/dd*8; d.vy+=dy/dd*8; } } });
+</script></body></html>

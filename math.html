@@ -68,29 +68,82 @@
     }
     .stage-banner + .section-heading { margin-top: 8px; border-top: none; }
 
-    /* Parent prompt: only shown once, under the Crawling stage.  Big and
-       yellow so the adult can't miss it. */
+    /* === Colour the page using ColorMyMath number-line palette =========== */
+    /* 1=red, 2=orange, 3=yellow, 4=green, 5=blue, 6=purple, 7=brown, 8=pink, 9=cyan */
+
+    /* Rainbow stripe in the hero -- 9 number-line dots so the page screams ColorMyMath */
+    .hero-stripe {
+      display: flex; justify-content: center; align-items: flex-end; gap: 10px;
+      margin: 0 auto 18px; flex-wrap: wrap;
+    }
+    .hero-stripe .dot {
+      width: clamp(22px, 4.5vw, 36px); height: clamp(22px, 4.5vw, 36px);
+      border-radius: 50%; border: 2px solid #000;
+      box-shadow: 0 3px 0 rgba(0,0,0,0.55), 0 0 22px rgba(255,230,0,0.10);
+    }
+
+    /* Each stage owns a colour from the palette */
+    .stage-1 { --stage-color: #e63946; }  /* crawling = red   */
+    .stage-2 { --stage-color: #ff6200; }  /* walking  = orange */
+    .stage-3 { --stage-color: #00a12c; }  /* running  = green */
+    .stage-4 { --stage-color: #0066ff; }  /* biking   = blue  */
+    .stage-banner svg { color: var(--stage-color, #ffe600); }
+    .stage-banner .stage-name { color: var(--stage-color, #ffe600); }
+    .stage-banner.stage-1 + .section-heading,
+    .stage-banner.stage-2 + .section-heading,
+    .stage-banner.stage-3 + .section-heading,
+    .stage-banner.stage-4 + .section-heading {
+      border-bottom-color: var(--stage-color);
+      color: var(--stage-color);
+    }
+    /* Make the Crawling section's note more visible -- it's the only one
+       the parent actually needs to read. */
+    .stage-banner.stage-1 + .section-heading + .section-note {
+      color: #fff; font-style: normal; font-size: 15px; line-height: 1.45;
+      border-left: 4px solid var(--stage-color); padding-left: 12px; margin-top: 2px;
+    }
+    .stage-banner.stage-1 + .section-heading + .section-note strong { color: var(--stage-color); }
+    /* Cards inherit their stage colour for borders + hover */
+    .stage-section .card.start { border-color: var(--stage-color); background: rgba(255,255,255,0.04); }
+    .stage-section .card.start:hover { background: var(--stage-color); color: #000; border-color: var(--stage-color); }
+    .stage-section .card.start:hover .filename { color: rgba(0,0,0,0.7); }
+    .stage-section .card .step { color: var(--stage-color); opacity: 1; }
+    .stage-section .card:hover .step { color: rgba(0,0,0,0.8); }
+
+    /* Parent prompt: only shown once, under the Crawling stage.  Loud and
+       colourful so adults can't miss it. */
     .parent-prompt {
-      border: 3px solid #ffe600;
-      background: rgba(255, 230, 0, 0.10);
-      border-radius: 14px;
-      padding: 18px 22px;
-      margin: 14px 0 22px;
+      position: relative;
+      border-radius: 18px;
+      padding: 20px 24px 22px;
+      margin: 14px 0 28px;
       color: #fff;
+      background:
+        linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45)),
+        linear-gradient(135deg, #e63946, #ff6200 28%, #e6c800 52%, #00a12c 74%, #0066ff);
+      box-shadow: 0 6px 26px rgba(255,98,0,0.25), inset 0 0 0 3px rgba(255,255,255,0.18);
+    }
+    .parent-prompt::before {
+      content: ""; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 10px;
+      border-radius: 14px 0 0 14px;
+      background: linear-gradient(180deg, #e63946, #ff6200, #e6c800, #00a12c, #0066ff, #7700dd);
     }
     .parent-prompt .pp-tag {
-      display: inline-block;
+      display: inline-flex; align-items: center; gap: 6px;
       background: #ffe600; color: #000;
-      font-weight: bold; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-      padding: 4px 10px; border-radius: 999px;
+      font-weight: 900; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 999px;
       margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
+    .parent-prompt .pp-tag::before { content: "★"; color: #000; font-size: 13px; }
     .parent-prompt h3 {
-      margin: 0 0 8px; font-size: clamp(18px, 3vw, 22px);
-      color: #ffe600; letter-spacing: 1px; text-transform: uppercase;
+      margin: 0 0 8px; font-size: clamp(20px, 3.3vw, 26px);
+      color: #fff; letter-spacing: 1px; text-transform: uppercase;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
-    .parent-prompt p { margin: 0; color: #ddd; font-size: 15px; line-height: 1.45; }
-    .parent-prompt strong { color: #fff; }
+    .parent-prompt p { margin: 0; color: #fff; font-size: 15px; line-height: 1.5; }
+    .parent-prompt strong { color: #ffe600; }
 
     .section-heading {
       font-size: clamp(18px, 3vw, 22px);
@@ -114,29 +167,37 @@
       gap: 18px;
     }
     .card {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding: 22px 24px;
-      font-size: 17px;
-      font-weight: bold;
-      background: transparent;
-      color: #fff;
-      border: 3px solid #fff;
-      border-radius: 14px;
+      display: grid;
+      grid-template-columns: 1fr 50%;
+      grid-template-areas: "step emoji" "title emoji" "file emoji";
+      align-items: center; column-gap: 14px; row-gap: 4px;
+      padding: 18px 22px;
+      font-size: 17px; font-weight: bold;
+      background: transparent; color: #fff;
+      border: 3px solid #fff; border-radius: 14px;
       text-decoration: none;
-      transition: all 0.3s ease;
-      min-height: 92px;
+      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+      min-height: 130px;
     }
-    .card.start {
-      border-width: 4px;
-      background: rgba(255,255,255,0.04);
+    .card.start { border-width: 4px; background: rgba(255,255,255,0.04); }
+    .card:hover { background: #fff; color: #000; transform: none; }
+    /* Big emoji takes half the card on the right.  No scale on hover -- the
+       whole card is the click target so it doesn't need to grow. */
+    .card .emoji {
+      grid-area: emoji;
+      align-self: stretch; justify-self: center;
+      width: 100%; max-width: 140px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(64px, 12vw, 96px);
+      line-height: 1;
+      overflow: hidden;
+      pointer-events: none; /* clicks pass through to the card link */
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
     }
-    .card:hover {
-      background: #fff;
-      color: #000;
-      transform: translateY(-2px);
-    }
+    .card .emoji svg { width: 100%; height: 100%; max-height: 120px; display: block; }
+    .card .step { grid-area: step; }
+    .card .filename { grid-area: file; }
+    .card > *:not(.emoji):not(.step):not(.filename) { grid-area: title; }
     .card .filename {
       font-size: 12px;
       font-weight: normal;
@@ -151,31 +212,105 @@
       opacity: 0.7;
       text-transform: uppercase;
     }
-    .card .emoji {
-      font-size: 30px;
-      line-height: 1;
-      margin-bottom: 2px;
-      cursor: pointer;
-      display: inline-block;
-      transition: font-size 0.25s ease;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    .card .emoji.big {
-      font-size: 90px;
-    }
   </style>
 </head>
 <body>
+  <!-- Reusable character SVGs (referenced via <use href="#id"> in the cards).
+       Hidden via display:none so they only render where they're <use>d. -->
+  <svg width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true">
+    <defs>
+      <!-- Front-facing crawling baby: hands forward (toward camera), big head,
+           black hair, smiling.  100x100 viewBox so it scales freely. -->
+      <symbol id="icon-crawling-baby" viewBox="0 0 100 100">
+        <!-- back leg + bottom (peeking behind) -->
+        <ellipse cx="78" cy="64" rx="14" ry="11" fill="#f5c89a" stroke="#000" stroke-width="2"/>
+        <!-- pajama back -->
+        <path d="M30 56 Q50 38 80 56 L82 78 Q55 84 28 78 Z" fill="#7ec8ff" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- arms forward toward camera -->
+        <ellipse cx="22" cy="82" rx="11" ry="8" fill="#7ec8ff" stroke="#000" stroke-width="2"/>
+        <ellipse cx="14" cy="82" rx="6" ry="5" fill="#f5c89a" stroke="#000" stroke-width="2"/>
+        <ellipse cx="78" cy="82" rx="11" ry="8" fill="#7ec8ff" stroke="#000" stroke-width="2"/>
+        <ellipse cx="86" cy="82" rx="6" ry="5" fill="#f5c89a" stroke="#000" stroke-width="2"/>
+        <!-- head -->
+        <ellipse cx="50" cy="40" rx="24" ry="22" fill="#f5c89a" stroke="#000" stroke-width="2.4"/>
+        <!-- black hair: top cap with little curl -->
+        <path d="M28 36 Q30 16 50 14 Q70 16 72 36 Q66 24 50 22 Q34 24 28 36 Z" fill="#1a1a1a"/>
+        <path d="M70 26 Q74 22 76 28 Q72 30 70 26" fill="#1a1a1a"/>
+        <!-- ears -->
+        <ellipse cx="26" cy="42" rx="3" ry="4" fill="#f5c89a" stroke="#000" stroke-width="1.8"/>
+        <ellipse cx="74" cy="42" rx="3" ry="4" fill="#f5c89a" stroke="#000" stroke-width="1.8"/>
+        <!-- happy face: eyes + cheek dots + smile -->
+        <circle cx="41" cy="42" r="2.4" fill="#1a1a1a"/>
+        <circle cx="59" cy="42" r="2.4" fill="#1a1a1a"/>
+        <circle cx="34" cy="50" r="2.4" fill="#ffaab8" opacity="0.85"/>
+        <circle cx="66" cy="50" r="2.4" fill="#ffaab8" opacity="0.85"/>
+        <path d="M42 52 Q50 60 58 52" stroke="#1a1a1a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Walking boy (a kid, not an adult), facing the screen: one knee
+           lifted forward (foot toward camera), other leg planted; arms
+           swinging.  Black hair, t-shirt, shorts. -->
+      <symbol id="icon-walking-boy" viewBox="0 0 100 100">
+        <!-- planted-foot shadow -->
+        <ellipse cx="58" cy="95" rx="14" ry="3" fill="#000" opacity="0.18"/>
+        <!-- head -->
+        <circle cx="50" cy="20" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
+        <!-- black hair: bowl cut covering top + sides -->
+        <path d="M36 19 Q38 6 50 5 Q62 6 64 19 Q58 13 50 13 Q42 13 36 19 Z" fill="#1a1a1a"/>
+        <!-- ears -->
+        <ellipse cx="36" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <ellipse cx="64" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <!-- happy face -->
+        <circle cx="45" cy="21" r="1.8" fill="#1a1a1a"/>
+        <circle cx="55" cy="21" r="1.8" fill="#1a1a1a"/>
+        <circle cx="41" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <circle cx="59" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <path d="M45 26 Q50 31 55 26" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- T-shirt (front-facing) -->
+        <path d="M34 36 L66 36 L70 58 L60 62 L58 52 L42 52 L40 62 L30 58 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- collar -->
+        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
+        <!-- arms swinging, one back one forward -->
+        <path d="M33 40 L22 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
+        <path d="M67 40 L78 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
+        <path d="M33 40 L22 56 M67 40 L78 56" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <!-- hands -->
+        <circle cx="22" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="78" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <!-- shorts -->
+        <path d="M36 58 L64 58 L66 72 L52 72 L48 72 L34 72 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- planted leg (right side, slightly back) -->
+        <path d="M60 72 L62 92" stroke="#f5c89a" stroke-width="8" stroke-linecap="round"/>
+        <path d="M60 72 L62 92" stroke="#000" stroke-width="1.6" fill="none"/>
+        <ellipse cx="58" cy="94" rx="8" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
+        <!-- stepping leg (left side, knee lifted forward toward camera) -->
+        <path d="M42 72 Q34 78 38 88" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M42 72 Q34 78 38 88" stroke="#000" stroke-width="1.6" fill="none"/>
+        <ellipse cx="36" cy="89" rx="9" ry="4" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
+      </symbol>
+    </defs>
+  </svg>
+
   <div class="wrap">
     <div class="top-nav">
       <a href="index.html">← Back to Home</a>
     </div>
 
-    <h1>Math</h1>
+    <h1 style="background:linear-gradient(90deg,#e63946,#ff6200,#e6c800,#00a12c,#0066ff,#7700dd);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;">Math</h1>
     <p class="sub">Pick a lesson.  Watch, play, and try the game on each page.</p>
+    <div class="hero-stripe" aria-hidden="true">
+      <span class="dot" style="background:#e63946"></span>
+      <span class="dot" style="background:#ff6200"></span>
+      <span class="dot" style="background:#e6c800"></span>
+      <span class="dot" style="background:#00a12c"></span>
+      <span class="dot" style="background:#0066ff"></span>
+      <span class="dot" style="background:#7700dd"></span>
+      <span class="dot" style="background:#7a3b00"></span>
+      <span class="dot" style="background:#ff3fa6"></span>
+      <span class="dot" style="background:#38c7ff"></span>
+    </div>
 
-    <div class="stage-banner" aria-hidden="true">
+    <div class="stage-banner stage-1" aria-hidden="true">
       <!-- Stage 1: crawling baby -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="20" cy="22" r="6" fill="currentColor" stroke="none"/>
@@ -192,29 +327,24 @@
       </div>
     </div>
 
-    <div class="parent-prompt" role="note">
-      <span class="pp-tag">Parents</span>
-      <h3>This is your turn to teach</h3>
-      <p>Crawling is where <strong>you sit beside your child</strong> and walk them through the very first ideas — bigger vs. smaller, the numbers 1 to 10.  Once they've got it, you can step back: <strong>everything after Crawling, they can do on their own.</strong></p>
-    </div>
-
-    <h2 class="section-heading">Start Here</h2>
-    <div class="grid">
+    <h2 class="section-heading">Start Here — Mom's Turn</h2>
+    <p class="section-note">Both lessons below are for <strong>you</strong> to teach.  Sit with your child and work through them patiently — once they've got these two, they can run with everything after Crawling on their own.</p>
+    <div class="grid stage-section stage-1">
       <a href="bigger-smaller.html" class="card start">
-        <span class="emoji">🧎</span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg></span>
         <span class="step">Mom's Turn to Teach</span>
         Bigger / Smaller
         <span class="filename">bigger-smaller.html</span>
       </a>
       <a href="number-practice.html" class="card start">
-        <span class="emoji">🚶</span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg></span>
         <span class="step">My Turn</span>
         Numbers 1 to 10
         <span class="filename">number-practice.html</span>
       </a>
     </div>
 
-    <div class="stage-banner" aria-hidden="true">
+    <div class="stage-banner stage-2" aria-hidden="true">
       <!-- Stage 2: toddler walking toward a table with a lamp -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="18" cy="14" r="5" fill="currentColor" stroke="none"/>
@@ -234,15 +364,15 @@
     </div>
     <h2 class="section-heading">Lessons</h2>
     <p class="section-note">Each lesson has a game, a video, and a play-along.  Work top to bottom.</p>
-    <div class="grid">
+    <div class="grid stage-section stage-2">
       <a href="addition.html" class="card start">
-        <span class="emoji">🚶</span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
         <span class="step">Lesson 1</span>
         Addition (1 to 5)
         <span class="filename">addition.html</span>
       </a>
       <a href="easy-addition.html" class="card start">
-        <span class="emoji">🚶</span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
         <span class="step">Facts Game</span>
         Easy Addition (+1, Doubles, Make 10, +2·3·4)
         <span class="filename">easy-addition.html</span>
@@ -255,7 +385,7 @@
       </a>
     </div>
 
-    <div class="stage-banner" aria-hidden="true">
+    <div class="stage-banner stage-3" aria-hidden="true">
       <!-- Stage 3: running kid -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="38" cy="12" r="5" fill="currentColor" stroke="none"/>
@@ -273,7 +403,7 @@
     </div>
     <h2 class="section-heading">Lessons (continued)</h2>
     <p class="section-note">Once you can make 10, taking away is the same idea in reverse.</p>
-    <div class="grid">
+    <div class="grid stage-section stage-3">
       <a href="making-10.html" class="card start">
         <span class="emoji">🤸</span>
         <span class="step">Lesson 3</span>
@@ -294,7 +424,7 @@
       </a>
     </div>
 
-    <div class="stage-banner" aria-hidden="true">
+    <div class="stage-banner stage-4" aria-hidden="true">
       <!-- Stage 4: kid on a bicycle -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <!-- two wheels -->
@@ -317,7 +447,7 @@
     </div>
     <h2 class="section-heading">Big Ideas</h2>
     <p class="section-note">The same ideas, gathered together as goals to master.</p>
-    <div class="grid">
+    <div class="grid stage-section stage-4">
       <a href="goal1.html" class="card start">
         <span class="emoji">⛹️</span>
         <span class="step">Goal 1</span>

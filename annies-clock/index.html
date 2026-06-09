@@ -16,7 +16,7 @@ const ONES={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
  4:[[-1,0],[1,0],[-1,-2],[1,-2]],
  5:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3]],
  6:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[0,-2*SQ3]],
- 7:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[-2,-2*SQ3],[0,-2*SQ3]],
+ 7:[[0,0],[2,0],[1,SQ3],[-1,SQ3],[-2,0],[-1,-SQ3],[1,-SQ3]],
  8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
  9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]};
 const ctx=document.getElementById('c').getContext('2d');
@@ -29,20 +29,32 @@ function ten(cx,baseY,r,c){const RH=SQ3*r,topY=baseY-3*RH,H=4.732*r;
   ctx.lineWidth=Math.max(1.5,r*.12);ctx.strokeStyle='#161616';ctx.stroke();
   for(let row=1;row<=4;row++){const y=baseY-(4-row)*RH,x0=cx-(row-1)*r;for(let j=0;j<row;j++)dot(x0+j*2*r,y,r,c);}}
 
-// draw the ColorMyMath figure for a number (0..69) centred at (cx,cy), dot radius r
+// draw the number figure (ones + tens) centred exactly on (cx,cy), dot radius r
 function figure(num,cx,cy,r){
-  const t=Math.floor(num/10), o=num%10;
-  // measure widths to centre
-  const TEN_W=9.464*r, gap=1.2*r;
-  const onesCells=ONES[o]||[];
-  const onesHW=onesCells.length?(Math.max(...onesCells.map(c=>Math.abs(c[0])))+1)*r:0;
-  const tensW=t? t*TEN_W : 0;
-  const onesW=o? 2*onesHW : 0;
-  const total=tensW+(t&&o?gap:0)+onesW;
-  let x=cx-total/2;
-  const baseY=cy + (TEN_W*0.55);   // sit roughly centred
-  if(t){ for(let k=0;k<t;k++){ ten(x+TEN_W/2, baseY, r, COLOR[t]); x+=TEN_W; } if(o)x+=gap; }
-  if(o){ const c0=x+onesHW; for(const[gx,gy]of onesCells) dot(c0+gx*r, baseY+gy*r, r, COLOR[o]); }
+  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
+  const ops=[]; let curX=0;
+  if(t){ for(let k=0;k<t;k++){ ops.push({ten:1, x:curX+TEN_W/2, c:COLOR[t]}); curX+=TEN_W; } if(o) curX+=gap; }
+  if(o){ const cells=ONES[o]; const hw=(Math.max(...cells.map(c=>Math.abs(c[0])))+1)*r;
+    const bx=curX+hw; for(const[gx,gy]of cells) ops.push({x:bx+gx*r, y:gy*r, c:COLOR[o]}); }
+  // bounding box, then centre on (cx,cy)
+  let a=1e9,b=-1e9,d=1e9,e=-1e9;
+  for(const p of ops){ if(p.ten){a=Math.min(a,p.x-TEN_W/2);b=Math.max(b,p.x+TEN_W/2);d=Math.min(d,-3*RH-2*r);e=Math.max(e,r);}
+    else{a=Math.min(a,p.x-r);b=Math.max(b,p.x+r);d=Math.min(d,p.y-r);e=Math.max(e,p.y+r);} }
+  const ox=cx-(a+b)/2, oy=cy-(d+e)/2;
+  for(const p of ops){ if(p.ten) ten(p.x+ox, oy+e, r, p.c); else dot(p.x+ox, p.y+oy, r, p.c); }
+}
+// approximate figure width/height in px for a given dot radius r
+function figSize(num,r){
+  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
+  let w=t*TEN_W, hh=t?(3*RH+3*r):0;
+  if(o){ const cells=ONES[o]; w+=(t?gap:0)+(Math.max(...cells.map(c=>Math.abs(c[0])))*2+2)*r;
+    const sy=Math.max(...cells.map(c=>Math.abs(c[1])))*r+2*r; hh=Math.max(hh,sy); }
+  return {w,h:hh};
+}
+// draw centred, shrinking r until it fits maxW x maxH (capped at capR)
+function figFit(num,cx,cy,maxW,maxH,capR){
+  let r=capR; while(r>4){ const s=figSize(num,r); if(s.w<=maxW && s.h<=maxH) break; r-=1; }
+  figure(num,cx,cy,r);
 }
 
 function hand(cx,cy,angle,len,wide,color){
@@ -54,8 +66,8 @@ function hand(cx,cy,angle,len,wide,color){
 function draw(){
   const W=1080,H=1920; ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
   // header
-  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 64px Georgia';ctx.fillText('Quantitative Clock',540,110);
-  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('the Art of Time · count the dots',540,156);
+  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 76px Georgia';ctx.fillText("Annie's Clock",540,116);
+  ctx.fillStyle='#888';ctx.font='italic 32px Georgia';ctx.fillText('count the dots to tell the time',540,162);
   if(sig.complete&&sig.naturalWidth) ctx.drawImage(sig,470,1820,140,74);
 
   const now=new Date();
@@ -68,8 +80,8 @@ function draw(){
   // hour positions: show each hour 1..12 as a dot-figure
   for(let n=1;n<=12;n++){
     const a=(n/12)*2*Math.PI - Math.PI/2;     // 12 at top
-    const px=cx+Math.cos(a)*(R-70), py=cy+Math.sin(a)*(R-70);
-    figure(n,px,py,7);
+    const px=cx+Math.cos(a)*(R-86), py=cy+Math.sin(a)*(R-86);
+    figFit(n,px,py,150,150,13);
   }
   // hands
   const ha=((h12%12)+m/60)/12*2*Math.PI;
@@ -83,9 +95,9 @@ function draw(){
   // ---- quantitative readout: HOUR  :  MINUTES ----
   ctx.fillStyle='#111';ctx.font='bold 40px Georgia';ctx.textAlign='center';
   ctx.fillText('hour',330,1280); ctx.fillText('minutes',760,1280);
-  figure(h12,330,1450,16);
-  ctx.fillStyle='#111';ctx.font='bold 120px Georgia';ctx.fillText(':',545,1480);
-  figure(m,760,1450,13);
+  figFit(h12,330,1460,300,260,46);
+  ctx.fillStyle='#111';ctx.font='bold 120px Georgia';ctx.fillText(':',545,1490);
+  figFit(m,770,1460,360,260,40);
   // digital time small
   ctx.fillStyle='#444';ctx.font='40px Georgia';
   ctx.fillText(h12+':'+String(m).padStart(2,'0'),540,1700);

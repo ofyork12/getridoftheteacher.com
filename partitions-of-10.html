@@ -142,11 +142,11 @@
     </div>
 
 
-    <h2 class="section-heading">Bonus — 512 ways with walls</h2>
-    <p class="section-note">There are 10 dots in a row.  Between them are 9 spaces.  Each space can hold a wall (or not) — that's <strong>2 &times; 2 &times; ... &times; 2 = 512</strong> ways.  Tap a space to put a wall in or take it out.  The numbers add up to 10 every time.</p>
+    <h2 class="section-heading">Find all 42 — with walls</h2>
+    <p class="section-note">10 dots in a row, 9 spaces between them.  Drop walls in to break the row into groups — the numbers add up to 10 every time.  There are exactly <strong>42</strong> different partitions to find.  (Same group sizes in a different order counts as the same partition.)</p>
     <div class="comp-game">
       <div class="comp-stats">
-        <span>Found <strong id="compFound">0</strong> / 512</span>
+        <span>Found <strong id="compFound">0</strong> / 42</span>
         <span class="comp-eq" id="compEq">10 = 10</span>
         <button type="button" id="compReset" class="comp-reset">Take walls down</button>
       </div>
@@ -223,7 +223,7 @@
         1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
         6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
       };
-      const seenKey = 'comp512_seen';
+      const seenKey = 'comp42_seen';
       let seen = new Set();
       try { seen = new Set(JSON.parse(localStorage.getItem(seenKey) || '[]')); } catch (e) {}
       function _save() { try { localStorage.setItem(seenKey, JSON.stringify([...seen])); } catch (e) {} }
@@ -293,7 +293,12 @@
         }
         return svg;
       }
-      function _key() { return walls.map(w => w ? '1' : '0').join(''); }
+      // Two arrangements with the same group SIZES count as the same
+      // partition (e.g. 5+3+2 and 2+5+3 both -> partition [5,3,2]).
+      // So the key is the descending-sorted group sizes.
+      function _key() {
+        return _groups().map(g => g.length).sort((a,b) => b-a).join(',');
+      }
       function _render() {
         const groups = _groups();
         row.innerHTML = '';
@@ -419,44 +424,44 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 2</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=2&amp;v=2026-06-07stroke2" title="Build with 1 to 2" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=2&amp;v=2026-06-07stroke2" title="Build with 1 to 2" allow="autoplay"></iframe>
         </div>
 
         <p class="partition-label">2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 10</p>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-play-2.html?v=2026-05-27nostart" title="2 + 8 ones" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-play-2.html?v=2026-05-27nostart" title="2 + 8 ones" allow="autoplay"></iframe>
         </div>
         <p class="partition-label">2 + 2 + 1 + 1 + 1 + 1 + 1 + 1 = 10</p>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-play-3.html?v=2026-05-27nostart" title="2 + 2 + 6 ones" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-play-3.html?v=2026-05-27nostart" title="2 + 2 + 6 ones" allow="autoplay"></iframe>
         </div>
         <p class="partition-label">2 + 2 + 2 + 1 + 1 + 1 + 1 = 10</p>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-play-4.html?v=2026-05-27nostart" title="three 2s + 4 ones" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-play-4.html?v=2026-05-27nostart" title="three 2s + 4 ones" allow="autoplay"></iframe>
         </div>
         <p class="partition-label">2 + 2 + 2 + 2 + 1 + 1 = 10</p>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-play-5.html?v=2026-05-27nostart" title="four 2s + 2 ones" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-play-5.html?v=2026-05-27nostart" title="four 2s + 2 ones" allow="autoplay"></iframe>
         </div>
         <p class="partition-label">2 + 2 + 2 + 2 + 2 = 10</p>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-play-6.html?v=2026-05-27nostart" title="five 2s" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-play-6.html?v=2026-05-27nostart" title="five 2s" allow="autoplay"></iframe>
         </div>
         <h3 style="text-align:center;color:#aaa;margin:30px 0 12px;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;">Games for this set</h3>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-game-2.html?v=2026-05-26v5" title="Partition 2 Game" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-game-2.html?v=2026-05-26v5" title="Partition 2 Game" allow="autoplay"></iframe>
         </div>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-game-3.html?v=2026-05-26v5" title="Partition 3 Game" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-game-3.html?v=2026-05-26v5" title="Partition 3 Game" allow="autoplay"></iframe>
         </div>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-game-4.html?v=2026-05-26v5" title="Partition 4 Game" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-game-4.html?v=2026-05-26v5" title="Partition 4 Game" allow="autoplay"></iframe>
         </div>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-game-5.html?v=2026-05-26v5" title="Partition 5 Game" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-game-5.html?v=2026-05-26v5" title="Partition 5 Game" allow="autoplay"></iframe>
         </div>
         <div class="interactive-frame">
-          <iframe src="partitions-of-10-game-6.html?v=2026-05-26v5" title="Partition 6 Game" allow="autoplay"></iframe>
+          <iframe data-src="partitions-of-10-game-6.html?v=2026-05-26v5" title="Partition 6 Game" allow="autoplay"></iframe>
         </div>
       </div>
     </details>
@@ -466,7 +471,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 3</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=3&amp;v=2026-06-07stroke3" title="Build with 1 to 3" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=3&amp;v=2026-06-07stroke3" title="Build with 1 to 3" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -487,7 +492,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 4</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=4&amp;v=2026-06-07stroke4" title="Build with 1 to 4" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=4&amp;v=2026-06-07stroke4" title="Build with 1 to 4" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -509,7 +514,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 5</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=5&amp;v=2026-06-07stroke5" title="Build with 1 to 5" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=5&amp;v=2026-06-07stroke5" title="Build with 1 to 5" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -529,7 +534,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 6</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=6&amp;v=2026-06-07stroke6" title="Build with 1 to 6" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=6&amp;v=2026-06-07stroke6" title="Build with 1 to 6" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -547,7 +552,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 7</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=7&amp;v=2026-06-07stroke7" title="Build with 1 to 7" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=7&amp;v=2026-06-07stroke7" title="Build with 1 to 7" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -563,7 +568,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 8</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=8&amp;v=2026-06-07stroke8" title="Build with 1 to 8" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=8&amp;v=2026-06-07stroke8" title="Build with 1 to 8" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -578,7 +583,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 9</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=9&amp;v=2026-06-07stroke9" title="Build with 1 to 9" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=9&amp;v=2026-06-07stroke9" title="Build with 1 to 9" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -592,7 +597,7 @@
       <div class="set-content">
         <h3 class="set-game-heading">Build with 1 to 10</h3>
         <div class="interactive-frame">
-          <iframe src="making-10-game.html?max=10&amp;v=2026-06-07stroke10" title="Build with 1 to 10" allow="autoplay"></iframe>
+          <iframe data-src="making-10-game.html?max=10&amp;v=2026-06-07stroke10" title="Build with 1 to 10" allow="autoplay"></iframe>
         </div>
 
         <div class="placeholder-grid">
@@ -611,5 +616,19 @@
         allowfullscreen></iframe>
     </div>
   </div>
+
+<script>
+// Defer iframe loading until a closed <details> set is opened.  This silences
+// the chorus of overlapping narration from all the games loading at once.
+document.querySelectorAll("details.partition-set").forEach(function(d){
+  d.addEventListener("toggle", function(){
+    if (!d.open) return;
+    d.querySelectorAll("iframe[data-src]").forEach(function(f){
+      f.src = f.dataset.src;
+      f.removeAttribute("data-src");
+    });
+  });
+});
+</script>
 </body>
 </html>

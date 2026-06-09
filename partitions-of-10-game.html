@@ -286,16 +286,26 @@
     letter-spacing:1px; text-transform:uppercase; background:transparent; color:#fff;
     border:2px solid #fff; border-radius:999px; cursor:pointer; }
   .show-missed-btn:hover { background:#fff; color:#000; }
-  .hint-btn { display:block; margin:8px auto 0; padding:7px 18px; font-size:12px; font-weight:bold;
-    letter-spacing:1px; text-transform:uppercase; background:#ffe600; color:#000;
-    border:2px solid #ffe600; border-radius:999px; cursor:pointer; }
+  .hint-btn { display:block; margin:12px auto 0; padding:10px 22px; font-size:14px; font-weight:bold;
+    letter-spacing:1.2px; text-transform:uppercase; background:#ffe600; color:#000;
+    border:3px solid #ffe600; border-radius:999px; cursor:pointer;
+    box-shadow:0 3px 0 rgba(0,0,0,0.35), 0 0 18px rgba(255,230,0,0.35); }
   .hint-btn:hover { background:#fff; border-color:#fff; }
-  .hint-msg { display:none; max-width:380px; margin:10px auto 0; padding:12px 16px; text-align:center;
-    background:rgba(255,230,0,0.10); border:2px solid #ffe600; border-radius:14px;
-    color:#fff; font-size:15px; line-height:1.4; }
+  .hint-msg { display:none; max-width:440px; margin:10px auto 0; padding:14px 14px 16px; text-align:center;
+    background:rgba(0,0,0,0.85); border:3px solid #ffe600; border-radius:14px;
+    color:#fff; font-size:14px; line-height:1.3; }
   .hint-msg.show { display:block; }
-  .hint-msg .eq { font-family:"SF Mono",Menlo,Consolas,monospace; color:#ffe600; font-weight:bold;
-    font-size:19px; display:block; margin-top:6px; }
+  .hint-msg .hint-title { font-weight:bold; color:#ffe600; margin-bottom:10px;
+    letter-spacing:0.5px; text-transform:uppercase; font-size:13px; }
+  .hint-msg .hint-clusters { display:flex; justify-content:center; align-items:flex-end;
+    gap:4px; flex-wrap:wrap; }
+  .hint-msg .hint-cell { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .hint-msg .hint-cluster { width:auto; height:42px; max-width:56px; display:block; }
+  .hint-msg .hint-digit { font-family:Nunito,Arial,sans-serif; font-weight:800; font-size:14px;
+    color:#fff; }
+  .hint-msg .hint-plus { color:#ffe600; font-weight:bold; font-size:20px; padding:0 2px;
+    align-self:center; }
+  .hint-msg .eq { display:none; }
   .missed-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000;
     display:none; align-items:center; justify-content:center; padding:20px; }
   .missed-overlay.show { display:flex; }
@@ -997,33 +1007,63 @@ function _hideHint() {
   const m = document.getElementById("hintMsg");
   if (m) { m.classList.remove("show"); m.innerHTML = ""; }
 }
+// Canonical ColorMyMath number-line geometry + colours (mirrors
+// making-10-game.html PAINT_SHAPES and the 512 game).
+const _HINT_COLORS = {1:"#e63946",2:"#ff6200",3:"#e6c800",4:"#00a12c",5:"#0066ff",6:"#7700dd",7:"#7a3b00",8:"#ff3fa6",9:"#38c7ff",10:"#e63946"};
+const _HINT_R = 8, _HINT_D = 16, _HINT_H = _HINT_D * Math.sqrt(3) / 2;
+const _HINT_CX = 50, _HINT_YB = 92;
+const _HINT_SHAPES = {
+  1: [[_HINT_CX, _HINT_YB]],
+  2: [[_HINT_CX-_HINT_R, _HINT_YB], [_HINT_CX+_HINT_R, _HINT_YB]],
+  3: [[_HINT_CX-_HINT_R, _HINT_YB], [_HINT_CX+_HINT_R, _HINT_YB], [_HINT_CX, _HINT_YB-_HINT_H]],
+  4: [[_HINT_CX-_HINT_R, _HINT_YB], [_HINT_CX+_HINT_R, _HINT_YB], [_HINT_CX-_HINT_R, _HINT_YB-_HINT_D], [_HINT_CX+_HINT_R, _HINT_YB-_HINT_D]],
+  5: [[_HINT_CX-_HINT_D, _HINT_YB], [_HINT_CX, _HINT_YB], [_HINT_CX+_HINT_D, _HINT_YB], [_HINT_CX-_HINT_R, _HINT_YB-_HINT_H], [_HINT_CX+_HINT_R, _HINT_YB-_HINT_H]],
+  6: [[_HINT_CX-_HINT_D, _HINT_YB], [_HINT_CX, _HINT_YB], [_HINT_CX+_HINT_D, _HINT_YB], [_HINT_CX-_HINT_R, _HINT_YB-_HINT_H], [_HINT_CX+_HINT_R, _HINT_YB-_HINT_H], [_HINT_CX, _HINT_YB-2*_HINT_H]],
+  7: [[_HINT_CX-_HINT_R, _HINT_YB], [_HINT_CX+_HINT_R, _HINT_YB], [_HINT_CX-_HINT_D, _HINT_YB-_HINT_H], [_HINT_CX, _HINT_YB-_HINT_H], [_HINT_CX+_HINT_D, _HINT_YB-_HINT_H], [_HINT_CX-_HINT_R, _HINT_YB-2*_HINT_H], [_HINT_CX+_HINT_R, _HINT_YB-2*_HINT_H]],
+  8: [[_HINT_CX-_HINT_D, _HINT_YB], [_HINT_CX, _HINT_YB], [_HINT_CX+_HINT_D, _HINT_YB], [_HINT_CX-_HINT_D, _HINT_YB-_HINT_D], [_HINT_CX+_HINT_D, _HINT_YB-_HINT_D], [_HINT_CX-_HINT_D, _HINT_YB-2*_HINT_D], [_HINT_CX, _HINT_YB-2*_HINT_D], [_HINT_CX+_HINT_D, _HINT_YB-2*_HINT_D]],
+  9: [[_HINT_CX-_HINT_D, _HINT_YB], [_HINT_CX, _HINT_YB], [_HINT_CX+_HINT_D, _HINT_YB], [_HINT_CX-_HINT_D, _HINT_YB-_HINT_D], [_HINT_CX, _HINT_YB-_HINT_D], [_HINT_CX+_HINT_D, _HINT_YB-_HINT_D], [_HINT_CX-_HINT_D, _HINT_YB-2*_HINT_D], [_HINT_CX, _HINT_YB-2*_HINT_D], [_HINT_CX+_HINT_D, _HINT_YB-2*_HINT_D]],
+  10:[[_HINT_CX-3*_HINT_R, _HINT_YB], [_HINT_CX-_HINT_R, _HINT_YB], [_HINT_CX+_HINT_R, _HINT_YB], [_HINT_CX+3*_HINT_R, _HINT_YB], [_HINT_CX-_HINT_D, _HINT_YB-_HINT_H], [_HINT_CX, _HINT_YB-_HINT_H], [_HINT_CX+_HINT_D, _HINT_YB-_HINT_H], [_HINT_CX-_HINT_R, _HINT_YB-2*_HINT_H], [_HINT_CX+_HINT_R, _HINT_YB-2*_HINT_H], [_HINT_CX, _HINT_YB-3*_HINT_H]]
+};
+function _hintClusterSVG(n) {
+  const color = _HINT_COLORS[n];
+  const pts = _HINT_SHAPES[n];
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for (const p of pts) {
+    if (p[0]-_HINT_R<minX) minX=p[0]-_HINT_R;
+    if (p[0]+_HINT_R>maxX) maxX=p[0]+_HINT_R;
+    if (p[1]-_HINT_R<minY) minY=p[1]-_HINT_R;
+    if (p[1]+_HINT_R>maxY) maxY=p[1]+_HINT_R;
+  }
+  const pad = 2;
+  const vb = (minX-pad) + " " + (minY-pad) + " " + (maxX-minX+2*pad) + " " + (maxY-minY+2*pad);
+  let svg = '<svg class="hint-cluster" viewBox="' + vb + '" preserveAspectRatio="xMidYMax meet">';
+  for (const p of pts) {
+    svg += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + _HINT_R + '" fill="' + color + '" stroke="#000" stroke-width="1"/>';
+    svg += '<ellipse cx="' + (p[0]-_HINT_R*0.35) + '" cy="' + (p[1]-_HINT_R*0.4) + '" rx="' + (_HINT_R*0.5) + '" ry="' + (_HINT_R*0.32) + '" fill="#fff" opacity="0.55"/>';
+  }
+  svg += "</svg>";
+  return '<span class="hint-cell">' + svg + '<span class="hint-digit">' + n + '</span></span>';
+}
+// Walk canonical 1..42 in order, skipping any already found.
+let _hintNextIdx = 1;
 function _giveHint() {
   const m = document.getElementById("hintMsg");
   if (!m) return;
-  // Which of this scope's partitions are still missing?
-  let missing = SCOPE_INDICES.filter(idx => !collectedPartitions.has(idx));
+  const missing = SCOPE_INDICES.filter(idx => !collectedPartitions.has(idx));
   if (missing.length === 0) {
-    m.innerHTML = "🎉 You found them all — every way to make 10!";
+    m.innerHTML = '<div class="hint-title">🎉 You found them all!</div>';
     m.classList.add("show");
     return;
   }
-  // Prefer ones we haven't hinted yet this round; if we've shown them all,
-  // start over so the button always gives something.
-  let pool = missing.filter(idx => !_hintShown.has(idx));
-  if (pool.length === 0) { _hintShown.clear(); pool = missing.slice(); }
-  // Anchor: the last partition the child built (else the first missing one).
-  const anchor = (_lastBuiltIdx != null) ? _lastBuiltIdx : pool[0];
-  // Pick the missing one closest to the anchor in the canonical order;
-  // ties go to the smaller index.
-  pool.sort((a, b) => {
-    const da = Math.abs(a - anchor), db = Math.abs(b - anchor);
-    return da !== db ? da - db : a - b;
-  });
-  const pick = pool[0];
+  if (missing.indexOf(_hintNextIdx) === -1) _hintNextIdx = missing[0];
+  const pick = _hintNextIdx;
+  const after = missing.filter(i => i > pick);
+  _hintNextIdx = after.length ? after[0] : missing[0];
   _hintShown.add(pick);
-  const p = PARTITIONS_OF_10_CANON[pick - 1];
-  m.innerHTML = "Here's one you haven't built yet:<span class=\"eq\">"
-              + p.join(" + ") + " = 10</span>";
+  const parts = PARTITIONS_OF_10_CANON[pick - 1];
+  const clusters = parts.map(_hintClusterSVG).join('<span class="hint-plus">+</span>');
+  m.innerHTML = '<div class="hint-title">Try this one (#' + pick + '):</div>'
+              + '<div class="hint-clusters">' + clusters + '</div>';
   m.classList.add("show");
 }
 document.getElementById("hintBtn")?.addEventListener("click", _giveHint);

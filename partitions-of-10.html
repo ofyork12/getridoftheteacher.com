@@ -48,6 +48,13 @@
     }
     .section-heading:first-of-type { margin-top: 20px; }
     .section-note { color: #888; font-size: 14px; margin: -8px 0 18px; font-style: italic; text-align: center; }
+    .page-hint-btn {
+      display: block; margin: 4px auto 26px; padding: 12px 24px;
+      font-size: 15px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;
+      background: #ffe600; color: #000; border: 3px solid #ffe600; border-radius: 999px;
+      cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 20px rgba(255,230,0,0.4);
+    }
+    .page-hint-btn:hover { background: #fff; border-color: #fff; }
     .interactive-frame {
       position: relative; width: 100%; max-width: 460px; margin: 0 auto 22px;
       aspect-ratio: 9 / 16; border-radius: 12px; overflow: hidden;
@@ -138,8 +145,18 @@
       <iframe src="partitions-of-10-game-follow.html?v=2026-06-10mute" title="42 — Follow-Me Game" allow="autoplay"></iframe>
     </div>
     <div class="interactive-frame">
-      <iframe src="partitions-of-10-game.html?v=2026-06-10mute" title="42 — Build Your Own" allow="autoplay"></iframe>
+      <iframe id="buildOwnFrame" src="partitions-of-10-game.html?v=2026-06-11hintbtn" title="42 — Build Your Own" allow="autoplay"></iframe>
     </div>
+    <button type="button" id="buildOwnHintBtn" class="page-hint-btn">💡 HINT — show me a triangle I haven't built</button>
+    <script>
+      (function(){
+        const f = document.getElementById('buildOwnFrame');
+        const b = document.getElementById('buildOwnHintBtn');
+        if (f && b) b.addEventListener('click', () => {
+          try { f.contentWindow.postMessage({ type: 'cmm-hint' }, '*'); } catch(e) {}
+        });
+      })();
+    </script>
 
 
     <h2 class="section-heading">Find all 42 — with walls</h2>

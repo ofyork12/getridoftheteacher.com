@@ -283,15 +283,11 @@
   .partition-tracker { position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:5;
     background:rgba(0,0,0,0.55); color:#ffe600; font-weight:bold; font-size:13px; letter-spacing:1px;
     padding:4px 12px; border-radius:14px; border:1px solid rgba(255,230,0,0.5); pointer-events:none; }
-  .show-missed-btn { display:block; margin:6px auto 0; padding:6px 14px; font-size:12px; font-weight:bold;
-    letter-spacing:1px; text-transform:uppercase; background:transparent; color:#fff;
-    border:2px solid #fff; border-radius:999px; cursor:pointer; }
-  .show-missed-btn:hover { background:#fff; color:#000; }
-  .hint-btn { display:block; margin:12px auto 0; padding:10px 22px; font-size:14px; font-weight:bold;
-    letter-spacing:1.2px; text-transform:uppercase; background:#ffe600; color:#000;
-    border:3px solid #ffe600; border-radius:999px; cursor:pointer;
-    box-shadow:0 3px 0 rgba(0,0,0,0.35), 0 0 18px rgba(255,230,0,0.35); }
-  .hint-btn:hover { background:#fff; border-color:#fff; }
+  /* These two buttons sat in normal flow inside an all-absolute stage and
+     floated up behind the scoreboard.  Hidden here -- the HINT is now
+     triggered by a visible button on the container page (postMessage). */
+  .show-missed-btn { display:none; }
+  .hint-btn { display:none; }
   .hint-msg { display:none; position:absolute; top:0.5%; left:50%; transform:translateX(-50%);
     max-width:90%; padding:6px 10px 8px; text-align:center; z-index:200;
     background:rgba(0,0,0,0.92); border:2px solid #ffe600; border-radius:10px;
@@ -1070,6 +1066,14 @@ function _giveHint() {
   m.classList.add("show");
 }
 document.getElementById("hintBtn")?.addEventListener("click", _giveHint);
+// Let the container page trigger the hint (the in-frame button sits in a
+// crowded stage; the page-level button is the reliable one). Tapping the
+// popup dismisses it.
+window.addEventListener("message", e => {
+  if (e && e.data && e.data.type === "cmm-hint") _giveHint();
+  if (e && e.data && e.data.type === "cmm-hint-hide") _hideHint();
+});
+document.getElementById("hintMsg")?.addEventListener("click", _hideHint);
 
 document.getElementById("showMissedBtn")?.addEventListener("click", _openMissed);
 document.getElementById("closeMissedBtn")?.addEventListener("click", _closeMissed);

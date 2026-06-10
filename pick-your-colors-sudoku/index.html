@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#10243e">
+<title>Color My Sudoku — Pick Your Colors</title>
+<style>
+  :root{
+    --bg:#0d1b2e; --bg2:#10243e; --canvas:#fbfcff;
+    --grout-thin:#c7d2e0; --grout-thick:#2b3f5c;
+    --etched-bg:#eef2f8; --spotlight-bg:#cfe3ff; --echo-bg:#eaf2fd; --twin-bg:#d6e9c9;
+    --clash-bg:#ffd9dc; --ink:#1f2d3d; --panel:#15294a; --panel2:#1d3559;
+    --muted:#9bb0cc; --accent:#f0b32a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(160deg,var(--bg),var(--bg2));
+    color:#eaf1fb; display:flex; flex-direction:column; align-items:center;
+    min-height:100%; overflow-x:hidden; user-select:none; -webkit-user-select:none;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .easel{width:100%; max-width:520px; padding:8px 12px 12px; display:flex; flex-direction:column; gap:8px;}
+  header{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .maestro{font-weight:800; font-size:19px; letter-spacing:.3px;}
+  .maestro b{color:var(--accent);}
+  .scoreboard{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);}
+  .bubble{background:var(--panel); padding:5px 10px; border-radius:999px; font-variant-numeric:tabular-nums; font-weight:600; color:#eaf1fb;}
+
+  .frame{position:relative; width:100%; max-width:min(100%,44vh); margin:0 auto; aspect-ratio:1/1;}
+  #board{
+    width:100%; height:100%; background:var(--canvas); border-radius:14px;
+    display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr);
+    overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.4); border:3px solid var(--grout-thick);
+  }
+  .swatch{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    border-right:1px solid var(--grout-thin); border-bottom:1px solid var(--grout-thin);
+    cursor:pointer; padding:6%;
+  }
+  .swatch:nth-child(9n){border-right:none;}
+  .swatch:nth-child(n+73){border-bottom:none;}
+  .swatch.grout-r{border-right:2.5px solid var(--grout-thick);}
+  .swatch.grout-b{border-bottom:2.5px solid var(--grout-thick);}
+  .swatch.etched{background:var(--etched-bg);}
+  .swatch.echo{background:#f3f7fc;}
+  .swatch.twin{box-shadow:inset 0 0 0 2.5px #f3c969;}
+  .swatch.spotlight{background:var(--spotlight-bg); box-shadow:inset 0 0 0 3px #1971c2;}
+  .swatch.clash{background:var(--clash-bg) !important;}
+  @keyframes nope{0%,100%{transform:translateX(0);}20%{transform:translateX(-4px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+  .swatch.nope{animation:nope .4s ease; box-shadow:inset 0 0 0 3px #e11d2a;}
+  .dotfig{width:100%; height:100%; display:block; pointer-events:none;}
+  .murmurs{position:absolute; inset:6%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+    font-size:clamp(7px,2.5vw,11px); font-weight:700; line-height:1; pointer-events:none; color:#7d8aa0;}
+  .murmurs span{display:flex; align-items:center; justify-content:center;}
+
+  .palette{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .crayon{
+    position:relative; aspect-ratio:1.35; border:none; border-radius:14px; background:var(--panel2);
+    cursor:pointer; padding:8%; display:flex; align-items:center; justify-content:center; transition:transform .05s;
+  }
+  .crayon:active{transform:scale(.92);}
+  .crayon .tally{position:absolute; bottom:4px; right:8px; font-size:12px; font-weight:700; color:var(--muted);}
+  .crayon.spent{opacity:.28;}
+  .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
+
+  .controls{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+  .ctl{border:none; border-radius:12px; background:var(--panel); color:#eaf1fb; cursor:pointer;
+    padding:9px 2px 7px; font-size:11px; font-weight:700; display:flex; flex-direction:column;
+    align-items:center; gap:3px; transition:transform .05s;}
+  .ctl:active{transform:scale(.93);}
+  .ctl .cic{font-size:20px; line-height:1;}
+  .ctl.accent{background:var(--accent); color:#10243e;}
+
+  /* Veils */
+  .veil{position:fixed; inset:0; background:rgba(4,10,20,.82); display:none; align-items:center; justify-content:center; padding:16px; z-index:50;}
+  .veil.bared{display:flex;}
+  .plate{background:var(--bg2); border:1px solid #2b466e; border-radius:16px; padding:20px; width:100%; max-width:380px; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .plate h2{margin:0 0 4px; font-size:21px;}
+  .plate p{margin:0 0 14px; color:var(--muted); font-size:14px; line-height:1.35;}
+  .tiers{display:flex; flex-direction:column; gap:8px;}
+  .tier{border:none; border-radius:12px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; color:#10243e; text-align:left; display:flex; justify-content:space-between; align-items:center;}
+  .tier small{font-weight:600; opacity:.7; font-size:12px;}
+  .tier.calm{background:#8ce99a;} .tier.brisk{background:#ffd43b;} .tier.fierce{background:#ff8787;}
+  .seal{margin-top:12px; width:100%; background:var(--panel); color:#eaf1fb; border:none; border-radius:10px; padding:11px; font-weight:700; cursor:pointer;}
+  .slab{border:none; border-radius:14px; padding:15px; font-weight:800; font-size:17px; cursor:pointer;}
+  .slab.bold{background:var(--accent); color:#10243e;}
+  .slab.bold:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* Pick-your-colors screen */
+  /* ColorMyMath number line — 1..9 on a white strip, like the real number line */
+  .pick .pickline{display:grid; grid-template-columns:repeat(9,1fr); gap:2px; margin-bottom:14px; padding:8px 4px; background:#fbfcff; border-radius:12px;}
+  .plcell{cursor:pointer; border-radius:8px; padding:4px 1px 2px; display:flex; flex-direction:column; align-items:center; gap:1px; border:2px solid transparent; transition:transform .05s;}
+  .plcell:active{transform:scale(.9);}
+  .plcell.active{border-color:var(--accent); background:#eaf2ff;}
+  .plcell .pldots{width:100%; aspect-ratio:1;}
+  .plcell b{font-size:11px; font-weight:800; color:#2a3340;}
+  .pickpal{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px;}
+  .pchip{aspect-ratio:1; border-radius:50%; border:3px solid #eef3fa; box-shadow:0 1px 4px rgba(0,0,0,.45); cursor:pointer; transition:transform .05s;}
+  .pchip:active{transform:scale(.88);}
+  .pchip.used{opacity:.25; pointer-events:none;}
+  .pickbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+  .pickbar #pickCount{font-size:14px; font-weight:700; color:var(--accent);}
+  .pickbar .slab{flex:1; max-width:62%;}
+
+  .blip{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
+    background:#10243e; border:1px solid #2b466e; color:#eaf1fb; padding:11px 18px; border-radius:999px; font-size:14px; font-weight:600;
+    opacity:0; transition:.25s; pointer-events:none; z-index:60; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .blip.bared{opacity:1; transform:translateX(-50%) translateY(0);}
+  .triumph .plate{text-align:center;} .burst{font-size:54px; margin-bottom:6px;}
+</style>
+</head>
+<body>
+  <div class="easel">
+    <header>
+      <div class="maestro">Color My <b>Sudoku</b></div>
+      <div class="scoreboard">
+        <div class="bubble" id="diffLabel">Easy</div>
+        <div class="bubble" id="timer">0:00</div>
+      </div>
+    </header>
+
+    <div class="frame"><div id="board"></div></div>
+    <div class="palette" id="numpad"></div>
+
+    <div class="controls">
+      <button class="ctl accent" id="btnNew"><span class="cic">🎲</span>New</button>
+      <button class="ctl" id="btnColors"><span class="cic">🎨</span>Colors</button>
+      <button class="ctl" id="btnHint"><span class="cic">💡</span>Hint</button>
+      <button class="ctl" id="btnUndo"><span class="cic">↶</span>Undo</button>
+      <button class="ctl" id="btnSettings"><span class="cic">⚙</span>Settings</button>
+    </div>
+  </div>
+
+  <!-- PICK YOUR COLORS -->
+  <div class="veil" id="pickOverlay">
+    <div class="plate pick">
+      <h2>🎨 Pick Your Colors!</h2>
+      <p id="pickPrompt">Tap a number, then tap a color. Give all 9 numbers a color to start.</p>
+      <div class="pickline" id="pickLine"></div>
+      <div class="pickpal" id="pickPal"></div>
+      <div class="pickbar">
+        <span id="pickCount">0 of 9 chosen</span>
+        <button class="slab bold" id="pickStart" disabled>Start Playing ▶</button>
+      </div>
+      <button class="seal" id="pickRandom">🎲 Surprise me</button>
+    </div>
+  </div>
+
+  <!-- New game -->
+  <div class="veil" id="newOverlay">
+    <div class="plate">
+      <h2>New Game</h2>
+      <p>Pick a difficulty. Each puzzle has exactly one solution.</p>
+      <div class="tiers">
+        <button class="tier calm"   data-diff="easy">Easy <small>more clues</small></button>
+        <button class="tier brisk"  data-diff="medium">Medium <small>balanced</small></button>
+        <button class="tier fierce" data-diff="hard">Hard <small>few clues</small></button>
+      </div>
+      <button class="seal" id="newClose">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="veil" id="setOverlay">
+    <div class="plate">
+      <h2>Settings</h2>
+      <div class="tiers">
+        <button class="tier brisk" id="setRecolor">🎨 Change my colors</button>
+      </div>
+      <div style="height:14px"></div>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #21385c;">
+        <span>Highlight wrong values</span><input type="checkbox" id="setWrong"></label>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #21385c;">
+        <span>Highlight row, column &amp; box</span><input type="checkbox" id="setPeers"></label>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+        <span>Show number totals on pad</span><input type="checkbox" id="setTotals"></label>
+      <button class="seal" id="setClose">Done</button>
+    </div>
+  </div>
+
+  <!-- Win -->
+  <div class="veil triumph" id="winOverlay">
+    <div class="plate">
+      <div class="burst">🎉</div>
+      <h2>Well done!</h2>
+      <p id="winText">Solved.</p>
+      <div class="tiers"><button class="tier calm" id="winNew">Play another</button></div>
+      <button class="seal" id="winClose">Close</button>
+    </div>
+  </div>
+
+  <div class="blip" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+  const CELLS=81, $=id=>document.getElementById(id);
+  const S=Math.sqrt(3);
+
+  // ---- ColorMyMath dot shapes (unit grid, dots tangent at distance 2) ----
+  // 3 & 6 = triangles, 7 = flower (center + hexagon), 8 = ring, 9 = 3x3.
+  // (4 and 5 are sensible placeholders — easy to change if Ted wants other shapes.)
+  const ONES={
+    1:[[0,0]],
+    2:[[-1,0],[1,0]],
+    3:[[-1,0],[1,0],[0,-S]],
+    4:[[-1,0],[1,0],[-1,-2],[1,-2]],
+    5:[[-2,0],[0,0],[2,0],[-1,-S],[1,-S]],
+    6:[[-2,0],[0,0],[2,0],[-1,-S],[1,-S],[0,-2*S]],
+    7:[[0,0],[2,0],[1,S],[-1,S],[-2,0],[-1,-S],[1,-S]],
+    8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
+    9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]
+  };
+  const VB=7;     // fixed viewBox so every dot is the SAME size in every cell
+  function dotsSVG(n,color){
+    const pts=ONES[n]; let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
+    for(const [x,y] of pts){ mnX=Math.min(mnX,x);mxX=Math.max(mxX,x);mnY=Math.min(mnY,y);mxY=Math.max(mxY,y); }
+    const cx=(mnX+mxX)/2, cy=(mnY+mxY)/2; let c='';
+    for(const [x,y] of pts){
+      const px=(x-cx).toFixed(3), py=(y-cy).toFixed(3);
+      c+='<circle cx="'+px+'" cy="'+py+'" r="1" fill="'+color+'" stroke="#16181d" stroke-width="0.1"/>';
+    }
+    return '<svg class="dotfig" viewBox="'+(-VB/2)+' '+(-VB/2)+' '+VB+' '+VB+'" xmlns="http://www.w3.org/2000/svg">'+c+'</svg>';
+  }
+
+  // ---- the color palette Ted asked for ----
+  // The 9 CORE colors are maximally distinct (no two look alike) — then extras.
+  const PALETTE=[
+    {name:'Red',        hex:'#ff1a1a'},   // 1
+    {name:'Orange',     hex:'#ff7a00'},   // 2
+    {name:'Yellow',     hex:'#ffd000'},   // 3
+    {name:'Green',      hex:'#15c015'},   // 4
+    {name:'Cyan',       hex:'#00ccdd'},   // 5
+    {name:'Blue',       hex:'#1565ff'},   // 6  (true blue)
+    {name:'Purple',     hex:'#9b1bd6'},   // 7  (violet — clearly not blue)
+    {name:'Pink',       hex:'#ff1493'},   // 8  (clearly not purple)
+    {name:'Black',      hex:'#000000'},   // 9
+    // ---- extra colors (gradations / variety) ----
+    {name:'Lime',       hex:'#9acd00'},
+    {name:'Jade',       hex:'#00c28a'},
+    {name:'Sky',        hex:'#34b0ff'},
+    {name:'Violet',     hex:'#7a2be2'},
+    {name:'Magenta',    hex:'#e612c9'},
+    {name:'Light Pink', hex:'#ff8fcf'}
+  ];
+  // colorsByDigit[1..9] = hex string. null = not yet picked.
+  let colorsByDigit=loadColors();
+  function loadColors(){
+    try{ const a=JSON.parse(localStorage.getItem('cmm_colors')); if(Array.isArray(a)&&a.length===10) return a; }catch(e){}
+    return [null,null,null,null,null,null,null,null,null,null];
+  }
+  function saveColors(){ localStorage.setItem('cmm_colors', JSON.stringify(colorsByDigit)); }
+  function colorsComplete(){ for(let n=1;n<=9;n++) if(!colorsByDigit[n]) return false; return true; }
+  function colOf(n){ return colorsByDigit[n] || '#9aa7bd'; }
+
+  // ---------- Sudoku engine ----------
+  const deepEmpty=()=>new Array(CELLS).fill(0);
+  const findEmpty=g=>{ for(let i=0;i<CELLS;i++) if(g[i]===0) return i; return -1; };
+  function valid(g,idx,v){
+    const r=(idx/9|0),c=idx%9;
+    for(let i=0;i<9;i++){ if(g[r*9+i]===v) return false; if(g[i*9+c]===v) return false; }
+    const br=(r/3|0)*3,bc=(c/3|0)*3;
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++) if(g[(br+i)*9+(bc+j)]===v) return false;
+    return true;
+  }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+  function fillSolution(g){
+    const idx=findEmpty(g); if(idx===-1) return true;
+    for(const v of shuffle([1,2,3,4,5,6,7,8,9])){ if(valid(g,idx,v)){ g[idx]=v; if(fillSolution(g)) return true; g[idx]=0; } }
+    return false;
+  }
+  function countSolutions(g,cap){
+    const idx=findEmpty(g); if(idx===-1) return 1; let t=0;
+    for(let v=1;v<=9;v++){ if(valid(g,idx,v)){ g[idx]=v; t+=countSolutions(g,cap); g[idx]=0; if(t>=cap) return t; } }
+    return t;
+  }
+  function generate(diff){
+    const solution=deepEmpty(); fillSolution(solution); const puzzle=solution.slice();
+    const targets={easy:[40,46],medium:[32,36],hard:[26,30]}; const [lo,hi]=targets[diff]||targets.easy;
+    const tg=lo+Math.floor(Math.random()*(hi-lo+1)); let givens=CELLS;
+    for(const i of shuffle([...Array(CELLS).keys()])){
+      if(givens<=tg) break; const bk=puzzle[i]; if(bk===0) continue;
+      puzzle[i]=0; if(countSolutions(puzzle.slice(),2)!==1) puzzle[i]=bk; else givens--;
+    }
+    return {puzzle,solution};
+  }
+
+  // ---------- State ----------
+  let state=null;
+  const defaults={wrong:true,peers:false,totals:false};
+  let settings=loadSettings();
+  function loadSettings(){ try{ return Object.assign({},defaults,JSON.parse(localStorage.getItem('cmm_set')||'{}')); }catch(e){ return Object.assign({},defaults); } }
+  function saveSettings(){ localStorage.setItem('cmm_set', JSON.stringify(settings)); }
+  function newState(p,s,diff){ return {difficulty:diff, given:p.slice(), values:p.slice(), solution:s.slice(), selected:-1, history:[], seconds:0, done:false}; }
+  const isReal=s=>s&&Array.isArray(s.given)&&s.given.some(x=>x>0);
+  function saveGame(){ if(isReal(state)) localStorage.setItem('cmm_game', JSON.stringify({...state,history:[]})); }
+  function loadGame(){ try{ const s=JSON.parse(localStorage.getItem('cmm_game')); if(s&&Array.isArray(s.values)&&s.values.length===CELLS&&isReal(s)){ s.history=[]; return s; } }catch(e){} return null; }
+
+  // ---------- Board ----------
+  const boardEl=$('board'), numpadEl=$('numpad');
+  function buildBoard(){
+    boardEl.innerHTML='';
+    for(let i=0;i<CELLS;i++){
+      const c=document.createElement('div'); c.className='swatch';
+      const col=i%9,row=(i/9|0);
+      if(col===2||col===5) c.classList.add('grout-r');
+      if(row===2||row===5) c.classList.add('grout-b');
+      c.addEventListener('click',()=>selectCell(i)); boardEl.appendChild(c);
+    }
+  }
+  function buildNumpad(){
+    numpadEl.innerHTML='';
+    for(let n=1;n<=9;n++){
+      const b=document.createElement('button'); b.className='crayon';
+      b.innerHTML=dotsSVG(n,colOf(n))+'<span class="tally" data-n="'+n+'"></span>';
+      b.addEventListener('click',()=>inputNumber(n)); numpadEl.appendChild(b);
+    }
+  }
+  function conflicts(){
+    const bad=new Set();
+    for(let i=0;i<CELLS;i++){ const v=state.values[i]; if(!v) continue; const r=(i/9|0),c=i%9;
+      for(let k=0;k<9;k++){ const a=r*9+k,b=k*9+c; if(a!==i&&state.values[a]===v){bad.add(i);bad.add(a);} if(b!==i&&state.values[b]===v){bad.add(i);bad.add(b);} }
+      const br=(r/3|0)*3,bc=(c/3|0)*3;
+      for(let x=0;x<3;x++)for(let y=0;y<3;y++){ const j=(br+x)*9+(bc+y); if(j!==i&&state.values[j]===v){bad.add(i);bad.add(j);} }
+    }
+    return bad;
+  }
+  function render(){
+    const sel=state.selected, selVal=sel>=0?state.values[sel]:0;
+    const bad=settings.wrong?conflicts():new Set();
+    let sR=-1,sC=-1,sB=-1; if(sel>=0){ sR=(sel/9|0); sC=sel%9; sB=(sR/3|0)*3+(sC/3|0); }
+    for(let i=0;i<CELLS;i++){
+      const cell=boardEl.children[i], v=state.values[i], r=(i/9|0),c=i%9,b=(r/3|0)*3+(c/3|0);
+      cell.className='swatch';
+      if(c===2||c===5) cell.classList.add('grout-r');
+      if(r===2||r===5) cell.classList.add('grout-b');
+      if(state.given[i]) cell.classList.add('etched');
+      if(settings.peers&&sel>=0&&i!==sel&&(r===sR||c===sC||b===sB)) cell.classList.add('echo');
+      if(selVal&&v===selVal&&i!==sel) cell.classList.add('twin');
+      if(i===sel) cell.classList.add('spotlight');
+      if(bad.has(i)) cell.classList.add('clash');
+      cell.innerHTML = v ? dotsSVG(v,colOf(v)) : '';
+    }
+    renderNumpad(selVal);
+    $('diffLabel').textContent=state.difficulty.charAt(0).toUpperCase()+state.difficulty.slice(1);
+  }
+  function renderNumpad(selVal){
+    const counts=new Array(10).fill(0); for(const v of state.values) if(v) counts[v]++;
+    for(let n=1;n<=9;n++){
+      const btn=numpadEl.children[n-1];
+      btn.querySelector('.tally').textContent=settings.totals?counts[n]:'';
+      btn.classList.toggle('spent',counts[n]>=9);
+      btn.classList.toggle('glow',selVal===n);
+    }
+  }
+
+  // ---------- Interaction ----------
+  function selectCell(i){
+    if(!state.done&&!state.given[i]&&state.values[i]){ pushHist(i); state.values[i]=0; state.selected=i; after(); return; }
+    state.selected=i; render();
+  }
+  function pushHist(i){ state.history.push({i,value:state.values[i]}); if(state.history.length>200) state.history.shift(); }
+  function nope(i){ toast('Try again 🙂'); const cell=boardEl.children[i]; if(cell){ cell.classList.remove('nope'); void cell.offsetWidth; cell.classList.add('nope'); setTimeout(()=>{ const c=boardEl.children[i]; if(c) c.classList.remove('nope'); },450); } if(navigator.vibrate){ try{navigator.vibrate(60);}catch(e){} } }
+  function inputNumber(n){
+    const i=state.selected;
+    if(i<0){ toast('Tap a square first'); return; }
+    if(state.given[i]){ toast('That one is already filled in'); return; }
+    if(state.done) return;
+    if(state.values[i]===n){ pushHist(i); state.values[i]=0; after(); return; }
+    if(n!==state.solution[i]){ nope(i); return; }
+    pushHist(i); state.values[i]=n; after();
+  }
+  function undo(){ const l=state.history.pop(); if(!l){ toast('Nothing to undo'); return; } state.values[l.i]=l.value; state.selected=l.i; render(); saveGame(); }
+  function hint(){
+    const i=state.selected;
+    if(i<0){ toast('Select an empty cell first'); return; }
+    if(state.given[i]||state.values[i]){ toast('Pick an empty cell'); return; }
+    if(state.done) return;
+    pushHist(i); state.values[i]=state.solution[i]; toast('Revealed!'); after();
+  }
+  function after(){ render(); saveGame(); checkWin(); }
+  function checkWin(){
+    for(let i=0;i<CELLS;i++) if(state.values[i]!==state.solution[i]) return;
+    state.done=true; stopTimer(); saveGame();
+    $('winText').textContent='Solved on '+state.difficulty.charAt(0).toUpperCase()+state.difficulty.slice(1)+' in '+fmt(state.seconds)+'.';
+    show('winOverlay');
+  }
+
+  // ---------- Timer ----------
+  let timerId=null;
+  function startTimer(){ stopTimer(); timerId=setInterval(()=>{ state.seconds++; $('timer').textContent=fmt(state.seconds); if(state.seconds%5===0) saveGame(); },1000); }
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+  const fmt=s=>{ const m=(s/60|0),ss=s%60; return m+':'+(ss<10?'0':'')+ss; };
+
+  // ---------- Veils ----------
+  const show=id=>$(id).classList.add('bared'), hide=id=>$(id).classList.remove('bared');
+  let toastT=null;
+  function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('bared'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('bared'),1500); }
+
+  function startNew(diff){
+    hide('newOverlay'); hide('winOverlay'); toast('Making a '+diff+' puzzle…');
+    setTimeout(()=>{ const {puzzle,solution}=generate(diff); state=newState(puzzle,solution,diff); $('timer').textContent='0:00'; render(); saveGame(); startTimer(); },30);
+  }
+
+  // ---------- Pick Your Colors ----------
+  let pickActive=1;
+  function openPicker(){
+    pickActive=firstUnset()||1; buildPicker(); show('pickOverlay');
+  }
+  function firstUnset(){ for(let n=1;n<=9;n++) if(!colorsByDigit[n]) return n; return 0; }
+  function buildPicker(){
+    // the ColorMyMath number line: 1..9, each as its dots in the chosen colour
+    const line=$('pickLine'); line.innerHTML='';
+    for(let n=1;n<=9;n++){
+      const t=document.createElement('div'); t.className='plcell'+(n===pickActive?' active':'');
+      t.innerHTML='<div class="pldots">'+dotsSVG(n,colOf(n))+'</div><b>'+n+'</b>';
+      t.addEventListener('click',()=>{ pickActive=n; buildPicker(); });
+      line.appendChild(t);
+    }
+    // palette chips
+    const used=new Set(colorsByDigit.filter(Boolean));
+    const pal=$('pickPal'); pal.innerHTML='';
+    PALETTE.forEach(p=>{
+      const ch=document.createElement('div');
+      const isUsedByOther = used.has(p.hex) && colorsByDigit[pickActive]!==p.hex;
+      ch.className='pchip'+(isUsedByOther?' used':''); ch.style.background=p.hex; ch.title=p.name;
+      ch.addEventListener('click',()=>assignColor(p.hex));
+      pal.appendChild(ch);
+    });
+    // status
+    const cnt=colorsByDigit.filter(Boolean).length;
+    $('pickCount').textContent=cnt+' of 9 chosen';
+    $('pickPrompt').textContent = colorsComplete()
+      ? 'All set! Tap a number to change it, or press Start.'
+      : 'What color for number '+pickActive+'? Tap a color below.';
+    $('pickStart').disabled = !colorsComplete();
+  }
+  function assignColor(hex){
+    // free this hex from any other digit (keep colors distinct)
+    for(let n=1;n<=9;n++) if(n!==pickActive && colorsByDigit[n]===hex) colorsByDigit[n]=null;
+    colorsByDigit[pickActive]=hex; saveColors();
+    const nxt=firstUnset(); if(nxt) pickActive=nxt;
+    buildPicker();
+  }
+  function surprise(){
+    const hexes=shuffle(PALETTE.map(p=>p.hex)).slice(0,9);
+    for(let n=1;n<=9;n++) colorsByDigit[n]=hexes[n-1];
+    saveColors(); pickActive=1; buildPicker();
+  }
+  function finishPicker(){
+    if(!colorsComplete()) return;
+    hide('pickOverlay'); buildNumpad();
+    if(state&&isReal(state)) render(); else show('newOverlay');
+  }
+
+  // ---------- Init ----------
+  function bindSettings(){
+    const map={setWrong:'wrong',setPeers:'peers',setTotals:'totals'};
+    for(const [id,k] of Object.entries(map)){ const el=$(id); el.checked=settings[k]; el.addEventListener('change',()=>{ settings[k]=el.checked; saveSettings(); render(); }); }
+  }
+  function init(){
+    buildBoard(); buildNumpad(); bindSettings();
+    $('btnNew').addEventListener('click',()=>show('newOverlay'));
+    $('btnColors').addEventListener('click',openPicker);
+    $('btnHint').addEventListener('click',hint);
+    $('btnUndo').addEventListener('click',undo);
+    $('btnSettings').addEventListener('click',()=>show('setOverlay'));
+    $('newClose').addEventListener('click',()=>hide('newOverlay'));
+    $('setClose').addEventListener('click',()=>hide('setOverlay'));
+    $('setRecolor').addEventListener('click',()=>{ hide('setOverlay'); openPicker(); });
+    $('winClose').addEventListener('click',()=>hide('winOverlay'));
+    $('winNew').addEventListener('click',()=>{ hide('winOverlay'); show('newOverlay'); });
+    $('pickStart').addEventListener('click',finishPicker);
+    $('pickRandom').addEventListener('click',surprise);
+    document.querySelectorAll('.tier[data-diff]').forEach(b=>b.addEventListener('click',()=>startNew(b.dataset.diff)));
+    document.querySelectorAll('.veil').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o && o.id!=='pickOverlay') hide(o.id); }));
+    document.addEventListener('keydown',e=>{ if(!state) return; if(e.key>='1'&&e.key<='9') inputNumber(+e.key); else if(e.key==='Backspace'||e.key==='Delete'){ const i=state.selected; if(i>=0&&!state.given[i]&&state.values[i]){ pushHist(i); state.values[i]=0; after(); } } else if(e.key.toLowerCase()==='u') undo(); });
+
+    const saved=loadGame();
+    if(saved){ state=saved; render(); if(!state.done) startTimer(); else $('timer').textContent=fmt(state.seconds); }
+    else state=newState(deepEmpty(),deepEmpty(),'easy');
+
+    // first thing: if colors aren't chosen yet, make them pick. Otherwise, if no
+    // game in progress, open the difficulty chooser.
+    if(!colorsComplete()) openPicker();
+    else if(!saved) show('newOverlay');
+
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
+  }
+  init();
+})();
+</script>
+</body>
+</html>

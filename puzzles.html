@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Puzzles — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: #000; color: #fff;
+      font-family: Arial, sans-serif; padding: 40px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; margin-bottom: 24px; }
+    .top-nav a {
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; text-decoration: none; transition: all 0.3s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+    h1 {
+      text-align: center; font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .sub { text-align: center; color: #aaa; margin: 0 0 36px; font-size: 16px; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 22px; background: rgba(255,255,255,0.03);
+      border: 3px solid #fff; border-radius: 18px; text-decoration: none;
+      color: #fff; transition: all 0.25s ease;
+    }
+    .card:hover { background: #fff; color: #000; transform: translateY(-3px); }
+    .card .art {
+      width: 100%; max-width: 220px; aspect-ratio: 1/1;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px; overflow: hidden;
+      filter: drop-shadow(0 4px 14px rgba(0,0,0,0.5));
+    }
+    .card .art img { width: 100%; height: 100%; object-fit: contain; }
+    .card .art.cover img { object-fit: cover; }
+    .card h2 { margin: 0; font-size: 22px; text-align: center; letter-spacing: 1px; }
+    .card p { margin: 0; font-size: 14px; text-align: center; opacity: 0.8; line-height: 1.45; }
+    .card:hover p { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav"><a href="index.html">← Back to Home</a></div>
+    <h1>Puzzles</h1>
+    <p class="sub">Colorful Sudoku and read-along stories.</p>
+
+    <div class="grid">
+      <a href="color-my-sudoku/index.html" class="card">
+        <span class="art"><img src="color-my-sudoku/sudoku-button.png" alt="Color My Sudoku"></span>
+        <h2>Color My Sudoku</h2>
+        <p>Every number is that many colored dots — the ColorMyMath colors.</p>
+      </a>
+
+      <a href="i-like-pink-sudoku/index.html" class="card">
+        <span class="art"><img src="i-like-pink-sudoku/sudoku-button.png" alt="I Like Pink Sudoku"></span>
+        <h2>I Like Pink Sudoku</h2>
+        <p>The same game in Annie's colors — pink at the start and the end.</p>
+      </a>
+
+      <a href="tom-sawyer-audiobook/index.html" class="card">
+        <span class="art cover"><img src="tom-sawyer-audiobook/cover.png" alt="The Adventures of Tom Sawyer"></span>
+        <h2>Tom Sawyer Audiobook</h2>
+        <p>Listen and read along — the words scroll with the narrator.</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

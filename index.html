@@ -96,6 +96,24 @@
     }
     .tile:hover p, .tile:focus-visible p { opacity: 1; }
 
+    /* Math is the headline button — full width and bigger than the rest */
+    .tile.featured {
+      grid-column: 1 / -1;
+      flex-direction: row;
+      align-items: center;
+      gap: 32px;
+      min-height: 220px;
+      border-width: 5px;
+      background: rgba(255,255,255,0.04);
+    }
+    .tile.featured .icon { font-size: clamp(72px, 12vw, 120px); }
+    .tile.featured .ftxt { display: flex; flex-direction: column; gap: 12px; }
+    .tile.featured h2 { font-size: clamp(40px, 8vw, 72px); }
+    .tile.featured p { font-size: 17px; max-width: 560px; }
+    @media (max-width: 560px) {
+      .tile.featured { flex-direction: column; align-items: flex-start; min-height: 220px; }
+    }
+
     .footer-note {
       text-align: center;
       margin-top: auto;
@@ -119,22 +137,30 @@
 
     <div class="tile-grid">
 
-      <a href="math.html" class="tile">
+      <a href="math.html" class="tile featured">
         <span class="icon">🔢</span>
-        <h2>Math</h2>
-        <p>Counting, adding, taking away, and making 10 — watch the video, play the game, do it yourself.</p>
+        <span class="ftxt">
+          <h2>Math</h2>
+          <p>Counting, adding, taking away, and making 10 — watch the video, play the game, do it yourself.</p>
+        </span>
+      </a>
+
+      <a href="puzzles.html" class="tile">
+        <span class="icon">🧩</span>
+        <h2>Puzzles</h2>
+        <p>Color My Sudoku, I Like Pink Sudoku, and read-along audiobooks.</p>
+      </a>
+
+      <a href="games.html" class="tile">
+        <span class="icon">🎮</span>
+        <h2>Games</h2>
+        <p>Clocks, squares, and other things to play with.</p>
       </a>
 
       <a href="language.html" class="tile">
         <span class="icon">🌍</span>
         <h2>Language</h2>
         <p>Vocabulary lessons and games in Vietnamese, Chinese, Korean, and French.</p>
-      </a>
-
-      <a href="audiobooks.html" class="tile">
-        <span class="icon">📖</span>
-        <h2>Audio Books</h2>
-        <p>Classic stories read aloud — start with Mark Twain's The Adventures of Tom Sawyer.</p>
       </a>
 
       <a href="https://colormymath.com" class="tile" target="_blank" rel="noopener">

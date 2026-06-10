@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Games — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: #000; color: #fff;
+      font-family: Arial, sans-serif; padding: 40px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; margin-bottom: 24px; }
+    .top-nav a {
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; text-decoration: none; transition: all 0.3s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+    h1 {
+      text-align: center; font-size: clamp(28px, 5vw, 42px);
+      margin: 0 0 8px; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .sub { text-align: center; color: #aaa; margin: 0 0 36px; font-size: 16px; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 26px 22px; background: rgba(255,255,255,0.03);
+      border: 3px solid #fff; border-radius: 18px; text-decoration: none;
+      color: #fff; transition: all 0.25s ease; min-height: 220px; justify-content: center;
+    }
+    .card:hover { background: #fff; color: #000; transform: translateY(-3px); }
+    .card .art { font-size: 84px; line-height: 1; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.5)); }
+    .card h2 { margin: 0; font-size: 22px; text-align: center; letter-spacing: 1px; }
+    .card p { margin: 0; font-size: 14px; text-align: center; opacity: 0.8; line-height: 1.45; }
+    .card:hover p { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav"><a href="index.html">← Back to Home</a></div>
+    <h1>Games</h1>
+    <p class="sub">Things to play with.</p>
+
+    <div class="grid">
+      <a href="annies-clock/index.html" class="card">
+        <span class="art">🕐</span>
+        <h2>Annie's Clock</h2>
+        <p>Tell the time, Annie's way.</p>
+      </a>
+
+      <a href="colormymath-clock/index.html" class="card">
+        <span class="art">⚙️</span>
+        <h2>ColorMyMath Clock</h2>
+        <p>A clock that shows how time really moves.</p>
+      </a>
+
+      <a href="squares.html" class="card">
+        <span class="art">🟦</span>
+        <h2>Squares</h2>
+        <p>Square numbers and multiplication to play with.</p>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

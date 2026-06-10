@@ -208,14 +208,15 @@
     }
     .card .emoji svg { width: 100%; height: 100%; max-height: 120px; display: block; }
 
-    /* --- Live characters: the babies/kids now move so they stop reading as
-       stiff, abstract figures.  Stage 1 (red) = crawling baby rocking +
-       bobbing like a real crawl; Stage 2 (orange) = walking boy with a
-       gentle step bounce.  transform-origin sits near the feet so they rock
-       on the ground, not the middle.  Respects reduced-motion below. --- */
-    @keyframes crawlBob {
-      0%, 100% { transform: translateY(0) rotate(-4deg) scale(1, 1); }
-      50%      { transform: translateY(-6%) rotate(4deg) scale(1.02, 0.98); }
+    /* --- Live characters: the kids move so they stop reading as stiff,
+       abstract figures.  Stage 1 (red, easiest) = the same boy SITTING, with
+       only a slow, tiny breathing motion -- he's "not going anywhere yet".
+       Stage 2 (orange) = walking boy with a gentle step bounce.
+       transform-origin sits near the feet/seat so they settle on the ground,
+       not the middle.  Respects reduced-motion below. --- */
+    @keyframes idleBreath {
+      0%, 100% { transform: translateY(0) scale(1, 1); }
+      50%      { transform: translateY(-1.5%) scale(1.015, 0.99); }
     }
     @keyframes walkBob {
       0%, 100% { transform: translateY(0) rotate(-2.5deg); }
@@ -223,11 +224,11 @@
     }
     .stage-section.stage-1 .card .emoji svg,
     .stage-banner.stage-1 svg {
-      transform-origin: 50% 82%;
-      animation: crawlBob 1.15s ease-in-out infinite;
+      transform-origin: 50% 90%;
+      animation: idleBreath 3.4s ease-in-out infinite;
     }
-    /* second baby crawls out of sync with the first -- looks livelier */
-    .stage-section.stage-1 .card:nth-child(2) .emoji svg { animation-delay: -0.45s; }
+    /* second kid breathes out of sync with the first -- feels alive, not cloned */
+    .stage-section.stage-1 .card:nth-child(2) .emoji svg { animation-delay: -1.5s; }
     .stage-section.stage-2 .card .emoji svg,
     .stage-banner.stage-2 svg {
       transform-origin: 50% 88%;
@@ -332,6 +333,42 @@
         <path d="M42 72 Q34 78 38 88" stroke="#000" stroke-width="1.6" fill="none"/>
         <ellipse cx="36" cy="89" rx="9" ry="4" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
       </symbol>
+
+      <!-- Same boy as #icon-walking-boy, but sitting cross-legged with his
+           hands resting on his knees: calm, "not going anywhere yet" pose for
+           the first two (easiest) lessons.  Same palette so it's clearly the
+           same kid. -->
+      <symbol id="icon-sitting-boy" viewBox="0 0 100 100">
+        <!-- ground shadow -->
+        <ellipse cx="50" cy="91" rx="30" ry="4" fill="#000" opacity="0.16"/>
+        <!-- crossed legs (behind the body) -->
+        <path d="M44 66 L27 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M56 66 L73 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M27 81 Q40 89 58 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M73 81 Q60 89 42 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <ellipse cx="58" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
+        <ellipse cx="42" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
+        <!-- shorts -->
+        <path d="M35 57 L65 57 L61 70 L52 66 L48 66 L39 70 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- T-shirt torso (upright) -->
+        <path d="M35 36 Q50 33 65 36 L66 60 Q50 63 34 60 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
+        <!-- arms resting down onto the knees -->
+        <path d="M36 41 L28 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M64 41 L72 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <circle cx="28" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="72" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <!-- head -->
+        <circle cx="50" cy="22" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
+        <path d="M36 21 Q38 8 50 7 Q62 8 64 21 Q58 15 50 15 Q42 15 36 21 Z" fill="#1a1a1a"/>
+        <ellipse cx="36" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <ellipse cx="64" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="45" cy="23" r="1.8" fill="#1a1a1a"/>
+        <circle cx="55" cy="23" r="1.8" fill="#1a1a1a"/>
+        <circle cx="41" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <circle cx="59" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <path d="M45 28 Q50 33 55 28" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </symbol>
     </defs>
   </svg>
 
@@ -349,7 +386,7 @@
 
     <div class="stage-banner stage-1" aria-hidden="true">
       <!-- Stage 1: crawling baby (friendly character, matches the cards) -->
-      <svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg>
+      <svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg>
       <div>
         <div class="stage-num">Stage 1</div>
         <div class="stage-name">Crawling — Easiest</div>
@@ -360,13 +397,13 @@
     <p class="section-note">Mom, will you sit with me for these first two?  They're a little hard to do by myself — let's work through them together, nice and slow.  Once I've got these, I can run with everything after Crawling all on my own!</p>
     <div class="grid stage-section stage-1">
       <a href="bigger-smaller.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg></span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
         <span class="step">Do this with me, Mom</span>
         Bigger / Smaller
         <span class="filename">bigger-smaller.html</span>
       </a>
       <a href="number-practice.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg></span>
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
         <span class="step">My Turn</span>
         Numbers 1 to 10
         <span class="filename">number-practice.html</span>

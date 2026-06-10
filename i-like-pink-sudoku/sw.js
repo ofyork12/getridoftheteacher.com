@@ -1,5 +1,5 @@
 /* I Like Pink Sudoku service worker — network-first so updates show up immediately when online */
-const CACHE = 'ilp-v1';
+const CACHE = 'ilp-v2';
 const ASSETS = [
   './',
   './index.html',

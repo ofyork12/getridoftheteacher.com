@@ -298,14 +298,15 @@
   .hint-msg.show { display:block; }
   .hint-msg .hint-title { font-weight:bold; color:#ffe600; margin-bottom:3px;
     letter-spacing:0.5px; text-transform:uppercase; font-size:10px; }
+  /* All clusters are ONE group of 10 -- pack them tight so they touch,
+     no plus signs between, no separate digit labels.  Same visual idea as
+     the number-line cell for 10. */
   .hint-msg .hint-clusters { display:flex; justify-content:center; align-items:flex-end;
-    gap:2px; flex-wrap:wrap; }
-  .hint-msg .hint-cell { display:flex; flex-direction:column; align-items:center; gap:1px; }
-  .hint-msg .hint-cluster { width:auto; height:22px; max-width:36px; display:block; }
-  .hint-msg .hint-digit { font-family:Nunito,Arial,sans-serif; font-weight:800; font-size:10px;
-    color:#fff; }
-  .hint-msg .hint-plus { color:#ffe600; font-weight:bold; font-size:12px; padding:0 1px;
-    align-self:center; }
+    gap:0; flex-wrap:nowrap; }
+  .hint-msg .hint-cell { display:flex; align-items:flex-end; }
+  .hint-msg .hint-cluster { width:auto; height:28px; max-width:48px; display:block; }
+  .hint-msg .hint-digit { display:none; }
+  .hint-msg .hint-plus { display:none; }
   .hint-msg .eq { display:none; }
   .missed-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000;
     display:none; align-items:center; justify-content:center; padding:20px; }

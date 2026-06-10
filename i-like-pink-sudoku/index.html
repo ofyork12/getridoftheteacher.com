@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#10243e">
+<title>I Like Pink Sudoku</title>
+
+<!-- PWA / iOS install -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="I Like Pink">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<style>
+  :root{
+    /* Annie's colors: 1 pink, 2 green, 3 red, 4 sky, 5 lime, 6 navy, 7 orange, 8 yellow, 9 magenta */
+    --hue1:#ff7fd4; --hue2:#0f8a2e; --hue3:#ed1c24; --hue4:#44c8f5; --hue5:#5bd11e;
+    --hue6:#2e3192; --hue7:#f7941d; --hue8:#e8d600; --hue9:#c724b1;
+
+    --bg:#0d1b2e; --bg2:#10243e;
+    --canvas:#fbfcff; --grout-thin:#c7d2e0; --grout-thick:#2b3f5c;
+    --etched-bg:#eef2f8; --spotlight-bg:#cfe3ff; --echo-bg:#eaf2fd; --twin-bg:#d6e9c9;
+    --clash-bg:#ffd9dc; --ink:#1f2d3d; --panel:#15294a; --panel2:#1d3559;
+    --muted:#9bb0cc; --accent:#f0b32a;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(160deg,var(--bg),var(--bg2));
+    color:#eaf1fb; display:flex; flex-direction:column; align-items:center;
+    min-height:100%; overflow-x:hidden; user-select:none; -webkit-user-select:none;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .easel{width:100%; max-width:520px; padding:8px 12px 12px; display:flex; flex-direction:column; gap:7px;}
+
+  header{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .maestro{font-weight:800; font-size:20px; letter-spacing:.3px; display:flex; gap:2px;}
+  .maestro span:nth-child(1){color:var(--hue1);} .maestro span:nth-child(2){color:var(--hue2);}
+  .maestro span:nth-child(3){color:var(--hue4);} .maestro span:nth-child(4){color:var(--hue6);}
+  .maestro span:nth-child(5){color:var(--hue9);}
+  .maestro .rest{color:#eaf1fb;}
+  .scoreboard{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted);}
+  .bubble{background:var(--panel); padding:5px 10px; border-radius:999px; font-variant-numeric:tabular-nums; font-weight:600; color:#eaf1fb;}
+  .bubble b{color:var(--accent);}
+
+  /* Board */
+  .frame{position:relative; width:100%; max-width:min(100%,48vh); margin:0 auto; aspect-ratio:1/1;}
+  #board{
+    width:100%; height:100%; background:var(--canvas); border-radius:14px;
+    display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(9,1fr);
+    overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.4);
+    border:3px solid var(--grout-thick);
+  }
+  .swatch{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    border-right:1px solid var(--grout-thin); border-bottom:1px solid var(--grout-thin);
+    color:var(--ink); font-weight:700; cursor:pointer;
+    font-size:clamp(18px,6.2vw,30px); line-height:1;
+  }
+  .swatch:nth-child(9n){border-right:none;}
+  .swatch:nth-child(n+73){border-bottom:none;}
+  /* thick 3x3 box borders */
+  .swatch.grout-r{border-right:2.5px solid var(--grout-thick);}
+  .swatch.grout-b{border-bottom:2.5px solid var(--grout-thick);}
+  .swatch.etched{background:var(--etched-bg); font-weight:800;}
+  .swatch.echo{background:#f3f7fc;}                                  /* row/col/box: barely-there wash */
+  .swatch.twin{box-shadow:inset 0 0 0 2.5px #f3c969;}               /* matching number: a ring, not a fill */
+  .swatch.spotlight{background:var(--spotlight-bg); box-shadow:inset 0 0 0 3px var(--hue5);}  /* the ONE active cell */
+  .swatch.clash{background:var(--clash-bg) !important; color:var(--hue1) !important;}
+  @keyframes nope{0%,100%{transform:translateX(0);}20%{transform:translateX(-4px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+  .swatch.nope{animation:nope .4s ease; box-shadow:inset 0 0 0 3px var(--hue1);}
+  .swatch .glyph.hue1{color:var(--hue1);} .swatch .glyph.hue2{color:var(--hue2);} .swatch .glyph.hue3{color:var(--hue3);}
+  .swatch .glyph.hue4{color:var(--hue4);} .swatch .glyph.hue5{color:var(--hue5);} .swatch .glyph.hue6{color:var(--hue6);}
+  .swatch .glyph.hue7{color:var(--hue7);} .swatch .glyph.hue8{color:var(--hue8);} .swatch .glyph.hue9{color:var(--hue9);}
+  .swatch.etched .glyph{color:var(--ink) !important;}
+  .swatch .speck{width:100%; height:100%; object-fit:contain; pointer-events:none;}
+  .murmurs{position:absolute; inset:6%; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+    font-size:clamp(7px,2.5vw,11px); font-weight:700; line-height:1; pointer-events:none;}
+  .murmurs span{display:flex; align-items:center; justify-content:center;}
+  .murmurs span.hue1{color:var(--hue1);} .murmurs span.hue2{color:var(--hue2);} .murmurs span.hue3{color:var(--hue3);}
+  .murmurs span.hue4{color:var(--hue4);} .murmurs span.hue5{color:var(--hue5);} .murmurs span.hue6{color:var(--hue6);}
+  .murmurs span.hue7{color:var(--hue7);} .murmurs span.hue8{color:var(--hue8);} .murmurs span.hue9{color:var(--hue9);}
+
+  /* Crayon pad — big 3x3 dialpad that fills the room below the board */
+  .palette{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .crayon{
+    position:relative; aspect-ratio:1.6; border:none; border-radius:14px; background:var(--panel2);
+    font-weight:800; font-size:clamp(18px,5.5vw,26px); cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center; transition:transform .05s;
+  }
+  .crayon:active{transform:scale(.92);}
+  .crayon.hue1{color:var(--hue1);} .crayon.hue2{color:var(--hue2);} .crayon.hue3{color:var(--hue3);}
+  .crayon.hue4{color:var(--hue4);} .crayon.hue5{color:var(--hue5);} .crayon.hue6{color:var(--hue6);}
+  .crayon.hue7{color:var(--hue7);} .crayon.hue8{color:var(--hue8);} .crayon.hue9{color:var(--hue9);}
+  .crayon .tally{position:absolute; bottom:6px; right:0; left:0; font-size:12px; font-weight:600; color:var(--muted);}
+  .crayon .speck{width:82%; height:82%; object-fit:contain; pointer-events:none;}
+  .crayon .speck.inked{filter:invert(1);} /* black number glyphs -> white on dark keys */
+  .crayon.spent{opacity:.28;}
+  .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
+  /* bottom row control keys: Install | Hint | Settings */
+  .crayon.ctrl{aspect-ratio:auto; flex-direction:column; gap:3px; background:var(--panel); padding:10px 4px;}
+  .crayon.ctrl .cic{font-size:24px; line-height:1;}
+  .crayon.ctrl .clab{font-size:12px; font-weight:700; color:#eaf1fb;}
+  .crayon.ctrl.accent{background:var(--accent);} .crayon.ctrl.accent .clab{color:#10243e;}
+
+  /* bottom control row: New | Install | Hint | Undo | Settings */
+  .controls{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+  .ctl{border:none; border-radius:12px; background:var(--panel); color:#eaf1fb; cursor:pointer;
+    padding:9px 2px 7px; font-size:11px; font-weight:700; display:flex; flex-direction:column;
+    align-items:center; gap:3px; transition:transform .05s;}
+  .ctl:active{transform:scale(.93);}
+  .ctl .cic{font-size:21px; line-height:1;}
+  .ctl.accent{background:var(--accent); color:#10243e;}
+  .gizmo .emblem img{width:22px; height:22px; object-fit:contain; filter:invert(1);}
+
+  /* Tool kit */
+  .kit{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .gizmo{
+    border:none; border-radius:16px; background:var(--panel); color:#eaf1fb; cursor:pointer;
+    padding:18px 4px 14px; font-size:14px; font-weight:600; display:flex; flex-direction:column;
+    align-items:center; gap:6px; transition:transform .05s, background .15s;
+  }
+  .gizmo:active{transform:scale(.95);}
+  .gizmo .emblem{font-size:30px;}
+  .gizmo.lit{background:var(--accent); color:#10243e;}
+  .gizmo .tag{font-size:10px; color:var(--accent); font-weight:700; min-height:12px;}
+  .gizmo.lit .tag{color:#10243e;}
+
+  .tray{display:flex; gap:8px;}
+  .slab{flex:1; border:none; border-radius:14px; padding:18px; font-weight:700; font-size:17px; cursor:pointer;}
+  .slab.bold{background:var(--accent); color:#10243e;}
+  .slab.faint{background:var(--panel); color:#eaf1fb;}
+
+  /* Veil + plate (modal) */
+  .veil{position:fixed; inset:0; background:rgba(4,10,20,.72); display:none; align-items:center; justify-content:center; padding:20px; z-index:50;}
+  .veil.bared{display:flex;}
+  .plate{background:var(--bg2); border:1px solid #2b466e; border-radius:16px; padding:20px; width:100%; max-width:360px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .plate h2{margin:0 0 4px; font-size:20px;}
+  .plate p{margin:0 0 16px; color:var(--muted); font-size:14px;}
+  .tiers{display:flex; flex-direction:column; gap:8px;}
+  .tier{border:none; border-radius:12px; padding:14px; font-weight:700; font-size:16px; cursor:pointer; color:#10243e; text-align:left; display:flex; justify-content:space-between; align-items:center;}
+  .tier small{font-weight:600; opacity:.7; font-size:12px;}
+  .tier.calm{background:#8ce99a;} .tier.brisk{background:#ffd43b;} .tier.fierce{background:#ff8787;}
+  .plate .seal{margin-top:14px; width:100%; background:var(--panel); color:#eaf1fb; border:none; border-radius:10px; padding:11px; font-weight:600; cursor:pointer;}
+
+  .knob-row{display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #21385c; gap:10px;}
+  .knob-row:last-of-type{border-bottom:none;}
+  .knob-row span{font-size:14px;}
+  .knob-row small{display:block; color:var(--muted); font-size:11px; margin-top:2px;}
+  .flip{position:relative; width:46px; height:26px; flex:none;}
+  .flip input{opacity:0; width:0; height:0;}
+  .rail{position:absolute; inset:0; background:#34507a; border-radius:999px; transition:.2s; cursor:pointer;}
+  .rail:before{content:""; position:absolute; height:20px; width:20px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.2s;}
+  .flip input:checked + .rail{background:var(--accent);}
+  .flip input:checked + .rail:before{transform:translateX(20px);}
+
+  .blip{position:fixed; left:50%; bottom:calc(20px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px);
+    background:#10243e; border:1px solid #2b466e; color:#eaf1fb; padding:11px 18px; border-radius:999px; font-size:14px; font-weight:600;
+    opacity:0; transition:.25s; pointer-events:none; z-index:60; box-shadow:0 8px 24px rgba(0,0,0,.4);}
+  .blip.bared{opacity:1; transform:translateX(-50%) translateY(0);}
+  .triumph .plate{text-align:center;}
+  .burst{font-size:54px; margin-bottom:6px;}
+  @media (max-height:720px){ .easel{gap:7px;} }
+
+  /* Install banner */
+  .installbar{display:none; align-items:center; gap:8px; background:var(--accent); color:#10243e;
+    border-radius:12px; padding:9px 8px 9px 14px; font-weight:700; font-size:14px;}
+  .installbar.open{display:flex;}
+  .installbar span{flex:1; line-height:1.2;}
+  .installbar button{border:none; cursor:pointer; font-weight:800; border-radius:9px;}
+  .installbar .go{background:#10243e; color:#fff; padding:9px 16px; font-size:14px;}
+  .installbar .x{background:transparent; color:#10243e; font-size:22px; padding:0 6px; line-height:1;}
+</style>
+</head>
+<body>
+  <div class="easel">
+    <header>
+      <div class="maestro"><span style="color:#f7941d">I</span>&nbsp;<span style="color:#44c8f5">Like</span>&nbsp;<span style="color:#ff7fd4">Pink</span><span class="rest">&nbsp;Sudoku</span></div>
+      <div class="scoreboard">
+        <div class="bubble" id="diffLabel">Easy</div>
+        <div class="bubble" id="timer">0:00</div>
+      </div>
+    </header>
+
+    <div class="frame">
+      <div id="board"></div>
+    </div>
+
+    <div class="palette" id="numpad"></div>
+
+    <div class="controls">
+      <button class="ctl accent" id="btnNew"><span class="cic">🎲</span>New</button>
+      <button class="ctl" id="btnInstall"><span class="cic">📲</span>Install</button>
+      <button class="ctl" id="btnHint"><span class="cic">💡</span>Hint</button>
+      <button class="ctl" id="btnUndo"><span class="cic">↶</span>Undo</button>
+      <button class="ctl" id="btnSettings"><span class="cic">⚙</span>Settings</button>
+    </div>
+  </div>
+
+  <!-- New game / difficulty veil -->
+  <div class="veil" id="newOverlay">
+    <div class="plate">
+      <h2>New Game</h2>
+      <p>Pick a difficulty. Each puzzle has exactly one solution.</p>
+      <div class="tiers">
+        <button class="tier calm"   data-diff="easy">Easy <small>more clues</small></button>
+        <button class="tier brisk"  data-diff="medium">Medium <small>balanced</small></button>
+        <button class="tier fierce" data-diff="hard">Hard <small>few clues</small></button>
+      </div>
+      <button class="seal" id="newClose">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Settings veil -->
+  <div class="veil" id="setOverlay">
+    <div class="plate">
+      <h2>Settings</h2>
+      <button class="seal" id="settingsInstall" style="background:var(--accent); color:#10243e; margin:0 0 8px;">📲 Install / Add to Home Screen</button>
+      <button class="seal" id="settingsShare" style="margin:0 0 14px;">📤 Share this app</button>
+      <div class="knob-row"><div><span>Highlight wrong values</span><small>Flag cells that break the rules.</small></div>
+        <label class="flip"><input type="checkbox" id="setWrong"><span class="rail"></span></label></div>
+      <div class="knob-row"><div><span>Highlight row, column &amp; box</span><small>Shade peers of the selected cell.</small></div>
+        <label class="flip"><input type="checkbox" id="setPeers"><span class="rail"></span></label></div>
+      <div class="knob-row"><div><span>Highlight matching numbers</span><small>Shade all cells with the same digit.</small></div>
+        <label class="flip"><input type="checkbox" id="setSame"><span class="rail"></span></label></div>
+      <div class="knob-row"><div><span>Show number totals</span><small>Count placed for each digit on the pad.</small></div>
+        <label class="flip"><input type="checkbox" id="setTotals"><span class="rail"></span></label></div>
+      <div class="knob-row"><div><span>Auto-remove notes</span><small>Clear pencil marks when you place a number.</small></div>
+        <label class="flip"><input type="checkbox" id="setAutoNotes"><span class="rail"></span></label></div>
+      <div class="knob-row"><div><span>Show colored dots</span><small>ColorMyMath style: each number as that many colored dots. Off = plain numbers.</small></div>
+        <label class="flip"><input type="checkbox" id="setDots"><span class="rail"></span></label></div>
+      <button class="seal" id="setClose">Done</button>
+    </div>
+  </div>
+
+  <!-- Triumph veil -->
+  <div class="veil triumph" id="winOverlay">
+    <div class="plate">
+      <div class="burst">🎉</div>
+      <h2>Well done!</h2>
+      <p id="winText">Solved.</p>
+      <div class="tiers">
+        <button class="tier calm" id="winNew">Play another</button>
+      </div>
+      <button class="seal" id="winClose">Close</button>
+    </div>
+  </div>
+
+  <!-- Install instructions veil -->
+  <div class="veil" id="installOverlay">
+    <div class="plate">
+      <h2>Add to Home Screen</h2>
+      <p id="installHow">&nbsp;</p>
+      <button class="seal" id="installShare" style="background:var(--accent); color:#10243e; margin-bottom:8px;">📤 Send the link to someone</button>
+      <button class="seal" id="installClose">Got it</button>
+    </div>
+  </div>
+
+  <div class="blip" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+  const SIZE=9, BOXES=3, CELLS=81;
+  const $=id=>document.getElementById(id);
+
+  // ---------- Install & Share ----------
+  let deferredPrompt=null;
+  function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
+  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; });
+  window.addEventListener('appinstalled',()=>{ deferredPrompt=null; });
+
+  function triggerInstall(){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; });
+    } else {
+      $('installHow').innerHTML = isIOS()
+        ? 'In <b>Safari</b>: tap the <b>Share</b> button (the box with an ↑ arrow) at the bottom, then choose <b>Add to Home Screen</b>.'
+        : 'Open your browser menu (<b>⋮</b>), then tap <b>Install app</b> or <b>Add to Home screen</b>.';
+      show('installOverlay');
+    }
+  }
+  async function shareInstall(){
+    const link = location.href.split('?')[0].split('#')[0].replace(/index\.html$/,'');
+    const data = { title:'Color My Sudoku', text:'Play Color My Sudoku — free, works on iPhone and Android:', url: link };
+    try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ if(e && e.name==='AbortError') return; }
+    try{ await navigator.clipboard.writeText(link); toast('Link copied — paste to share!'); return; }catch(e){}
+    try{ window.prompt('Copy this link to share:', link); }catch(e){}
+  }
+
+  // ---------- Sudoku engine: solver + generator ----------
+  function deepEmpty(){ return new Array(CELLS).fill(0); }
+
+  function findEmpty(g){ for(let i=0;i<CELLS;i++) if(g[i]===0) return i; return -1; }
+
+  function valid(g, idx, v){
+    const r=(idx/9|0), c=idx%9;
+    for(let i=0;i<9;i++){
+      if(g[r*9+i]===v) return false;
+      if(g[i*9+c]===v) return false;
+    }
+    const br=(r/3|0)*3, bc=(c/3|0)*3;
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++)
+      if(g[(br+i)*9+(bc+j)]===v) return false;
+    return true;
+  }
+
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+  // Fill a complete valid solution via randomized backtracking
+  function fillSolution(g){
+    const idx=findEmpty(g);
+    if(idx===-1) return true;
+    const nums=shuffle([1,2,3,4,5,6,7,8,9]);
+    for(const v of nums){
+      if(valid(g,idx,v)){
+        g[idx]=v;
+        if(fillSolution(g)) return true;
+        g[idx]=0;
+      }
+    }
+    return false;
+  }
+
+  // Count solutions up to a cap (for uniqueness checking)
+  function countSolutions(g, cap){
+    const idx=findEmpty(g);
+    if(idx===-1) return 1;
+    let total=0;
+    for(let v=1;v<=9;v++){
+      if(valid(g,idx,v)){
+        g[idx]=v;
+        total+=countSolutions(g,cap);
+        g[idx]=0;
+        if(total>=cap) return total;
+      }
+    }
+    return total;
+  }
+
+  // Generate a puzzle: returns {puzzle, solution}
+  function generate(difficulty){
+    const solution=deepEmpty();
+    fillSolution(solution);
+    const puzzle=solution.slice();
+
+    // target number of givens
+    const targets={easy:[40,46], medium:[32,36], hard:[26,30]};
+    const [lo,hi]=targets[difficulty]||targets.easy;
+    const targetGivens=lo+Math.floor(Math.random()*(hi-lo+1));
+
+    // remove cells in random order while keeping a unique solution
+    const order=shuffle([...Array(CELLS).keys()]);
+    let givens=CELLS;
+    for(const i of order){
+      if(givens<=targetGivens) break;
+      const backup=puzzle[i];
+      if(backup===0) continue;
+      puzzle[i]=0;
+      const test=puzzle.slice();
+      if(countSolutions(test,2)!==1){ puzzle[i]=backup; } // not unique -> revert
+      else givens--;
+    }
+    return {puzzle, solution};
+  }
+
+  // ---------- Game state ----------
+  let state=null;
+  const defaults={wrong:true, peers:false, same:false, totals:false, autoNotes:true, visual:'dots'};
+  let settings=loadSettings();
+
+  // ColorMyMath representation: each number = that many colored dots (or plain number glyph)
+  function repPrefix(){ return settings.visual==='numbers' ? 'num' : 'dot'; }
+  function repSrc(n){ return 'img/'+repPrefix()+n+'.png'; }
+
+  function loadSettings(){
+    let s;
+    try{ s=Object.assign({}, defaults, JSON.parse(localStorage.getItem('cms_settings')||'{}')); }
+    catch(e){ s=Object.assign({}, defaults); }
+    // one-time migration: turn the row/col/box + matching-number highlights OFF for
+    // existing players (they read as "the whole board fills in"). Still re-enable-able in Settings.
+    if(localStorage.getItem('cms_pref_migrate_v2')!=='1'){
+      s.peers=false; s.same=false; s.totals=false;
+      localStorage.setItem('cms_pref_migrate_v2','1');
+      localStorage.setItem('cms_settings', JSON.stringify(s));
+    }
+    return s;
+  }
+  function saveSettings(){ localStorage.setItem('cms_settings', JSON.stringify(settings)); }
+
+  function newState(puzzle, solution, difficulty){
+    return {
+      difficulty,
+      given: puzzle.slice(),               // immutable clues (0 = blank)
+      values: puzzle.slice(),              // current entries
+      notes: Array.from({length:CELLS},()=>[]), // arrays of digits
+      solution: solution.slice(),
+      selected: -1,
+      notesMode: false,
+      history: [],
+      seconds: 0,
+      done: false,
+      started: Date.now()
+    };
+  }
+
+  function isRealPuzzle(s){ return s && Array.isArray(s.given) && s.given.some(x=>x>0); }
+
+  function saveGame(){
+    if(!isRealPuzzle(state)) return; // never persist the empty placeholder
+    const s={...state, history:[]}; // don't persist full history
+    localStorage.setItem('cms_game', JSON.stringify(s));
+  }
+  function loadGame(){
+    try{
+      const s=JSON.parse(localStorage.getItem('cms_game'));
+      if(s && Array.isArray(s.values) && s.values.length===CELLS && isRealPuzzle(s)){ s.history=[]; return s; }
+    }catch(e){}
+    localStorage.removeItem('cms_game');
+    return null;
+  }
+
+  // ---------- Rendering ----------
+  const boardEl=$('board'), numpadEl=$('numpad');
+
+  function buildBoard(){
+    boardEl.innerHTML='';
+    for(let i=0;i<CELLS;i++){
+      const c=document.createElement('div');
+      c.className='swatch';
+      const col=i%9, row=(i/9|0);
+      if(col===2||col===5) c.classList.add('grout-r');
+      if(row===2||row===5) c.classList.add('grout-b');
+      c.dataset.i=i;
+      c.addEventListener('click',()=>selectCell(i));
+      boardEl.appendChild(c);
+    }
+  }
+
+  function buildNumpad(){
+    numpadEl.innerHTML='';
+    for(let n=1;n<=9;n++){
+      const b=document.createElement('button');
+      b.className='crayon hue'+n;
+      b.innerHTML='<img class="speck" src="'+repSrc(n)+'" alt="'+n+'"><span class="tally" data-n="'+n+'"></span>';
+      b.addEventListener('click',()=>inputNumber(n));
+      numpadEl.appendChild(b);
+    }
+  }
+
+  function conflictsSet(){
+    // indices that violate a rule given current values
+    const bad=new Set();
+    for(let i=0;i<CELLS;i++){
+      const v=state.values[i];
+      if(!v) continue;
+      const r=(i/9|0), c=i%9;
+      for(let k=0;k<9;k++){
+        const a=r*9+k, b=k*9+c;
+        if(a!==i && state.values[a]===v) {bad.add(i);bad.add(a);}
+        if(b!==i && state.values[b]===v) {bad.add(i);bad.add(b);}
+      }
+      const br=(r/3|0)*3, bc=(c/3|0)*3;
+      for(let x=0;x<3;x++)for(let y=0;y<3;y++){
+        const j=(br+x)*9+(bc+y);
+        if(j!==i && state.values[j]===v){bad.add(i);bad.add(j);}
+      }
+    }
+    return bad;
+  }
+
+  function render(){
+    const sel=state.selected;
+    const selVal = sel>=0 ? state.values[sel] : 0;
+    const bad = settings.wrong ? conflictsSet() : new Set();
+    let selR=-1, selC=-1, selB=-1;
+    if(sel>=0){ selR=(sel/9|0); selC=sel%9; selB=(selR/3|0)*3+(selC/3|0); }
+
+    for(let i=0;i<CELLS;i++){
+      const cell=boardEl.children[i];
+      const v=state.values[i];
+      const r=(i/9|0), c=i%9, b=(r/3|0)*3+(c/3|0);
+      cell.className='swatch';
+      if(c===2||c===5) cell.classList.add('grout-r');
+      if(r===2||r===5) cell.classList.add('grout-b');
+      if(state.given[i]) cell.classList.add('etched');
+
+      if(settings.peers && sel>=0 && i!==sel && (r===selR||c===selC||b===selB)) cell.classList.add('echo');
+      if(settings.same && selVal && v===selVal && i!==sel) cell.classList.add('twin');
+      if(i===sel) cell.classList.add('spotlight');
+      if(bad.has(i)) cell.classList.add('clash');
+
+      // content
+      if(v){
+        cell.innerHTML='<img class="speck" src="'+repSrc(v)+'" alt="'+v+'">';
+      } else if(state.notes[i] && state.notes[i].length){
+        let h='<div class="murmurs">';
+        for(let n=1;n<=9;n++){
+          h += '<span class="hue'+n+'">'+(state.notes[i].includes(n)?n:'')+'</span>';
+        }
+        h+='</div>';
+        cell.innerHTML=h;
+      } else {
+        cell.innerHTML='';
+      }
+    }
+    renderNumpad(selVal);
+    $('diffLabel').textContent = state.difficulty.charAt(0).toUpperCase()+state.difficulty.slice(1);
+  }
+
+  function renderNumpad(selVal){
+    const counts=new Array(10).fill(0);
+    for(const v of state.values) if(v) counts[v]++;
+    const isNum = settings.visual==='numbers';
+    for(let n=1;n<=9;n++){
+      const btn=numpadEl.children[n-1];
+      const cnt=btn.querySelector('.tally');
+      const img=btn.querySelector('.speck');
+      const want=repSrc(n);
+      if(!img.getAttribute('src').endsWith(want)) img.setAttribute('src', want);
+      img.classList.toggle('inked', isNum);
+      cnt.textContent = settings.totals ? counts[n] : '';   // how many of this number are on the board
+      btn.classList.toggle('spent', counts[n]>=9);
+      btn.classList.toggle('glow', selVal===n);
+    }
+  }
+
+  // ---------- Interaction ----------
+  function selectCell(i){
+    // tap a dot you placed to take it back out; tap an empty/clue square to select it
+    if(!state.done && !state.given[i] && state.values[i]){
+      pushHistory(i);
+      state.values[i]=0;
+      state.selected=i;
+      afterMove();
+      return;
+    }
+    state.selected=i; render();
+  }
+
+  function pushHistory(i){
+    state.history.push({i, value:state.values[i], notes:state.notes[i].slice()});
+    if(state.history.length>200) state.history.shift();
+  }
+
+  function wrongFeedback(i){
+    toast('Try again 🙂');
+    const cell=boardEl.children[i];
+    if(cell){ cell.classList.remove('nope'); void cell.offsetWidth; cell.classList.add('nope');
+      setTimeout(()=>{ const c=boardEl.children[i]; if(c) c.classList.remove('nope'); }, 450); }
+    if(navigator.vibrate){ try{ navigator.vibrate(60); }catch(e){} }
+  }
+
+  function inputNumber(n){
+    const i=state.selected;
+    if(i<0){ toast('Tap a square first'); return; }
+    if(state.given[i]){ toast('That one is already filled in'); return; }
+    if(state.done) return;
+
+    // tap the same number that's already there to clear it
+    if(!state.notesMode && state.values[i]===n){ pushHistory(i); state.values[i]=0; afterMove(); return; }
+    if(state.notesMode && state.notes[i].includes(n)){ pushHistory(i); const a=state.notes[i]; a.splice(a.indexOf(n),1); afterMove(); return; }
+
+    // correct-only: a wrong number simply won't go in
+    if(n !== state.solution[i]){ wrongFeedback(i); return; }
+
+    pushHistory(i);
+    if(state.notesMode){
+      if(state.values[i]) state.values[i]=0;
+      const arr=state.notes[i]; arr.push(n); arr.sort();
+    } else {
+      state.values[i]=n;
+      state.notes[i]=[];
+      if(settings.autoNotes) removeNotesFromPeers(i,n);
+    }
+    afterMove();
+  }
+
+  function removeNotesFromPeers(i,n){
+    const r=(i/9|0), c=i%9, br=(r/3|0)*3, bc=(c/3|0)*3;
+    const peers=new Set();
+    for(let k=0;k<9;k++){ peers.add(r*9+k); peers.add(k*9+c); }
+    for(let x=0;x<3;x++)for(let y=0;y<3;y++) peers.add((br+x)*9+(bc+y));
+    peers.forEach(p=>{
+      const arr=state.notes[p]; if(!arr) return;
+      const idx=arr.indexOf(n); if(idx>=0) arr.splice(idx,1);
+    });
+  }
+
+  function erase(){
+    const i=state.selected;
+    if(i<0||state.given[i]||state.done) return;
+    if(!state.values[i] && (!state.notes[i]||!state.notes[i].length)) return;
+    pushHistory(i);
+    state.values[i]=0; state.notes[i]=[];
+    afterMove();
+  }
+
+  function undo(){
+    const last=state.history.pop();
+    if(!last){ toast('Nothing to undo'); return; }
+    state.values[last.i]=last.value;
+    state.notes[last.i]=last.notes;
+    state.selected=last.i;
+    render(); saveGame();
+  }
+
+  function hint(){
+    const i=state.selected;
+    if(i<0){ toast('Select an empty cell first'); return; }
+    if(state.given[i]||state.values[i]){ toast('Pick an empty cell'); return; }
+    if(state.done) return;
+    pushHistory(i);
+    state.values[i]=state.solution[i];
+    state.notes[i]=[];
+    if(settings.autoNotes) removeNotesFromPeers(i,state.solution[i]);
+    toast('Revealed '+state.solution[i]);
+    afterMove();
+  }
+
+  function afterMove(){
+    render(); saveGame(); checkWin();
+  }
+
+  function checkWin(){
+    for(let i=0;i<CELLS;i++) if(state.values[i]!==state.solution[i]) return;
+    state.done=true; stopTimer(); saveGame();
+    $('winText').textContent='Solved on '+state.difficulty.charAt(0).toUpperCase()+state.difficulty.slice(1)+' in '+fmt(state.seconds)+'.';
+    show('winOverlay');
+  }
+
+  // ---------- Timer ----------
+  let timerId=null;
+  function startTimer(){ stopTimer(); timerId=setInterval(()=>{ state.seconds++; $('timer').textContent=fmt(state.seconds); if((state.seconds%5)===0) saveGame(); },1000); }
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+  function fmt(s){ const m=(s/60|0); const ss=s%60; return m+':'+(ss<10?'0':'')+ss; }
+
+  // ---------- Veils / blip ----------
+  function show(id){ $(id).classList.add('bared'); }
+  function hide(id){ $(id).classList.remove('bared'); }
+  let toastT=null;
+  function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('bared'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('bared'),1600); }
+
+  // ---------- New game ----------
+  function startNew(difficulty){
+    hide('newOverlay'); hide('winOverlay');
+    toast('Generating '+difficulty+' puzzle…');
+    // let the blip paint before the (sync) heavy generation
+    setTimeout(()=>{
+      const {puzzle, solution}=generate(difficulty);
+      state=newState(puzzle, solution, difficulty);
+      $('timer').textContent='0:00';
+      render(); saveGame(); startTimer();
+    },30);
+  }
+
+  // ---------- Wire up UI ----------
+  function bindSettingsUI(){
+    const map={setWrong:'wrong', setPeers:'peers', setSame:'same', setTotals:'totals', setAutoNotes:'autoNotes'};
+    for(const [id,key] of Object.entries(map)){
+      const el=$(id); el.checked=settings[key];
+      el.addEventListener('change',()=>{ settings[key]=el.checked; saveSettings(); render(); });
+    }
+    // dots/numbers toggle (on = colored dots)
+    const dotsEl=$('setDots'); dotsEl.checked = settings.visual!=='numbers';
+    dotsEl.addEventListener('change',()=>{ settings.visual = dotsEl.checked ? 'dots' : 'numbers'; saveSettings(); render(); });
+  }
+
+  function init(){
+    buildBoard(); buildNumpad(); bindSettingsUI();
+
+    // bottom control row
+    $('btnNew').addEventListener('click',()=>show('newOverlay'));
+    $('btnInstall').addEventListener('click', triggerInstall);
+    $('btnHint').addEventListener('click', hint);
+    $('btnUndo').addEventListener('click', undo);
+    $('btnSettings').addEventListener('click',()=>show('setOverlay'));
+    $('newClose').addEventListener('click',()=>hide('newOverlay'));
+    $('setClose').addEventListener('click',()=>hide('setOverlay'));
+    $('winClose').addEventListener('click',()=>hide('winOverlay'));
+    $('winNew').addEventListener('click',()=>{ hide('winOverlay'); show('newOverlay'); });
+    document.querySelectorAll('.tier[data-diff]').forEach(b=>b.addEventListener('click',()=>startNew(b.dataset.diff)));
+    document.querySelectorAll('.veil').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) hide(o.id); }));
+
+    // install / share
+    $('settingsInstall').addEventListener('click',()=>{ hide('setOverlay'); triggerInstall(); });
+    $('settingsShare').addEventListener('click',()=>{ hide('setOverlay'); shareInstall(); });
+    $('installShare').addEventListener('click', shareInstall);
+    $('installClose').addEventListener('click',()=>hide('installOverlay'));
+
+    // physical keyboard support (desktop testing)
+    document.addEventListener('keydown',e=>{
+      if(!state) return;
+      if(e.key>='1'&&e.key<='9') inputNumber(+e.key);
+      else if(e.key==='Backspace'||e.key==='Delete'||e.key==='0') erase();
+      else if(e.key.toLowerCase()==='n') { state.notesMode=!state.notesMode; render(); }
+      else if(e.key.toLowerCase()==='u') undo();
+      else if(state.selected>=0){
+        let i=state.selected, r=(i/9|0), c=i%9;
+        if(e.key==='ArrowLeft'&&c>0) selectCell(i-1);
+        else if(e.key==='ArrowRight'&&c<8) selectCell(i+1);
+        else if(e.key==='ArrowUp'&&r>0) selectCell(i-9);
+        else if(e.key==='ArrowDown'&&r<8) selectCell(i+9);
+      }
+    });
+
+    // resume saved game, else open new-game chooser
+    const saved=loadGame();
+    if(saved){ state=saved; render(); if(!state.done) startTimer(); else $('timer').textContent=fmt(state.seconds); }
+    else { state=newState(deepEmpty(), deepEmpty(), 'easy'); render(); show('newOverlay'); }
+
+    // pause timer save when backgrounded
+    document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
+
+    // register service worker; auto-reload once when a new version takes over
+    if('serviceWorker' in navigator){
+      let refreshing=false;
+      const hadController=!!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange',()=>{
+        if(refreshing || !hadController) return; refreshing=true; location.reload();
+      });
+      window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

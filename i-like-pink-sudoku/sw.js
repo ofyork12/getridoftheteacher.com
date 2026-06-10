@@ -1,5 +1,5 @@
-/* Color My Sudoku service worker — network-first so updates show up immediately when online */
-const CACHE = 'cms-v16';
+/* I Like Pink Sudoku service worker — network-first so updates show up immediately when online */
+const CACHE = 'ilp-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -19,7 +19,7 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('cms-') && k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('ilp-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

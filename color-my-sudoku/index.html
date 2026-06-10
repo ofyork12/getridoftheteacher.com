@@ -19,7 +19,7 @@
   :root{
     /* paint hues — faithful to the original colors.xml, tuned for readability */
     --hue1:#e11d2a; --hue2:#f08c00; --hue3:#caa406; --hue4:#2f9e44; --hue5:#1971c2;
-    --hue6:#7048e8; --hue7:#955418; --hue8:#e64980; --hue9:#0c8599;
+    --hue6:#a32cc4; --hue7:#955418; --hue8:#e64980; --hue9:#2e9bf0;
 
     --bg:#0d1b2e; --bg2:#10243e;
     --canvas:#fbfcff; --grout-thin:#c7d2e0; --grout-thick:#2b3f5c;
@@ -41,8 +41,9 @@
   header{display:flex; align-items:center; justify-content:space-between; gap:8px;}
   .maestro{font-weight:800; font-size:20px; letter-spacing:.3px; display:flex; gap:2px;}
   .maestro span:nth-child(1){color:var(--hue1);} .maestro span:nth-child(2){color:var(--hue2);}
-  .maestro span:nth-child(3){color:var(--hue4);} .maestro span:nth-child(4){color:var(--hue5);}
-  .maestro span:nth-child(5){color:var(--hue6);} .maestro span:nth-child(6){color:var(--hue8);}
+  .maestro span:nth-child(3){color:var(--hue4);} .maestro span:nth-child(4){color:var(--hue6);}
+  .maestro span:nth-child(5){color:var(--hue9);}
+  .maestro .rest{color:#eaf1fb;}
   .scoreboard{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted);}
   .bubble{background:var(--panel); padding:5px 10px; border-radius:999px; font-variant-numeric:tabular-nums; font-weight:600; color:#eaf1fb;}
   .bubble b{color:var(--accent);}
@@ -71,6 +72,8 @@
   .swatch.twin{box-shadow:inset 0 0 0 2.5px #f3c969;}               /* matching number: a ring, not a fill */
   .swatch.spotlight{background:var(--spotlight-bg); box-shadow:inset 0 0 0 3px var(--hue5);}  /* the ONE active cell */
   .swatch.clash{background:var(--clash-bg) !important; color:var(--hue1) !important;}
+  @keyframes nope{0%,100%{transform:translateX(0);}20%{transform:translateX(-4px);}40%{transform:translateX(4px);}60%{transform:translateX(-3px);}80%{transform:translateX(3px);}}
+  .swatch.nope{animation:nope .4s ease; box-shadow:inset 0 0 0 3px var(--hue1);}
   .swatch .glyph.hue1{color:var(--hue1);} .swatch .glyph.hue2{color:var(--hue2);} .swatch .glyph.hue3{color:var(--hue3);}
   .swatch .glyph.hue4{color:var(--hue4);} .swatch .glyph.hue5{color:var(--hue5);} .swatch .glyph.hue6{color:var(--hue6);}
   .swatch .glyph.hue7{color:var(--hue7);} .swatch .glyph.hue8{color:var(--hue8);} .swatch .glyph.hue9{color:var(--hue9);}
@@ -99,6 +102,11 @@
   .crayon .speck.inked{filter:invert(1);} /* black number glyphs -> white on dark keys */
   .crayon.spent{opacity:.28;}
   .crayon.glow{outline:2px solid var(--accent); outline-offset:-2px; background:#24406e;}
+  /* bottom row control keys: Install | Hint | Settings */
+  .crayon.ctrl{aspect-ratio:auto; flex-direction:column; gap:3px; background:var(--panel); padding:10px 4px;}
+  .crayon.ctrl .cic{font-size:24px; line-height:1;}
+  .crayon.ctrl .clab{font-size:12px; font-weight:700; color:#eaf1fb;}
+  .crayon.ctrl.accent{background:var(--accent);} .crayon.ctrl.accent .clab{color:#10243e;}
   .gizmo .emblem img{width:22px; height:22px; object-fit:contain; filter:invert(1);}
 
   /* Tool kit */
@@ -162,13 +170,8 @@
 </head>
 <body>
   <div class="easel">
-    <div class="installbar" id="installBar">
-      <span>📲 Install this app</span>
-      <button class="go" id="installBtn">Install</button>
-      <button class="x" id="installX" aria-label="dismiss">×</button>
-    </div>
     <header>
-      <div class="maestro"><span>C</span><span>o</span><span>l</span><span>o</span><span>r</span><span>!</span>&nbsp;<span style="color:#eaf1fb">Sudoku</span></div>
+      <div class="maestro"><span>C</span><span>o</span><span>l</span><span>o</span><span>r</span><span class="rest">&nbsp;My Sudoku</span></div>
       <div class="scoreboard">
         <div class="bubble" id="diffLabel">Easy</div>
         <div class="bubble" id="timer">0:00</div>
@@ -181,17 +184,7 @@
 
     <div class="palette" id="numpad"></div>
 
-    <div class="kit">
-      <button class="gizmo" id="btnNotes"><span class="emblem">✏️</span>Notes<span class="tag" id="notesBadge">OFF</span></button>
-      <button class="gizmo" id="btnErase"><span class="emblem"><img id="eraseIc" src="img/dotc.png" alt="clear"></span>Erase<span class="tag">&nbsp;</span></button>
-      <button class="gizmo" id="btnUndo"><span class="emblem">↶</span>Undo<span class="tag">&nbsp;</span></button>
-      <button class="gizmo" id="btnHint"><span class="emblem">💡</span>Hint<span class="tag" id="hintBadge">&nbsp;</span></button>
-    </div>
-
-    <div class="tray">
-      <button class="slab bold" id="btnNew">New Game</button>
-      <button class="slab faint" id="btnSettings">⚙ Settings</button>
-    </div>
+    <button class="slab bold" id="btnNew">New Game</button>
   </div>
 
   <!-- New game / difficulty veil -->
@@ -212,7 +205,8 @@
   <div class="veil" id="setOverlay">
     <div class="plate">
       <h2>Settings</h2>
-      <button class="seal" id="settingsInstall" style="background:var(--accent); color:#10243e; margin:0 0 14px;">📲 Install / Add to Home Screen</button>
+      <button class="seal" id="settingsInstall" style="background:var(--accent); color:#10243e; margin:0 0 8px;">📲 Install / Add to Home Screen</button>
+      <button class="seal" id="settingsShare" style="margin:0 0 14px;">📤 Share this app</button>
       <div class="knob-row"><div><span>Highlight wrong values</span><small>Flag cells that break the rules.</small></div>
         <label class="flip"><input type="checkbox" id="setWrong"><span class="rail"></span></label></div>
       <div class="knob-row"><div><span>Highlight row, column &amp; box</span><small>Shade peers of the selected cell.</small></div>
@@ -247,6 +241,7 @@
     <div class="plate">
       <h2>Add to Home Screen</h2>
       <p id="installHow">&nbsp;</p>
+      <button class="seal" id="installShare" style="background:var(--accent); color:#10243e; margin-bottom:8px;">📤 Send the link to someone</button>
       <button class="seal" id="installClose">Got it</button>
     </div>
   </div>
@@ -259,16 +254,31 @@
   const SIZE=9, BOXES=3, CELLS=81;
   const $=id=>document.getElementById(id);
 
-  // ---------- Install (Add to Home Screen) ----------
+  // ---------- Install & Share ----------
   let deferredPrompt=null;
   function isStandalone(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true; }
   function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-  function maybeShowInstallBar(){
-    if(isStandalone() || localStorage.getItem('cms_install_dismissed')==='1') return;
-    const b=$('installBar'); if(b) b.classList.add('open');
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; });
+  window.addEventListener('appinstalled',()=>{ deferredPrompt=null; });
+
+  function triggerInstall(){
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; });
+    } else {
+      $('installHow').innerHTML = isIOS()
+        ? 'In <b>Safari</b>: tap the <b>Share</b> button (the box with an ↑ arrow) at the bottom, then choose <b>Add to Home Screen</b>.'
+        : 'Open your browser menu (<b>⋮</b>), then tap <b>Install app</b> or <b>Add to Home screen</b>.';
+      show('installOverlay');
+    }
   }
-  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; maybeShowInstallBar(); });
-  window.addEventListener('appinstalled',()=>{ const b=$('installBar'); if(b) b.classList.remove('open'); deferredPrompt=null; });
+  async function shareInstall(){
+    const link = location.href.split('?')[0].split('#')[0].replace(/index\.html$/,'');
+    const data = { title:'Color My Sudoku', text:'Play Color My Sudoku — free, works on iPhone and Android:', url: link };
+    try{ if(navigator.share){ await navigator.share(data); return; } }catch(e){ if(e && e.name==='AbortError') return; }
+    try{ await navigator.clipboard.writeText(link); toast('Link copied — paste to share!'); return; }catch(e){}
+    try{ window.prompt('Copy this link to share:', link); }catch(e){}
+  }
 
   // ---------- Sudoku engine: solver + generator ----------
   function deepEmpty(){ return new Array(CELLS).fill(0); }
@@ -428,6 +438,19 @@
       b.addEventListener('click',()=>inputNumber(n));
       numpadEl.appendChild(b);
     }
+    // bottom row (3x4 keypad): Install | Hint | Settings — Hint sits where the 0 would be
+    const ctrls=[
+      {id:'btnInstall', ic:'📲', label:'Install', cls:'ctrl accent', fn:()=>triggerInstall()},
+      {id:'btnHint',    ic:'💡', label:'Hint',    cls:'ctrl',        fn:()=>hint()},
+      {id:'btnSettings',ic:'⚙',  label:'Settings',cls:'ctrl',        fn:()=>show('setOverlay')}
+    ];
+    for(const c of ctrls){
+      const b=document.createElement('button');
+      b.className='crayon '+c.cls; b.id=c.id;
+      b.innerHTML='<span class="cic">'+c.ic+'</span><span class="clab">'+c.label+'</span>';
+      b.addEventListener('click', c.fn);
+      numpadEl.appendChild(b);
+    }
   }
 
   function conflictsSet(){
@@ -487,11 +510,7 @@
       }
     }
     renderNumpad(selVal);
-    const eraseIc=$('eraseIc'); const ec='img/'+repPrefix()+'c.png';
-    if(!eraseIc.getAttribute('src').endsWith(ec)) eraseIc.setAttribute('src', ec);
     $('diffLabel').textContent = state.difficulty.charAt(0).toUpperCase()+state.difficulty.slice(1);
-    $('notesBadge').textContent = state.notesMode?'ON':'OFF';
-    $('btnNotes').classList.toggle('lit', state.notesMode);
   }
 
   function renderNumpad(selVal){
@@ -512,32 +531,52 @@
   }
 
   // ---------- Interaction ----------
-  function selectCell(i){ state.selected=i; render(); }
+  function selectCell(i){
+    // tap a dot you placed to take it back out; tap an empty/clue square to select it
+    if(!state.done && !state.given[i] && state.values[i]){
+      pushHistory(i);
+      state.values[i]=0;
+      state.selected=i;
+      afterMove();
+      return;
+    }
+    state.selected=i; render();
+  }
 
   function pushHistory(i){
     state.history.push({i, value:state.values[i], notes:state.notes[i].slice()});
     if(state.history.length>200) state.history.shift();
   }
 
+  function wrongFeedback(i){
+    toast('Try again 🙂');
+    const cell=boardEl.children[i];
+    if(cell){ cell.classList.remove('nope'); void cell.offsetWidth; cell.classList.add('nope');
+      setTimeout(()=>{ const c=boardEl.children[i]; if(c) c.classList.remove('nope'); }, 450); }
+    if(navigator.vibrate){ try{ navigator.vibrate(60); }catch(e){} }
+  }
+
   function inputNumber(n){
     const i=state.selected;
-    if(i<0){ toast('Select a cell first'); return; }
-    if(state.given[i]){ toast('That cell is a clue'); return; }
+    if(i<0){ toast('Tap a square first'); return; }
+    if(state.given[i]){ toast('That one is already filled in'); return; }
     if(state.done) return;
+
+    // tap the same number that's already there to clear it
+    if(!state.notesMode && state.values[i]===n){ pushHistory(i); state.values[i]=0; afterMove(); return; }
+    if(state.notesMode && state.notes[i].includes(n)){ pushHistory(i); const a=state.notes[i]; a.splice(a.indexOf(n),1); afterMove(); return; }
+
+    // correct-only: a wrong number simply won't go in
+    if(n !== state.solution[i]){ wrongFeedback(i); return; }
 
     pushHistory(i);
     if(state.notesMode){
-      if(state.values[i]) state.values[i]=0; // clear value if turning into notes
-      const arr=state.notes[i];
-      const idx=arr.indexOf(n);
-      if(idx>=0) arr.splice(idx,1); else { arr.push(n); arr.sort(); }
+      if(state.values[i]) state.values[i]=0;
+      const arr=state.notes[i]; arr.push(n); arr.sort();
     } else {
-      if(state.values[i]===n){ state.values[i]=0; } // tap same number to clear
-      else {
-        state.values[i]=n;
-        state.notes[i]=[];
-        if(settings.autoNotes) removeNotesFromPeers(i,n);
-      }
+      state.values[i]=n;
+      state.notes[i]=[];
+      if(settings.autoNotes) removeNotesFromPeers(i,n);
     }
     afterMove();
   }
@@ -635,12 +674,8 @@
   function init(){
     buildBoard(); buildNumpad(); bindSettingsUI();
 
-    $('btnNotes').addEventListener('click',()=>{ state.notesMode=!state.notesMode; render(); });
-    $('btnErase').addEventListener('click', erase);
-    $('btnUndo').addEventListener('click', undo);
-    $('btnHint').addEventListener('click', hint);
+    // btnInstall, btnHint, btnSettings live in the keypad (wired in buildNumpad)
     $('btnNew').addEventListener('click',()=>show('newOverlay'));
-    $('btnSettings').addEventListener('click',()=>show('setOverlay'));
     $('newClose').addEventListener('click',()=>hide('newOverlay'));
     $('setClose').addEventListener('click',()=>hide('setOverlay'));
     $('winClose').addEventListener('click',()=>hide('winOverlay'));
@@ -648,22 +683,10 @@
     document.querySelectorAll('.tier[data-diff]').forEach(b=>b.addEventListener('click',()=>startNew(b.dataset.diff)));
     document.querySelectorAll('.veil').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) hide(o.id); }));
 
-    // install — reachable from the top bar AND always from Settings
-    function triggerInstall(){
-      if(deferredPrompt){
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; $('installBar').classList.remove('open'); });
-      } else {
-        $('installHow').innerHTML = isIOS()
-          ? 'In <b>Safari</b>: tap the <b>Share</b> button (the box with an ↑ arrow) at the bottom, then choose <b>Add to Home Screen</b>.'
-          : 'Open your browser menu (<b>⋮</b>), then tap <b>Install app</b> or <b>Add to Home screen</b>.';
-        show('installOverlay');
-      }
-    }
-    maybeShowInstallBar();
-    $('installBtn').addEventListener('click', triggerInstall);
+    // install / share
     $('settingsInstall').addEventListener('click',()=>{ hide('setOverlay'); triggerInstall(); });
-    $('installX').addEventListener('click',()=>{ $('installBar').classList.remove('open'); localStorage.setItem('cms_install_dismissed','1'); });
+    $('settingsShare').addEventListener('click',()=>{ hide('setOverlay'); shareInstall(); });
+    $('installShare').addEventListener('click', shareInstall);
     $('installClose').addEventListener('click',()=>hide('installOverlay'));
 
     // physical keyboard support (desktop testing)

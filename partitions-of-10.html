@@ -151,6 +151,8 @@
         <button type="button" id="compReset" class="comp-reset">Take walls down</button>
       </div>
       <div class="comp-row" id="compRow"></div>
+      <button type="button" id="compHintBtn" class="comp-hint-btn">💡 HINT — show me one I missed</button>
+      <div id="compHintMsg" class="comp-hint-msg"></div>
     </div>
 
     <style>
@@ -209,6 +211,34 @@
       .comp-gap.on::before { width: 7px; background: #000; }
       .comp-gap:hover::before { background: #999; }
       .comp-gap.on:hover::before { background: #000; }
+
+      /* Hint button + popup -- mirrors the Build-Your-Own game's hint style */
+      .comp-hint-btn {
+        display: block; margin: 14px auto 0; padding: 10px 22px;
+        font-size: 14px; font-weight: bold; letter-spacing: 1.2px; text-transform: uppercase;
+        background: #ffe600; color: #000;
+        border: 3px solid #ffe600; border-radius: 999px; cursor: pointer;
+        box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 0 18px rgba(255,230,0,0.35);
+      }
+      .comp-hint-btn:hover { background: #fff; border-color: #fff; }
+      .comp-hint-msg {
+        display: none; max-width: 440px; margin: 10px auto 0;
+        padding: 12px 14px 14px; text-align: center;
+        background: rgba(0,0,0,0.85); border: 3px solid #ffe600; border-radius: 14px;
+        color: #fff; font-size: 14px; line-height: 1.3;
+      }
+      .comp-hint-msg.show { display: block; }
+      .comp-hint-msg .hint-title {
+        font-weight: bold; color: #ffe600; margin-bottom: 8px;
+        letter-spacing: 0.5px; text-transform: uppercase; font-size: 12px;
+      }
+      .comp-hint-msg .hint-clusters {
+        display: flex; justify-content: center; align-items: flex-end;
+        gap: 0; flex-wrap: nowrap;
+      }
+      .comp-hint-msg .hint-cluster {
+        width: auto; height: 36px; max-width: 56px; display: block;
+      }
     </style>
 
     <script>
@@ -397,6 +427,55 @@
         for (let i = 0; i < 9; i++) walls[i] = false;
         _updateAll();
       });
+
+      // -------- HINT: show one of the 42 partitions the kid hasn't built yet --------
+      // Canonical 1..42 order, same mapping as the Build-Your-Own game.
+      // Each partition is its parts sorted descending; the dedup key is the same
+      // descending join used by _key().
+      const PARTITIONS_42 = [
+        [1,1,1,1,1,1,1,1,1,1],
+        [2,1,1,1,1,1,1,1,1],[2,2,1,1,1,1,1,1],[2,2,2,1,1,1,1],[2,2,2,2,1,1],[2,2,2,2,2],
+        [3,1,1,1,1,1,1,1],[3,2,1,1,1,1,1],[3,2,2,1,1,1],[3,2,2,2,1],[3,3,1,1,1,1],[3,3,2,1,1],[3,3,2,2],[3,3,3,1],
+        [4,1,1,1,1,1,1],[4,2,1,1,1,1],[4,2,2,1,1],[4,2,2,2],[4,3,1,1,1],[4,3,2,1],[4,3,3],[4,4,1,1],[4,4,2],
+        [5,1,1,1,1,1],[5,2,1,1,1],[5,2,2,1],[5,3,1,1],[5,3,2],[5,4,1],[5,5],
+        [6,1,1,1,1],[6,2,1,1],[6,2,2],[6,3,1],[6,4],
+        [7,1,1,1],[7,2,1],[7,3],
+        [8,1,1],[8,2],
+        [9,1],
+        [10]
+      ];
+      let _hintNextIdx = 1;
+      function _hintClusterSVG(n){
+        // Reuse _buildShape (already in scope) but spit out HTML so it can drop into innerHTML.
+        const svg = _buildShape(n);
+        // _buildShape returns an SVG DOM node -- wrap it in outerHTML.
+        return svg.outerHTML.replace(/class="nl-shape"/, 'class="hint-cluster"');
+      }
+      function _giveHint(){
+        const m = document.getElementById('compHintMsg');
+        if (!m) return;
+        const missingIdx = [];
+        for (let i = 0; i < PARTITIONS_42.length; i++) {
+          const key = PARTITIONS_42[i].join(',');   // already descending
+          if (!seen.has(key)) missingIdx.push(i + 1);
+        }
+        if (missingIdx.length === 0) {
+          m.innerHTML = '<div class="hint-title">🎉 You found all 42!</div>';
+          m.classList.add('show');
+          return;
+        }
+        if (missingIdx.indexOf(_hintNextIdx) === -1) _hintNextIdx = missingIdx[0];
+        const pick = _hintNextIdx;
+        const after = missingIdx.filter(i => i > pick);
+        _hintNextIdx = after.length ? after[0] : missingIdx[0];
+        const parts = PARTITIONS_42[pick - 1];
+        const clusters = parts.map(_hintClusterSVG).join('');
+        m.innerHTML = '<div class="hint-title">Try partition #' + pick + ':</div>'
+                    + '<div class="hint-clusters">' + clusters + '</div>';
+        m.classList.add('show');
+      }
+      document.getElementById('compHintBtn')?.addEventListener('click', _giveHint);
+
       _updateAll(); // initial render + counts the all-no-walls composition
     })();
     </script>

@@ -207,6 +207,38 @@
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
     }
     .card .emoji svg { width: 100%; height: 100%; max-height: 120px; display: block; }
+
+    /* --- Live characters: the babies/kids now move so they stop reading as
+       stiff, abstract figures.  Stage 1 (red) = crawling baby rocking +
+       bobbing like a real crawl; Stage 2 (orange) = walking boy with a
+       gentle step bounce.  transform-origin sits near the feet so they rock
+       on the ground, not the middle.  Respects reduced-motion below. --- */
+    @keyframes crawlBob {
+      0%, 100% { transform: translateY(0) rotate(-4deg) scale(1, 1); }
+      50%      { transform: translateY(-6%) rotate(4deg) scale(1.02, 0.98); }
+    }
+    @keyframes walkBob {
+      0%, 100% { transform: translateY(0) rotate(-2.5deg); }
+      50%      { transform: translateY(-6%) rotate(2.5deg); }
+    }
+    .stage-section.stage-1 .card .emoji svg,
+    .stage-banner.stage-1 svg {
+      transform-origin: 50% 82%;
+      animation: crawlBob 1.15s ease-in-out infinite;
+    }
+    /* second baby crawls out of sync with the first -- looks livelier */
+    .stage-section.stage-1 .card:nth-child(2) .emoji svg { animation-delay: -0.45s; }
+    .stage-section.stage-2 .card .emoji svg,
+    .stage-banner.stage-2 svg {
+      transform-origin: 50% 88%;
+      animation: walkBob 0.85s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .stage-section.stage-1 .card .emoji svg,
+      .stage-section.stage-2 .card .emoji svg,
+      .stage-banner.stage-1 svg,
+      .stage-banner.stage-2 svg { animation: none; }
+    }
     .card .step { grid-area: step; }
     .card .filename { grid-area: file; }
     .card > *:not(.emoji):not(.step):not(.filename) { grid-area: title; }
@@ -316,16 +348,8 @@
     <div class="hero-numline" id="heroNumLine" aria-hidden="true"></div>
 
     <div class="stage-banner stage-1" aria-hidden="true">
-      <!-- Stage 1: crawling baby -->
-      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="20" cy="22" r="6" fill="currentColor" stroke="none"/>
-        <path d="M14 38 L30 38 L46 50"/>
-        <path d="M30 38 L46 32"/>
-        <path d="M14 38 L14 50"/>
-        <path d="M22 38 L22 50"/>
-        <path d="M46 50 L46 56"/>
-        <path d="M46 32 L46 26"/>
-      </svg>
+      <!-- Stage 1: crawling baby (friendly character, matches the cards) -->
+      <svg viewBox="0 0 100 100"><use href="#icon-crawling-baby"/></svg>
       <div>
         <div class="stage-num">Stage 1</div>
         <div class="stage-name">Crawling — Easiest</div>
@@ -350,18 +374,8 @@
     </div>
 
     <div class="stage-banner stage-2" aria-hidden="true">
-      <!-- Stage 2: toddler walking toward a table with a lamp -->
-      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="18" cy="14" r="5" fill="currentColor" stroke="none"/>
-        <path d="M18 19 L18 38"/>
-        <path d="M18 26 L12 32"/>
-        <path d="M18 26 L25 30"/>
-        <path d="M18 38 L13 52"/>
-        <path d="M18 38 L23 52"/>
-        <!-- table + lamp on the right -->
-        <path d="M42 40 L60 40 L60 56 M42 40 L42 56"/>
-        <path d="M51 40 L51 28 M48 28 L54 28 M51 28 Q51 22 47 22 L55 22 Q51 22 51 28" fill="currentColor"/>
-      </svg>
+      <!-- Stage 2: walking boy (friendly character, matches the cards) -->
+      <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
       <div>
         <div class="stage-num">Stage 2</div>
         <div class="stage-name">Walking — Easy</div>

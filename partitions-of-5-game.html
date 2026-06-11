@@ -281,19 +281,11 @@
     pips.push(p);
   });
 
-  // ---- Spoken number names (best-effort, respects the mute button) -----
-  var NAMES = ['zero','one','two','three','four','five'];
-  function speak(left, right) {
-    if (window.__cmmMuted) return;
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(
-        NAMES[left] + ' plus ' + NAMES[right] + ' equals five');
-      u.rate = 0.9; u.pitch = 1.1;
-      window.speechSynthesis.speak(u);
-    } catch (e) {}
-  }
+  // ---- No spoken voice ------------------------------------------------
+  // The game stays silent (no speechSynthesis). Kept as a no-op so the
+  // call sites below don't need touching.
+  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) {}
+  function speak() {}
 
   // ---- Idle behaviour: hint, then auto-advance -------------------------
   // After IDLE_HINT_MS with no taps, pulse the NEXT button so the child

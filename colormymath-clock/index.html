@@ -29,40 +29,63 @@ let gx=0, gy=0.9;                  // gravity (tilt changes it)
 let tiltOn=false;
 let lastMin=-1, lastHour=-1;
 
-function addDot(jar,c,r){
-  const J=jar==='h'?HOUR:MIN;
-  dots.push({x:J.x0+20+Math.random()*(J.x1-J.x0-40), y:J.y0+20+Math.random()*40,
-             vx:(Math.random()-.5)*4, vy:Math.random()*3, r:r, c:c, jar:jar});
+// ---- ColorMyMath number shapes: the dots fall into these slots ----
+const R=DOT, SQ3=Math.sqrt(3);
+// ones-digit offsets (R-units; bottom row y=0, up = negative, centred at x=0). 5 = three on the bottom, two on top.
+const ONES={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
+ 4:[[-1,0],[1,0],[-1,-2],[1,-2]],
+ 5:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3]],
+ 6:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[0,-2*SQ3]],
+ 7:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[-2,-2*SQ3],[0,-2*SQ3]],
+ 8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
+ 9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]};
+// a ten-group = triangle of 10 (rows 4,3,2,1 from the floor up), centred, bottom y=0
+const TEN=(function(){const p=[];let y=0;for(const c of [4,3,2,1]){const x0=-(c-1);for(let i=0;i<c;i++)p.push([x0+2*i,y]);y-=SQ3;}return p;})();
+// how whole ten-groups are arranged (cells), bottom-aligned (5 tens = pyramid of triangles)
+const TENS={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-2,0],[0,0],[2,0]],4:[[-3,0],[-1,0],[1,0],[3,0]],5:[[-2,0],[0,0],[2,0],[-1,-1],[1,-1]]};
+const TEN_W=9, TEN_H=2*SQ3+5;
+// target slots for the ColorMyMath figure of n, sitting on chamber J's floor (in order: tens then ones)
+function figureTargets(n,J){
+  const tens=Math.floor(n/10), ones=n%10, t=[]; const cells=TENS[tens]||[];
+  for(const c of cells){ const cx=c[0]*TEN_W, cy=c[1]*TEN_H; for(const [dx,dy] of TEN) t.push([cx+dx,cy+dy]); }
+  const onesOff = cells.length ? Math.max(...cells.map(c=>c[0]))*TEN_W+6 : 0;
+  for(const [dx,dy] of (ONES[ones]||[])) t.push([onesOff+dx,dy]);
+  if(!t.length) return [];
+  const xs=t.map(p=>p[0]), cxOff=(Math.min(...xs)+Math.max(...xs))/2, baseX=(J.x0+J.x1)/2, baseY=J.y1-R;
+  return t.map(p=>({tx:baseX+(p[0]-cxOff)*R, ty:baseY+p[1]*R}));
 }
+function spawn(jar,c){ const J=jar==='h'?HOUR:MIN;
+  return {x:J.x0+30+Math.random()*(J.x1-J.x0-60), y:J.y0+10+Math.random()*30, vx:(Math.random()-.5)*3, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0}; }
+function assignTargets(jar,count){ const J=jar==='h'?HOUR:MIN, T=figureTargets(count,J);
+  let k=0; for(const d of dots){ if(d.jar===jar){ if(T[k]){d.tx=T[k].tx; d.ty=T[k].ty;} k++; } } }
 function build(h,m){
   dots=[];
   const h12=((h%12)===0?12:(h%12));
-  for(let i=0;i<h12;i++) addDot('h',HOURCOL,DOT);
-  for(let i=0;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],DOT);
+  for(let i=0;i<h12;i++) dots.push(spawn('h',HOURCOL));
+  for(let i=0;i<m;i++)   dots.push(spawn('m',TENCOL[Math.floor(i/10)%6]));
+  assignTargets('h',h12); assignTargets('m',m);
   lastHour=h12; lastMin=m;
 }
 function step(){
-  // gravity
-  for(const d of dots){ d.vx+=gx; d.vy+=gy; d.x+=d.vx; d.y+=d.vy; }
-  // walls per chamber
-  for(const d of dots){ const J=d.jar==='h'?HOUR:MIN;
-    if(d.x<J.x0+d.r){d.x=J.x0+d.r;d.vx*=-0.3;} if(d.x>J.x1-d.r){d.x=J.x1-d.r;d.vx*=-0.3;}
-    if(d.y<J.y0+d.r){d.y=J.y0+d.r;d.vy*=-0.3;}
-    if(d.y>J.y1-d.r){d.y=J.y1-d.r;d.vy*=-0.18;d.vx*=0.8;}   // FLOOR: low bounce + grip so they settle, don't roll out
+  for(const d of dots){
+    // gentle spring toward this dot's slot in the ColorMyMath figure -> slow, smooth (~3x slower)
+    d.vx += (d.tx-d.x)*0.045; d.vy += (d.ty-d.y)*0.045;
+    d.vx *= 0.86; d.vy *= 0.86;
+    d.x += d.vx; d.y += d.vy;
   }
-  // collisions — more passes so dots never overlap (they pack tight, just touching)
-  for(let it=0;it<10;it++){
+  for(const d of dots){ const J=d.jar==='h'?HOUR:MIN;     // stay inside the chamber
+    if(d.x<J.x0+d.r)d.x=J.x0+d.r; if(d.x>J.x1-d.r)d.x=J.x1-d.r;
+    if(d.y<J.y0+d.r)d.y=J.y0+d.r; if(d.y>J.y1-d.r)d.y=J.y1-d.r;
+  }
+  // collision so dots never overlap on the way in — they just touch
+  for(let it=0;it<8;it++){
     for(let i=0;i<dots.length;i++) for(let j=i+1;j<dots.length;j++){
       const a=dots[i],b=dots[j]; if(a.jar!==b.jar) continue;
       let dx=b.x-a.x, dy=b.y-a.y, dd=Math.hypot(dx,dy), mn=a.r+b.r;
       if(dd>0 && dd<mn){ const ov=(mn-dd)/2, nx=dx/dd, ny=dy/dd;
-        a.x-=nx*ov; a.y-=ny*ov; b.x+=nx*ov; b.y+=ny*ov;
-        const rvn=((b.vx-a.vx)*nx+(b.vy-a.vy)*ny); if(rvn<0){ const im=rvn*0.5;
-          a.vx+=im*nx; a.vy+=im*ny; b.vx-=im*nx; b.vy-=im*ny; }
-      }
+        a.x-=nx*ov; a.y-=ny*ov; b.x+=nx*ov; b.y+=ny*ov; }
     }
   }
-  for(const d of dots){ d.vx*=0.95; d.vy*=0.99; }   // more side-friction -> dots settle into a clean pile
 }
 function dot(d){ ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fillStyle=d.c;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#161616';ctx.stroke(); }
 function jarBox(J,label){
@@ -79,7 +102,7 @@ function jarBox(J,label){
 function draw(){
   ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 74px Georgia';ctx.fillText('ColorMyMath Clock',540,120);
-  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('count the dots · tilt or shake them',540,166);
+  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('count the dots · shake them and watch them fall back into place',540,166);
   jarBox(HOUR,'hours'); jarBox(MIN,'minutes');
   for(const d of dots) dot(d);
   const now=new Date(), h12=((now.getHours()%12)===0?12:now.getHours()%12);
@@ -92,10 +115,10 @@ function loop(){ step(); draw(); requestAnimationFrame(loop); }
 // keep in sync with the real time
 function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
   const h12=((h%12)===0?12:h%12);
-  if(h12!==lastHour){ build(h,m); }                 // new hour: rebuild
-  else if(m!==lastMin){                              // new minute: drop dots to match
-    if(m>lastMin){ for(let i=lastMin;i<m;i++) addDot('m',TENCOL[Math.floor(i/10)%6],DOT); }
-    else build(h,m);                                 // minute went backwards (top of hour handled above)
+  if(h12!==lastHour || m<lastMin){ build(h,m); return; }       // new hour or wrap: rebuild
+  if(m!==lastMin){
+    for(let i=lastMin;i<m;i++) dots.push(spawn('m',TENCOL[Math.floor(i/10)%6]));  // new minute dots drop in
+    assignTargets('m',m);                                       // re-form the whole minute figure
     lastMin=m;
   }
 }

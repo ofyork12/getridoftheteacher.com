@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="mute-button.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Partitions of 5 — ColorMyMath</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    background: #333;
+    font-family: 'Nunito', Arial, sans-serif;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100vw, 56.25vh);
+    aspect-ratio: 9 / 16;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .title {
+    margin-top: 3.2vh;
+    text-align: center;
+    font-size: 2.3vh; font-weight: 800;
+    color: #222; letter-spacing: 0.04em;
+    pointer-events: none;
+  }
+  .title .sub {
+    display: block;
+    font-size: 1.5vh; font-weight: 600;
+    color: #777; letter-spacing: 0.02em;
+    margin-top: 0.4vh;
+  }
+
+  /* The "whole" we are breaking apart, shown small up top. */
+  .whole {
+    margin-top: 1.6vh;
+    display: flex; align-items: center; gap: 1.2vh;
+    pointer-events: none;
+  }
+  .whole .whole-label {
+    font-size: 1.6vh; font-weight: 700; color: #555;
+    letter-spacing: 0.06em;
+  }
+  .whole svg { width: 7vh; height: 7vh; }
+
+  /* The two parts: [group] + [group] = total */
+  .visual {
+    flex: 1 1 auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.4vh;
+    pointer-events: none;
+    padding: 0 2vh;
+  }
+  .part {
+    width: 22vh; height: 22vh;
+    max-width: 38%;
+    display: flex; align-items: flex-end; justify-content: center;
+    border-radius: 2vh;
+    background: #fafafa;
+    box-shadow: inset 0 0 0 2px #eee;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .part.flash {
+    box-shadow: inset 0 0 0 3px #ffd400, 0 0 0 4px rgba(255,212,0,0.35);
+  }
+  .part svg { width: 100%; height: 100%; }
+  .op {
+    font-size: 5vh; font-weight: 800; color: #333;
+    line-height: 1;
+  }
+
+  /* Big written equation under the dots. */
+  .equation {
+    margin-bottom: 1.2vh;
+    font-size: 5.2vh; font-weight: 800;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    display: flex; align-items: baseline; gap: 1.2vh;
+  }
+  .equation .term { transition: transform 0.2s ease; }
+  .equation .eqsign, .equation .plus { color: #333; }
+
+  /* Progress pips — one per partition. */
+  .progress {
+    display: flex; gap: 1.1vh;
+    margin-bottom: 1.8vh;
+    pointer-events: none;
+  }
+  .pip {
+    width: 1.4vh; height: 1.4vh; border-radius: 50%;
+    background: #ddd;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  .pip.on { background: #0066ff; transform: scale(1.25); }
+
+  /* NEXT button — centered in the flow, below the pips, so it never
+     overlaps the equation. */
+  .next-btn {
+    margin-bottom: 3vh;
+    background: #0066ff; color: #fff;
+    border: none; border-radius: 999px;
+    font-family: inherit; font-weight: 800;
+    font-size: 2.4vh; letter-spacing: 0.05em;
+    padding: 1.5vh 4vh;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,102,255,0.4);
+    z-index: 30;
+    touch-action: manipulation;
+  }
+  @keyframes nextPulse {
+    0%, 100% { box-shadow: 0 6px 16px rgba(0,102,255,0.4); transform: scale(1); }
+    50%      { box-shadow: 0 0 0 10px rgba(255,212,0,0.55),
+                           0 6px 16px rgba(0,102,255,0.4); transform: scale(1.07); }
+  }
+  .next-btn.nudge { animation: nextPulse 1.2s ease-in-out infinite; }
+
+  /* PLAY overlay. */
+  .overlay {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.94);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 60;
+  }
+  .overlay.hidden { display: none; }
+  .play-btn {
+    background: #0066ff; color: #fff;
+    border: none; border-radius: 999px;
+    font-family: inherit; font-weight: 800;
+    font-size: 3.2vh; letter-spacing: 0.08em;
+    padding: 2vh 5vh;
+    cursor: pointer;
+    box-shadow: 0 10px 28px rgba(0,102,255,0.45);
+  }
+
+  /* dot pop-in */
+  @keyframes dotPop {
+    0%   { opacity: 0; transform: scale(0.2); }
+    70%  { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="title">Partitions of 5<span class="sub">Two parts make 5 — and 0 is nothing</span></div>
+
+    <div class="whole">
+      <span class="whole-label">MAKE</span>
+      <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="wholeSvg"></svg>
+    </div>
+
+    <div class="visual">
+      <div class="part" id="partLeft"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="leftSvg"></svg></div>
+      <div class="op">+</div>
+      <div class="part" id="partRight"><svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" id="rightSvg"></svg></div>
+    </div>
+
+    <div class="equation" id="equation"></div>
+
+    <div class="progress" id="progress"></div>
+
+    <button class="next-btn" id="nextBtn" type="button">NEXT&nbsp;▶</button>
+
+    <div class="overlay" id="overlay">
+      <button class="play-btn" id="playBtn" type="button">PLAY</button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  'use strict';
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // ---- Canonical ColorMyMath number-line colours (1-5) -----------------
+  // Copied exactly from the live number line so each quantity is drawn in
+  // the colour the child already recognises.
+  var COLOR = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
+  var ZERO_STROKE = '#9aa0a6';   // neutral grey ring for "nothing"
+
+  // ---- Canonical number-line dot SHAPES (1-5) --------------------------
+  // Same geometry the number line uses, so a "4" looks like the 2x2 square
+  // and a "5" like the 3-over-2 pyramid the child has been learning.
+  var R = 10, CX = 50, YBOT = 92, D = 2 * R, TRI_H = D * Math.sqrt(3) / 2;
+  var SHAPES = {
+    1: [ {x: CX, y: YBOT} ],
+    2: [ {x: CX - R, y: YBOT}, {x: CX + R, y: YBOT} ],
+    3: [ {x: CX - R, y: YBOT}, {x: CX + R, y: YBOT},
+         {x: CX,     y: YBOT - TRI_H} ],
+    4: [ {x: CX - R, y: YBOT}, {x: CX + R, y: YBOT},
+         {x: CX - R, y: YBOT - D}, {x: CX + R, y: YBOT - D} ],
+    5: [ {x: CX - D, y: YBOT}, {x: CX, y: YBOT}, {x: CX + D, y: YBOT},
+         {x: CX - R, y: YBOT - TRI_H}, {x: CX + R, y: YBOT - TRI_H} ]
+  };
+
+  // Draw `n` filled dots (or one hollow ring for 0) into an <svg>.
+  // `animate` staggers a pop-in so the child sees each dot appear.
+  function renderQuantity(svg, n, animate) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    if (n === 0) {
+      // ZERO VISUAL RULE: hollow outlined ring, transparent inside,
+      // placed where a single "1" dot would sit so empty vs. one reads
+      // clearly.  No fill, neutral grey stroke, no shading.
+      var ring = document.createElementNS(SVG_NS, 'circle');
+      ring.setAttribute('cx', CX);
+      ring.setAttribute('cy', YBOT);
+      ring.setAttribute('r', R);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', ZERO_STROKE);
+      ring.setAttribute('stroke-width', '3');
+      ring.setAttribute('stroke-dasharray', '');
+      if (animate) ring.style.animation = 'dotPop 0.4s ease both';
+      svg.appendChild(ring);
+      return;
+    }
+
+    var centers = SHAPES[n] || [];
+    var fill = COLOR[n] || '#0066ff';
+    centers.forEach(function (p, i) {
+      var c = document.createElementNS(SVG_NS, 'circle');
+      c.setAttribute('cx', p.x);
+      c.setAttribute('cy', p.y);
+      c.setAttribute('r', R);
+      c.setAttribute('fill', fill);
+      c.setAttribute('stroke', '#000');
+      c.setAttribute('stroke-width', '2');
+      c.style.transformOrigin = p.x + 'px ' + p.y + 'px';
+      if (animate) c.style.animation = 'dotPop 0.4s ease both ' + (i * 0.09) + 's';
+      svg.appendChild(c);
+    });
+  }
+
+  // ---- The partitions of 5 ---------------------------------------------
+  var PARTITIONS = [ [0,5], [1,4], [2,3], [3,2], [4,1], [5,0] ];
+
+  // ---- DOM handles ------------------------------------------------------
+  var leftSvg  = document.getElementById('leftSvg');
+  var rightSvg = document.getElementById('rightSvg');
+  var wholeSvg = document.getElementById('wholeSvg');
+  var partLeft  = document.getElementById('partLeft');
+  var partRight = document.getElementById('partRight');
+  var equation = document.getElementById('equation');
+  var progress = document.getElementById('progress');
+  var nextBtn  = document.getElementById('nextBtn');
+  var overlay  = document.getElementById('overlay');
+  var playBtn  = document.getElementById('playBtn');
+  var stage    = document.getElementById('stage');
+
+  // The "whole" never changes — always the canonical 5 in blue.
+  renderQuantity(wholeSvg, 5, false);
+
+  // Build progress pips.
+  var pips = [];
+  PARTITIONS.forEach(function () {
+    var p = document.createElement('div');
+    p.className = 'pip';
+    progress.appendChild(p);
+    pips.push(p);
+  });
+
+  // ---- Spoken number names (best-effort, respects the mute button) -----
+  var NAMES = ['zero','one','two','three','four','five'];
+  function speak(left, right) {
+    if (window.__cmmMuted) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(
+        NAMES[left] + ' plus ' + NAMES[right] + ' equals five');
+      u.rate = 0.9; u.pitch = 1.1;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  // ---- Idle behaviour: hint, then auto-advance -------------------------
+  // After IDLE_HINT_MS with no taps, pulse the NEXT button so the child
+  // sees what to press.  After AUTO_MS, move on by itself so the lesson
+  // keeps going even if no one touches the screen.
+  var IDLE_HINT_MS = 3500;
+  var AUTO_MS = 7000;
+  var hintTimer = null, autoTimer = null;
+
+  function clearTimers() {
+    if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+    nextBtn.classList.remove('nudge');
+  }
+  function armTimers() {
+    clearTimers();
+    hintTimer = setTimeout(function () { nextBtn.classList.add('nudge'); }, IDLE_HINT_MS);
+    autoTimer = setTimeout(function () { advance(); }, AUTO_MS);
+  }
+
+  // ---- Render one partition step ---------------------------------------
+  var step = 0;
+  var started = false;
+
+  function showStep(i, animate) {
+    var pair = PARTITIONS[i];
+    var left = pair[0], right = pair[1];
+
+    renderQuantity(leftSvg, left, animate);
+    renderQuantity(rightSvg, right, animate);
+
+    // Coloured written equation: each term in its own colour (0 grey).
+    equation.innerHTML = '';
+    equation.appendChild(term(left));
+    equation.appendChild(glyph('+', 'plus'));
+    equation.appendChild(term(right));
+    equation.appendChild(glyph('=', 'eqsign'));
+    equation.appendChild(glyph('5', 'eqsign', COLOR[5]));
+
+    // Update pips.
+    pips.forEach(function (p, idx) { p.classList.toggle('on', idx === i); });
+
+    // Brief highlight so the eye lands on the two groups.
+    partLeft.classList.add('flash');
+    partRight.classList.add('flash');
+    setTimeout(function () {
+      partLeft.classList.remove('flash');
+      partRight.classList.remove('flash');
+    }, 650);
+
+    speak(left, right);
+    armTimers();
+  }
+
+  function term(n) {
+    var span = document.createElement('span');
+    span.className = 'term';
+    span.textContent = String(n);
+    span.style.color = (n === 0) ? ZERO_STROKE : (COLOR[n] || '#333');
+    return span;
+  }
+  function glyph(txt, cls, color) {
+    var span = document.createElement('span');
+    span.className = cls;
+    span.textContent = txt;
+    if (color) span.style.color = color;
+    return span;
+  }
+
+  function advance() {
+    step = (step + 1) % PARTITIONS.length;
+    showStep(step, true);
+  }
+
+  // ---- Input ------------------------------------------------------------
+  function handleTap(e) {
+    if (!started) return;
+    e.preventDefault();
+    advance();
+  }
+  nextBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    handleTap(e);
+  });
+  // Tapping anywhere on the stage also advances (big, baby-friendly target).
+  stage.addEventListener('click', function (e) {
+    if (e.target === nextBtn || e.target === playBtn) return;
+    handleTap(e);
+  });
+
+  function start() {
+    overlay.classList.add('hidden');
+    started = true;
+    step = 0;
+    showStep(step, true);
+  }
+  playBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    start();
+  });
+
+  // Show first partition (static) behind the PLAY overlay as a preview.
+  showStep(0, false);
+  clearTimers();
+})();
+</script>
+</body>
+</html>

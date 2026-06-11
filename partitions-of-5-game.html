@@ -33,9 +33,10 @@
     cursor: pointer;
     user-select: none;
   }
+  #sim { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
 
   .title {
-    position: absolute; top: 3vh; left: 0; right: 0;
+    position: absolute; top: 2.4vh; left: 0; right: 0;
     text-align: center;
     font-size: 2.3vh; font-weight: 800;
     color: #222; letter-spacing: 0.04em;
@@ -45,55 +46,28 @@
     display: block;
     font-size: 1.5vh; font-weight: 600;
     color: #777; letter-spacing: 0.02em;
-    margin-top: 0.4vh;
+    margin-top: 0.3vh;
   }
 
-  /* Funnel artwork fills the stage; it maps 1:1 to the 9/16 box so the
-     viewBox coords line up with the fractional dot positions in JS. */
-  .funnel { position: absolute; inset: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 1; }
-
-  /* The dots (parts falling in, and the blue 5 coming out) live here. */
-  .dots { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-  .dot {
-    position: absolute;
-    border-radius: 50%;
-    border: 2px solid #000;
-    box-sizing: border-box;
-    transition: transform 0.8s cubic-bezier(.45,.05,.55,.95),
-                background-color 0.6s ease, opacity 0.5s ease;
-    will-change: transform, opacity;
-  }
-  .dot.ring { background: transparent !important; border: 3px solid #9aa0a6; }
-  @keyframes pop {
-    0%   { transform: scale(0.1); opacity: 0; }
-    65%  { transform: scale(1.18); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  .dot.pop { animation: pop 0.45s ease both; }
-
-  /* Bottom bar: equation, progress pips, NEXT. */
   .bottombar {
     position: absolute; bottom: 0; left: 0; right: 0;
     display: flex; flex-direction: column; align-items: center;
-    padding-bottom: 2.4vh;
-    z-index: 10;
+    padding-bottom: 2.2vh; z-index: 10;
   }
   .equation {
-    font-size: 5vh; font-weight: 800; letter-spacing: 0.02em;
-    pointer-events: none;
-    display: flex; align-items: baseline; gap: 1.1vh;
-    margin-bottom: 1.4vh; min-height: 6vh;
+    font-size: 4.4vh; font-weight: 800; letter-spacing: 0.01em;
+    pointer-events: none; display: flex; align-items: baseline; gap: 0.7vh;
+    margin-bottom: 1.2vh; min-height: 5.4vh;
   }
   .equation .total.hidden { visibility: hidden; }
-  .progress { display: flex; gap: 1.1vh; margin-bottom: 1.6vh; pointer-events: none; }
-  .pip { width: 1.4vh; height: 1.4vh; border-radius: 50%; background: #ddd;
+  .progress { display: flex; gap: 1vh; margin-bottom: 1.4vh; pointer-events: none; }
+  .pip { width: 1.3vh; height: 1.3vh; border-radius: 50%; background: #ddd;
          transition: background .2s ease, transform .2s ease; }
   .pip.on { background: #0066ff; transform: scale(1.25); }
   .next-btn {
     background: #0066ff; color: #fff; border: none; border-radius: 999px;
-    font-family: inherit; font-weight: 800; font-size: 2.4vh; letter-spacing: 0.05em;
-    padding: 1.5vh 4vh; cursor: pointer;
+    font-family: inherit; font-weight: 800; font-size: 2.3vh; letter-spacing: 0.05em;
+    padding: 1.4vh 3.8vh; cursor: pointer;
     box-shadow: 0 6px 16px rgba(0,102,255,0.4); touch-action: manipulation;
   }
   @keyframes nextPulse {
@@ -117,17 +91,9 @@
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="title">Partitions of 5<span class="sub">The parts fall in and make 5</span></div>
+    <canvas id="sim"></canvas>
 
-    <!-- Funnel. viewBox is 90x160 = 9:16, so coords map to stage fractions. -->
-    <svg class="funnel" viewBox="0 0 90 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <polygon points="10.8,54.4 79.2,54.4 50.4,80 50.4,89.6 39.6,89.6 39.6,80"
-               fill="#eef2f7" stroke="#9aa0a6" stroke-width="1.6" stroke-linejoin="round"/>
-      <!-- rim highlight -->
-      <line x1="10.8" y1="54.4" x2="79.2" y2="54.4" stroke="#c7d0db" stroke-width="2.4" stroke-linecap="round"/>
-    </svg>
-
-    <div class="dots" id="dots"></div>
+    <div class="title">Partitions of 5<span class="sub">Drop the parts — they roll in and make 5</span></div>
 
     <div class="bottombar">
       <div class="equation" id="equation"></div>
@@ -140,35 +106,37 @@
     </div>
   </div>
 
+<script src="matter.min.js"></script>
 <script>
 (function () {
   'use strict';
+  var M = window.Matter;
+  var Engine = M.Engine, Render = M.Render, Runner = M.Runner,
+      Bodies = M.Bodies, Composite = M.Composite, Body = M.Body, Events = M.Events;
 
-  // ---- Canonical ColorMyMath number colours (1-5) ----------------------
+  // ---- Canonical ColorMyMath number colours ----------------------------
   var COLOR = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
-  var ZERO_STROKE = '#9aa0a6';
+  var BLUE = '#0066ff';
 
-  // ---- Canonical number-line dot SHAPES, in "dot-diameter" units --------
-  // dy negative = up. Each cluster's bottom row sits on the center y.
-  var CLUSTERS = {
-    1: [ [0, 0] ],
-    2: [ [-0.5, 0], [0.5, 0] ],
-    3: [ [-0.5, 0], [0.5, 0], [0, -0.87] ],
-    4: [ [-0.5, 0], [0.5, 0], [-0.5, -1], [0.5, -1] ],
-    5: [ [-1, 0], [0, 0], [1, 0], [-0.5, -0.87], [0.5, -0.87] ]
-  };
-
-  // ---- The partitions of 5 ---------------------------------------------
-  var PARTITIONS = [ [0,5], [1,4], [2,3], [3,2], [4,1], [5,0] ];
+  // ---- Integer partitions of 5, biggest part first (no permutations) ---
+  var PARTITIONS = [
+    [5],
+    [4, 1],
+    [3, 2],
+    [3, 1, 1],
+    [2, 2, 1],
+    [2, 1, 1, 1],
+    [1, 1, 1, 1, 1]
+  ];
 
   // ---- DOM --------------------------------------------------------------
-  var stage   = document.getElementById('stage');
-  var dotsLay = document.getElementById('dots');
-  var equation= document.getElementById('equation');
-  var progress= document.getElementById('progress');
-  var nextBtn = document.getElementById('nextBtn');
-  var overlay = document.getElementById('overlay');
-  var playBtn = document.getElementById('playBtn');
+  var stage    = document.getElementById('stage');
+  var canvas   = document.getElementById('sim');
+  var equation = document.getElementById('equation');
+  var progress = document.getElementById('progress');
+  var nextBtn  = document.getElementById('nextBtn');
+  var overlay  = document.getElementById('overlay');
+  var playBtn  = document.getElementById('playBtn');
 
   var pips = [];
   PARTITIONS.forEach(function () {
@@ -176,58 +144,111 @@
     progress.appendChild(p); pips.push(p);
   });
 
-  // ---- Geometry (recomputed each step so resizes stay correct) ---------
-  function geom() {
-    var W = stage.clientWidth, H = stage.clientHeight;
-    var dotD = 0.055 * H;
-    return {
-      W: W, H: H, dotD: dotD, unit: dotD,
-      left:   { x: 0.30 * W, y: 0.20 * H },
-      right:  { x: 0.70 * W, y: 0.20 * H },
-      throat: { x: 0.50 * W, y: 0.50 * H },
-      result: { x: 0.50 * W, y: 0.68 * H }
-    };
-  }
+  // ---- Matter setup -----------------------------------------------------
+  var engine = Engine.create();
+  engine.gravity.y = 1.1;
+  var render, runner, W, H, R;
+  var walls = [];
+  var dotBodies = [];
+  var step = 0, started = false, revealed = false, settleHits = 0, frame = 0;
 
-  function makeDot(g, cx, cy, color, isZero) {
-    var d = document.createElement('div');
-    d.className = 'dot' + (isZero ? ' ring' : '');
-    d.style.width = g.dotD + 'px';
-    d.style.height = g.dotD + 'px';
-    d.style.left = (cx - g.dotD / 2) + 'px';
-    d.style.top  = (cy - g.dotD / 2) + 'px';
-    if (!isZero) d.style.background = color;
-    dotsLay.appendChild(d);
-    return d;
-  }
+  function buildWorld() {
+    var rect = stage.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    R = 0.05 * W;                         // dot radius
 
-  // Build a cluster of `value` dots centred at `center`. Returns the dot
-  // elements together with their screen positions (for the fall).
-  function buildCluster(g, value, center) {
-    var out = [];
-    if (value === 0) {
-      var ring = makeDot(g, center.x, center.y, null, true);
-      out.push({ el: ring, x: center.x, y: center.y, zero: true });
-      return out;
+    if (render) { Render.stop(render); }
+    if (runner) { Runner.stop(runner); }
+    Composite.clear(engine.world, false);
+    walls = []; dotBodies = [];
+
+    render = Render.create({
+      canvas: canvas, engine: engine,
+      options: {
+        width: W, height: H,
+        pixelRatio: window.devicePixelRatio || 1,
+        wireframes: false, background: 'transparent'
+      }
+    });
+
+    // ---- Funnel: TWO slanted lines + a couple of verticals (the pipe).
+    //      Black, no top cap, no horizontal lines. ----------------------
+    var th = Math.max(3, 0.014 * W);      // line thickness
+    function wall(x1, y1, x2, y2, thickness, visible) {
+      var cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+      var len = Math.hypot(x2 - x1, y2 - y1);
+      var ang = Math.atan2(y2 - y1, x2 - x1);
+      var b = Bodies.rectangle(cx, cy, len + thickness, thickness, {
+        isStatic: true,
+        render: visible ? { fillStyle: '#000' } : { visible: false }
+      });
+      Body.setAngle(b, ang);
+      walls.push(b);
+      return b;
     }
-    var color = COLOR[value] || '#0066ff';
-    CLUSTERS[value].forEach(function (off) {
-      var cx = center.x + off[0] * g.unit;
-      var cy = center.y + off[1] * g.unit;
-      out.push({ el: makeDot(g, cx, cy, color, false), x: cx, y: cy, zero: false });
-    });
-    return out;
+
+    // Slants (mouth -> pipe top)
+    wall(0.10 * W, 0.30 * H, 0.42 * W, 0.54 * H, th, true);   // left slant
+    wall(0.90 * W, 0.30 * H, 0.58 * W, 0.54 * H, th, true);   // right slant
+    // Pipe (two short verticals)
+    wall(0.42 * W, 0.54 * H, 0.42 * W, 0.63 * H, th, true);   // left pipe
+    wall(0.58 * W, 0.54 * H, 0.58 * W, 0.63 * H, th, true);   // right pipe
+
+    // Invisible catch basin BELOW the pipe (its walls start under the pipe
+    // so they never snag dots on the funnel slants).  Narrow enough that
+    // the five dots stack into the canonical 3-over-2 pyramid (the
+    // number-line 5) instead of spreading into a flat row.
+    wall(0.31 * W, 0.74 * H, 0.69 * W, 0.74 * H, 26, false);  // floor
+    wall(0.33 * W, 0.62 * H, 0.33 * W, 0.74 * H, 26, false);  // left side
+    wall(0.67 * W, 0.62 * H, 0.67 * W, 0.74 * H, 26, false);  // right side
+
+    Composite.add(engine.world, walls);
+
+    Render.run(render);
+    runner = Runner.create();
+    Runner.run(runner, engine);
   }
 
-  // The 5 result slots (blue pyramid) in screen coords.
-  function resultSlots(g) {
-    return CLUSTERS[5].map(function (off) {
-      return { x: g.result.x + off[0] * g.unit, y: g.result.y + off[1] * g.unit };
+  // ---- Colour-on-touch: any two dots that meet turn blue ---------------
+  function makeBlue(b) {
+    if (b && b.label === 'dot') { b.render.fillStyle = BLUE; b.cmmBlue = true; }
+  }
+  Events.on(engine, 'collisionStart', function (ev) {
+    ev.pairs.forEach(function (p) {
+      if (p.bodyA.label === 'dot' && p.bodyB.label === 'dot') {
+        makeBlue(p.bodyA); makeBlue(p.bodyB);
+      }
     });
+  });
+
+  // ---- Settle watch: when the pile stops moving, reveal "= 5" ----------
+  var MIN_FRAMES = 70, MAX_FRAMES = 520;
+  Events.on(engine, 'afterUpdate', function () {
+    if (!started || revealed) return;
+    frame++;
+    var maxSpeed = 0;
+    for (var i = 0; i < dotBodies.length; i++) {
+      if (dotBodies[i].speed > maxSpeed) maxSpeed = dotBodies[i].speed;
+    }
+    if (frame > MIN_FRAMES && maxSpeed < 0.4) settleHits++; else settleHits = 0;
+    if (settleHits > 14 || frame > MAX_FRAMES) reveal();
+  });
+
+  // ---- Equation ---------------------------------------------------------
+  function setEquation(addends, showTotal) {
+    equation.innerHTML = '';
+    addends.forEach(function (v, i) {
+      if (i > 0) { var pl = document.createElement('span'); pl.textContent = '+'; pl.style.color = '#333'; equation.appendChild(pl); }
+      var t = document.createElement('span'); t.textContent = String(v);
+      t.style.color = COLOR[v] || '#333'; equation.appendChild(t);
+    });
+    var eq = document.createElement('span'); eq.textContent = '='; eq.style.color = '#333'; equation.appendChild(eq);
+    var tot = document.createElement('span'); tot.textContent = '5'; tot.style.color = BLUE;
+    tot.className = 'total' + (showTotal ? '' : ' hidden'); equation.appendChild(tot);
   }
 
   // ---- Idle: hint then auto-advance ------------------------------------
-  var IDLE_HINT_MS = 3500, AUTO_MS = 5200;
+  var IDLE_HINT_MS = 3000, AUTO_MS = 4200;
   var hintTimer = null, autoTimer = null;
   function clearTimers() {
     if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
@@ -240,102 +261,54 @@
     autoTimer = setTimeout(advance, AUTO_MS);
   }
 
-  // ---- Equation ---------------------------------------------------------
-  function term(n) {
-    var s = document.createElement('span');
-    s.textContent = String(n);
-    s.style.color = (n === 0) ? ZERO_STROKE : (COLOR[n] || '#333');
-    return s;
-  }
-  function glyph(t, color) {
-    var s = document.createElement('span');
-    s.textContent = t; s.style.color = color || '#333';
-    return s;
-  }
-  function setEquation(a, b, showTotal) {
-    equation.innerHTML = '';
-    equation.appendChild(term(a));
-    equation.appendChild(glyph('+'));
-    equation.appendChild(term(b));
-    equation.appendChild(glyph('='));
-    var tot = glyph('5', COLOR[5]);
-    tot.className = 'total' + (showTotal ? '' : ' hidden');
-    equation.appendChild(tot);
+  function reveal() {
+    revealed = true;
+    dotBodies.forEach(makeBlue);
+    setEquation(PARTITIONS[step], true);
+    armTimers();
   }
 
-  // ---- The funnel animation for one partition --------------------------
-  var step = 0, started = false, gen = 0;
-
-  function showStep(i, animate) {
-    var myGen = ++gen;
+  // ---- Drop one partition ----------------------------------------------
+  function spawn(i) {
     clearTimers();
-    dotsLay.innerHTML = '';
+    // remove old dots
+    dotBodies.forEach(function (b) { Composite.remove(engine.world, b); });
+    dotBodies = [];
+    frame = 0; settleHits = 0; revealed = false;
 
-    var pair = PARTITIONS[i];
-    var a = pair[0], b = pair[1];
+    var addends = PARTITIONS[i];
     pips.forEach(function (p, idx) { p.classList.toggle('on', idx === i); });
+    setEquation(addends, false);
 
-    var g = geom();
-    var leftDots  = buildCluster(g, a, g.left);
-    var rightDots = buildCluster(g, b, g.right);
-    var all = leftDots.concat(rightDots);
-    // Exactly 5 coloured dots in every partition (a + b = 5). These are
-    // the SAME dots that will travel down and become the blue 5 — nothing
-    // is deleted, so nothing visually "disappears" (only the empty 0-ring
-    // fades, because it is nothing).
-    var colored = all.filter(function (d) { return !d.zero; });
-    var rings   = all.filter(function (d) { return d.zero; });
+    // Flatten addends -> 5 unit dots coloured by their addend.
+    var colors = [];
+    addends.forEach(function (v) { for (var k = 0; k < v; k++) colors.push(COLOR[v]); });
 
-    setEquation(a, b, false);
-
-    if (!animate) {
-      // Static preview (behind PLAY): parts sit above the funnel.
-      return;
-    }
-
-    // 1) The parts FALL and bunch together inside the funnel throat,
-    //    staying visible.  The empty ring (a 0-part) fades — it's nothing.
-    setTimeout(function () {
-      if (myGen !== gen) return;
-      colored.forEach(function (d, k) {
-        d.el.style.transitionDelay = (k * 0.05) + 's';
-        d.el.style.transform =
-          'translate(' + (g.throat.x - d.x) + 'px,' + (g.throat.y - d.y) + 'px) scale(0.62)';
+    // Spread them across the funnel mouth, staggered in height so they
+    // drop in one after another instead of overlapping at spawn.
+    var n = colors.length;
+    colors.forEach(function (col, k) {
+      var fx = 0.40 + (0.20) * (n === 1 ? 0.5 : k / (n - 1));   // 0.40..0.60 (over the throat)
+      var jitter = (Math.random() - 0.5) * 0.05;
+      var x = (fx + jitter) * W;
+      var y = (0.10 - 0.06 * k) * H;                            // stagger upward, drop one by one
+      var b = Bodies.circle(x, y, R, {
+        restitution: 0.45, friction: 0.06, frictionAir: 0.01,
+        label: 'dot',
+        render: { fillStyle: col, strokeStyle: '#000', lineWidth: 2 }
       });
-      rings.forEach(function (d) {
-        d.el.style.transform =
-          'translate(' + (g.throat.x - d.x) + 'px,' + (g.throat.y - d.y) + 'px) scale(0.45)';
-        d.el.style.opacity = '0';
-      });
-    }, 700);
-
-    // 2) The bunched dots POUR OUT of the spout, spread into the canonical
-    //    5-pyramid, and turn blue — they ARE the 5.
-    setTimeout(function () {
-      if (myGen !== gen) return;
-      var slots = resultSlots(g);
-      colored.forEach(function (d, k) {
-        var s = slots[k];
-        d.el.style.transitionDelay = (k * 0.06) + 's';
-        d.el.style.transform = 'translate(' + (s.x - d.x) + 'px,' + (s.y - d.y) + 'px)';
-        d.el.style.background = COLOR[5];
-      });
-      setEquation(a, b, true);
-      armTimers();
-    }, 1500);
+      dotBodies.push(b);
+      Composite.add(engine.world, b);
+    });
   }
 
   function advance() {
     step = (step + 1) % PARTITIONS.length;
-    showStep(step, true);
+    spawn(step);
   }
 
   // ---- Input ------------------------------------------------------------
-  function handleTap(e) {
-    if (!started) return;
-    if (e) e.preventDefault();
-    advance();
-  }
+  function handleTap(e) { if (!started) return; if (e) e.preventDefault(); advance(); }
   nextBtn.addEventListener('click', function (e) { e.stopPropagation(); handleTap(e); });
   stage.addEventListener('click', function (e) {
     if (e.target === nextBtn || e.target === playBtn) return;
@@ -344,13 +317,36 @@
 
   function start() {
     overlay.classList.add('hidden');
-    started = true; step = 0;
-    showStep(step, true);
+    started = true; step = 0; spawn(0);
   }
   playBtn.addEventListener('click', function (e) { e.stopPropagation(); start(); });
 
-  // Static preview behind the PLAY overlay.
-  showStep(0, false);
+  // ---- Resize: rebuild walls + re-drop the current partition -----------
+  var rsTimer = null;
+  window.addEventListener('resize', function () {
+    if (rsTimer) clearTimeout(rsTimer);
+    rsTimer = setTimeout(function () {
+      buildWorld();
+      if (started) spawn(step);
+    }, 200);
+  });
+
+  // ---- Debug hooks for verification ------------------------------------
+  window.__engine = engine; window.__M = M;
+  window.__cmmState = function () {
+    return {
+      step: step, revealed: revealed, count: dotBodies.length,
+      dots: dotBodies.map(function (b) {
+        return { x: Math.round(b.position.x), y: Math.round(b.position.y),
+                 fy: +(b.position.y / H).toFixed(2),
+                 fx: +(b.position.x / W).toFixed(2),
+                 blue: !!b.cmmBlue, speed: +b.speed.toFixed(2) };
+      }),
+      eq: equation.textContent
+    };
+  };
+
+  buildWorld();
 })();
 </script>
 </body>

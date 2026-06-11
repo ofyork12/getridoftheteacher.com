@@ -60,7 +60,8 @@
     border-radius: 50%;
     border: 2px solid #000;
     box-sizing: border-box;
-    transition: transform 0.75s cubic-bezier(.45,.05,.55,.95), opacity 0.6s ease;
+    transition: transform 0.8s cubic-bezier(.45,.05,.55,.95),
+                background-color 0.6s ease, opacity 0.5s ease;
     will-change: transform, opacity;
   }
   .dot.ring { background: transparent !important; border: 3px solid #9aa0a6; }
@@ -206,16 +207,23 @@
     var out = [];
     if (value === 0) {
       var ring = makeDot(g, center.x, center.y, null, true);
-      out.push({ el: ring, x: center.x, y: center.y });
+      out.push({ el: ring, x: center.x, y: center.y, zero: true });
       return out;
     }
     var color = COLOR[value] || '#0066ff';
     CLUSTERS[value].forEach(function (off) {
       var cx = center.x + off[0] * g.unit;
       var cy = center.y + off[1] * g.unit;
-      out.push({ el: makeDot(g, cx, cy, color, false), x: cx, y: cy });
+      out.push({ el: makeDot(g, cx, cy, color, false), x: cx, y: cy, zero: false });
     });
     return out;
+  }
+
+  // The 5 result slots (blue pyramid) in screen coords.
+  function resultSlots(g) {
+    return CLUSTERS[5].map(function (off) {
+      return { x: g.result.x + off[0] * g.unit, y: g.result.y + off[1] * g.unit };
+    });
   }
 
   // ---- Idle: hint then auto-advance ------------------------------------
@@ -271,41 +279,50 @@
     var leftDots  = buildCluster(g, a, g.left);
     var rightDots = buildCluster(g, b, g.right);
     var all = leftDots.concat(rightDots);
-
-    if (!animate) {
-      // Static preview (behind PLAY): parts sit above the funnel.
-      setEquation(a, b, false);
-      return;
-    }
+    // Exactly 5 coloured dots in every partition (a + b = 5). These are
+    // the SAME dots that will travel down and become the blue 5 — nothing
+    // is deleted, so nothing visually "disappears" (only the empty 0-ring
+    // fades, because it is nothing).
+    var colored = all.filter(function (d) { return !d.zero; });
+    var rings   = all.filter(function (d) { return d.zero; });
 
     setEquation(a, b, false);
 
-    // 1) After a beat, the parts FALL into the funnel throat and merge.
-    setTimeout(function () {
-      if (myGen !== gen) return;
-      all.forEach(function (d, k) {
-        var tx = g.throat.x - d.x;
-        var ty = g.throat.y - d.y;
-        d.el.style.transitionDelay = (k * 0.05) + 's';
-        d.el.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(0.34)';
-        // fade out just as they reach the narrow throat
-        d.el.style.opacity = '0';
-        d.el.style.transitionProperty = 'transform, opacity';
-      });
-    }, 750);
+    if (!animate) {
+      // Static preview (behind PLAY): parts sit above the funnel.
+      return;
+    }
 
-    // 2) Out the bottom pours a blue 5 (canonical pyramid), popping in.
+    // 1) The parts FALL and bunch together inside the funnel throat,
+    //    staying visible.  The empty ring (a 0-part) fades — it's nothing.
     setTimeout(function () {
       if (myGen !== gen) return;
-      dotsLay.innerHTML = '';
-      var five = buildCluster(g, 5, g.result);
-      five.forEach(function (d, k) {
-        d.el.classList.add('pop');
-        d.el.style.animationDelay = (k * 0.07) + 's';
+      colored.forEach(function (d, k) {
+        d.el.style.transitionDelay = (k * 0.05) + 's';
+        d.el.style.transform =
+          'translate(' + (g.throat.x - d.x) + 'px,' + (g.throat.y - d.y) + 'px) scale(0.62)';
+      });
+      rings.forEach(function (d) {
+        d.el.style.transform =
+          'translate(' + (g.throat.x - d.x) + 'px,' + (g.throat.y - d.y) + 'px) scale(0.45)';
+        d.el.style.opacity = '0';
+      });
+    }, 700);
+
+    // 2) The bunched dots POUR OUT of the spout, spread into the canonical
+    //    5-pyramid, and turn blue — they ARE the 5.
+    setTimeout(function () {
+      if (myGen !== gen) return;
+      var slots = resultSlots(g);
+      colored.forEach(function (d, k) {
+        var s = slots[k];
+        d.el.style.transitionDelay = (k * 0.06) + 's';
+        d.el.style.transform = 'translate(' + (s.x - d.x) + 'px,' + (s.y - d.y) + 'px)';
+        d.el.style.background = COLOR[5];
       });
       setEquation(a, b, true);
       armTimers();
-    }, 1650);
+    }, 1500);
   }
 
   function advance() {

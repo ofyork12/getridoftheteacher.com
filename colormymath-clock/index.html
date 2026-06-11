@@ -42,8 +42,8 @@ const ONES={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
 // a ten-group = triangle of 10 (rows 4,3,2,1 from the floor up), centred, bottom y=0
 const TEN=(function(){const p=[];let y=0;for(const c of [4,3,2,1]){const x0=-(c-1);for(let i=0;i<c;i++)p.push([x0+2*i,y]);y-=SQ3;}return p;})();
 // how whole ten-groups are arranged (cells), bottom-aligned (5 tens = pyramid of triangles)
-const TENS={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-2,0],[0,0],[2,0]],4:[[-3,0],[-1,0],[1,0],[3,0]],5:[[-2,0],[0,0],[2,0],[-1,-1],[1,-1]]};
-const TEN_W=9, TEN_H=2*SQ3+5;
+const TENS={0:[],1:[[0,0]],2:[[-.5,0],[.5,0]],3:[[-.5,0],[.5,0],[0,-1]],4:[[-.5,0],[.5,0],[-.5,-1],[.5,-1]],5:[[-1,0],[0,0],[1,0],[-.5,-1],[.5,-1]]};
+const TEN_W=9.4641, TEN_H=3*SQ3+3;
 // target slots for the ColorMyMath figure of n, sitting on chamber J's floor (in order: tens then ones)
 function figureTargets(n,J){
   const tens=Math.floor(n/10), ones=n%10, t=[]; const cells=TENS[tens]||[];

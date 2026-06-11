@@ -146,7 +146,7 @@
 
   // ---- Matter setup -----------------------------------------------------
   var engine = Engine.create();
-  engine.gravity.y = 1.1;
+  engine.gravity.y = 0.36;                 // ~1/3 gravity: slow, floaty drop
   var render, runner, W, H, R;
   var walls = [];
   var dotBodies = [];
@@ -187,20 +187,21 @@
       return b;
     }
 
-    // Slants (mouth -> pipe top)
-    wall(0.10 * W, 0.30 * H, 0.42 * W, 0.54 * H, th, true);   // left slant
-    wall(0.90 * W, 0.30 * H, 0.58 * W, 0.54 * H, th, true);   // right slant
+    // Slants (mouth -> pipe top).  A WIDE throat (0.30W) so the dots flow
+    // through and meet without wedging, even under the low floaty gravity.
+    wall(0.12 * W, 0.32 * H, 0.35 * W, 0.52 * H, th, true);   // left slant
+    wall(0.88 * W, 0.32 * H, 0.65 * W, 0.52 * H, th, true);   // right slant
     // Pipe (two short verticals)
-    wall(0.42 * W, 0.54 * H, 0.42 * W, 0.63 * H, th, true);   // left pipe
-    wall(0.58 * W, 0.54 * H, 0.58 * W, 0.63 * H, th, true);   // right pipe
+    wall(0.35 * W, 0.52 * H, 0.35 * W, 0.60 * H, th, true);   // left pipe
+    wall(0.65 * W, 0.52 * H, 0.65 * W, 0.60 * H, th, true);   // right pipe
 
     // Invisible catch basin BELOW the pipe (its walls start under the pipe
     // so they never snag dots on the funnel slants).  Narrow enough that
     // the five dots stack into the canonical 3-over-2 pyramid (the
     // number-line 5) instead of spreading into a flat row.
-    wall(0.31 * W, 0.74 * H, 0.69 * W, 0.74 * H, 26, false);  // floor
-    wall(0.33 * W, 0.62 * H, 0.33 * W, 0.74 * H, 26, false);  // left side
-    wall(0.67 * W, 0.62 * H, 0.67 * W, 0.74 * H, 26, false);  // right side
+    wall(0.33 * W, 0.74 * H, 0.67 * W, 0.74 * H, 26, false);  // floor
+    wall(0.345 * W, 0.60 * H, 0.345 * W, 0.74 * H, 26, false);// left side  (inner ~3 dots wide)
+    wall(0.655 * W, 0.60 * H, 0.655 * W, 0.74 * H, 26, false);// right side
 
     Composite.add(engine.world, walls);
 
@@ -221,18 +222,58 @@
     });
   });
 
-  // ---- Settle watch: when the pile stops moving, reveal "= 5" ----------
-  var MIN_FRAMES = 70, MAX_FRAMES = 520;
+  // ---- Settle watch + snap-into-the-5 ----------------------------------
+  // Low gravity = slow, low-speed motion, so wait longer and use a smaller
+  // speed threshold so we don't call "settled" mid-roll.  Once settled we
+  // gently glide the five dots into the EXACT ColorMyMath 5 (3 on the
+  // bottom, 2 nestled on top) so it always lands on that shape.
+  var MIN_FRAMES = 200, MAX_FRAMES = 1600;
+  var snap = null;
   Events.on(engine, 'afterUpdate', function () {
-    if (!started || revealed) return;
+    if (!started) return;
+    if (snap) {                                   // gliding into the pyramid
+      snap.t = Math.min(1, snap.t + 0.04);
+      var e = 1 - Math.pow(1 - snap.t, 3);        // easeOutCubic
+      snap.items.forEach(function (it) {
+        Body.setPosition(it.body, { x: it.x0 + (it.tx - it.x0) * e,
+                                    y: it.y0 + (it.ty - it.y0) * e });
+      });
+      if (snap.t >= 1) snap = null;
+      return;
+    }
+    if (revealed) return;
     frame++;
     var maxSpeed = 0;
     for (var i = 0; i < dotBodies.length; i++) {
       if (dotBodies[i].speed > maxSpeed) maxSpeed = dotBodies[i].speed;
     }
-    if (frame > MIN_FRAMES && maxSpeed < 0.4) settleHits++; else settleHits = 0;
-    if (settleHits > 14 || frame > MAX_FRAMES) reveal();
+    if (frame > MIN_FRAMES && maxSpeed < 0.18) settleHits++; else settleHits = 0;
+    if (settleHits > 22 || frame > MAX_FRAMES) reveal();
   });
+
+  // Glide the settled dots into the canonical 3-over-2 pyramid and freeze.
+  function startSnap() {
+    var d = 2 * R, cx = 0.50 * W, by = 0.70 * H, ty = by - 0.866 * d;
+    var slots = [
+      { x: cx - d, y: by }, { x: cx, y: by }, { x: cx + d, y: by },   // bottom 3
+      { x: cx - d / 2, y: ty }, { x: cx + d / 2, y: ty }              // top 2
+    ];
+    var pool = dotBodies.slice();
+    var items = [];
+    slots.forEach(function (s) {
+      var bi = -1, best = Infinity;
+      for (var i = 0; i < pool.length; i++) {
+        if (!pool[i]) continue;
+        var dx = pool[i].position.x - s.x, dy = pool[i].position.y - s.y;
+        var dd = dx * dx + dy * dy;
+        if (dd < best) { best = dd; bi = i; }
+      }
+      var b = pool[bi]; pool[bi] = null;
+      Body.setStatic(b, true);
+      items.push({ body: b, x0: b.position.x, y0: b.position.y, tx: s.x, ty: s.y });
+    });
+    snap = { items: items, t: 0 };
+  }
 
   // ---- Equation ---------------------------------------------------------
   function setEquation(addends, showTotal) {
@@ -265,6 +306,7 @@
     revealed = true;
     dotBodies.forEach(makeBlue);
     setEquation(PARTITIONS[step], true);
+    startSnap();
     armTimers();
   }
 
@@ -274,7 +316,7 @@
     // remove old dots
     dotBodies.forEach(function (b) { Composite.remove(engine.world, b); });
     dotBodies = [];
-    frame = 0; settleHits = 0; revealed = false;
+    frame = 0; settleHits = 0; revealed = false; snap = null;
 
     var addends = PARTITIONS[i];
     pips.forEach(function (p, idx) { p.classList.toggle('on', idx === i); });
@@ -284,16 +326,19 @@
     var colors = [];
     addends.forEach(function (v) { for (var k = 0; k < v; k++) colors.push(COLOR[v]); });
 
-    // Spread them across the funnel mouth, staggered in height so they
-    // drop in one after another instead of overlapping at spawn.
-    var n = colors.length;
+    // Drop them ON THE SIDES (alternating left/right, over the slants) and
+    // staggered in height, so they land on the funnel walls and ROLL down
+    // and meet in the middle instead of dropping straight through.
     colors.forEach(function (col, k) {
-      var fx = 0.40 + (0.20) * (n === 1 ? 0.5 : k / (n - 1));   // 0.40..0.60 (over the throat)
-      var jitter = (Math.random() - 0.5) * 0.05;
-      var x = (fx + jitter) * W;
-      var y = (0.10 - 0.06 * k) * H;                            // stagger upward, drop one by one
+      var leftSide = (k % 2 === 0);
+      var rank = Math.floor(k / 2);                            // 0,0,1,1,2
+      var baseFx = leftSide ? 0.22 : 0.78;
+      var spread = (leftSide ? 1 : -1) * 0.03 * rank;
+      var jitter = (Math.random() - 0.5) * 0.03;
+      var x = (baseFx + spread + jitter) * W;
+      var y = (0.06 - 0.07 * k) * H;                           // each drops a bit later
       var b = Bodies.circle(x, y, R, {
-        restitution: 0.45, friction: 0.06, frictionAir: 0.01,
+        restitution: 0.4, friction: 0.05, frictionAir: 0.01,
         label: 'dot',
         render: { fillStyle: col, strokeStyle: '#000', lineWidth: 2 }
       });

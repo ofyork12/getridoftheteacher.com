@@ -92,11 +92,14 @@
   /* Pick-your-colors screen */
   /* ColorMyMath number line — 1..9 on a white strip, like the real number line */
   .pick .pickline{display:grid; grid-template-columns:repeat(9,1fr); gap:2px; margin-bottom:14px; padding:8px 4px; background:#fbfcff; border-radius:12px;}
-  .plcell{cursor:pointer; border-radius:8px; padding:4px 1px 2px; display:flex; flex-direction:column; align-items:center; gap:1px; border:2px solid transparent; transition:transform .05s;}
+  .plcell{cursor:pointer; border-radius:8px; padding:4px 1px 3px; display:flex; flex-direction:column; align-items:center; gap:3px; border:2px solid transparent; transition:transform .05s;}
   .plcell:active{transform:scale(.9);}
   .plcell.active{border-color:var(--accent); background:#eaf2ff;}
-  .plcell .pldots{width:100%; aspect-ratio:1;}
-  .plcell b{font-size:11px; font-weight:800; color:#2a3340;}
+  /* box is TALLER than wide: the square dot-figure fits the width and sits
+     vertically centred, so even the tall figures (6,8,9) keep clear space
+     above the digit instead of crowding it. Dots stay the same size. */
+  .plcell .pldots{width:100%; aspect-ratio:4/5; display:flex; align-items:center; justify-content:center;}
+  .plcell b{font-size:11px; font-weight:800; color:#2a3340; line-height:1;}
   .pickpal{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px;}
   .pchip{aspect-ratio:1; border-radius:50%; border:3px solid #eef3fa; box-shadow:0 1px 4px rgba(0,0,0,.45); cursor:pointer; transition:transform .05s;}
   .pchip:active{transform:scale(.88);}

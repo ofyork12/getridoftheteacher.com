@@ -46,11 +46,12 @@ function step(){
   for(const d of dots){ d.vx+=gx; d.vy+=gy; d.x+=d.vx; d.y+=d.vy; }
   // walls per chamber
   for(const d of dots){ const J=d.jar==='h'?HOUR:MIN;
-    if(d.x<J.x0+d.r){d.x=J.x0+d.r;d.vx*=-0.4;} if(d.x>J.x1-d.r){d.x=J.x1-d.r;d.vx*=-0.4;}
-    if(d.y<J.y0+d.r){d.y=J.y0+d.r;d.vy*=-0.4;} if(d.y>J.y1-d.r){d.y=J.y1-d.r;d.vy*=-0.4;}
+    if(d.x<J.x0+d.r){d.x=J.x0+d.r;d.vx*=-0.3;} if(d.x>J.x1-d.r){d.x=J.x1-d.r;d.vx*=-0.3;}
+    if(d.y<J.y0+d.r){d.y=J.y0+d.r;d.vy*=-0.3;}
+    if(d.y>J.y1-d.r){d.y=J.y1-d.r;d.vy*=-0.18;d.vx*=0.8;}   // FLOOR: low bounce + grip so they settle, don't roll out
   }
-  // collisions (a few positional-correction passes) — only within same chamber
-  for(let it=0;it<4;it++){
+  // collisions — more passes so dots never overlap (they pack tight, just touching)
+  for(let it=0;it<10;it++){
     for(let i=0;i<dots.length;i++) for(let j=i+1;j<dots.length;j++){
       const a=dots[i],b=dots[j]; if(a.jar!==b.jar) continue;
       let dx=b.x-a.x, dy=b.y-a.y, dd=Math.hypot(dx,dy), mn=a.r+b.r;
@@ -61,10 +62,18 @@ function step(){
       }
     }
   }
-  for(const d of dots){ d.vx*=0.985; d.vy*=0.99; }   // friction -> settle
+  for(const d of dots){ d.vx*=0.95; d.vy*=0.99; }   // more side-friction -> dots settle into a clean pile
 }
 function dot(d){ ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fillStyle=d.c;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#161616';ctx.stroke(); }
-function jarBox(J,label){ ctx.strokeStyle='#bbb';ctx.lineWidth=3;ctx.strokeRect(J.x0,J.y0,J.x1-J.x0,J.y1-J.y0);
+function jarBox(J,label){
+  // a REAL container: solid floor + two side walls, open at the top so dots drop in and land
+  const wall='#c8a86a', edge='#9c7a3a', wt=12;
+  ctx.fillStyle=wall;
+  ctx.fillRect(J.x0-wt, J.y1, (J.x1-J.x0)+2*wt, wt+4);     // floor (the flat line the balls land on)
+  ctx.fillRect(J.x0-wt, J.y0, wt, (J.y1-J.y0)+wt+4);       // left wall
+  ctx.fillRect(J.x1,    J.y0, wt, (J.y1-J.y0)+wt+4);       // right wall
+  ctx.strokeStyle=edge;ctx.lineWidth=2;
+  ctx.strokeRect(J.x0-wt, J.y0, (J.x1-J.x0)+2*wt, (J.y1-J.y0)+wt+4);
   ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.textAlign='left';ctx.fillText(label,J.x0+6,J.y0-12); }
 
 function draw(){

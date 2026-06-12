@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="mute-button.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Roll to 5 — ColorMyMath</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    margin: 0; padding: 0;
+    background: #333;
+    font-family: 'Nunito', Arial, sans-serif;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage {
+    position: relative;
+    width: min(100vw, 56.25vh);
+    aspect-ratio: 9 / 16;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    cursor: default;
+    user-select: none;
+  }
+  #sim { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+
+  .title {
+    position: absolute; top: 2.2vh; left: 0; right: 0;
+    text-align: center;
+    font-size: 2.3vh; font-weight: 800;
+    color: #222; letter-spacing: 0.04em;
+    pointer-events: none; z-index: 8;
+  }
+  .title .sub {
+    display: block;
+    font-size: 1.5vh; font-weight: 600;
+    color: #777; letter-spacing: 0.02em;
+    margin-top: 0.3vh;
+  }
+
+  /* Big running-count readout sits just above the controls */
+  .count-readout {
+    position: absolute; left: 0; right: 0; bottom: 19vh;
+    text-align: center; z-index: 9; pointer-events: none;
+    font-size: 9vh; font-weight: 900; line-height: 1;
+    color: #ddd; transition: color .2s ease, transform .15s ease;
+  }
+  .count-readout.pop { transform: scale(1.18); }
+
+  .controls {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding-bottom: 2.4vh; z-index: 10;
+  }
+  .picker {
+    display: flex; align-items: center; gap: 2.2vh; margin-bottom: 1.6vh;
+  }
+  .picker .lbl {
+    font-size: 1.7vh; font-weight: 700; color: #888; letter-spacing: .03em;
+    position: absolute; transform: translateY(-4.6vh);
+  }
+  .step-btn {
+    width: 7vh; height: 7vh; border-radius: 50%;
+    border: none; background: #eef1f6; color: #0066ff;
+    font-family: inherit; font-weight: 900; font-size: 4vh; line-height: 1;
+    cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-btn:disabled { opacity: .35; cursor: default; }
+  .sel-num {
+    min-width: 9vh; text-align: center;
+    font-size: 7vh; font-weight: 900; line-height: 1;
+  }
+  .go-btn {
+    background: #00a12c; color: #fff; border: none; border-radius: 999px;
+    font-family: inherit; font-weight: 900; font-size: 2.6vh; letter-spacing: 0.1em;
+    padding: 1.5vh 5.5vh; cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,161,44,0.4); touch-action: manipulation;
+  }
+  .go-btn:disabled { background: #c9c9c9; box-shadow: none; cursor: default; }
+  .go-btn.replay { background: #0066ff; box-shadow: 0 6px 16px rgba(0,102,255,0.4); }
+  @keyframes goPulse {
+    0%,100% { transform: scale(1); box-shadow: 0 6px 16px rgba(0,161,44,0.4); }
+    50%     { transform: scale(1.06); box-shadow: 0 0 0 9px rgba(255,212,0,0.5), 0 6px 16px rgba(0,161,44,0.4); }
+  }
+  .go-btn.nudge { animation: goPulse 1.2s ease-in-out infinite; }
+
+  .overlay {
+    position: absolute; inset: 0; background: rgba(255,255,255,0.94);
+    display: flex; align-items: center; justify-content: center; z-index: 60;
+  }
+  .overlay.hidden { display: none; }
+  .play-btn {
+    background: #0066ff; color: #fff; border: none; border-radius: 999px;
+    font-family: inherit; font-weight: 800; font-size: 3.2vh; letter-spacing: 0.08em;
+    padding: 2vh 5vh; cursor: pointer; box-shadow: 0 10px 28px rgba(0,102,255,0.45);
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <canvas id="sim"></canvas>
+
+    <div class="title">Roll to 5<span class="sub">Pick how many balls — then press GO</span></div>
+
+    <div class="count-readout" id="readout">0</div>
+
+    <div class="controls">
+      <div class="picker">
+        <span class="lbl">RELEASE</span>
+        <button class="step-btn" id="minusBtn" type="button">−</button>
+        <div class="sel-num" id="selNum">1</div>
+        <button class="step-btn" id="plusBtn" type="button">+</button>
+      </div>
+      <button class="go-btn nudge" id="goBtn" type="button">GO</button>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <button class="play-btn" id="playBtn" type="button">PLAY</button>
+    </div>
+  </div>
+
+<script src="planck.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  // ===== Box2D (planck.js) ==============================================
+  var pl   = window.planck;
+  var Vec2 = pl.Vec2;
+
+  // Work in WORLD units; convert to pixels only when drawing. (See the
+  // funnel game for the why — pixels make Box2D's solver stiff/jittery.)
+  var PPM = 60;
+  function wx(px) { return px / PPM; }
+
+  // ---- Canonical ColorMyMath number colours ----------------------------
+  var COLOR = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
+  var BLUE = '#0066ff', GREY = '#ddd';
+  var TOTAL = 5;
+
+  // ---- DOM --------------------------------------------------------------
+  var stage   = document.getElementById('stage');
+  var canvas  = document.getElementById('sim');
+  var ctx     = canvas.getContext('2d');
+  var readout = document.getElementById('readout');
+  var selNum  = document.getElementById('selNum');
+  var minusBtn= document.getElementById('minusBtn');
+  var plusBtn = document.getElementById('plusBtn');
+  var goBtn   = document.getElementById('goBtn');
+  var overlay = document.getElementById('overlay');
+  var playBtn = document.getElementById('playBtn');
+
+  // ---- Box2D world ------------------------------------------------------
+  var world = pl.World(Vec2(0, 9.0));      // enough push to keep them rolling
+                                           // down the ramps without stalling.
+  var W, H, R, rafId = null;
+  var trackSegs = [];                      // {x1,y1,x2,y2,vis} PIXELS, for drawing
+  var balls = [];                          // planck bodies; userData below
+  var started = false;
+  var released = 0;                        // balls dropped so far (0..5)
+  var settled  = 0;                        // balls that reached the basin
+  var sel = 1;                             // currently-selected release count
+  var finale = false, snap = null;
+
+  // ---- Track (marble run): zig-zag ramps the balls roll down -----------
+  function addSeg(x1, y1, x2, y2, vis) {
+    var body = world.createBody();
+    body.createFixture(pl.Edge(Vec2(wx(x1), wx(y1)), Vec2(wx(x2), wx(y2))), { friction: 0.25 });
+    trackSegs.push({ x1: x1, y1: y1, x2: x2, y2: y2, vis: vis });
+  }
+
+  function clearWorld() {
+    for (var b = world.getBodyList(); b; ) { var n = b.getNext(); world.destroyBody(b); b = n; }
+    trackSegs = []; balls = [];
+  }
+
+  function buildWorld() {
+    var rect = stage.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    R = 0.046 * W;
+
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    clearWorld();
+
+    // Outer side walls — balls can never leave the playfield.  At each turn
+    // the ball rolls off a ramp, hits the side wall, and drops onto the next
+    // ramp which starts right against that wall.
+    addSeg(0.06*W, 0.16*H, 0.06*W, 0.82*H, true);   // left wall
+    addSeg(0.94*W, 0.16*H, 0.94*W, 0.82*H, true);   // right wall
+
+    // Three slanted ramps in a zig-zag.  Each ramp ENDS short of the far wall
+    // (a ledge), so the ball rolls off, drops past the gap, hits the side wall
+    // and lands on the next ramp which starts hard against that wall.  No
+    // ramp-meets-wall V-pocket to stall in.
+    addSeg(0.72*W, 0.20*H, 0.16*W, 0.31*H, true);   // ramp A  (down-left, ends short of L wall)
+    addSeg(0.08*W, 0.36*H, 0.84*W, 0.47*H, true);   // ramp B  (down-right, ends short of R wall)
+    addSeg(0.92*W, 0.52*H, 0.46*W, 0.63*H, true);   // ramp C  (down-left into basin)
+
+    // Basin = the holding pen the balls sit in until all five arrive.
+    addSeg(0.355*W, 0.80*H, 0.645*W, 0.80*H, true); // floor
+    addSeg(0.355*W, 0.62*H, 0.355*W, 0.80*H, true); // left wall
+    addSeg(0.645*W, 0.62*H, 0.645*W, 0.80*H, true); // right wall
+  }
+
+  // ---- Counting: a ball "arrives" when it reaches the basin & slows ----
+  function recolorSettled() {
+    var c = COLOR[Math.min(settled, TOTAL)] || GREY;
+    balls.forEach(function (b) {
+      var ud = b.getUserData();
+      if (ud.counted) ud.color = c;
+    });
+  }
+
+  function setReadout(n) {
+    readout.textContent = String(n);
+    readout.style.color = n > 0 ? (COLOR[Math.min(n, TOTAL)] || GREY) : GREY;
+    readout.classList.remove('pop');
+    // force reflow so the pop animates each time
+    void readout.offsetWidth;
+    readout.classList.add('pop');
+  }
+
+  function ballArrived() {
+    settled++;
+    recolorSettled();
+    setReadout(settled);
+    if (settled >= TOTAL) triggerFinale();
+  }
+
+  // ---- Finale: they sit, become 5, drop into the canonical 5, show "5" --
+  function triggerFinale() {
+    finale = true;
+    balls.forEach(function (b) { b.getUserData().color = BLUE; });
+    setReadout(5);
+    startSnap();
+    goBtn.textContent = 'AGAIN ▶';
+    goBtn.classList.add('replay');
+    goBtn.classList.remove('nudge');
+    goBtn.disabled = false;
+    updatePicker();
+  }
+
+  function startSnap() {
+    var d = 2 * R, cx = 0.50 * W, by = 0.755 * H, ty = by - 0.866 * d;
+    var slots = [
+      { x: cx - d, y: by }, { x: cx, y: by }, { x: cx + d, y: by },
+      { x: cx - d / 2, y: ty }, { x: cx + d / 2, y: ty }
+    ];
+    var pool = balls.slice(), items = [];
+    slots.forEach(function (s) {
+      var bi = -1, best = Infinity;
+      for (var i = 0; i < pool.length; i++) {
+        if (!pool[i]) continue;
+        var p = pool[i].getPosition();
+        var dx = p.x * PPM - s.x, dy = p.y * PPM - s.y, dd = dx*dx + dy*dy;
+        if (dd < best) { best = dd; bi = i; }
+      }
+      var b = pool[bi]; pool[bi] = null; b.setType('static');
+      var pp = b.getPosition();
+      items.push({ body: b, x0: pp.x*PPM, y0: pp.y*PPM, tx: s.x, ty: s.y });
+    });
+    snap = { items: items, t: 0 };
+  }
+
+  // ---- Per-step sim work -----------------------------------------------
+  function updateSim() {
+    if (snap) {
+      snap.t = Math.min(1, snap.t + 0.05);
+      var e = 1 - Math.pow(1 - snap.t, 3);
+      snap.items.forEach(function (it) {
+        it.body.setPosition(Vec2(wx(it.x0 + (it.tx - it.x0) * e), wx(it.y0 + (it.ty - it.y0) * e)));
+      });
+      if (snap.t >= 1) snap = null;
+      return;
+    }
+    if (finale) return;
+    // arrival check: ball low in the basin and moving slowly
+    for (var i = 0; i < balls.length; i++) {
+      var b = balls[i], ud = b.getUserData();
+      if (ud.counted) continue;
+      var p = b.getPosition(), v = b.getLinearVelocity();
+      var fy = (p.y * PPM) / H, sp = Math.hypot(v.x, v.y);
+      if (fy > 0.66 && sp < 0.6) { ud.counted = true; ballArrived(); }
+    }
+  }
+
+  // ---- Render ----------------------------------------------------------
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = Math.max(3, 0.014 * W);
+    ctx.lineCap = 'round';
+    trackSegs.forEach(function (s) {
+      if (!s.vis) return;
+      ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2); ctx.stroke();
+    });
+    balls.forEach(function (b) {
+      var p = b.getPosition(), ud = b.getUserData();
+      ctx.beginPath();
+      ctx.arc(p.x * PPM, p.y * PPM, R, 0, 6.2832);
+      ctx.fillStyle = ud.color; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke();
+    });
+  }
+
+  // ---- Fixed-step loop -------------------------------------------------
+  var DT = 1/60, acc = 0, last = 0;
+  function loop(ts) {
+    rafId = requestAnimationFrame(loop);
+    if (!last) last = ts;
+    var dtMs = ts - last; last = ts;
+    if (dtMs > 100) dtMs = 100;
+    acc += dtMs / 1000;
+    while (acc >= DT) { world.step(DT, 8, 3); updateSim(); acc -= DT; }
+    draw();
+  }
+
+  // ---- Release balls ---------------------------------------------------
+  function spawnBalls(n) {
+    var batchColor = COLOR[n] || COLOR[1];     // a batch of n shows n's colour
+    for (var k = 0; k < n; k++) {
+      var x = (0.60 + (Math.random() - 0.5) * 0.04) * W;
+      var y = (0.07 - 0.07 * k) * H;           // stagger so they queue down
+      var body = world.createDynamicBody(Vec2(wx(x), wx(y)));
+      body.setBullet(true);                    // continuous collision: don't
+                                               // tunnel through the thin ramps
+      body.createFixture(pl.Circle(wx(R)), { density: 1.0, friction: 0.25, restitution: 0.12 });
+      body.setUserData({ color: batchColor, counted: false });
+      balls.push(body);
+    }
+    released += n;
+  }
+
+  // ---- Picker / GO state ------------------------------------------------
+  function remaining() { return TOTAL - released; }
+  function updatePicker() {
+    if (finale) {
+      selNum.textContent = '5';
+      minusBtn.disabled = true; plusBtn.disabled = true;
+      goBtn.disabled = false;
+      return;
+    }
+    var rem = remaining();
+    if (sel > rem) sel = rem;
+    if (sel < 1) sel = rem > 0 ? 1 : 0;
+    selNum.textContent = String(sel);
+    selNum.style.color = COLOR[sel] || '#bbb';
+    minusBtn.disabled = sel <= 1;
+    plusBtn.disabled  = sel >= rem;
+    goBtn.disabled    = rem <= 0;
+  }
+
+  minusBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); if (finale) return; sel = Math.max(1, sel - 1); updatePicker();
+  });
+  plusBtn.addEventListener('click', function (e) {
+    e.stopPropagation(); if (finale) return; sel = Math.min(remaining(), sel + 1); updatePicker();
+  });
+
+  goBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    goBtn.classList.remove('nudge');
+    if (finale) { resetRound(); return; }
+    var rem = remaining();
+    if (rem <= 0) return;
+    var n = Math.min(sel, rem);
+    spawnBalls(n);
+    sel = 1;
+    updatePicker();
+  });
+
+  // ---- Reset for another round -----------------------------------------
+  function resetRound() {
+    balls.forEach(function (b) { world.destroyBody(b); });
+    balls = []; released = 0; settled = 0; finale = false; snap = null;
+    sel = 1;
+    setReadout(0);
+    goBtn.textContent = 'GO'; goBtn.classList.remove('replay');
+    updatePicker();
+  }
+
+  function start() {
+    overlay.classList.add('hidden');
+    started = true;
+    resetRound();
+    if (!rafId) { last = 0; rafId = requestAnimationFrame(loop); }
+  }
+  playBtn.addEventListener('click', function (e) { e.stopPropagation(); start(); });
+
+  // ---- Resize -----------------------------------------------------------
+  var rsTimer = null;
+  window.addEventListener('resize', function () {
+    if (rsTimer) clearTimeout(rsTimer);
+    rsTimer = setTimeout(function () {
+      var keep = { released: released, settled: settled, finale: finale };
+      buildWorld();
+      // simplest safe behaviour on rotate: start the round over
+      balls = []; released = 0; settled = 0; finale = false; snap = null;
+      setReadout(0); goBtn.textContent = 'GO'; goBtn.classList.remove('replay');
+      if (started) updatePicker();
+      draw();
+    }, 200);
+  });
+
+  // ---- Debug hooks ------------------------------------------------------
+  window.__world = world; window.__pl = pl;
+  window.__pump = function (n) { for (var i = 0; i < (n||1); i++) { world.step(DT, 8, 3); updateSim(); } };
+  window.__go = function () { goBtn.click(); };
+  window.__draw = function () { draw(); };
+  window.__setSel = function (v) { sel = v; updatePicker(); };
+  window.__cmmState = function () {
+    return {
+      released: released, settled: settled, finale: finale,
+      sel: sel, readout: readout.textContent,
+      balls: balls.map(function (b) {
+        var p = b.getPosition(), v = b.getLinearVelocity(), ud = b.getUserData();
+        return { fx: +((p.x*PPM)/W).toFixed(2), fy: +((p.y*PPM)/H).toFixed(2),
+                 color: ud.color, counted: !!ud.counted, speed: +Math.hypot(v.x,v.y).toFixed(2) };
+      })
+    };
+  };
+
+  buildWorld();
+  setReadout(0);
+  updatePicker();
+  draw();
+})();
+</script>
+</body>
+</html>

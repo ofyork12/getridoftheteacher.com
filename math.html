@@ -87,7 +87,7 @@
       display: flex; flex-direction: column; align-items: center;
       gap: 4px;
     }
-    .nl-cell svg { width: 100%; height: auto; max-height: clamp(60px, 11vw, 110px); }
+    .nl-cell svg { width: 100%; height: auto; max-height: clamp(80px, 15vw, 150px); }
     .nl-cell .nl-digit {
       font-family: 'Nunito', Arial, sans-serif; font-weight: 800;
       font-size: clamp(14px, 2.4vw, 22px); color: #fff;
@@ -756,7 +756,7 @@
       const baseY = YB + R;
       const topY = baseY - halfW * Math.sqrt(3);
       svg += '<polygon points="' + (CX-halfW)+','+baseY + ' ' + (CX+halfW)+','+baseY + ' ' + CX+','+topY +
-             '" fill="none" stroke="#fff" stroke-width="1.4" stroke-opacity="0.4"/>';
+             '" fill="none" stroke="#fff" stroke-width="2.8" stroke-opacity="0.75"/>';
     }
     for (const [cx, cy] of SHAPES[n]) {
       // Build a 3D ball: tiny soft shadow ellipse beneath, shaded base,

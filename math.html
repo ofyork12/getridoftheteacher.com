@@ -655,16 +655,11 @@
   function buildCell(n) {
     const color = NUM_COLOR[n];
     const dark = darken(color);
-    // Tighten viewBox to the cluster's bounds so each cell fills its column.
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for (const [x, y] of SHAPES[n]) {
-      if (x - R < minX) minX = x - R;
-      if (x + R > maxX) maxX = x + R;
-      if (y - R < minY) minY = y - R;
-      if (y + R > maxY) maxY = y + R;
-    }
-    const pad = 3;
-    const vb = (minX-pad) + ' ' + (minY-pad) + ' ' + (maxX-minX+2*pad) + ' ' + (maxY-minY+2*pad);
+    // Fixed viewBox sized to the widest/tallest cluster (10 dots) so every
+    // dot is drawn at the same R=8 scale regardless of how many dots the
+    // cell contains.  Without this, the lone "1" dot fills its entire cell
+    // and looks enormous next to 2, 3, 4, etc.
+    const vb = '15 38 70 66';
     let svg = '<svg viewBox="' + vb + '" preserveAspectRatio="xMidYMax meet">' + defs;
     // For 10, draw the canonical big-triangle outline before the balls.
     if (n === 10) {

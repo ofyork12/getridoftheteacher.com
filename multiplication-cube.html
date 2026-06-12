@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ColorMyMath · 3D Multiplication</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#111;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:none}
+  #ui{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 16px 10px}
+  #title{color:#fff;font-size:clamp(18px,4vw,28px);font-weight:bold;text-shadow:0 2px 8px #000}
+  #eq{color:#ffd700;font-size:clamp(22px,6vw,42px);font-weight:bold;letter-spacing:2px;text-shadow:0 2px 12px #000a}
+  #controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .lbl{color:#aaa;font-size:14px}
+  .spin{display:flex;align-items:center;gap:4px}
+  input[type=range]{width:80px;accent-color:#ffd700}
+  .val{color:#ffd700;font-size:16px;min-width:18px;text-align:center}
+  #hint{color:#777;font-size:12px;padding-bottom:2px}
+  canvas{display:block}
+</style>
+</head><body>
+<div id="ui">
+  <div id="title">ColorMyMath 3D</div>
+  <div id="eq">4 × 4 × 4 = 64</div>
+  <div id="controls">
+    <div class="spin"><span class="lbl">X</span><input type="range" id="sx" min="1" max="9" value="4"><span class="val" id="vx">4</span></div>
+    <div class="spin"><span class="lbl">Y</span><input type="range" id="sy" min="1" max="9" value="4"><span class="val" id="vy">4</span></div>
+    <div class="spin"><span class="lbl">Z</span><input type="range" id="sz" min="1" max="9" value="4"><span class="val" id="vz">4</span></div>
+  </div>
+  <div id="hint">drag to spin · pinch to zoom</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+<script>
+// ColorMyMath colors
+const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3192',7:'#F7941D',8:'#FFF200',9:'#C724B1'};
+const hex2three=h=>new THREE.Color(h);
+
+// Scene setup
+const scene=new THREE.Scene();
+scene.background=new THREE.Color('#111');
+const cam=new THREE.PerspectiveCamera(45,1,0.1,1000);
+cam.position.set(0,0,28);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.shadowMap.enabled=true;
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const sun=new THREE.DirectionalLight(0xffffff,1.2);
+sun.position.set(10,18,20); sun.castShadow=true; scene.add(sun);
+const fill=new THREE.DirectionalLight(0x8899ff,0.4);
+fill.position.set(-10,-8,-10); scene.add(fill);
+
+// Dot group
+const group=new THREE.Group(); scene.add(group);
+let nx=4,ny=4,nz=4;
+
+function buildCube(x,y,z){
+  while(group.children.length) group.remove(group.children[0]);
+  nx=x; ny=y; nz=z;
+  const geo=new THREE.SphereGeometry(0.44,16,12);
+  const step=1.1;
+  const ox=(x-1)*step/2, oy=(y-1)*step/2, oz=(z-1)*step/2;
+  for(let xi=0;xi<x;xi++) for(let yi=0;yi<y;yi++) for(let zi=0;zi<z;zi++){
+    // color by which dimension "layer" — zi picks the color (depth = Z dimension)
+    const layerColor = hex2three(COLOR[(zi%9)+1]);
+    // edge dots brighter, interior slightly dimmer for depth feel
+    const edge = xi===0||xi===x-1||yi===0||yi===y-1||zi===0||zi===z-1;
+    const mat=new THREE.MeshPhongMaterial({
+      color: layerColor,
+      emissive: layerColor,
+      emissiveIntensity: edge ? 0.18 : 0.06,
+      shininess: 80,
+      transparent: !edge,
+      opacity: edge ? 1.0 : 0.55,
+    });
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.position.set(xi*step-ox, yi*step-oy, zi*step-oz);
+    mesh.castShadow=true;
+    group.add(mesh);
+  }
+  // axis labels as sprites
+  addLabel('+X', (x-1)*step/2+1.4, 0, 0, COLOR[nx]||'#fff');
+  addLabel('+Y', 0, (y-1)*step/2+1.4, 0, COLOR[ny]||'#fff');
+  addLabel('+Z', 0, 0, (z-1)*step/2+1.4, COLOR[nz]||'#fff');
+  updateEq();
+  fitCamera(x,y,z);
+}
+
+function addLabel(text, lx, ly, lz, color){
+  const cv=document.createElement('canvas'); cv.width=128; cv.height=64;
+  const c=cv.getContext('2d');
+  c.clearRect(0,0,128,64);
+  c.font='bold 36px Georgia'; c.fillStyle=color; c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(text,64,32);
+  const tex=new THREE.CanvasTexture(cv);
+  const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});
+  const sp=new THREE.Sprite(mat); sp.scale.set(1.2,0.6,1);
+  sp.position.set(lx,ly,lz); group.add(sp);
+}
+
+function fitCamera(x,y,z){
+  const maxDim=Math.max(x,y,z)*1.1*1.1;
+  cam.position.setLength(maxDim*3.2);
+  cam.lookAt(0,0,0);
+}
+
+function updateEq(){
+  document.getElementById('eq').textContent=`${nx} × ${ny} × ${nz} = ${nx*ny*nz}`;
+}
+
+// Sliders
+['x','y','z'].forEach(ax=>{
+  const sl=document.getElementById('s'+ax), vl=document.getElementById('v'+ax);
+  sl.addEventListener('input',()=>{
+    vl.textContent=sl.value;
+    buildCube(+document.getElementById('sx').value,+document.getElementById('sy').value,+document.getElementById('sz').value);
+  });
+});
+
+// Orbit: mouse + touch
+let rotX=-0.4, rotY=0.6, dist=1;
+let lastX=0,lastY=0,lastD=0,dragging=false;
+const el=renderer.domElement;
+el.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
+window.addEventListener('pointerup',()=>dragging=false);
+window.addEventListener('pointermove',e=>{
+  if(!dragging) return;
+  rotY+=(e.clientX-lastX)*0.012; rotX+=(e.clientY-lastY)*0.012;
+  lastX=e.clientX; lastY=e.clientY;
+});
+el.addEventListener('touchstart',e=>{if(e.touches.length===2){lastD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
+el.addEventListener('touchmove',e=>{
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    dist*=lastD/d; dist=Math.max(0.4,Math.min(3,dist)); lastD=d;
+  }
+},{passive:true});
+el.addEventListener('wheel',e=>{dist*=1+e.deltaY*0.001; dist=Math.max(0.4,Math.min(3,dist));},{passive:true});
+
+// Auto-spin when idle
+let autoSpin=true;
+el.addEventListener('pointerdown',()=>autoSpin=false);
+
+// Resize
+function resize(){
+  const w=window.innerWidth, h=window.innerHeight;
+  renderer.setSize(w,h); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  cam.aspect=w/h; cam.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize); resize();
+
+// Animate
+function animate(){
+  requestAnimationFrame(animate);
+  if(autoSpin) rotY+=0.006;
+  group.rotation.x=rotX; group.rotation.y=rotY;
+  cam.position.setLength(cam.position.length()*0.9 + Math.max(4,Math.max(nx,ny,nz)*3.2)*dist*0.1);
+  renderer.render(scene,cam);
+}
+buildCube(4,4,4);
+animate();
+</script></body></html>

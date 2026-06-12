@@ -24,8 +24,8 @@ const W=1080,H=1920;
 // two chambers (jars): hour on top, minutes below
 const HOUR={x0:150,y0:350,x1:930,y1:560};
 const MIN ={x0:90,y0:720,x1:990,y1:1340};
-let dots=[];                       // {x,y,vx,vy,r,c,jar}
-let gx=0, gy=0.9;                  // gravity (tilt changes it)
+let dots=[];                       // {x,y,vx,vy,r,c,jar,tx,ty,settled}
+let gx=0, gy=0.55;                 // gravity (tilt changes it)
 let tiltOn=false;
 let lastMin=-1, lastHour=-1;
 
@@ -54,10 +54,12 @@ function figureTargets(n,J){
   const xs=t.map(p=>p[0]), cxOff=(Math.min(...xs)+Math.max(...xs))/2, baseX=(J.x0+J.x1)/2, baseY=J.y1-R;
   return t.map(p=>({tx:baseX+(p[0]-cxOff)*R, ty:baseY+p[1]*R}));
 }
-function spawn(jar,c,side){ const J=jar==='h'?HOUR:MIN;   // drop in at a SIDE, then roll into the middle
-  const x = side ? J.x1-DOT-Math.random()*25 : J.x0+DOT+Math.random()*25;
-  const y = J.y0 + (J.y1-J.y0)*0.26 + Math.random()*40;
-  return {x, y, vx:0, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0}; }
+function spawn(jar,c,side){ const J=jar==='h'?HOUR:MIN;
+  // drop from near the top of the chamber, left or right side
+  const x = side ? J.x1-DOT*2-Math.random()*60 : J.x0+DOT*2+Math.random()*60;
+  const y = J.y0 + DOT + Math.random()*30;
+  const vx = side ? -(Math.random()*3+1) : (Math.random()*3+1);
+  return {x, y, vx, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0, settled:false}; }
 function assignTargets(jar,count){ const J=jar==='h'?HOUR:MIN, T=figureTargets(count,J);
   let k=0; for(const d of dots){ if(d.jar===jar){ if(T[k]){d.tx=T[k].tx; d.ty=T[k].ty;} k++; } } }
 function build(h,m){
@@ -68,24 +70,53 @@ function build(h,m){
   assignTargets('h',h12); assignTargets('m',m);
   lastHour=h12; lastMin=m;
 }
+const BOUNCE=0.38, FRICTION=0.78, SETTLE_PULL=0.018, SETTLE_DIST=18;
+function chamberFloorY(J,x){
+  // valley floor: ramps from sides down to flat shelf in centre
+  const cx=(J.x0+J.x1)/2, shelf=Math.min(230,(J.x1-J.x0)*0.32);
+  const sideY=J.y1-Math.min(120,(J.y1-J.y0)*0.42);
+  if(x < cx-shelf) return sideY + (J.y1-sideY)*((x-(J.x0))/(cx-shelf-J.x0));
+  if(x > cx+shelf) return sideY + (J.y1-sideY)*((J.x1-x)/(J.x1-(cx+shelf)));
+  return J.y1;
+}
 function step(){
   for(const d of dots){
-    // gentle spring toward this dot's slot in the ColorMyMath figure -> slow, smooth (~3x slower)
-    d.vx += (d.tx-d.x)*0.045; d.vy += (d.ty-d.y)*0.045;
-    d.vx *= 0.86; d.vy *= 0.86;
+    const J=d.jar==='h'?HOUR:MIN;
+    const speed=Math.hypot(d.vx,d.vy);
+    const nearTarget=Math.hypot(d.tx-d.x,d.ty-d.y)<SETTLE_DIST*3;
+    // gravity — less when close to target so dots float gently in
+    const gravScale = nearTarget ? 0.25 : 1.0;
+    d.vy += gy * gravScale;
+    d.vx += gx;
+    // gentle pull toward target slot when close enough
+    if(nearTarget){
+      d.vx += (d.tx-d.x)*SETTLE_PULL;
+      d.vy += (d.ty-d.y)*SETTLE_PULL;
+    }
+    d.vx *= 0.985; d.vy *= 0.985;   // air friction
     d.x += d.vx; d.y += d.vy;
+    // wall bounce
+    if(d.x < J.x0+d.r){ d.x=J.x0+d.r; d.vx=Math.abs(d.vx)*BOUNCE; d.vy*=FRICTION; }
+    if(d.x > J.x1-d.r){ d.x=J.x1-d.r; d.vx=-Math.abs(d.vx)*BOUNCE; d.vy*=FRICTION; }
+    // ceiling
+    if(d.y < J.y0+d.r){ d.y=J.y0+d.r; d.vy=Math.abs(d.vy)*BOUNCE; }
+    // valley floor collision
+    const fy=chamberFloorY(J,d.x);
+    if(d.y > fy-d.r){ d.y=fy-d.r; d.vy=-Math.abs(d.vy)*BOUNCE; d.vx*=FRICTION; }
   }
-  for(const d of dots){ const J=d.jar==='h'?HOUR:MIN;     // stay inside the chamber
-    if(d.x<J.x0+d.r)d.x=J.x0+d.r; if(d.x>J.x1-d.r)d.x=J.x1-d.r;
-    if(d.y<J.y0+d.r)d.y=J.y0+d.r; if(d.y>J.y1-d.r)d.y=J.y1-d.r;
-  }
-  // collision so dots never overlap on the way in — they just touch
-  for(let it=0;it<8;it++){
+  // dot-dot collisions with velocity exchange (Box2D style)
+  for(let it=0;it<6;it++){
     for(let i=0;i<dots.length;i++) for(let j=i+1;j<dots.length;j++){
       const a=dots[i],b=dots[j]; if(a.jar!==b.jar) continue;
       let dx=b.x-a.x, dy=b.y-a.y, dd=Math.hypot(dx,dy), mn=a.r+b.r;
-      if(dd>0 && dd<mn){ const ov=(mn-dd)/2, nx=dx/dd, ny=dy/dd;
-        a.x-=nx*ov; a.y-=ny*ov; b.x+=nx*ov; b.y+=ny*ov; }
+      if(dd>0 && dd<mn){
+        const ov=(mn-dd)/2, nx=dx/dd, ny=dy/dd;
+        a.x-=nx*ov; a.y-=ny*ov; b.x+=nx*ov; b.y+=ny*ov;
+        // velocity exchange along collision normal
+        const dvx=b.vx-a.vx, dvy=b.vy-a.vy, dot2=dvx*nx+dvy*ny;
+        if(dot2<0){ const imp=dot2*0.9;
+          a.vx+=imp*nx; a.vy+=imp*ny; b.vx-=imp*nx; b.vy-=imp*ny; }
+      }
     }
   }
 }
@@ -137,7 +168,7 @@ build(new Date().getHours(), new Date().getMinutes());
 loop(); setInterval(tick,1000);
 
 // interaction
-document.getElementById('shake').onclick=()=>{ for(const d of dots){ d.vx+=(Math.random()-.5)*40; d.vy-=Math.random()*30; } };
+document.getElementById('shake').onclick=()=>{ for(const d of dots){ d.vx+=(Math.random()-.5)*50; d.vy-=(Math.random()*18+12); d.settled=false; } };
 document.getElementById('tilt').onclick=async ()=>{
   if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
     try{ const p=await DeviceOrientationEvent.requestPermission(); if(p!=='granted') return; }catch(e){}

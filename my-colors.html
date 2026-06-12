@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Make It Your Colors — ColorMyMath</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{margin:0;padding:0;min-height:100%;}
+    body{
+      background:#000;color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      padding:32px 16px 80px; display:flex; flex-direction:column; align-items:center;
+    }
+    .wrap{width:100%;max-width:480px;}
+
+    /* back nav */
+    .back{display:inline-block;margin-bottom:28px;padding:10px 20px;border:2px solid #fff;
+      border-radius:999px;color:#fff;text-decoration:none;font-size:14px;font-weight:700;}
+    .back:hover{background:#fff;color:#000;}
+
+    h1{font-size:clamp(24px,6vw,38px);margin:0 0 6px;text-align:center;letter-spacing:1px;}
+    .sub{color:#888;font-size:15px;text-align:center;margin:0 0 36px;line-height:1.5;}
+
+    /* number strip */
+    .numstrip{
+      display:grid;grid-template-columns:repeat(9,1fr);gap:4px;
+      background:#111;border-radius:14px;padding:12px 8px;margin-bottom:24px;
+    }
+    .numcell{
+      display:flex;flex-direction:column;align-items:center;gap:5px;
+      padding:6px 2px;border-radius:10px;cursor:pointer;
+      border:2px solid transparent;transition:all .15s;
+    }
+    .numcell.active{border-color:#ffd000;background:rgba(255,208,0,0.12);}
+    .numcell svg{width:100%;aspect-ratio:1;display:block;}
+    .numcell .num{font-size:11px;font-weight:800;color:#aaa;}
+    .numcell.active .num{color:#ffd000;}
+
+    /* color palette */
+    .pal-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      color:#555;margin:0 0 12px;}
+    .palette{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px;
+    }
+    .chip{
+      aspect-ratio:1;border-radius:50%;border:3px solid #222;cursor:pointer;
+      transition:transform .1s,border-color .1s;
+    }
+    .chip:hover{transform:scale(1.12);}
+    .chip.selected{border-color:#fff;transform:scale(1.18);}
+    .chip.used{opacity:.25;}
+
+    /* progress */
+    .progress{text-align:center;font-size:14px;font-weight:700;color:#888;margin-bottom:24px;}
+    .progress span{color:#ffd000;}
+
+    /* action buttons */
+    .actions{display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
+    .btn{
+      display:block;width:100%;padding:16px;border:none;border-radius:14px;
+      font-size:17px;font-weight:800;cursor:pointer;text-align:center;
+      text-decoration:none;transition:all .18s;
+    }
+    .btn-primary{background:#ffd000;color:#000;}
+    .btn-primary:disabled{opacity:.3;cursor:not-allowed;}
+    .btn-primary:not(:disabled):hover{background:#ffe840;transform:translateY(-2px);}
+    .btn-secondary{background:#1a1a1a;color:#fff;border:2px solid #333;}
+    .btn-secondary:hover{border-color:#fff;}
+
+    /* your link box */
+    .link-box{display:none;background:#0a1a0a;border:2px solid #15c015;border-radius:14px;
+      padding:20px;margin-bottom:24px;}
+    .link-box h3{margin:0 0 8px;font-size:16px;color:#15c015;}
+    .link-box p{margin:0 0 12px;font-size:13px;color:#888;line-height:1.5;}
+    .link-url{
+      background:#111;border:1px solid #333;border-radius:8px;padding:10px 12px;
+      font-size:12px;color:#aaa;word-break:break-all;margin-bottom:12px;
+      font-family:monospace;
+    }
+    .copy-btn{
+      background:#15c015;color:#000;border:none;border-radius:999px;
+      padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;
+    }
+    .copy-btn:hover{background:#1de01d;}
+
+    /* game links */
+    .game-links{display:none;margin-top:24px;}
+    .game-links h3{font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      color:#555;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid #222;}
+    .glink{
+      display:flex;align-items:center;gap:12px;padding:14px 16px;
+      background:#111;border-radius:12px;text-decoration:none;color:#fff;
+      margin-bottom:10px;transition:background .15s;
+    }
+    .glink:hover{background:#1a1a1a;}
+    .glink .gicon{font-size:28px;}
+    .glink .gtitle{font-size:15px;font-weight:700;}
+    .glink .gsub{font-size:12px;color:#666;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="premium-games.html" class="back">← All Games</a>
+
+  <h1>🎨 Make It Your Colors</h1>
+  <p class="sub">Tap a number, then tap your color for it.<br>Give all 9 numbers a color — then play!</p>
+
+  <!-- number strip -->
+  <div class="numstrip" id="numstrip"></div>
+
+  <!-- palette -->
+  <div class="pal-label">Choose a color</div>
+  <div class="palette" id="palette"></div>
+
+  <div class="progress">Colors chosen: <span id="countSpan">0</span> of 9</div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="btnGenerate" disabled>✨ Generate My Personal Link</button>
+    <button class="btn btn-secondary" id="btnRandom">🎲 Surprise Me!</button>
+  </div>
+
+  <!-- result -->
+  <div class="link-box" id="linkBox">
+    <h3>✅ Your personal link is ready!</h3>
+    <p>Bookmark this link — it loads all your games in YOUR colors, anytime.</p>
+    <div class="link-url" id="linkUrl"></div>
+    <button class="copy-btn" id="copyBtn">📋 Copy Link</button>
+  </div>
+
+  <div class="game-links" id="gameLinks">
+    <h3>Jump straight into a game</h3>
+    <a class="glink" id="gl-counting" href="#"><span class="gicon">🔢</span><span><div class="gtitle">Counting to 10</div><div class="gsub">In your colors</div></span></a>
+    <a class="glink" id="gl-addition" href="#"><span class="gicon">➕</span><span><div class="gtitle">Addition</div><div class="gsub">In your colors</div></span></a>
+    <a class="glink" id="gl-subtraction" href="#"><span class="gicon">➖</span><span><div class="gtitle">Subtraction</div><div class="gsub">In your colors</div></span></a>
+    <a class="glink" id="gl-making10" href="#"><span class="gicon">🔟</span><span><div class="gtitle">Making 10</div><div class="gsub">In your colors</div></span></a>
+    <a class="glink" id="gl-sudoku" href="#"><span class="gicon">🎨</span><span><div class="gtitle">Pick Your Colors Sudoku</div><div class="gsub">Already customizable!</div></span></a>
+    <a class="glink" id="gl-clock" href="#"><span class="gicon">🕐</span><span><div class="gtitle">Annie's Clock</div><div class="gsub">In your colors</div></span></a>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+  // ── ColorMyMath dot shapes ──
+  const S = Math.sqrt(3);
+  const SHAPES = {
+    1:[[0,0]],
+    2:[[-1,0],[1,0]],
+    3:[[-1,0],[1,0],[0,-S]],
+    4:[[-1,0],[1,0],[-1,-2],[1,-2]],
+    5:[[-2,0],[0,0],[2,0],[-1,-S],[1,-S]],
+    6:[[-2,0],[0,0],[2,0],[-1,-S],[1,-S],[0,-2*S]],
+    7:[[0,0],[2,0],[1,S],[-1,S],[-2,0],[-1,-S],[1,-S]],
+    8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
+    9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]
+  };
+  const VB = 7;
+  function dotsSVG(n, color){
+    const pts = SHAPES[n];
+    let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
+    for(const [x,y] of pts){mnX=Math.min(mnX,x);mxX=Math.max(mxX,x);mnY=Math.min(mnY,y);mxY=Math.max(mxY,y);}
+    const cx=(mnX+mxX)/2, cy=(mnY+mxY)/2;
+    let c='';
+    for(const [x,y] of pts){
+      c+=`<circle cx="${(x-cx).toFixed(2)}" cy="${(y-cy).toFixed(2)}" r="1" fill="${color}" stroke="#16181d" stroke-width="0.1"/>`;
+    }
+    return `<svg viewBox="${-VB/2} ${-VB/2} ${VB} ${VB}" xmlns="http://www.w3.org/2000/svg">${c}</svg>`;
+  }
+
+  // ── Color palette ──
+  const PALETTE = [
+    {name:'Red',       hex:'#ff1a1a'},
+    {name:'Orange',    hex:'#ff7a00'},
+    {name:'Yellow',    hex:'#ffd000'},
+    {name:'Green',     hex:'#15c015'},
+    {name:'Cyan',      hex:'#00ccdd'},
+    {name:'Blue',      hex:'#1565ff'},
+    {name:'Purple',    hex:'#9b1bd6'},
+    {name:'Pink',      hex:'#ff1493'},
+    {name:'Black',     hex:'#333333'},
+    {name:'Lime',      hex:'#9acd00'},
+    {name:'Jade',      hex:'#00c28a'},
+    {name:'Sky',       hex:'#34b0ff'},
+    {name:'Violet',    hex:'#7a2be2'},
+    {name:'Magenta',   hex:'#e612c9'},
+    {name:'Coral',     hex:'#ff6b6b'},
+    {name:'Gold',      hex:'#f0b32a'},
+    {name:'Teal',      hex:'#00897b'},
+    {name:'Indigo',    hex:'#3949ab'},
+    {name:'Rose',      hex:'#e91e63'},
+    {name:'White',     hex:'#eeeeee'},
+  ];
+
+  // Default teacher colors
+  const DEFAULT = ['#ff1a1a','#ff7a00','#ffd000','#15c015','#00ccdd','#1565ff','#9b1bd6','#ff1493','#333333'];
+
+  const chosen = new Array(10).fill(null); // index 1-9
+  let activeNum = 1;
+
+  const strip = document.getElementById('numstrip');
+  const pal = document.getElementById('palette');
+  const countSpan = document.getElementById('countSpan');
+  const btnGen = document.getElementById('btnGenerate');
+  const btnRand = document.getElementById('btnRandom');
+  const linkBox = document.getElementById('linkBox');
+  const linkUrl = document.getElementById('linkUrl');
+  const copyBtn = document.getElementById('copyBtn');
+  const gameLinks = document.getElementById('gameLinks');
+
+  // Build number strip
+  for(let n=1;n<=9;n++){
+    const cell = document.createElement('div');
+    cell.className = 'numcell' + (n===1?' active':'');
+    cell.dataset.n = n;
+    const color = chosen[n] || DEFAULT[n-1];
+    cell.innerHTML = dotsSVG(n, color) + `<span class="num">${n}</span>`;
+    cell.addEventListener('click', ()=>{ selectNum(n); });
+    strip.appendChild(cell);
+  }
+
+  // Build palette
+  PALETTE.forEach((c,i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.style.background = c.hex;
+    chip.title = c.name;
+    chip.dataset.hex = c.hex;
+    chip.addEventListener('click', ()=>{ assignColor(c.hex); });
+    pal.appendChild(chip);
+  });
+
+  function selectNum(n){
+    activeNum = n;
+    document.querySelectorAll('.numcell').forEach(el=>{
+      el.classList.toggle('active', +el.dataset.n === n);
+    });
+    updateChipUsed();
+  }
+
+  function assignColor(hex){
+    chosen[activeNum] = hex;
+    // refresh that cell's dot
+    const cell = strip.children[activeNum-1];
+    cell.innerHTML = dotsSVG(activeNum, hex) + `<span class="num">${activeNum}</span>`;
+    cell.classList.add('active');
+    // move to next unchosen number
+    let next = activeNum;
+    for(let i=1;i<=9;i++){
+      const try_ = ((activeNum-1+i)%9)+1;
+      if(!chosen[try_]){next=try_;break;}
+    }
+    selectNum(next);
+    updateCount();
+    updateChipUsed();
+  }
+
+  function updateCount(){
+    const n = chosen.slice(1).filter(Boolean).length;
+    countSpan.textContent = n;
+    btnGen.disabled = n < 9;
+  }
+
+  function updateChipUsed(){
+    // mark colors already used by OTHER numbers
+    const usedByOthers = new Set(
+      chosen.slice(1).filter((_,i)=> i+1 !== activeNum && chosen[i+1])
+    );
+    document.querySelectorAll('.chip').forEach(chip=>{
+      chip.classList.toggle('used', usedByOthers.has(chip.dataset.hex));
+      chip.classList.toggle('selected', chip.dataset.hex === chosen[activeNum]);
+    });
+  }
+
+  // Random
+  btnRand.addEventListener('click', ()=>{
+    const shuffled = [...PALETTE].sort(()=>Math.random()-.5).slice(0,9).map(c=>c.hex);
+    for(let n=1;n<=9;n++){
+      chosen[n] = shuffled[n-1];
+      strip.children[n-1].innerHTML = dotsSVG(n, chosen[n]) + `<span class="num">${n}</span>`;
+    }
+    selectNum(1);
+    updateCount();
+    updateChipUsed();
+  });
+
+  // Generate link
+  btnGen.addEventListener('click', ()=>{
+    const params = chosen.slice(1).map((hex,i)=>`c${i+1}=${hex.replace('#','')}`).join('&');
+    const base = window.location.origin + window.location.pathname.replace('my-colors.html','');
+    const myUrl = `${base}my-colors.html?${params}`;
+    linkUrl.textContent = myUrl;
+    linkBox.style.display = 'block';
+    gameLinks.style.display = 'block';
+    // set game links
+    const qs = '?' + params;
+    document.getElementById('gl-counting').href = 'counting-to-10-game.html' + qs;
+    document.getElementById('gl-addition').href = 'addition-game.html' + qs;
+    document.getElementById('gl-subtraction').href = 'subtraction-game.html' + qs;
+    document.getElementById('gl-making10').href = 'making-10-game.html' + qs;
+    document.getElementById('gl-sudoku').href = 'pick-your-colors-sudoku/index.html';
+    document.getElementById('gl-clock').href = 'annies-clock/index.html' + qs;
+    linkBox.scrollIntoView({behavior:'smooth'});
+  });
+
+  // Copy
+  copyBtn.addEventListener('click', ()=>{
+    navigator.clipboard.writeText(linkUrl.textContent).then(()=>{
+      copyBtn.textContent = '✅ Copied!';
+      setTimeout(()=>{ copyBtn.textContent = '📋 Copy Link'; },2000);
+    });
+  });
+
+  // Load from URL params (so bookmarked link restores your colors)
+  const params = new URLSearchParams(window.location.search);
+  let loaded = 0;
+  for(let n=1;n<=9;n++){
+    const hex = params.get('c'+n);
+    if(hex){
+      chosen[n] = '#'+hex;
+      strip.children[n-1].innerHTML = dotsSVG(n, '#'+hex) + `<span class="num">${n}</span>`;
+      loaded++;
+    }
+  }
+  if(loaded>0){ updateCount(); updateChipUsed(); }
+  if(loaded===9){ btnGen.click(); }
+
+})();
+</script>
+</body>
+</html>

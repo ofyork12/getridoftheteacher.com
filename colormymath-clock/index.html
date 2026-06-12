@@ -22,8 +22,8 @@ const sig=new Image(); sig.src='signature.png';
 const W=1080,H=1920;
 
 // two chambers (jars): hour on top, minutes below
-const HOUR={x0:60,y0:300,x1:1020,y1:620};
-const MIN ={x0:60,y0:760,x1:1020,y1:1780};
+const HOUR={x0:150,y0:350,x1:930,y1:560};
+const MIN ={x0:90,y0:720,x1:990,y1:1340};
 let dots=[];                       // {x,y,vx,vy,r,c,jar}
 let gx=0, gy=0.9;                  // gravity (tilt changes it)
 let tiltOn=false;
@@ -54,15 +54,17 @@ function figureTargets(n,J){
   const xs=t.map(p=>p[0]), cxOff=(Math.min(...xs)+Math.max(...xs))/2, baseX=(J.x0+J.x1)/2, baseY=J.y1-R;
   return t.map(p=>({tx:baseX+(p[0]-cxOff)*R, ty:baseY+p[1]*R}));
 }
-function spawn(jar,c){ const J=jar==='h'?HOUR:MIN;
-  return {x:J.x0+30+Math.random()*(J.x1-J.x0-60), y:J.y0+10+Math.random()*30, vx:(Math.random()-.5)*3, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0}; }
+function spawn(jar,c,side){ const J=jar==='h'?HOUR:MIN;   // drop in at a SIDE, then roll into the middle
+  const x = side ? J.x1-DOT-Math.random()*25 : J.x0+DOT+Math.random()*25;
+  const y = J.y0 + (J.y1-J.y0)*0.26 + Math.random()*40;
+  return {x, y, vx:0, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0}; }
 function assignTargets(jar,count){ const J=jar==='h'?HOUR:MIN, T=figureTargets(count,J);
   let k=0; for(const d of dots){ if(d.jar===jar){ if(T[k]){d.tx=T[k].tx; d.ty=T[k].ty;} k++; } } }
 function build(h,m){
   dots=[];
   const h12=((h%12)===0?12:(h%12));
-  for(let i=0;i<h12;i++) dots.push(spawn('h',HOURCOL));
-  for(let i=0;i<m;i++)   dots.push(spawn('m',TENCOL[Math.floor(i/10)%6]));
+  for(let i=0;i<h12;i++) dots.push(spawn('h',HOURCOL,i%2));
+  for(let i=0;i<m;i++)   dots.push(spawn('m',TENCOL[Math.floor(i/10)%6],i%2));
   assignTargets('h',h12); assignTargets('m',m);
   lastHour=h12; lastMin=m;
 }
@@ -89,14 +91,23 @@ function step(){
 }
 function dot(d){ ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fillStyle=d.c;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#161616';ctx.stroke(); }
 function jarBox(J,label){
-  // a REAL container: solid floor + two side walls, open at the top so dots drop in and land
+  // container with a DIPPING floor: ramps down from both sides to a flat shelf in the middle,
+  // so dots roll in from the sides and settle in the centre to make the ColorMyMath number.
   const wall='#c8a86a', edge='#9c7a3a', wt=12;
+  const cx=(J.x0+J.x1)/2, shelf=Math.min(230,(J.x1-J.x0)*0.32), sideY=J.y1-Math.min(120,(J.y1-J.y0)*0.42);
   ctx.fillStyle=wall;
-  ctx.fillRect(J.x0-wt, J.y1, (J.x1-J.x0)+2*wt, wt+4);     // floor (the flat line the balls land on)
   ctx.fillRect(J.x0-wt, J.y0, wt, (J.y1-J.y0)+wt+4);       // left wall
   ctx.fillRect(J.x1,    J.y0, wt, (J.y1-J.y0)+wt+4);       // right wall
-  ctx.strokeStyle=edge;ctx.lineWidth=2;
-  ctx.strokeRect(J.x0-wt, J.y0, (J.x1-J.x0)+2*wt, (J.y1-J.y0)+wt+4);
+  ctx.beginPath();                                          // valley floor
+  ctx.moveTo(J.x0-wt, sideY);
+  ctx.lineTo(cx-shelf, J.y1);
+  ctx.lineTo(cx+shelf, J.y1);
+  ctx.lineTo(J.x1+wt, sideY);
+  ctx.lineTo(J.x1+wt, J.y1+wt+6);
+  ctx.lineTo(J.x0-wt, J.y1+wt+6);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=edge;ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(J.x0-wt,sideY); ctx.lineTo(cx-shelf,J.y1); ctx.lineTo(cx+shelf,J.y1); ctx.lineTo(J.x1+wt,sideY); ctx.stroke();
   ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.textAlign='left';ctx.fillText(label,J.x0+6,J.y0-12); }
 
 function draw(){
@@ -117,7 +128,7 @@ function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
   const h12=((h%12)===0?12:h%12);
   if(h12!==lastHour || m<lastMin){ build(h,m); return; }       // new hour or wrap: rebuild
   if(m!==lastMin){
-    for(let i=lastMin;i<m;i++) dots.push(spawn('m',TENCOL[Math.floor(i/10)%6]));  // new minute dots drop in
+    for(let i=lastMin;i<m;i++) dots.push(spawn('m',TENCOL[Math.floor(i/10)%6],i%2));  // new minute dots roll in from a side
     assignTargets('m',m);                                       // re-form the whole minute figure
     lastMin=m;
   }

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Full Math Games Access — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: #000; color: #fff;
+      font-family: Arial, sans-serif; padding: 40px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+
+    .top-nav { display: flex; justify-content: center; margin-bottom: 32px; }
+    .top-nav a {
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; text-decoration: none; transition: all 0.3s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+
+    h1 {
+      text-align: center; font-size: clamp(28px, 5vw, 48px);
+      margin: 0 0 6px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;
+    }
+    .sub { text-align: center; color: #aaa; margin: 0 0 48px; font-size: 16px; }
+
+    /* ── Section headers ── */
+    .section-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: #555; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 1px solid #222;
+    }
+    .section { margin-bottom: 48px; }
+
+    /* ── Card grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      padding: 24px 18px; background: rgba(255,255,255,0.03);
+      border: 2px solid #fff; border-radius: 16px; text-decoration: none;
+      color: #fff; transition: all 0.22s ease; min-height: 180px; justify-content: center;
+      cursor: pointer;
+    }
+    .card:hover { background: #fff; color: #000; transform: translateY(-3px); }
+    .card:hover .tag { background: #000; color: #fff; }
+    .card .art { font-size: 52px; line-height: 1; }
+    .card h2 { margin: 0; font-size: 18px; text-align: center; letter-spacing: 0.5px; }
+    .card p { margin: 0; font-size: 13px; text-align: center; opacity: 0.7; line-height: 1.4; }
+
+    /* rainbow accent border for teacher edition */
+    .rainbow {
+      border-image: linear-gradient(135deg,#ff1a1a,#ff7a00,#ffd000,#15c015,#00ccdd,#1565ff,#9b1bd6) 1;
+      border-width: 3px;
+    }
+
+    /* tag badge */
+    .tag {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+      background: #fff; color: #000; border-radius: 999px; padding: 3px 10px;
+    }
+    .tag.custom { background: #9b1bd6; color: #fff; }
+
+    /* buy-colors banner */
+    .banner {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      border: 2px dashed #9b1bd6; border-radius: 16px; padding: 20px 24px;
+      margin-bottom: 48px; flex-wrap: wrap; gap: 12px;
+    }
+    .banner-text h3 { margin: 0 0 4px; font-size: 20px; }
+    .banner-text p { margin: 0; color: #aaa; font-size: 14px; }
+    .banner-btn {
+      display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 700;
+      background: #9b1bd6; color: #fff; border-radius: 999px; text-decoration: none;
+      white-space: nowrap; transition: all 0.2s ease;
+    }
+    .banner-btn:hover { background: #7a15aa; transform: scale(1.03); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top-nav"><a href="index.html">← Back to Home</a></div>
+
+  <h1>Full Math Games Access</h1>
+  <p class="sub">All games, all levels — ColorMyMath Teacher's Edition 🌈</p>
+
+  <!-- Make It Your Colors banner -->
+  <div class="banner">
+    <div class="banner-text">
+      <h3>🎨 Want your own colors?</h3>
+      <p>For just $1 — pick the colors <em>you</em> love for every number.</p>
+    </div>
+    <a href="https://colormymath.com/products/make-it-your-colors" class="banner-btn">Make It Your Colors — $1</a>
+  </div>
+
+  <!-- COUNTING -->
+  <div class="section">
+    <div class="section-title">Counting</div>
+    <div class="grid">
+      <a href="counting-to-10-game.html" class="card">
+        <span class="art">🔢</span>
+        <h2>Counting to 10</h2>
+        <p>Learn to count the ColorMyMath way.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- ADDITION -->
+  <div class="section">
+    <div class="section-title">Addition</div>
+    <div class="grid">
+      <a href="easy-addition-game.html" class="card">
+        <span class="art">➕</span>
+        <h2>Easy Addition</h2>
+        <p>First steps with adding numbers.</p>
+      </a>
+      <a href="addition-game.html" class="card">
+        <span class="art">➕</span>
+        <h2>Addition</h2>
+        <p>Build your addition skills.</p>
+      </a>
+      <a href="making-10-game.html" class="card">
+        <span class="art">🔟</span>
+        <h2>Making 10</h2>
+        <p>Find all the pairs that add up to 10.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- SUBTRACTION -->
+  <div class="section">
+    <div class="section-title">Subtraction</div>
+    <div class="grid">
+      <a href="subtraction-game.html" class="card">
+        <span class="art">➖</span>
+        <h2>Subtraction</h2>
+        <p>Take away and see what's left.</p>
+      </a>
+      <a href="subtraction-from-10-game.html" class="card">
+        <span class="art">➖</span>
+        <h2>Subtract from 10</h2>
+        <p>Subtracting from 10 — a key skill.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- NUMBER SENSE -->
+  <div class="section">
+    <div class="section-title">Number Sense</div>
+    <div class="grid">
+      <a href="partitions-of-5-game.html" class="card">
+        <span class="art">✋</span>
+        <h2>Partitions of 5</h2>
+        <p>All the ways to make 5.</p>
+      </a>
+      <a href="partitions-of-10-game.html" class="card">
+        <span class="art">🔟</span>
+        <h2>Partitions of 10</h2>
+        <p>All the ways to make 10.</p>
+      </a>
+      <a href="partitions-of-10-game-2.html" class="card">
+        <span class="art">🔟</span>
+        <h2>Partitions of 10 — Level 2</h2>
+        <p>More challenge.</p>
+      </a>
+      <a href="partitions-of-10-game-3.html" class="card">
+        <span class="art">🔟</span>
+        <h2>Partitions of 10 — Level 3</h2>
+        <p>Keep going!</p>
+      </a>
+      <a href="goal1-game.html" class="card">
+        <span class="art">🎯</span>
+        <h2>Goal 1</h2>
+        <p>First milestone game.</p>
+      </a>
+      <a href="goal2-game.html" class="card">
+        <span class="art">🎯</span>
+        <h2>Goal 2</h2>
+        <p>Second milestone game.</p>
+      </a>
+      <a href="goal3-game.html" class="card">
+        <span class="art">🎯</span>
+        <h2>Goal 3</h2>
+        <p>Third milestone game.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- SUDOKU -->
+  <div class="section">
+    <div class="section-title">Sudoku</div>
+    <div class="grid">
+      <a href="color-my-sudoku/index.html" class="card">
+        <span class="art">🟥</span>
+        <h2>Color My Sudoku</h2>
+        <p>Classic 9×9 in the teacher's rainbow colors.</p>
+      </a>
+      <a href="pick-your-colors-sudoku/index.html" class="card">
+        <span class="art">🎨</span>
+        <h2>Pick Your Colors Sudoku</h2>
+        <p>Choose your own colors for every number.</p>
+        <span class="tag custom">Custom Colors</span>
+      </a>
+      <a href="i-like-pink-sudoku/index.html" class="card">
+        <span class="art">🩷</span>
+        <h2>I Like Pink Sudoku</h2>
+        <p>For pink lovers everywhere.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- CLOCK -->
+  <div class="section">
+    <div class="section-title">Clock</div>
+    <div class="grid">
+      <a href="annies-clock/index.html" class="card">
+        <span class="art">🕐</span>
+        <h2>Annie's Clock</h2>
+        <p>Tell the time, Annie's way — with color.</p>
+      </a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

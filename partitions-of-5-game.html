@@ -106,13 +106,19 @@
     </div>
   </div>
 
-<script src="matter.min.js"></script>
+<script src="planck.min.js"></script>
 <script>
 (function () {
   'use strict';
-  var M = window.Matter;
-  var Engine = M.Engine, Render = M.Render, Runner = M.Runner,
-      Bodies = M.Bodies, Composite = M.Composite, Body = M.Body, Events = M.Events;
+  // ===== Box2D (planck.js) ==============================================
+  var pl   = window.planck;
+  var Vec2 = pl.Vec2;
+
+  // Box2D wants MKS-ish units (bodies ~0.1–10 "metres"), NOT pixels, or the
+  // solver gets stiff and jittery.  So we work in WORLD units and convert to
+  // pixels only when drawing.  PPM = pixels per world-unit (set in buildWorld).
+  var PPM = 60;
+  function wx(px) { return px / PPM; }   // pixels -> world
 
   // ---- Canonical ColorMyMath number colours ----------------------------
   var COLOR = { 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c', 5: '#0066ff' };
@@ -132,6 +138,7 @@
   // ---- DOM --------------------------------------------------------------
   var stage    = document.getElementById('stage');
   var canvas   = document.getElementById('sim');
+  var ctx      = canvas.getContext('2d');
   var equation = document.getElementById('equation');
   var progress = document.getElementById('progress');
   var nextBtn  = document.getElementById('nextBtn');
@@ -144,114 +151,112 @@
     progress.appendChild(p); pips.push(p);
   });
 
-  // ---- Matter setup -----------------------------------------------------
-  var engine = Engine.create();
-  engine.gravity.y = 0.36;                 // ~1/3 gravity: slow, floaty drop
-  var render, runner, W, H, R;
-  var walls = [];
-  var dotBodies = [];
+  // ---- Box2D world ------------------------------------------------------
+  // Floaty, slow drop: ~0.4g so the dots drift down and the kid can watch
+  // each one roll in.  Box2D's solid contact solver keeps the final stack
+  // rock-steady (the thing Matter wobbled on).
+  var world = pl.World(Vec2(0, 6.0));
+  var W, H, R, rafId = null;
+  var wallSegs = [];               // {x1,y1,x2,y2} in PIXELS, for drawing
+  var dotBodies = [];              // planck bodies, userData = { color, blue, label:'dot' }
   var step = 0, started = false, revealed = false, settleHits = 0, frame = 0;
+  var snap = null;
+
+  // ---- Colour-on-touch: any two dots that meet turn blue ---------------
+  function makeBlue(b) {
+    var d = b.getUserData();
+    if (d && d.label === 'dot') { d.color = BLUE; d.blue = true; }
+  }
+  world.on('begin-contact', function (contact) {
+    var a = contact.getFixtureA().getBody();
+    var b = contact.getFixtureB().getBody();
+    var da = a.getUserData(), db = b.getUserData();
+    if (da && da.label === 'dot' && db && db.label === 'dot') {
+      makeBlue(a); makeBlue(b);
+    }
+  });
+
+  function clearWorld() {
+    for (var b = world.getBodyList(); b; ) {
+      var next = b.getNext();
+      world.destroyBody(b);
+      b = next;
+    }
+    wallSegs = []; dotBodies = [];
+  }
+
+  function addWall(x1, y1, x2, y2, visible) {
+    // Static edge body, coords given in PIXELS.
+    var body = world.createBody();
+    body.createFixture(pl.Edge(Vec2(wx(x1), wx(y1)), Vec2(wx(x2), wx(y2))), {
+      friction: 0.3
+    });
+    if (visible) wallSegs.push({ x1: x1, y1: y1, x2: x2, y2: y2 });
+  }
 
   function buildWorld() {
     var rect = stage.getBoundingClientRect();
     W = rect.width; H = rect.height;
-    R = 0.05 * W;                         // dot radius
+    R = 0.05 * W;                          // dot radius (pixels)
 
-    if (render) { Render.stop(render); }
-    if (runner) { Runner.stop(runner); }
-    Composite.clear(engine.world, false);
-    walls = []; dotBodies = [];
+    // Crisp canvas at device resolution.
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    render = Render.create({
-      canvas: canvas, engine: engine,
-      options: {
-        width: W, height: H,
-        pixelRatio: window.devicePixelRatio || 1,
-        wireframes: false, background: 'transparent'
-      }
-    });
+    clearWorld();
 
     // ---- Funnel: TWO slanted lines + a couple of verticals (the pipe).
-    //      Black, no top cap, no horizontal lines. ----------------------
-    var th = Math.max(3, 0.014 * W);      // line thickness
-    function wall(x1, y1, x2, y2, thickness, visible) {
-      var cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
-      var len = Math.hypot(x2 - x1, y2 - y1);
-      var ang = Math.atan2(y2 - y1, x2 - x1);
-      var b = Bodies.rectangle(cx, cy, len + thickness, thickness, {
-        isStatic: true,
-        render: visible ? { fillStyle: '#000' } : { visible: false }
-      });
-      Body.setAngle(b, ang);
-      walls.push(b);
-      return b;
-    }
-
-    // Slants (mouth -> pipe top).  A WIDE throat (0.30W) so the dots flow
-    // through and meet without wedging, even under the low floaty gravity.
-    wall(0.12 * W, 0.32 * H, 0.35 * W, 0.52 * H, th, true);   // left slant
-    wall(0.88 * W, 0.32 * H, 0.65 * W, 0.52 * H, th, true);   // right slant
+    //      Black, no top cap, no horizontal lines. (kept from original) --
+    // Slants (mouth -> pipe top).  WIDE throat so dots flow through and meet
+    // without wedging.
+    addWall(0.12 * W, 0.32 * H, 0.35 * W, 0.52 * H, true);   // left slant
+    addWall(0.88 * W, 0.32 * H, 0.65 * W, 0.52 * H, true);   // right slant
     // Pipe (two short verticals)
-    wall(0.35 * W, 0.52 * H, 0.35 * W, 0.60 * H, th, true);   // left pipe
-    wall(0.65 * W, 0.52 * H, 0.65 * W, 0.60 * H, th, true);   // right pipe
+    addWall(0.35 * W, 0.52 * H, 0.35 * W, 0.60 * H, true);   // left pipe
+    addWall(0.65 * W, 0.52 * H, 0.65 * W, 0.60 * H, true);   // right pipe
 
-    // Invisible catch basin BELOW the pipe (its walls start under the pipe
-    // so they never snag dots on the funnel slants).  Narrow enough that
-    // the five dots stack into the canonical 3-over-2 pyramid (the
-    // number-line 5) instead of spreading into a flat row.
-    wall(0.33 * W, 0.74 * H, 0.67 * W, 0.74 * H, 26, false);  // floor
-    wall(0.345 * W, 0.60 * H, 0.345 * W, 0.74 * H, 26, false);// left side  (inner ~3 dots wide)
-    wall(0.655 * W, 0.60 * H, 0.655 * W, 0.74 * H, 26, false);// right side
-
-    Composite.add(engine.world, walls);
-
-    Render.run(render);
-    runner = Runner.create();
-    Runner.run(runner, engine);
+    // Invisible catch basin below the pipe — narrow enough that the five dots
+    // stack into the canonical 3-over-2 pyramid (the number-line 5).
+    addWall(0.33 * W, 0.74 * H, 0.67 * W, 0.74 * H, false);  // floor
+    addWall(0.345 * W, 0.60 * H, 0.345 * W, 0.74 * H, false);// left side
+    addWall(0.655 * W, 0.60 * H, 0.655 * W, 0.74 * H, false);// right side
   }
-
-  // ---- Colour-on-touch: any two dots that meet turn blue ---------------
-  function makeBlue(b) {
-    if (b && b.label === 'dot') { b.render.fillStyle = BLUE; b.cmmBlue = true; }
-  }
-  Events.on(engine, 'collisionStart', function (ev) {
-    ev.pairs.forEach(function (p) {
-      if (p.bodyA.label === 'dot' && p.bodyB.label === 'dot') {
-        makeBlue(p.bodyA); makeBlue(p.bodyB);
-      }
-    });
-  });
 
   // ---- Settle watch + snap-into-the-5 ----------------------------------
-  // Low gravity = slow, low-speed motion, so wait longer and use a smaller
-  // speed threshold so we don't call "settled" mid-roll.  Once settled we
-  // gently glide the five dots into the EXACT ColorMyMath 5 (3 on the
-  // bottom, 2 nestled on top) so it always lands on that shape.
-  var MIN_FRAMES = 200, MAX_FRAMES = 1600;
-  var snap = null;
-  Events.on(engine, 'afterUpdate', function () {
+  var MIN_FRAMES = 140, MAX_FRAMES = 1200;
+
+  function updateSim() {
     if (!started) return;
+
     if (snap) {                                   // gliding into the pyramid
-      snap.t = Math.min(1, snap.t + 0.04);
+      snap.t = Math.min(1, snap.t + 0.05);
       var e = 1 - Math.pow(1 - snap.t, 3);        // easeOutCubic
       snap.items.forEach(function (it) {
-        Body.setPosition(it.body, { x: it.x0 + (it.tx - it.x0) * e,
-                                    y: it.y0 + (it.ty - it.y0) * e });
+        it.body.setPosition(Vec2(
+          wx(it.x0 + (it.tx - it.x0) * e),
+          wx(it.y0 + (it.ty - it.y0) * e)
+        ));
       });
       if (snap.t >= 1) snap = null;
       return;
     }
     if (revealed) return;
+
     frame++;
     var maxSpeed = 0;
     for (var i = 0; i < dotBodies.length; i++) {
-      if (dotBodies[i].speed > maxSpeed) maxSpeed = dotBodies[i].speed;
+      var v = dotBodies[i].getLinearVelocity();
+      var s = Math.hypot(v.x, v.y);
+      if (s > maxSpeed) maxSpeed = s;
     }
-    if (frame > MIN_FRAMES && maxSpeed < 0.18) settleHits++; else settleHits = 0;
-    if (settleHits > 22 || frame > MAX_FRAMES) reveal();
-  });
+    if (frame > MIN_FRAMES && maxSpeed < 0.12) settleHits++; else settleHits = 0;
+    if (settleHits > 18 || frame > MAX_FRAMES) reveal();
+  }
 
   // Glide the settled dots into the canonical 3-over-2 pyramid and freeze.
+  // Targets are in PIXELS; bodies are made static so they hold dead-still.
   function startSnap() {
     var d = 2 * R, cx = 0.50 * W, by = 0.70 * H, ty = by - 0.866 * d;
     var slots = [
@@ -264,22 +269,66 @@
       var bi = -1, best = Infinity;
       for (var i = 0; i < pool.length; i++) {
         if (!pool[i]) continue;
-        var dx = pool[i].position.x - s.x, dy = pool[i].position.y - s.y;
+        var p = pool[i].getPosition();
+        var dx = p.x * PPM - s.x, dy = p.y * PPM - s.y;
         var dd = dx * dx + dy * dy;
         if (dd < best) { best = dd; bi = i; }
       }
       var b = pool[bi]; pool[bi] = null;
-      Body.setStatic(b, true);
-      items.push({ body: b, x0: b.position.x, y0: b.position.y, tx: s.x, ty: s.y });
+      b.setType('static');
+      var pp = b.getPosition();
+      items.push({ body: b, x0: pp.x * PPM, y0: pp.y * PPM, tx: s.x, ty: s.y });
     });
     snap = { items: items, t: 0 };
+  }
+
+  // ---- Render ----------------------------------------------------------
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // funnel walls
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = Math.max(3, 0.014 * W);
+    ctx.lineCap = 'round';
+    wallSegs.forEach(function (s) {
+      ctx.beginPath();
+      ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x2, s.y2);
+      ctx.stroke();
+    });
+
+    // dots
+    dotBodies.forEach(function (b) {
+      var p = b.getPosition(), ud = b.getUserData();
+      ctx.beginPath();
+      ctx.arc(p.x * PPM, p.y * PPM, R, 0, 6.2832);
+      ctx.fillStyle = ud.color;
+      ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#000';
+      ctx.stroke();
+    });
+  }
+
+  // ---- Fixed-step loop -------------------------------------------------
+  var DT = 1 / 60, acc = 0, last = 0;
+  function loop(ts) {
+    rafId = requestAnimationFrame(loop);
+    if (!last) last = ts;
+    var dtMs = ts - last; last = ts;
+    if (dtMs > 100) dtMs = 100;             // avoid spiral after a stall
+    acc += dtMs / 1000;
+    while (acc >= DT) {
+      world.step(DT, 8, 3);                 // 8 velocity / 3 position iters
+      updateSim();
+      acc -= DT;
+    }
+    draw();
   }
 
   // ---- Equation ---------------------------------------------------------
   function setEquation(addends, showTotal) {
     equation.innerHTML = '';
     addends.forEach(function (v, i) {
-      if (i > 0) { var pl = document.createElement('span'); pl.textContent = '+'; pl.style.color = '#333'; equation.appendChild(pl); }
+      if (i > 0) { var pl2 = document.createElement('span'); pl2.textContent = '+'; pl2.style.color = '#333'; equation.appendChild(pl2); }
       var t = document.createElement('span'); t.textContent = String(v);
       t.style.color = COLOR[v] || '#333'; equation.appendChild(t);
     });
@@ -313,8 +362,7 @@
   // ---- Drop one partition ----------------------------------------------
   function spawn(i) {
     clearTimers();
-    // remove old dots
-    dotBodies.forEach(function (b) { Composite.remove(engine.world, b); });
+    dotBodies.forEach(function (b) { world.destroyBody(b); });
     dotBodies = [];
     frame = 0; settleHits = 0; revealed = false; snap = null;
 
@@ -337,13 +385,13 @@
       var jitter = (Math.random() - 0.5) * 0.03;
       var x = (baseFx + spread + jitter) * W;
       var y = (0.06 - 0.07 * k) * H;                           // each drops a bit later
-      var b = Bodies.circle(x, y, R, {
-        restitution: 0.4, friction: 0.05, frictionAir: 0.01,
-        label: 'dot',
-        render: { fillStyle: col, strokeStyle: '#000', lineWidth: 2 }
+
+      var body = world.createDynamicBody(Vec2(wx(x), wx(y)));
+      body.createFixture(pl.Circle(wx(R)), {
+        density: 1.0, friction: 0.05, restitution: 0.35
       });
-      dotBodies.push(b);
-      Composite.add(engine.world, b);
+      body.setUserData({ color: col, blue: false, label: 'dot' });
+      dotBodies.push(body);
     });
   }
 
@@ -363,6 +411,7 @@
   function start() {
     overlay.classList.add('hidden');
     started = true; step = 0; spawn(0);
+    if (!rafId) { last = 0; rafId = requestAnimationFrame(loop); }
   }
   playBtn.addEventListener('click', function (e) { e.stopPropagation(); start(); });
 
@@ -377,21 +426,24 @@
   });
 
   // ---- Debug hooks for verification ------------------------------------
-  window.__engine = engine; window.__M = M;
+  window.__world = world; window.__pl = pl;
   window.__cmmState = function () {
     return {
       step: step, revealed: revealed, count: dotBodies.length,
       dots: dotBodies.map(function (b) {
-        return { x: Math.round(b.position.x), y: Math.round(b.position.y),
-                 fy: +(b.position.y / H).toFixed(2),
-                 fx: +(b.position.x / W).toFixed(2),
-                 blue: !!b.cmmBlue, speed: +b.speed.toFixed(2) };
+        var p = b.getPosition(), v = b.getLinearVelocity(), ud = b.getUserData();
+        return { x: Math.round(p.x * PPM), y: Math.round(p.y * PPM),
+                 fy: +((p.y * PPM) / H).toFixed(2),
+                 fx: +((p.x * PPM) / W).toFixed(2),
+                 blue: !!ud.blue, speed: +Math.hypot(v.x, v.y).toFixed(2) };
       }),
       eq: equation.textContent
     };
   };
 
   buildWorld();
+  // idle render so the funnel shows behind the PLAY overlay
+  draw();
 })();
 </script>
 </body>

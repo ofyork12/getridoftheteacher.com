@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Puzzles &amp; Games — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: #000; color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 32px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; margin-bottom: 28px; }
+    .top-nav a {
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      background: transparent; color: #fff;
+      border: 2px solid #fff; border-radius: 999px; text-decoration: none;
+    }
+
+    .section-header { display: flex; align-items: center; gap: 18px; margin-bottom: 36px; }
+    .sec-num {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: #e6c800; color: #000;
+      font-size: 32px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      flex: 0 0 auto; box-shadow: 0 3px 14px rgba(230,200,0,0.45);
+    }
+    .sec-title { font-size: clamp(24px,5vw,36px); font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #e6c800; line-height: 1; }
+    .sec-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 5px; }
+
+    .section-heading {
+      font-size: clamp(16px,2.5vw,20px); letter-spacing: 1.5px; text-transform: uppercase;
+      margin: 36px 0 14px; padding-bottom: 8px;
+      border-bottom: 2px solid #e6c800; color: #e6c800;
+    }
+    .section-heading.alt { border-bottom-color: #7700dd; color: #7700dd; }
+    .section-heading.alt2 { border-bottom-color: #38c7ff; color: #38c7ff; }
+    .section-note { color: #888; font-size: 14px; margin: -8px 0 16px; font-style: italic; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
+    .card {
+      display: grid;
+      grid-template-columns: 1fr 45%;
+      grid-template-areas: "step emoji" "title emoji" "file emoji";
+      align-items: center; column-gap: 12px; row-gap: 3px;
+      padding: 18px 20px; font-size: 17px; font-weight: bold;
+      background: rgba(255,255,255,0.04); color: #fff;
+      border: 4px solid var(--sc, #e6c800); border-radius: 14px;
+      text-decoration: none; min-height: 120px;
+      transition: background 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:active { background: var(--sc, #e6c800); color: #000; }
+    .card .emoji { grid-area: emoji; display: flex; align-items: center; justify-content: center; font-size: clamp(56px,10vw,80px); }
+    .card .emoji img { width: 100%; max-height: 100px; object-fit: contain; border-radius: 10px; }
+    .card .step { grid-area: step; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.65; }
+    .card > *:not(.emoji):not(.step):not(.filename) { grid-area: title; }
+    .card .filename { grid-area: file; font-size: 11px; font-weight: normal; opacity: 0.4; font-family: monospace; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav">
+      <a href="math.html">← Back to Math</a>
+    </div>
+
+    <div class="section-header">
+      <div class="sec-num">3</div>
+      <div>
+        <div class="sec-title">Puzzles &amp; Games</div>
+        <div class="sec-sub">Sudoku, squares, and clocks</div>
+      </div>
+    </div>
+
+    <h2 class="section-heading">Sudoku &amp; Clocks</h2>
+    <p class="section-note">Logic games — each number shows as that many colored dots.</p>
+    <div class="grid">
+      <a href="color-my-sudoku/index.html" class="card" style="--sc:#e6c800">
+        <span class="emoji"><img src="color-my-sudoku/sudoku-button.png?v=3" alt="Color My Sudoku"></span>
+        <span class="step">Puzzle</span>
+        Color My Sudoku
+        <span class="filename">color-my-sudoku/</span>
+      </a>
+      <a href="i-like-pink-sudoku/index.html" class="card" style="--sc:#ff3fa6">
+        <span class="emoji"><img src="i-like-pink-sudoku/sudoku-button.png?v=3" alt="I Like Pink Sudoku"></span>
+        <span class="step">Puzzle</span>
+        I Like Pink Sudoku
+        <span class="filename">i-like-pink-sudoku/</span>
+      </a>
+      <a href="pick-your-colors-sudoku/index.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🎨</span>
+        <span class="step">Puzzle</span>
+        Pick Your Colors Sudoku
+        <span class="filename">pick-your-colors-sudoku/</span>
+      </a>
+      <a href="annies-clock/index.html" class="card" style="--sc:#38c7ff">
+        <span class="emoji">🕐</span>
+        <span class="step">Clock</span>
+        Annie's Clock
+        <span class="filename">annies-clock/</span>
+      </a>
+      <a href="colormymath-clock/index.html" class="card" style="--sc:#38c7ff">
+        <span class="emoji">⚙️</span>
+        <span class="step">Physics Clock</span>
+        ColorMyMath Clock
+        <span class="filename">colormymath-clock/</span>
+      </a>
+    </div>
+
+    <h2 class="section-heading alt">Squares</h2>
+    <p class="section-note">Multiplication and squared numbers.</p>
+    <div class="grid">
+      <a href="squares.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🟪</span>
+        Squares
+        <span class="filename">squares.html</span>
+      </a>
+      <a href="squares-opposite.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🟪</span>
+        Squares Opposite
+        <span class="filename">squares-opposite.html</span>
+      </a>
+      <a href="squares - game.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🟪</span>
+        Squares Game
+        <span class="filename">squares - game.html</span>
+      </a>
+      <a href="SquaresCubegame.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🟪</span>
+        Squares Cube Game
+        <span class="filename">SquaresCubegame.html</span>
+      </a>
+      <a href="claudesquaresgame.html" class="card" style="--sc:#7700dd">
+        <span class="emoji">🟪</span>
+        Claude Squares Game
+        <span class="filename">claudesquaresgame.html</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

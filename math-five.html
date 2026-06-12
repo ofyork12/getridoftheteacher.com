@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Five and Under — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: #000; color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 32px 20px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; margin-bottom: 28px; }
+    .top-nav a {
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      background: transparent; color: #fff;
+      border: 2px solid #fff; border-radius: 999px; text-decoration: none;
+    }
+
+    /* Section header */
+    .section-header {
+      display: flex; align-items: center; gap: 18px;
+      margin-bottom: 36px;
+    }
+    .sec-num {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: #e63946; color: #000;
+      font-size: 32px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      flex: 0 0 auto;
+      box-shadow: 0 3px 14px rgba(230,57,70,0.5);
+    }
+    .sec-title {
+      font-size: clamp(24px, 5vw, 36px); font-weight: 900;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: #e63946; line-height: 1;
+    }
+    .sec-sub { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 5px; }
+
+    /* Stage banners */
+    .stage-banner {
+      display: flex; align-items: center; gap: 14px;
+      margin: 36px 0 4px;
+    }
+    .stage-banner svg { width: 60px; height: 60px; flex: 0 0 auto; }
+    .stage-banner .stage-num { font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #888; }
+    .stage-banner .stage-name { font-size: clamp(18px,3vw,22px); font-weight: bold; letter-spacing: 1px; margin-top: 2px; }
+    .stage-1 { --sc: #e63946; }
+    .stage-2 { --sc: #ff6200; }
+    .stage-banner.stage-1 .stage-name, .stage-banner.stage-2 .stage-name { color: var(--sc); }
+
+    .section-heading {
+      font-size: clamp(16px,2.5vw,20px); letter-spacing: 1.5px; text-transform: uppercase;
+      margin: 8px 0 14px; padding-bottom: 8px;
+      border-bottom: 2px solid var(--sc, #444); color: var(--sc, #fff);
+    }
+    .section-note { color: #888; font-size: 14px; margin: -6px 0 16px; font-style: italic; }
+
+    /* Cards */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
+    .card {
+      display: grid;
+      grid-template-columns: 1fr 45%;
+      grid-template-areas: "step emoji" "title emoji" "file emoji";
+      align-items: center; column-gap: 12px; row-gap: 3px;
+      padding: 18px 20px; font-size: 17px; font-weight: bold;
+      background: rgba(255,255,255,0.04); color: #fff;
+      border: 4px solid var(--sc, #e63946); border-radius: 14px;
+      text-decoration: none; min-height: 120px;
+      transition: background 0.2s, color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .card:active { background: var(--sc, #e63946); color: #000; }
+    .card .emoji { grid-area: emoji; display: flex; align-items: center; justify-content: center; font-size: clamp(56px,10vw,80px); }
+    .card .emoji svg { width: 100%; max-height: 100px; }
+    .card .step { grid-area: step; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.65; }
+    .card > *:not(.emoji):not(.step):not(.filename) { grid-area: title; }
+    .card .filename { grid-area: file; font-size: 11px; font-weight: normal; opacity: 0.4; font-family: monospace; word-break: break-all; }
+
+    @keyframes idleBreath {
+      0%,100% { transform: translateY(0) scale(1,1); }
+      50%      { transform: translateY(-1.5%) scale(1.015,0.99); }
+    }
+    @keyframes walkBob {
+      0%,100% { transform: translateY(0) rotate(-2.5deg); }
+      50%      { transform: translateY(-6%) rotate(2.5deg); }
+    }
+    .stage-1 .card .emoji svg { transform-origin: 50% 90%; animation: idleBreath 3.4s ease-in-out infinite; }
+    .stage-1 .card:nth-child(2) .emoji svg { animation-delay: -1.5s; }
+    .stage-2 .card .emoji svg { transform-origin: 50% 88%; animation: walkBob 0.85s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .stage-1 .card .emoji svg, .stage-2 .card .emoji svg { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="icon-sitting-boy" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="91" rx="30" ry="4" fill="#000" opacity="0.16"/>
+        <path d="M44 66 L27 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M56 66 L73 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <path d="M27 81 Q40 89 58 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <path d="M73 81 Q60 89 42 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <ellipse cx="58" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
+        <ellipse cx="42" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
+        <path d="M35 57 L65 57 L61 70 L52 66 L48 66 L39 70 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M35 36 Q50 33 65 36 L66 60 Q50 63 34 60 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
+        <path d="M36 41 L28 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M64 41 L72 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <circle cx="28" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="72" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="50" cy="22" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
+        <path d="M36 21 Q38 8 50 7 Q62 8 64 21 Q58 15 50 15 Q42 15 36 21 Z" fill="#1a1a1a"/>
+        <ellipse cx="36" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <ellipse cx="64" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="45" cy="23" r="1.8" fill="#1a1a1a"/>
+        <circle cx="55" cy="23" r="1.8" fill="#1a1a1a"/>
+        <circle cx="41" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <circle cx="59" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <path d="M45 28 Q50 33 55 28" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-walking-boy" viewBox="0 0 100 100">
+        <ellipse cx="58" cy="95" rx="14" ry="3" fill="#000" opacity="0.18"/>
+        <circle cx="50" cy="20" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
+        <path d="M36 19 Q38 6 50 5 Q62 6 64 19 Q58 13 50 13 Q42 13 36 19 Z" fill="#1a1a1a"/>
+        <ellipse cx="36" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <ellipse cx="64" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="45" cy="21" r="1.8" fill="#1a1a1a"/>
+        <circle cx="55" cy="21" r="1.8" fill="#1a1a1a"/>
+        <circle cx="41" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <circle cx="59" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
+        <path d="M45 26 Q50 31 55 26" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M34 36 L66 36 L70 58 L60 62 L58 52 L42 52 L40 62 L30 58 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
+        <path d="M33 40 L22 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
+        <path d="M67 40 L78 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="22" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <circle cx="78" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
+        <path d="M36 58 L64 58 L66 72 L52 72 L48 72 L34 72 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M60 72 L62 92" stroke="#f5c89a" stroke-width="8" stroke-linecap="round"/>
+        <ellipse cx="58" cy="94" rx="8" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
+        <path d="M42 72 Q34 78 38 88" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <ellipse cx="36" cy="89" rx="9" ry="4" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="wrap">
+    <div class="top-nav">
+      <a href="math.html">← Back to Math</a>
+    </div>
+
+    <div class="section-header">
+      <div class="sec-num">1</div>
+      <div>
+        <div class="sec-title">Five and Under</div>
+        <div class="sec-sub">Numbers 1 – 5 · Start here</div>
+      </div>
+    </div>
+
+    <div class="stage-banner stage-1">
+      <svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg>
+      <div>
+        <div class="stage-num">Stage 1 — Crawling · Easiest</div>
+        <div class="stage-name">Mom, I need your help</div>
+      </div>
+    </div>
+    <p class="section-note" style="color:#fff;font-style:normal;border-left:4px solid #e63946;padding-left:12px;margin-top:6px">
+      Mom, will you sit with me for these first two? Let's work through them together, nice and slow.
+    </p>
+    <div class="grid stage-1" style="margin-top:14px">
+      <a href="bigger-smaller.html" class="card" style="--sc:#e63946">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
+        <span class="step">Do this with me, Mom</span>
+        Bigger / Smaller
+        <span class="filename">bigger-smaller.html</span>
+      </a>
+      <a href="number-practice.html" class="card" style="--sc:#e63946">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
+        <span class="step">My Turn</span>
+        Numbers 1 to 10
+        <span class="filename">number-practice.html</span>
+      </a>
+    </div>
+
+    <div class="stage-banner stage-2" style="margin-top:40px">
+      <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
+      <div>
+        <div class="stage-num">Stage 2 — Walking · Easy</div>
+        <div class="stage-name">Lessons</div>
+      </div>
+    </div>
+    <p class="section-note">Learn to add within 5, then master the facts.</p>
+    <div class="grid stage-2">
+      <a href="addition.html" class="card" style="--sc:#ff6200">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
+        <span class="step">Lesson 1</span>
+        Addition (1 to 5)
+        <span class="filename">addition.html</span>
+      </a>
+      <a href="easy-addition.html" class="card" style="--sc:#ff6200">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
+        <span class="step">Facts Game</span>
+        Easy Addition (+1, Doubles, Make 10, +2·3·4)
+        <span class="filename">easy-addition.html</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

@@ -18,27 +18,27 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
-      padding: 40px 20px 80px;
+      padding: 32px 20px 80px;
       -webkit-tap-highlight-color: transparent;
     }
-    .wrap { max-width: 1000px; margin: 0 auto; }
+    .wrap { max-width: 700px; margin: 0 auto; }
     h1 {
       text-align: center;
-      font-size: clamp(28px, 5vw, 42px);
-      margin: 0 0 12px;
+      font-size: clamp(28px, 6vw, 44px);
+      margin: 0 0 8px;
       letter-spacing: 2px;
       text-transform: uppercase;
     }
     .sub {
       text-align: center;
       color: #aaa;
-      margin: 0 0 40px;
+      margin: 0 0 28px;
       font-size: 16px;
     }
     .top-nav {
       display: flex;
       justify-content: center;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
     }
     .top-nav a {
       padding: 12px 24px;
@@ -49,39 +49,15 @@
       border: 2px solid #fff;
       border-radius: 999px;
       text-decoration: none;
-      transition: all 0.3s ease;
     }
-    .top-nav a:hover { background: #fff; color: #000; }
 
-    .stage-banner {
-      display: flex; align-items: center; gap: 14px;
-      margin: 38px 0 4px;
-    }
-    .stage-banner svg { width: 60px; height: 60px; flex: 0 0 auto; color: #ffe600; }
-    .stage-banner .stage-num {
-      font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;
-      color: #888; line-height: 1;
-    }
-    .stage-banner .stage-name {
-      font-size: clamp(18px, 3vw, 22px); font-weight: bold; letter-spacing: 1px;
-      color: #ffe600; line-height: 1.1; margin-top: 2px;
-    }
-    .stage-banner + .section-heading { margin-top: 8px; border-top: none; }
-
-    /* === Colour the page using ColorMyMath number-line palette =========== */
-    /* 1=red, 2=orange, 3=yellow, 4=green, 5=blue, 6=purple, 7=brown, 8=pink, 9=cyan */
-
-    /* Hero number line -- the canonical ColorMyMath 1..10 cell layout.
-       Each cell shows N spheres in their number-line shape, with the
-       digit below.  Sets up the visual vocabulary for the under-5
-       facts work: every quantity reads as a real ball you could pick up. */
+    /* Hero number line */
     .hero-numline {
       display: grid;
       grid-template-columns: repeat(10, 1fr);
       gap: clamp(2px, 0.8vw, 8px);
       align-items: end;
-      margin: 0 auto 28px;
-      max-width: 980px;
+      margin: 0 auto 36px;
     }
     .nl-cell {
       display: flex; flex-direction: column; align-items: center;
@@ -89,631 +65,137 @@
     }
     .nl-cell svg { width: 100%; height: auto; max-height: clamp(80px, 15vw, 150px); }
     .nl-cell .nl-digit {
-      font-family: 'Nunito', Arial, sans-serif; font-weight: 800;
+      font-weight: 800;
       font-size: clamp(14px, 2.4vw, 22px); color: #fff;
       line-height: 1;
     }
 
-    /* Each stage owns a colour from the palette */
-    .stage-1 { --stage-color: #e63946; }  /* crawling = red   */
-    .stage-2 { --stage-color: #ff6200; }  /* walking  = orange */
-    .stage-3 { --stage-color: #00a12c; }  /* running  = green */
-    .stage-4 { --stage-color: #0066ff; }  /* biking   = blue  */
-    .stage-banner svg { color: var(--stage-color, #ffe600); }
-    .stage-banner .stage-name { color: var(--stage-color, #ffe600); }
-    .stage-banner.stage-1 + .section-heading,
-    .stage-banner.stage-2 + .section-heading,
-    .stage-banner.stage-3 + .section-heading,
-    .stage-banner.stage-4 + .section-heading {
-      border-bottom-color: var(--stage-color);
-      color: var(--stage-color);
-    }
-    /* Make the Crawling section's note more visible -- it's the only one
-       the parent actually needs to read. */
-    .stage-banner.stage-1 + .section-heading + .section-note {
-      color: #fff; font-style: normal; font-size: 15px; line-height: 1.45;
-      border-left: 4px solid var(--stage-color); padding-left: 12px; margin-top: 2px;
-    }
-    .stage-banner.stage-1 + .section-heading + .section-note strong { color: var(--stage-color); }
-    /* Cards inherit their stage colour for borders + hover */
-    .stage-section .card.start { border-color: var(--stage-color); background: rgba(255,255,255,0.04); }
-    .stage-section .card.start:hover { background: var(--stage-color); color: #000; border-color: var(--stage-color); }
-    .stage-section .card.start:hover .filename { color: rgba(0,0,0,0.7); }
-    .stage-section .card .step { color: var(--stage-color); opacity: 1; }
-    .stage-section .card:hover .step { color: rgba(0,0,0,0.8); }
-
-    /* Parent prompt: only shown once, under the Crawling stage.  Loud and
-       colourful so adults can't miss it. */
-    .parent-prompt {
-      position: relative;
-      border-radius: 18px;
-      padding: 20px 24px 22px;
-      margin: 14px 0 28px;
-      color: #fff;
-      background:
-        linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.45)),
-        linear-gradient(135deg, #e63946, #ff6200 28%, #e6c800 52%, #00a12c 74%, #0066ff);
-      box-shadow: 0 6px 26px rgba(255,98,0,0.25), inset 0 0 0 3px rgba(255,255,255,0.18);
-    }
-    .parent-prompt::before {
-      content: ""; position: absolute; left: -2px; top: -2px; bottom: -2px; width: 10px;
-      border-radius: 14px 0 0 14px;
-      background: linear-gradient(180deg, #e63946, #ff6200, #e6c800, #00a12c, #0066ff, #7700dd);
-    }
-    .parent-prompt .pp-tag {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #ffe600; color: #000;
-      font-weight: 900; font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-      padding: 5px 12px; border-radius: 999px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-    .parent-prompt .pp-tag::before { content: "★"; color: #000; font-size: 13px; }
-    .parent-prompt h3 {
-      margin: 0 0 8px; font-size: clamp(20px, 3.3vw, 26px);
-      color: #fff; letter-spacing: 1px; text-transform: uppercase;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    }
-    .parent-prompt p { margin: 0; color: #fff; font-size: 15px; line-height: 1.5; }
-    .parent-prompt strong { color: #ffe600; }
-
-    .section-heading {
-      font-size: clamp(18px, 3vw, 22px);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin: 50px 0 16px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #333;
-    }
-    .section-heading:first-of-type { margin-top: 30px; }
-    .section-note {
-      color: #888;
-      font-size: 14px;
-      margin: -8px 0 18px;
-      font-style: italic;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    /* ===== Big 3-button nav ===== */
+    .btn-stack {
+      display: flex;
+      flex-direction: column;
       gap: 18px;
     }
-    .card {
-      display: grid;
-      grid-template-columns: 1fr 50%;
-      grid-template-areas: "step emoji" "title emoji" "file emoji";
-      align-items: center; column-gap: 14px; row-gap: 4px;
-      padding: 18px 22px;
-      font-size: 17px; font-weight: bold;
-      background: transparent; color: #fff;
-      border: 3px solid #fff; border-radius: 14px;
+    .big-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      border: 3px solid var(--bc, #fff);
       text-decoration: none;
-      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-      min-height: 130px;
-    }
-    .card.start { border-width: 4px; background: rgba(255,255,255,0.04); }
-    .card:hover { background: #fff; color: #000; transform: none; }
-    /* Big emoji takes half the card on the right.  No scale on hover -- the
-       whole card is the click target so it doesn't need to grow. */
-    .card .emoji {
-      grid-area: emoji;
-      align-self: stretch; justify-self: center;
-      width: 100%; max-width: 140px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: clamp(64px, 12vw, 96px);
-      line-height: 1;
+      color: #fff;
+      background: rgba(0,0,0,0.45);
+      position: relative;
       overflow: hidden;
-      pointer-events: none; /* clicks pass through to the card link */
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 100px;
     }
-    .card .emoji svg { width: 100%; height: 100%; max-height: 120px; display: block; }
-
-    /* --- Live characters: the kids move so they stop reading as stiff,
-       abstract figures.  Stage 1 (red, easiest) = the same boy SITTING, with
-       only a slow, tiny breathing motion -- he's "not going anywhere yet".
-       Stage 2 (orange) = walking boy with a gentle step bounce.
-       transform-origin sits near the feet/seat so they settle on the ground,
-       not the middle.  Respects reduced-motion below. --- */
-    @keyframes idleBreath {
-      0%, 100% { transform: translateY(0) scale(1, 1); }
-      50%      { transform: translateY(-1.5%) scale(1.015, 0.99); }
+    .big-nav-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--bc, #fff);
+      opacity: 0.10;
+      border-radius: 19px;
+      pointer-events: none;
     }
-    @keyframes walkBob {
-      0%, 100% { transform: translateY(0) rotate(-2.5deg); }
-      50%      { transform: translateY(-6%) rotate(2.5deg); }
+    .big-nav-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 0 0 4px var(--bc);
     }
-    .stage-section.stage-1 .card .emoji svg,
-    .stage-banner.stage-1 svg {
-      transform-origin: 50% 90%;
-      animation: idleBreath 3.4s ease-in-out infinite;
-    }
-    /* second kid breathes out of sync with the first -- feels alive, not cloned */
-    .stage-section.stage-1 .card:nth-child(2) .emoji svg { animation-delay: -1.5s; }
-    .stage-section.stage-2 .card .emoji svg,
-    .stage-banner.stage-2 svg {
-      transform-origin: 50% 88%;
-      animation: walkBob 0.85s ease-in-out infinite;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .stage-section.stage-1 .card .emoji svg,
-      .stage-section.stage-2 .card .emoji svg,
-      .stage-banner.stage-1 svg,
-      .stage-banner.stage-2 svg { animation: none; }
-    }
-    .card .step { grid-area: step; }
-    .card .filename { grid-area: file; }
-    .card > *:not(.emoji):not(.step):not(.filename) { grid-area: title; }
-    .card .filename {
-      font-size: 12px;
-      font-weight: normal;
-      opacity: 0.45;
-      font-family: 'SF Mono', Menlo, Consolas, monospace;
-      word-break: break-all;
-    }
-    .card:hover .filename { opacity: 0.85; }
-    .card .step {
-      font-size: 12px;
-      letter-spacing: 1px;
-      opacity: 0.7;
-      text-transform: uppercase;
-    }
-
-    /* ===== Range section banners ("Ten and Under" / "Five and Under") ===== */
-    .range-banner {
-      display: flex; align-items: center; gap: 20px;
-      padding: 22px 28px;
-      margin: 54px 0 10px;
-      border-radius: 20px;
-      border: 3px solid var(--rc, #fff);
-      background: rgba(0,0,0,0.38);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 6px 30px rgba(0,0,0,0.55);
-      position: relative; overflow: hidden;
-    }
-    .range-banner::after {
-      content: ''; position: absolute; inset: 0;
-      background: var(--rc, #fff); opacity: 0.11; pointer-events: none;
-      border-radius: 17px;
-    }
-    .range-banner .rb-text { flex: 1; position: relative; z-index: 1; }
-    .range-banner .rb-label {
-      font-size: clamp(24px, 4.5vw, 36px); font-weight: 900;
-      letter-spacing: 3px; text-transform: uppercase;
-      color: var(--rc, #fff); line-height: 1;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
-    }
-    .range-banner .rb-sub {
-      font-size: 14px; letter-spacing: 1px;
-      color: rgba(255,255,255,0.65); margin-top: 6px;
-    }
-    .range-banner .rb-chips {
-      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
-      position: relative; z-index: 1; flex: 0 0 auto;
-    }
-    .range-banner .rb-chip {
-      width: clamp(26px, 4.2vw, 38px); height: clamp(26px, 4.2vw, 38px);
+    /* Number circle on the left */
+    .btn-num {
+      width: clamp(60px, 12vw, 80px);
+      height: clamp(60px, 12vw, 80px);
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: clamp(12px, 1.9vw, 17px);
+      background: var(--bc, #fff);
       color: #000;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+      position: relative; z-index: 1;
     }
-    /* first range-banner has less top margin (it follows the hero numline) */
-    .range-banner:first-of-type { margin-top: 10px; }
+    .btn-info {
+      position: relative; z-index: 1;
+    }
+    .btn-title {
+      font-size: clamp(22px, 4.5vw, 30px);
+      font-weight: 900;
+      letter-spacing: 1px;
+      line-height: 1.1;
+      color: var(--bc, #fff);
+    }
+    .btn-sub {
+      font-size: clamp(13px, 2.2vw, 15px);
+      color: rgba(255,255,255,0.65);
+      margin-top: 5px;
+      letter-spacing: 0.5px;
+    }
+    /* Arrow hint */
+    .btn-arrow {
+      margin-left: auto;
+      font-size: 28px;
+      opacity: 0.45;
+      position: relative; z-index: 1;
+      flex: 0 0 auto;
+    }
   </style>
 </head>
 <body>
-  <!-- Reusable character SVGs (referenced via <use href="#id"> in the cards).
-       Hidden via display:none so they only render where they're <use>d. -->
-  <svg width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true">
-    <defs>
-      <!-- Front-facing crawling baby: hands forward (toward camera), big head,
-           black hair, smiling.  100x100 viewBox so it scales freely. -->
-      <symbol id="icon-crawling-baby" viewBox="0 0 100 100">
-        <!-- back leg + bottom (peeking behind) -->
-        <ellipse cx="78" cy="64" rx="14" ry="11" fill="#f5c89a" stroke="#000" stroke-width="2"/>
-        <!-- pajama back -->
-        <path d="M30 56 Q50 38 80 56 L82 78 Q55 84 28 78 Z" fill="#7ec8ff" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
-        <!-- arms forward toward camera -->
-        <ellipse cx="22" cy="82" rx="11" ry="8" fill="#7ec8ff" stroke="#000" stroke-width="2"/>
-        <ellipse cx="14" cy="82" rx="6" ry="5" fill="#f5c89a" stroke="#000" stroke-width="2"/>
-        <ellipse cx="78" cy="82" rx="11" ry="8" fill="#7ec8ff" stroke="#000" stroke-width="2"/>
-        <ellipse cx="86" cy="82" rx="6" ry="5" fill="#f5c89a" stroke="#000" stroke-width="2"/>
-        <!-- head -->
-        <ellipse cx="50" cy="40" rx="24" ry="22" fill="#f5c89a" stroke="#000" stroke-width="2.4"/>
-        <!-- black hair: top cap with little curl -->
-        <path d="M28 36 Q30 16 50 14 Q70 16 72 36 Q66 24 50 22 Q34 24 28 36 Z" fill="#1a1a1a"/>
-        <path d="M70 26 Q74 22 76 28 Q72 30 70 26" fill="#1a1a1a"/>
-        <!-- ears -->
-        <ellipse cx="26" cy="42" rx="3" ry="4" fill="#f5c89a" stroke="#000" stroke-width="1.8"/>
-        <ellipse cx="74" cy="42" rx="3" ry="4" fill="#f5c89a" stroke="#000" stroke-width="1.8"/>
-        <!-- happy face: eyes + cheek dots + smile -->
-        <circle cx="41" cy="42" r="2.4" fill="#1a1a1a"/>
-        <circle cx="59" cy="42" r="2.4" fill="#1a1a1a"/>
-        <circle cx="34" cy="50" r="2.4" fill="#ffaab8" opacity="0.85"/>
-        <circle cx="66" cy="50" r="2.4" fill="#ffaab8" opacity="0.85"/>
-        <path d="M42 52 Q50 60 58 52" stroke="#1a1a1a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      </symbol>
-
-      <!-- Walking boy (a kid, not an adult), facing the screen: one knee
-           lifted forward (foot toward camera), other leg planted; arms
-           swinging.  Black hair, t-shirt, shorts. -->
-      <symbol id="icon-walking-boy" viewBox="0 0 100 100">
-        <!-- planted-foot shadow -->
-        <ellipse cx="58" cy="95" rx="14" ry="3" fill="#000" opacity="0.18"/>
-        <!-- head -->
-        <circle cx="50" cy="20" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
-        <!-- black hair: bowl cut covering top + sides -->
-        <path d="M36 19 Q38 6 50 5 Q62 6 64 19 Q58 13 50 13 Q42 13 36 19 Z" fill="#1a1a1a"/>
-        <!-- ears -->
-        <ellipse cx="36" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <ellipse cx="64" cy="22" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <!-- happy face -->
-        <circle cx="45" cy="21" r="1.8" fill="#1a1a1a"/>
-        <circle cx="55" cy="21" r="1.8" fill="#1a1a1a"/>
-        <circle cx="41" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
-        <circle cx="59" cy="26" r="1.6" fill="#ffaab8" opacity="0.85"/>
-        <path d="M45 26 Q50 31 55 26" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <!-- T-shirt (front-facing) -->
-        <path d="M34 36 L66 36 L70 58 L60 62 L58 52 L42 52 L40 62 L30 58 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
-        <!-- collar -->
-        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
-        <!-- arms swinging, one back one forward -->
-        <path d="M33 40 L22 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
-        <path d="M67 40 L78 56" stroke="#f5c89a" stroke-width="7" stroke-linecap="round"/>
-        <path d="M33 40 L22 56 M67 40 L78 56" stroke="#000" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <!-- hands -->
-        <circle cx="22" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <circle cx="78" cy="56" r="4" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <!-- shorts -->
-        <path d="M36 58 L64 58 L66 72 L52 72 L48 72 L34 72 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
-        <!-- planted leg (right side, slightly back) -->
-        <path d="M60 72 L62 92" stroke="#f5c89a" stroke-width="8" stroke-linecap="round"/>
-        <path d="M60 72 L62 92" stroke="#000" stroke-width="1.6" fill="none"/>
-        <ellipse cx="58" cy="94" rx="8" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
-        <!-- stepping leg (left side, knee lifted forward toward camera) -->
-        <path d="M42 72 Q34 78 38 88" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M42 72 Q34 78 38 88" stroke="#000" stroke-width="1.6" fill="none"/>
-        <ellipse cx="36" cy="89" rx="9" ry="4" fill="#1a1a1a" stroke="#000" stroke-width="1.4"/>
-      </symbol>
-
-      <!-- Same boy as #icon-walking-boy, but sitting cross-legged with his
-           hands resting on his knees: calm, "not going anywhere yet" pose for
-           the first two (easiest) lessons.  Same palette so it's clearly the
-           same kid. -->
-      <symbol id="icon-sitting-boy" viewBox="0 0 100 100">
-        <!-- ground shadow -->
-        <ellipse cx="50" cy="91" rx="30" ry="4" fill="#000" opacity="0.16"/>
-        <!-- crossed legs (behind the body) -->
-        <path d="M44 66 L27 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M56 66 L73 81" stroke="#f5c89a" stroke-width="9" fill="none" stroke-linecap="round"/>
-        <path d="M27 81 Q40 89 58 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <path d="M73 81 Q60 89 42 86" stroke="#f5c89a" stroke-width="8" fill="none" stroke-linecap="round"/>
-        <ellipse cx="58" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
-        <ellipse cx="42" cy="86" rx="6" ry="3.5" fill="#1a1a1a" stroke="#000" stroke-width="1.2"/>
-        <!-- shorts -->
-        <path d="M35 57 L65 57 L61 70 L52 66 L48 66 L39 70 Z" fill="#1f6fb4" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
-        <!-- T-shirt torso (upright) -->
-        <path d="M35 36 Q50 33 65 36 L66 60 Q50 63 34 60 Z" fill="#e63946" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/>
-        <path d="M44 36 Q50 40 56 36" stroke="#000" stroke-width="2" fill="none"/>
-        <!-- arms resting down onto the knees -->
-        <path d="M36 41 L28 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
-        <path d="M64 41 L72 76" stroke="#f5c89a" stroke-width="7" fill="none" stroke-linecap="round"/>
-        <circle cx="28" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <circle cx="72" cy="78" r="4.5" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <!-- head -->
-        <circle cx="50" cy="22" r="13" fill="#f5c89a" stroke="#000" stroke-width="2.2"/>
-        <path d="M36 21 Q38 8 50 7 Q62 8 64 21 Q58 15 50 15 Q42 15 36 21 Z" fill="#1a1a1a"/>
-        <ellipse cx="36" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <ellipse cx="64" cy="24" rx="2" ry="3" fill="#f5c89a" stroke="#000" stroke-width="1.6"/>
-        <circle cx="45" cy="23" r="1.8" fill="#1a1a1a"/>
-        <circle cx="55" cy="23" r="1.8" fill="#1a1a1a"/>
-        <circle cx="41" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
-        <circle cx="59" cy="28" r="1.6" fill="#ffaab8" opacity="0.85"/>
-        <path d="M45 28 Q50 33 55 28" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </symbol>
-    </defs>
-  </svg>
-
   <div class="wrap">
     <div class="top-nav">
       <a href="index.html">← Back to Home</a>
     </div>
 
     <h1>Math</h1>
-    <p class="sub">Pick a section, then pick a lesson.  Work top to bottom.</p>
-    <!-- Canonical ColorMyMath number line: 1..10 cells -->
+    <p class="sub">Pick where to start.</p>
+
     <div class="hero-numline" id="heroNumLine" aria-hidden="true"></div>
 
-    <!-- ════════════════════════════════════════════════════
-         TEN AND UNDER
-         ════════════════════════════════════════════════════ -->
-    <div class="range-banner" style="--rc:#e63946;">
-      <div class="rb-chips" id="rbChips10"></div>
-      <div class="rb-text">
-        <div class="rb-label">Ten and Under</div>
-        <div class="rb-sub">Numbers 1 – 10</div>
-      </div>
-    </div>
+    <div class="btn-stack">
+      <a href="math-five.html" class="big-nav-btn" style="--bc:#e63946;">
+        <div class="btn-num">1</div>
+        <div class="btn-info">
+          <div class="btn-title">Five and Under</div>
+          <div class="btn-sub">Numbers 1 – 5 · Start here</div>
+        </div>
+        <div class="btn-arrow">›</div>
+      </a>
 
-    <div class="stage-banner stage-2" aria-hidden="true">
-      <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
-      <div>
-        <div class="stage-num">Stage 2</div>
-        <div class="stage-name">Walking — Easy</div>
-      </div>
-    </div>
-    <h2 class="section-heading">Lessons</h2>
-    <p class="section-note">Each lesson has a game, a video, and a play-along.  Work top to bottom.</p>
-    <div class="grid stage-section stage-2">
-      <a href="counting-to-10.html" class="card start">
-        <span class="emoji">🤸</span>
-        <span class="step">Lesson 1</span>
-        Counting to 10
-        <span class="filename">counting-to-10.html</span>
+      <a href="math-ten.html" class="big-nav-btn" style="--bc:#ff6200;">
+        <div class="btn-num">2</div>
+        <div class="btn-info">
+          <div class="btn-title">Ten and Under</div>
+          <div class="btn-sub">Numbers 1 – 10 · Counting, adding, subtracting</div>
+        </div>
+        <div class="btn-arrow">›</div>
       </a>
-    </div>
 
-    <div class="stage-banner stage-3" aria-hidden="true">
-      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="38" cy="12" r="5" fill="currentColor" stroke="none"/>
-        <path d="M36 17 L26 34"/>
-        <path d="M30 22 L42 28"/>
-        <path d="M30 22 L18 18"/>
-        <path d="M26 34 L18 50"/>
-        <path d="M26 34 L40 46 L46 56"/>
-        <path d="M52 24 L60 22 M52 32 L60 30 M52 40 L60 38" stroke-width="2"/>
-      </svg>
-      <div>
-        <div class="stage-num">Stage 3</div>
-        <div class="stage-name">Running — Medium</div>
-      </div>
-    </div>
-    <h2 class="section-heading">Lessons (continued)</h2>
-    <p class="section-note">Once you can make 10, taking away is the same idea in reverse.</p>
-    <div class="grid stage-section stage-3">
-      <a href="making-10.html" class="card start">
-        <span class="emoji">🤸</span>
-        <span class="step">Lesson 2</span>
-        Making 10
-        <span class="filename">making-10.html</span>
-      </a>
-      <a href="subtraction.html" class="card start">
-        <span class="emoji">⛹️</span>
-        <span class="step">Lesson 3</span>
-        Subtraction (5 take away 1)
-        <span class="filename">subtraction.html</span>
-      </a>
-      <a href="subtraction-from-10.html" class="card start">
-        <span class="emoji">⛹️</span>
-        <span class="step">Lesson 4</span>
-        Subtraction from 10
-        <span class="filename">subtraction-from-10.html</span>
+      <a href="math-puzzles.html" class="big-nav-btn" style="--bc:#e6c800;">
+        <div class="btn-num">3</div>
+        <div class="btn-info">
+          <div class="btn-title">Puzzles &amp; Games</div>
+          <div class="btn-sub">Sudoku, squares, and clocks</div>
+        </div>
+        <div class="btn-arrow">›</div>
       </a>
     </div>
-
-    <div class="stage-banner stage-4" aria-hidden="true">
-      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="14" cy="48" r="9"/>
-        <circle cx="50" cy="48" r="9"/>
-        <path d="M14 48 L26 32 L50 48 M26 32 L36 32 L40 48"/>
-        <path d="M26 32 L22 28"/>
-        <path d="M40 30 L38 26 L42 26"/>
-        <circle cx="38" cy="14" r="5" fill="currentColor" stroke="none"/>
-        <path d="M38 19 L40 30"/>
-        <path d="M40 24 L46 22"/>
-      </svg>
-      <div>
-        <div class="stage-num">Stage 4</div>
-        <div class="stage-name">Biking — Hardest</div>
-      </div>
-    </div>
-    <h2 class="section-heading">Big Ideas</h2>
-    <p class="section-note">The same ideas, gathered together as goals to master.</p>
-    <div class="grid stage-section stage-4">
-      <a href="goal1.html" class="card start">
-        <span class="emoji">⛹️</span>
-        <span class="step">Goal 1</span>
-        Adding 1 / Counting to 10
-        <span class="filename">goal1.html</span>
-      </a>
-      <a href="goal2.html" class="card start">
-        <span class="emoji">⛹️</span>
-        <span class="step">Goal 2</span>
-        Doubles (1+1, 2+2, …)
-        <span class="filename">goal2.html</span>
-      </a>
-      <a href="goal3.html" class="card start">
-        <span class="emoji">🏃</span>
-        <span class="step">Goal 3</span>
-        Making 10
-        <span class="filename">goal3.html</span>
-      </a>
-      <a href="goal3-game.html" class="card start">
-        <span class="emoji">🏃</span>
-        <span class="step">Goal 3 — Game</span>
-        Build 10 Your Way
-        <span class="filename">goal3-game.html</span>
-      </a>
-      <a href="partitions-of-10.html" class="card start">
-        <span class="emoji">🏃</span>
-        <span class="step">Bonus</span>
-        42 — Every Way to Make 10
-        <span class="filename">partitions-of-10.html</span>
-      </a>
-    </div>
-
-    <h2 class="section-heading">Squares</h2>
-    <p class="section-note">Multiplication and squared numbers.</p>
-    <div class="grid">
-      <a href="squares.html" class="card">
-        <span class="emoji">🏃</span>
-        Squares
-        <span class="filename">squares.html</span>
-      </a>
-      <a href="squares-opposite.html" class="card">
-        <span class="emoji">🏃</span>
-        Squares Opposite
-        <span class="filename">squares-opposite.html</span>
-      </a>
-      <a href="squares - game.html" class="card">
-        <span class="emoji">🏃</span>
-        Squares Game
-        <span class="filename">squares - game.html</span>
-      </a>
-      <a href="SquaresCubegame.html" class="card">
-        <span class="emoji">🏃</span>
-        Squares Cube Game
-        <span class="filename">SquaresCubegame.html</span>
-      </a>
-      <a href="claudesquaresgame.html" class="card">
-        <span class="emoji">🏃</span>
-        Claude Squares Game
-        <span class="filename">claudesquaresgame.html</span>
-      </a>
-    </div>
-
-    <h2 class="section-heading">Puzzles</h2>
-    <p class="section-note">Logic games.  Each number shows as that many colored dots.</p>
-    <div class="grid">
-      <a href="color-my-sudoku/index.html" class="card start">
-        <span class="emoji"><img src="color-my-sudoku/sudoku-button.png?v=3" alt="Color My Sudoku" style="width:100%;max-height:128px;object-fit:contain;border-radius:14px"></span>
-        <span class="step">Puzzle</span>
-        Color My Sudoku
-        <span class="filename">color-my-sudoku/</span>
-      </a>
-      <a href="i-like-pink-sudoku/index.html" class="card start">
-        <span class="emoji"><img src="i-like-pink-sudoku/sudoku-button.png?v=3" alt="I Like Pink Sudoku" style="width:100%;max-height:128px;object-fit:contain;border-radius:14px"></span>
-        <span class="step">Puzzle</span>
-        I Like Pink Sudoku
-        <span class="filename">i-like-pink-sudoku/</span>
-      </a>
-      <a href="pick-your-colors-sudoku/index.html" class="card start">
-        <span class="emoji">🎨</span>
-        <span class="step">Puzzle</span>
-        Pick Your Colors Sudoku
-        <span class="filename">pick-your-colors-sudoku/</span>
-      </a>
-      <a href="annies-clock/index.html" class="card start">
-        <span class="emoji">🕐</span>
-        <span class="step">Clock</span>
-        Annie's Clock
-        <span class="filename">annies-clock/</span>
-      </a>
-      <a href="colormymath-clock/index.html" class="card start">
-        <span class="emoji">⚙️</span>
-        <span class="step">Physics</span>
-        ColorMyMath Clock
-        <span class="filename">colormymath-clock/</span>
-      </a>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════
-         FIVE AND UNDER
-         ════════════════════════════════════════════════════ -->
-    <div class="range-banner" style="--rc:#0066ff;">
-      <div class="rb-chips" id="rbChips5"></div>
-      <div class="rb-text">
-        <div class="rb-label">Five and Under</div>
-        <div class="rb-sub">Numbers 1 – 5 · Start here</div>
-      </div>
-    </div>
-
-    <div class="stage-banner stage-1" aria-hidden="true">
-      <svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg>
-      <div>
-        <div class="stage-num">Stage 1</div>
-        <div class="stage-name">Crawling — Easiest</div>
-      </div>
-    </div>
-    <h2 class="section-heading">Mom, I need your help</h2>
-    <p class="section-note">Mom, will you sit with me for these first two?  They're a little hard to do by myself — let's work through them together, nice and slow.  Once I've got these, I can run with everything after Crawling all on my own!</p>
-    <div class="grid stage-section stage-1">
-      <a href="bigger-smaller.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
-        <span class="step">Do this with me, Mom</span>
-        Bigger / Smaller
-        <span class="filename">bigger-smaller.html</span>
-      </a>
-      <a href="number-practice.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
-        <span class="step">My Turn</span>
-        Numbers 1 to 10
-        <span class="filename">number-practice.html</span>
-      </a>
-    </div>
-
-    <div class="stage-banner stage-2" aria-hidden="true">
-      <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
-      <div>
-        <div class="stage-num">Stage 2</div>
-        <div class="stage-name">Walking — Easy</div>
-      </div>
-    </div>
-    <h2 class="section-heading">Lessons</h2>
-    <p class="section-note">Learn to add within 5, then master the facts.</p>
-    <div class="grid stage-section stage-2">
-      <a href="addition.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
-        <span class="step">Lesson 1</span>
-        Addition (1 to 5)
-        <span class="filename">addition.html</span>
-      </a>
-      <a href="easy-addition.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
-        <span class="step">Facts Game</span>
-        Easy Addition (+1, Doubles, Make 10, +2·3·4)
-        <span class="filename">easy-addition.html</span>
-      </a>
-    </div>
-
   </div>
 
-  <script>
-  // Build the colored number chips inside each range banner.
-  (function(){
-    var NUM_COLOR = {
-      1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
-      6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
-    };
-    function buildChips(id, upTo) {
-      var el = document.getElementById(id);
-      if (!el) return;
-      for (var i = 1; i <= upTo; i++) {
-        var chip = document.createElement('div');
-        chip.className = 'rb-chip';
-        chip.style.background = NUM_COLOR[i];
-        chip.textContent = i;
-        el.appendChild(chip);
-      }
-    }
-    buildChips('rbChips10', 10);
-    buildChips('rbChips5', 5);
-  })();
-  </script>
-
-  <script>
-    // Tap a figure to make it grow; tap again to shrink. Don't open the lesson.
-    document.querySelectorAll('.card .emoji').forEach(function (el) {
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        el.classList.toggle('big');
-      });
-    });
-  </script>
 <script>
-// Build the hero number line: 10 cells, each a sphere cluster in the
-// canonical ColorMyMath shape + a digit below.  Same shape map used
-// elsewhere on the site (making-10-game.html, the 512 game).
 (function(){
-  const NUM_COLOR = {
+  var NUM_COLOR = {
     1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
     6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
   };
-  // Bottom-aligned cluster centers in a 100x100 viewBox (R=8, D=16, H=D*sqrt(3)/2)
-  const R = 8, D = 16, H = D * Math.sqrt(3) / 2, CX = 50, YB = 92;
-  const SHAPES = {
-    1:  [[CX, YB]],
+  var R = 8, D = 16, H = D * Math.sqrt(3) / 2, CX = 50, YB = 92;
+  var SHAPES = {
+    1:  [[CX,YB]],
     2:  [[CX-R,YB],[CX+R,YB]],
     3:  [[CX-R,YB],[CX+R,YB],[CX,YB-H]],
     4:  [[CX-R,YB],[CX+R,YB],[CX-R,YB-D],[CX+R,YB-D]],
@@ -724,56 +206,38 @@
     9:  [[CX-D,YB],[CX,YB],[CX+D,YB],[CX-D,YB-D],[CX,YB-D],[CX+D,YB-D],[CX-D,YB-2*D],[CX,YB-2*D],[CX+D,YB-2*D]],
     10: [[CX-3*R,YB],[CX-R,YB],[CX+R,YB],[CX+3*R,YB],[CX-D,YB-H],[CX,YB-H],[CX+D,YB-H],[CX-R,YB-2*H],[CX+R,YB-2*H],[CX,YB-3*H]]
   };
-  const SVG_NS = 'http://www.w3.org/2000/svg';
-  const root = document.getElementById('heroNumLine');
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var root = document.getElementById('heroNumLine');
   if (!root) return;
-  // A single shared <defs> block for the radial-highlight + drop-shadow filter.
-  const defs = '<defs>' +
-    '<radialGradient id="ballHi" cx="32%" cy="28%" r="55%">' +
-      '<stop offset="0%" stop-color="#fff" stop-opacity="0.85"/>' +
-      '<stop offset="55%" stop-color="#fff" stop-opacity="0"/>' +
-    '</radialGradient>' +
-  '</defs>';
+  var defs = '<defs><radialGradient id="ballHi" cx="32%" cy="28%" r="55%"><stop offset="0%" stop-color="#fff" stop-opacity="0.85"/><stop offset="55%" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>';
   function darken(hex) {
-    // 60/40 blend with black -- "color-mix" without depending on CSS support.
-    const n = parseInt(hex.slice(1), 16);
-    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-    const m = v => Math.round(v * 0.6).toString(16).padStart(2,'0');
-    return '#' + m(r) + m(g) + m(b);
+    var n = parseInt(hex.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    var m = function(v){ return Math.round(v*0.6).toString(16).padStart(2,'0'); };
+    return '#'+m(r)+m(g)+m(b);
   }
   function buildCell(n) {
-    const color = NUM_COLOR[n];
-    const dark = darken(color);
-    // Fixed viewBox sized to the widest/tallest cluster (10 dots) so every
-    // dot is drawn at the same R=8 scale regardless of how many dots the
-    // cell contains.  Without this, the lone "1" dot fills its entire cell
-    // and looks enormous next to 2, 3, 4, etc.
-    const vb = '15 38 70 66';
-    let svg = '<svg viewBox="' + vb + '" preserveAspectRatio="xMidYMax meet">' + defs;
-    // For 10, draw the canonical big-triangle outline before the balls.
+    var color = NUM_COLOR[n], dark = darken(color);
+    var vb = '15 38 70 66';
+    var svg = '<svg viewBox="'+vb+'" preserveAspectRatio="xMidYMax meet">'+defs;
     if (n === 10) {
-      const halfW = 3 * R + R * Math.sqrt(3);
-      const baseY = YB + R;
-      const topY = baseY - halfW * Math.sqrt(3);
-      svg += '<polygon points="' + (CX-halfW)+','+baseY + ' ' + (CX+halfW)+','+baseY + ' ' + CX+','+topY +
-             '" fill="none" stroke="#fff" stroke-width="2.8" stroke-opacity="0.75"/>';
+      var halfW = 3*R + R*Math.sqrt(3);
+      var baseY = YB+R, topY = baseY - halfW*Math.sqrt(3);
+      svg += '<polygon points="'+(CX-halfW)+','+baseY+' '+(CX+halfW)+','+baseY+' '+CX+','+topY+'" fill="none" stroke="#fff" stroke-width="2.8" stroke-opacity="0.75"/>';
     }
-    for (const [cx, cy] of SHAPES[n]) {
-      // Build a 3D ball: tiny soft shadow ellipse beneath, shaded base,
-      // highlight on top, then a thin dark outline.  No SVG filters --
-      // they choke some renderers when there are 55 balls on the page.
-      svg += '<ellipse cx="' + cx + '" cy="' + (cy + R - 0.5) + '" rx="' + (R*0.78) + '" ry="' + (R*0.22) + '" fill="#000" opacity="0.32"/>' +
-             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="' + color + '"/>' +
-             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="url(#ballHi)"/>' +
-             '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="' + dark + '" stroke-width="0.9" stroke-opacity="0.95"/>';
+    for (var i = 0; i < SHAPES[n].length; i++) {
+      var cx = SHAPES[n][i][0], cy = SHAPES[n][i][1];
+      svg += '<ellipse cx="'+cx+'" cy="'+(cy+R-0.5)+'" rx="'+(R*0.78)+'" ry="'+(R*0.22)+'" fill="#000" opacity="0.32"/>';
+      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="'+color+'"/>';
+      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="url(#ballHi)"/>';
+      svg += '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+dark+'" stroke-width="0.9" stroke-opacity="0.95"/>';
     }
     svg += '</svg>';
-    const cell = document.createElement('div');
+    var cell = document.createElement('div');
     cell.className = 'nl-cell';
-    cell.innerHTML = svg + '<div class="nl-digit">' + n + '</div>';
+    cell.innerHTML = svg + '<div class="nl-digit">'+n+'</div>';
     return cell;
   }
-  for (let n = 1; n <= 10; n++) root.appendChild(buildCell(n));
+  for (var n = 1; n <= 10; n++) root.appendChild(buildCell(n));
 })();
 </script>
 </body>

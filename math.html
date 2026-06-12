@@ -257,6 +257,48 @@
       opacity: 0.7;
       text-transform: uppercase;
     }
+
+    /* ===== Range section banners ("Ten and Under" / "Five and Under") ===== */
+    .range-banner {
+      display: flex; align-items: center; gap: 20px;
+      padding: 22px 28px;
+      margin: 54px 0 10px;
+      border-radius: 20px;
+      border: 3px solid var(--rc, #fff);
+      background: rgba(0,0,0,0.38);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 6px 30px rgba(0,0,0,0.55);
+      position: relative; overflow: hidden;
+    }
+    .range-banner::after {
+      content: ''; position: absolute; inset: 0;
+      background: var(--rc, #fff); opacity: 0.11; pointer-events: none;
+      border-radius: 17px;
+    }
+    .range-banner .rb-text { flex: 1; position: relative; z-index: 1; }
+    .range-banner .rb-label {
+      font-size: clamp(24px, 4.5vw, 36px); font-weight: 900;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: var(--rc, #fff); line-height: 1;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+    .range-banner .rb-sub {
+      font-size: 14px; letter-spacing: 1px;
+      color: rgba(255,255,255,0.65); margin-top: 6px;
+    }
+    .range-banner .rb-chips {
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      position: relative; z-index: 1; flex: 0 0 auto;
+    }
+    .range-banner .rb-chip {
+      width: clamp(26px, 4.2vw, 38px); height: clamp(26px, 4.2vw, 38px);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: clamp(12px, 1.9vw, 17px);
+      color: #000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+    }
+    /* first range-banner has less top margin (it follows the hero numline) */
+    .range-banner:first-of-type { margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -378,40 +420,22 @@
     </div>
 
     <h1>Math</h1>
-    <p class="sub">Pick a lesson.  Watch, play, and try the game on each page.</p>
-    <!-- Canonical ColorMyMath number line: 1..10 cells, each a sphere
-         cluster in the number-line shape + the digit below.  Built once
-         on load by the script at the end of <body>. -->
+    <p class="sub">Pick a section, then pick a lesson.  Work top to bottom.</p>
+    <!-- Canonical ColorMyMath number line: 1..10 cells -->
     <div class="hero-numline" id="heroNumLine" aria-hidden="true"></div>
 
-    <div class="stage-banner stage-1" aria-hidden="true">
-      <!-- Stage 1: crawling baby (friendly character, matches the cards) -->
-      <svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg>
-      <div>
-        <div class="stage-num">Stage 1</div>
-        <div class="stage-name">Crawling — Easiest</div>
+    <!-- ════════════════════════════════════════════════════
+         TEN AND UNDER
+         ════════════════════════════════════════════════════ -->
+    <div class="range-banner" style="--rc:#e63946;">
+      <div class="rb-chips" id="rbChips10"></div>
+      <div class="rb-text">
+        <div class="rb-label">Ten and Under</div>
+        <div class="rb-sub">Numbers 1 – 10</div>
       </div>
     </div>
 
-    <h2 class="section-heading">Mom, I need your help</h2>
-    <p class="section-note">Mom, will you sit with me for these first two?  They're a little hard to do by myself — let's work through them together, nice and slow.  Once I've got these, I can run with everything after Crawling all on my own!</p>
-    <div class="grid stage-section stage-1">
-      <a href="bigger-smaller.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
-        <span class="step">Do this with me, Mom</span>
-        Bigger / Smaller
-        <span class="filename">bigger-smaller.html</span>
-      </a>
-      <a href="number-practice.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
-        <span class="step">My Turn</span>
-        Numbers 1 to 10
-        <span class="filename">number-practice.html</span>
-      </a>
-    </div>
-
     <div class="stage-banner stage-2" aria-hidden="true">
-      <!-- Stage 2: walking boy (friendly character, matches the cards) -->
       <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
       <div>
         <div class="stage-num">Stage 2</div>
@@ -421,28 +445,15 @@
     <h2 class="section-heading">Lessons</h2>
     <p class="section-note">Each lesson has a game, a video, and a play-along.  Work top to bottom.</p>
     <div class="grid stage-section stage-2">
-      <a href="addition.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
-        <span class="step">Lesson 1</span>
-        Addition (1 to 5)
-        <span class="filename">addition.html</span>
-      </a>
-      <a href="easy-addition.html" class="card start">
-        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
-        <span class="step">Facts Game</span>
-        Easy Addition (+1, Doubles, Make 10, +2·3·4)
-        <span class="filename">easy-addition.html</span>
-      </a>
       <a href="counting-to-10.html" class="card start">
         <span class="emoji">🤸</span>
-        <span class="step">Lesson 2</span>
+        <span class="step">Lesson 1</span>
         Counting to 10
         <span class="filename">counting-to-10.html</span>
       </a>
     </div>
 
     <div class="stage-banner stage-3" aria-hidden="true">
-      <!-- Stage 3: running kid -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="38" cy="12" r="5" fill="currentColor" stroke="none"/>
         <path d="M36 17 L26 34"/>
@@ -462,36 +473,31 @@
     <div class="grid stage-section stage-3">
       <a href="making-10.html" class="card start">
         <span class="emoji">🤸</span>
-        <span class="step">Lesson 3</span>
+        <span class="step">Lesson 2</span>
         Making 10
         <span class="filename">making-10.html</span>
       </a>
       <a href="subtraction.html" class="card start">
         <span class="emoji">⛹️</span>
-        <span class="step">Lesson 4</span>
+        <span class="step">Lesson 3</span>
         Subtraction (5 take away 1)
         <span class="filename">subtraction.html</span>
       </a>
       <a href="subtraction-from-10.html" class="card start">
         <span class="emoji">⛹️</span>
-        <span class="step">Lesson 5</span>
+        <span class="step">Lesson 4</span>
         Subtraction from 10
         <span class="filename">subtraction-from-10.html</span>
       </a>
     </div>
 
     <div class="stage-banner stage-4" aria-hidden="true">
-      <!-- Stage 4: kid on a bicycle -->
       <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <!-- two wheels -->
         <circle cx="14" cy="48" r="9"/>
         <circle cx="50" cy="48" r="9"/>
-        <!-- frame -->
         <path d="M14 48 L26 32 L50 48 M26 32 L36 32 L40 48"/>
-        <!-- handlebars + seat -->
         <path d="M26 32 L22 28"/>
         <path d="M40 30 L38 26 L42 26"/>
-        <!-- rider -->
         <circle cx="38" cy="14" r="5" fill="currentColor" stroke="none"/>
         <path d="M38 19 L40 30"/>
         <path d="M40 24 L46 22"/>
@@ -600,7 +606,90 @@
         <span class="filename">colormymath-clock/</span>
       </a>
     </div>
+
+    <!-- ════════════════════════════════════════════════════
+         FIVE AND UNDER
+         ════════════════════════════════════════════════════ -->
+    <div class="range-banner" style="--rc:#0066ff;">
+      <div class="rb-chips" id="rbChips5"></div>
+      <div class="rb-text">
+        <div class="rb-label">Five and Under</div>
+        <div class="rb-sub">Numbers 1 – 5 · Start here</div>
+      </div>
+    </div>
+
+    <div class="stage-banner stage-1" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg>
+      <div>
+        <div class="stage-num">Stage 1</div>
+        <div class="stage-name">Crawling — Easiest</div>
+      </div>
+    </div>
+    <h2 class="section-heading">Mom, I need your help</h2>
+    <p class="section-note">Mom, will you sit with me for these first two?  They're a little hard to do by myself — let's work through them together, nice and slow.  Once I've got these, I can run with everything after Crawling all on my own!</p>
+    <div class="grid stage-section stage-1">
+      <a href="bigger-smaller.html" class="card start">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
+        <span class="step">Do this with me, Mom</span>
+        Bigger / Smaller
+        <span class="filename">bigger-smaller.html</span>
+      </a>
+      <a href="number-practice.html" class="card start">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-sitting-boy"/></svg></span>
+        <span class="step">My Turn</span>
+        Numbers 1 to 10
+        <span class="filename">number-practice.html</span>
+      </a>
+    </div>
+
+    <div class="stage-banner stage-2" aria-hidden="true">
+      <svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg>
+      <div>
+        <div class="stage-num">Stage 2</div>
+        <div class="stage-name">Walking — Easy</div>
+      </div>
+    </div>
+    <h2 class="section-heading">Lessons</h2>
+    <p class="section-note">Learn to add within 5, then master the facts.</p>
+    <div class="grid stage-section stage-2">
+      <a href="addition.html" class="card start">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
+        <span class="step">Lesson 1</span>
+        Addition (1 to 5)
+        <span class="filename">addition.html</span>
+      </a>
+      <a href="easy-addition.html" class="card start">
+        <span class="emoji"><svg viewBox="0 0 100 100"><use href="#icon-walking-boy"/></svg></span>
+        <span class="step">Facts Game</span>
+        Easy Addition (+1, Doubles, Make 10, +2·3·4)
+        <span class="filename">easy-addition.html</span>
+      </a>
+    </div>
+
   </div>
+
+  <script>
+  // Build the colored number chips inside each range banner.
+  (function(){
+    var NUM_COLOR = {
+      1:'#e63946', 2:'#ff6200', 3:'#e6c800', 4:'#00a12c', 5:'#0066ff',
+      6:'#7700dd', 7:'#7a3b00', 8:'#ff3fa6', 9:'#38c7ff', 10:'#e63946'
+    };
+    function buildChips(id, upTo) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      for (var i = 1; i <= upTo; i++) {
+        var chip = document.createElement('div');
+        chip.className = 'rb-chip';
+        chip.style.background = NUM_COLOR[i];
+        chip.textContent = i;
+        el.appendChild(chip);
+      }
+    }
+    buildChips('rbChips10', 10);
+    buildChips('rbChips5', 5);
+  })();
+  </script>
 
   <script>
     // Tap a figure to make it grow; tap again to shrink. Don't open the lesson.

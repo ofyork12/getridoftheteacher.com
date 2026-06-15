@@ -14,121 +14,144 @@
 <link rel="icon" href="icons/icon-192.png">
 <style>
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{margin:0; height:100%;}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:radial-gradient(circle at 50% 30%, #142c4e, #0d1b2e 70%);
-    color:#eaf1fb; min-height:100%; display:flex; flex-direction:column;
-    overflow-x:hidden; user-select:none; -webkit-user-select:none;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-  .topbar{display:flex; align-items:center; justify-content:space-between; padding:12px 16px 4px;}
-  .exit{color:#9bb0cc; text-decoration:none; font-size:14px; font-weight:600; border:1px solid #2b466e; padding:7px 12px; border-radius:999px;}
+  html,body{margin:0; height:100%; overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#0b1422; color:#eaf1fb; height:100%;}
+  #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
+  .exit{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:12px; z-index:5;
+    color:#9bb0cc; text-decoration:none; font-size:14px; font-weight:600; border:1px solid #2b466e;
+    padding:7px 12px; border-radius:999px; background:rgba(13,27,46,.55);}
   .exit:hover{background:#15294a; color:#fff;}
-  .brand{font-weight:800; font-size:18px; letter-spacing:.5px;}
-  .brand b{color:#f0b32a;}
-
-  .clockwrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:6px 14px 26px;}
-
-  /* the round clock face */
-  .dial{
-    position:relative; width:min(86vw, 60vh); aspect-ratio:1/1; border-radius:50%;
-    background:radial-gradient(circle at 50% 42%, #ffffff, #eef2f8);
-    border:10px solid #2b3f5c; box-shadow:0 14px 40px rgba(0,0,0,.5), inset 0 0 0 4px #fff;
-  }
-  .numeral{position:absolute; transform:translate(-50%,-50%); pointer-events:none;}
-  .numeral img{height:clamp(34px,9.5vw,66px); width:auto; object-fit:contain; display:block;
-    filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));}
-
-  .hand{position:absolute; left:50%; bottom:50%; transform-origin:50% 100%; border-radius:999px; z-index:5;}
-  .hand--hour  {width:2.6%; height:27%; margin-left:-1.3%; background:#22344f;}
-  .hand--minute{width:1.8%; height:37%; margin-left:-0.9%; background:#22344f;}
-  .hand--second{width:1.0%; height:41%; margin-left:-0.5%; background:#f0b32a;}
-  .hub{position:absolute; left:50%; top:50%; width:5.5%; height:5.5%; transform:translate(-50%,-50%);
-    background:#22344f; border:3px solid #fff; border-radius:50%; z-index:6;}
-
-  .readout{font-size:15px; color:#9bb0cc; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:1px;}
-  .readout b{color:#cdddf2;}
-
-  .knobs{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;}
+  .knobs{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:5;
+    display:flex; align-items:center; justify-content:center; gap:14px;}
   .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
   .knob:active{transform:scale(.9);}
-  .knob img{height:46px; width:auto; display:block; border-radius:10px;}
-  .gauge{font-size:13px; color:#9bb0cc; font-weight:700; background:#15294a; padding:8px 14px; border-radius:999px;}
-  .gauge b{color:#f0b32a;}
-  .hint{font-size:12px; color:#6f86a8; text-align:center; max-width:340px;}
+  .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
+    font-size:12px; color:#6f86a8; pointer-events:none;}
 </style>
 </head>
 <body>
-  <div class="topbar">
-    <a class="exit" href="../games.html">← Games</a>
-    <div class="brand">About <b>Time</b></div>
-    <span style="width:64px"></span>
+  <a class="exit" href="../games.html">← Games</a>
+  <div class="tip">Tap to drop the time · tilt your phone to tumble the dots</div>
+  <canvas id="c"></canvas>
+  <div class="knobs">
+    <button class="knob" id="btnSlow"  title="Lighter / less bouncy"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
+    <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
+    <button class="knob" id="btnFast"  title="Heavier / more bouncy"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
   </div>
 
-  <div class="clockwrap">
-    <div class="dial" id="dial">
-      <div class="hand hand--hour"   id="handHour"></div>
-      <div class="hand hand--minute" id="handMin"></div>
-      <div class="hand hand--second" id="handSec"></div>
-      <div class="hub"></div>
-    </div>
-
-    <div class="readout"><b id="readout">12:00</b> <span id="ampm">AM</span></div>
-
-    <div class="knobs">
-      <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
-      <button class="knob" id="btnReset" title="Reset to now"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
-      <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
-    </div>
-    <div class="gauge" id="gauge">Real time</div>
-    <div class="hint">The numbers are colored dots. Tap <b>Faster</b>/<b>Slower</b> to move the hands · <b>Reset</b> goes back to now.</div>
-  </div>
-
+<script src="planck.min.js"></script>
 <script>
 "use strict";
 (function(){
-  const $=id=>document.getElementById(id);
-  const WORD=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
-  function numeralSrc(n){ return n===5 ? 'gfx/a_five_house.png' : 'gfx/a_group_'+WORD[n]+'.png'; }
+  const pl=planck, Vec2=pl.Vec2;
+  const WORLD_W=640, WORLD_H=360, PM=32;            // world units (px) and pixels-per-metre (matches AndEngine)
+  const m=(v)=>v/PM;                                 // world-px -> metres
 
-  // place the 12 dot-group numbers around the face (12 at top)
-  const dial=$('dial');
-  for(let n=1;n<=12;n++){
-    const ang=(n/12)*Math.PI*2 - Math.PI/2;      // 3 o'clock = 0, go clockwise; offset so 12 is up
-    const R=39;                                    // % of radius from center
-    const x=50 + Math.cos(ang)*R, y=50 + Math.sin(ang)*R;
-    const wrap=document.createElement('div'); wrap.className='numeral';
-    wrap.style.left=x+'%'; wrap.style.top=y+'%';
-    const im=document.createElement('img'); im.src=numeralSrc(n); im.alt=n;
-    wrap.appendChild(im); dial.appendChild(wrap);
+  // ----- assets (the original gfx) -----
+  const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
+  const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
+  function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
+  // original spawn coordinates (top-left in 640x360 world)
+  const npx9=[530,563,596,530,563,596,530,563,596], npy9=[196,196,196,163,163,163,130,130,130];   // ones grid (right)
+  const npx10=[296,408,296,408,352], npy10=[164,164,71,71,-22];                                    // ten-triangles (middle)
+  const HOURX=8, HOURY=70;                                                                          // hour group (left)
+
+  const IMG={};
+  function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
+  const needed=new Set(['a_five_house']);
+  for(let n=1;n<=9;n++) needed.add(ONES[n]);
+  TENS.forEach(t=>needed.add(t));
+  for(let h=1;h<=12;h++) needed.add(hourImg(h));
+
+  // ----- physics -----
+  let pDensity=4.0, pElasticity=1.0, pFriction=0.0;
+  const world=pl.World(Vec2(0, 3.0));                // gravity DOWN (y increases downward)
+  const statics=world.createBody();                  // one static body holds all the walls
+  function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
+  // walls + the two middle obstacles, exactly as the original
+  box(0,357,640,3); box(0,0,640,3); box(0,0,3,360); box(637,0,3,360);
+  box(250,140,20,20); box(250,220,20,20);
+
+  let sprites=[];   // {body, img, size}
+  function clearSprites(){ for(const s of sprites) world.destroyBody(s.body); sprites=[]; }
+  function addSprite(name, x, y, size){
+    const img=IMG[name]; if(!img) return;
+    const b=world.createDynamicBody(Vec2(m(x+size/2), m(y+size/2)));
+    b.createFixture(pl.Circle(m(size*0.42)), {density:pDensity, friction:pFriction, restitution:pElasticity});
+    b.setAngularVelocity((Math.random()-0.5)*2);
+    sprites.push({body:b, img, size});
   }
 
-  // ---- time model: simulated clock with adjustable rate ----
-  const SPEEDS=[0, 0.25, 1, 30, 120, 600, 3600];
-  const SPEED_LABELS=['Paused','¼ speed','Real time','×30','×120','×600','×3600'];
-  let speedIdx=2, simMs=Date.now(), lastTs=performance.now();
-  const rate=()=>SPEEDS[speedIdx];
-  function setGauge(){ const r=rate(); $('gauge').innerHTML = r===1 ? 'Real time' : '<b>'+SPEED_LABELS[speedIdx]+'</b>'; }
-
-  function render(){
-    const d=new Date(simMs);
-    const ms=d.getMilliseconds(), s=d.getSeconds()+ms/1000, m=d.getMinutes()+s/60, h=(d.getHours()%12)+m/60;
-    $('handHour').style.transform='rotate('+(h*30)+'deg)';
-    $('handMin').style.transform='rotate('+(m*6)+'deg)';
-    $('handSec').style.transform='rotate('+(s*6)+'deg)';
-    let hh=d.getHours()%12; if(hh===0) hh=12;
-    const mm=d.getMinutes();
-    $('readout').textContent = hh+':'+(mm<10?'0':'')+mm;
-    $('ampm').textContent = d.getHours()>=12 ? 'PM':'AM';
+  // ----- build the time as quantities -----
+  let simMs=Date.now(), lastMin=-1;
+  function spawnTime(){
+    clearSprites();
+    const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; const mm=d.getMinutes();
+    // hour group (one sprite) — sized to roughly the original (bigger for bigger numbers)
+    addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110);
+    // minute tens: one ten-triangle per ten, coloured red,orange,yellow,green,blue
+    const tens=Math.floor(mm/10);
+    for(let i=0;i<tens;i++) addSprite(TENS[i], npx10[i], npy10[i], 104);
+    // minute ones: that many single dots, coloured by the ones digit
+    const ones=mm%10;
+    for(let i=0;i<ones && i<9;i++) addSprite(ONES[ones], npx9[i], npy9[i], 30);
+    lastMin=mm;
   }
-  function frame(ts){ const dt=ts-lastTs; lastTs=ts; simMs += dt*rate(); render(); requestAnimationFrame(frame); }
 
-  $('btnFast').addEventListener('click', ()=>{ speedIdx=Math.min(SPEEDS.length-1, speedIdx+1); setGauge(); });
-  $('btnSlow').addEventListener('click', ()=>{ speedIdx=Math.max(0, speedIdx-1); setGauge(); });
-  $('btnReset').addEventListener('click', ()=>{ speedIdx=2; simMs=Date.now(); setGauge(); render(); });
+  // ----- render -----
+  const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+  let CW=0,CH=0,DPR=Math.min(2,window.devicePixelRatio||1), fit=1, offx=0, offy=0;
+  function resize(){
+    CW=window.innerWidth; CH=window.innerHeight;
+    canvas.width=CW*DPR; canvas.height=CH*DPR; canvas.style.width=CW+'px'; canvas.style.height=CH+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    fit=Math.min(CW/WORLD_W, CH/WORLD_H);
+    offx=(CW-WORLD_W*fit)/2; offy=(CH-WORLD_H*fit)/2;
+  }
+  window.addEventListener('resize', resize);
 
-  setGauge(); render(); requestAnimationFrame(frame);
+  let lastT=performance.now();
+  function frame(t){
+    const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+    simMs += dt*1000;
+    const nowMin=new Date(simMs).getMinutes();
+    if(nowMin!==lastMin) spawnTime();
+    world.step(1/60, 8, 3);
+
+    ctx.clearRect(0,0,CW,CH);
+    // play-field backdrop (the 640x360 wallpaper area)
+    ctx.save(); ctx.translate(offx,offy); ctx.scale(fit,fit);
+    ctx.fillStyle='#0d1b2e'; ctx.fillRect(0,0,WORLD_W,WORLD_H);
+    for(const s of sprites){
+      const p=s.body.getPosition(), a=s.body.getAngle();
+      const x=p.x*PM, y=p.y*PM;
+      const iw=s.img.naturalWidth||s.size, ih=s.img.naturalHeight||s.size;
+      const scale=s.size/Math.max(iw,ih), dw=iw*scale, dh=ih*scale;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+      ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
+      ctx.restore();
+    }
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+
+  // ----- interaction -----
+  canvas.addEventListener('pointerdown', ()=>{ simMs=Date.now(); spawnTime(); });
+  window.addEventListener('deviceorientation', e=>{
+    if(e.gamma==null) return;
+    const gx=Math.max(-9,Math.min(9, e.gamma/5));    // tilt L/R
+    const gy=Math.max(-2,Math.min(9, 3 + e.beta/30)); // keep some downward pull
+    world.setGravity(Vec2(gx, gy));
+  });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); spawnTime(); });
+  document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); spawnTime(); });
+  document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; spawnTime(); });
+
+  // ----- go -----
+  Promise.all([...needed].map(load)).then(()=>{ resize(); spawnTime(); requestAnimationFrame(frame); });
+
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(refreshing||!had) return; refreshing=true; location.reload(); });

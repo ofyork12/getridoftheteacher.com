@@ -1,5 +1,5 @@
 /* About Time clock — network-first; own cache prefix so it won't clash with the other apps */
-const CACHE = 'atc-v1';
+const CACHE = 'atc-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/icon-180.png'];
 

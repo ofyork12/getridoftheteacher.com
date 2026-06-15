@@ -22,70 +22,67 @@
     overflow-x:hidden; user-select:none; -webkit-user-select:none;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  header{display:flex; align-items:center; justify-content:space-between; padding:12px 16px 4px;}
-  .home{color:#9bb0cc; text-decoration:none; font-size:14px; font-weight:600; border:1px solid #2b466e; padding:7px 12px; border-radius:999px;}
-  .home:hover{background:#15294a; color:#fff;}
-  .ttl{font-weight:800; font-size:18px; letter-spacing:.5px;}
-  .ttl b{color:#f0b32a;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:12px 16px 4px;}
+  .exit{color:#9bb0cc; text-decoration:none; font-size:14px; font-weight:600; border:1px solid #2b466e; padding:7px 12px; border-radius:999px;}
+  .exit:hover{background:#15294a; color:#fff;}
+  .brand{font-weight:800; font-size:18px; letter-spacing:.5px;}
+  .brand b{color:#f0b32a;}
 
-  .stage{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:10px 14px 24px;}
+  .clockwrap{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:6px 14px 26px;}
 
-  .timerow{display:flex; align-items:flex-start; justify-content:center; gap:clamp(10px,4vw,40px); width:100%; max-width:760px;}
-  .unit{display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; min-width:0;}
-  .label{font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#7f97b8; font-weight:700;}
-  .digit{font-size:clamp(34px,11vw,72px); font-weight:800; line-height:1; font-variant-numeric:tabular-nums;}
-  .groups{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:center; gap:6px; min-height:96px;}
-  .groups img{height:clamp(74px,21vw,150px); width:auto; object-fit:contain;
-    filter:drop-shadow(0 4px 10px rgba(0,0,0,.45)); animation:bob 3.2s ease-in-out infinite;}
-  .tens{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:center; gap:4px;}
-  .tens img{height:clamp(54px,15vw,104px);}
-  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
-  .colon{font-size:clamp(40px,12vw,80px); font-weight:800; color:#54709b; align-self:center; padding-top:24px;}
+  /* the round clock face */
+  .dial{
+    position:relative; width:min(86vw, 60vh); aspect-ratio:1/1; border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, #ffffff, #eef2f8);
+    border:10px solid #2b3f5c; box-shadow:0 14px 40px rgba(0,0,0,.5), inset 0 0 0 4px #fff;
+  }
+  .numeral{position:absolute; transform:translate(-50%,-50%); pointer-events:none;}
+  .numeral img{height:clamp(34px,9.5vw,66px); width:auto; object-fit:contain; display:block;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));}
 
-  .readout{font-size:clamp(20px,6vw,30px); font-weight:700; color:#cdddf2; font-variant-numeric:tabular-nums; letter-spacing:1px;}
-  .ampm{color:#f0b32a; font-size:.7em; margin-left:6px;}
+  .hand{position:absolute; left:50%; bottom:50%; transform-origin:50% 100%; border-radius:999px; z-index:5;}
+  .hand--hour  {width:2.6%; height:27%; margin-left:-1.3%; background:#22344f;}
+  .hand--minute{width:1.8%; height:37%; margin-left:-0.9%; background:#22344f;}
+  .hand--second{width:1.0%; height:41%; margin-left:-0.5%; background:#f0b32a;}
+  .hub{position:absolute; left:50%; top:50%; width:5.5%; height:5.5%; transform:translate(-50%,-50%);
+    background:#22344f; border:3px solid #fff; border-radius:50%; z-index:6;}
 
-  .controls{display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
-  .ctlbtn{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
-  .ctlbtn:active{transform:scale(.9);}
-  .ctlbtn img{height:46px; width:auto; display:block; border-radius:10px;}
-  .speed{font-size:13px; color:#9bb0cc; font-weight:700; min-width:96px; text-align:center;
-    background:#15294a; padding:8px 12px; border-radius:999px;}
-  .speed b{color:#f0b32a;}
-  .hint{font-size:12px; color:#6f86a8; text-align:center;}
+  .readout{font-size:15px; color:#9bb0cc; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:1px;}
+  .readout b{color:#cdddf2;}
+
+  .knobs{display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap;}
+  .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
+  .knob:active{transform:scale(.9);}
+  .knob img{height:46px; width:auto; display:block; border-radius:10px;}
+  .gauge{font-size:13px; color:#9bb0cc; font-weight:700; background:#15294a; padding:8px 14px; border-radius:999px;}
+  .gauge b{color:#f0b32a;}
+  .hint{font-size:12px; color:#6f86a8; text-align:center; max-width:340px;}
 </style>
 </head>
 <body>
-  <header>
-    <a class="home" href="../games.html">← Games</a>
-    <div class="ttl">About <b>Time</b></div>
+  <div class="topbar">
+    <a class="exit" href="../games.html">← Games</a>
+    <div class="brand">About <b>Time</b></div>
     <span style="width:64px"></span>
-  </header>
+  </div>
 
-  <div class="stage">
-    <div class="timerow">
-      <div class="unit">
-        <div class="label">Hour</div>
-        <div class="groups" id="hourGroups"></div>
-        <div class="digit" id="hourDigit">12</div>
-      </div>
-      <div class="colon">:</div>
-      <div class="unit">
-        <div class="label">Minutes</div>
-        <div class="groups" id="minGroups"></div>
-        <div class="digit" id="minDigit">00</div>
-      </div>
+  <div class="clockwrap">
+    <div class="dial" id="dial">
+      <div class="hand hand--hour"   id="handHour"></div>
+      <div class="hand hand--minute" id="handMin"></div>
+      <div class="hand hand--second" id="handSec"></div>
+      <div class="hub"></div>
     </div>
 
-    <div class="readout"><span id="readout">12:00</span><span class="ampm" id="ampm">AM</span></div>
+    <div class="readout"><b id="readout">12:00</b> <span id="ampm">AM</span></div>
 
-    <div class="controls">
-      <button class="ctlbtn" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
-      <button class="ctlbtn" id="btnReset" title="Reset to now"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
-      <button class="ctlbtn" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
+    <div class="knobs">
+      <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
+      <button class="knob" id="btnReset" title="Reset to now"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
+      <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
     </div>
-    <div class="speed" id="speed">Real time</div>
-    <div class="hint">Tap <b>Faster</b> or <b>Slower</b> to watch the clock move · <b>Reset</b> goes back to now</div>
+    <div class="gauge" id="gauge">Real time</div>
+    <div class="hint">The numbers are colored dots. Tap <b>Faster</b>/<b>Slower</b> to move the hands · <b>Reset</b> goes back to now.</div>
   </div>
 
 <script>
@@ -93,80 +90,45 @@
 (function(){
   const $=id=>document.getElementById(id);
   const WORD=['','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
-  // 5 has no "group" art — it uses the five-house
-  function hourSrc(h){ return h===5 ? 'gfx/a_five_house.png' : 'gfx/a_group_'+WORD[h]+'.png'; }
-  function onesSrc(o){ if(o===0) return null; return o===5 ? 'gfx/a_five_house.png' : 'gfx/a_group_'+WORD[o]+'.png'; }
-  const TEN_COLORS=['ten_red','ten_blue','ten_green','ten_orange','ten_yellow'];
+  function numeralSrc(n){ return n===5 ? 'gfx/a_five_house.png' : 'gfx/a_group_'+WORD[n]+'.png'; }
+
+  // place the 12 dot-group numbers around the face (12 at top)
+  const dial=$('dial');
+  for(let n=1;n<=12;n++){
+    const ang=(n/12)*Math.PI*2 - Math.PI/2;      // 3 o'clock = 0, go clockwise; offset so 12 is up
+    const R=39;                                    // % of radius from center
+    const x=50 + Math.cos(ang)*R, y=50 + Math.sin(ang)*R;
+    const wrap=document.createElement('div'); wrap.className='numeral';
+    wrap.style.left=x+'%'; wrap.style.top=y+'%';
+    const im=document.createElement('img'); im.src=numeralSrc(n); im.alt=n;
+    wrap.appendChild(im); dial.appendChild(wrap);
+  }
 
   // ---- time model: simulated clock with adjustable rate ----
   const SPEEDS=[0, 0.25, 1, 30, 120, 600, 3600];
   const SPEED_LABELS=['Paused','¼ speed','Real time','×30','×120','×600','×3600'];
-  let speedIdx=2;                 // start on real time
-  let simMs=Date.now();
-  let lastTs=performance.now();
+  let speedIdx=2, simMs=Date.now(), lastTs=performance.now();
+  const rate=()=>SPEEDS[speedIdx];
+  function setGauge(){ const r=rate(); $('gauge').innerHTML = r===1 ? 'Real time' : '<b>'+SPEED_LABELS[speedIdx]+'</b>'; }
 
-  function rate(){ return SPEEDS[speedIdx]; }
-  function setSpeedLabel(){
-    const r=rate();
-    $('speed').innerHTML = r===1 ? 'Real time' : '<b>'+SPEED_LABELS[speedIdx]+'</b>';
-  }
-
-  // ---- render ----
-  let last={h:-1,m:-1};
-  function buildGroups(el, srcs){
-    el.innerHTML='';
-    for(const s of srcs){ const im=document.createElement('img'); im.src=s; im.alt=''; el.appendChild(im); }
-    // stagger the bob so it reads as gentle motion, not a sync pulse
-    [...el.querySelectorAll('img')].forEach((im,i)=>{ im.style.animationDelay=(i*0.18)+'s'; });
-  }
   function render(){
     const d=new Date(simMs);
-    let h=d.getHours(); const m=d.getMinutes();
-    const ampm = h>=12 ? 'PM':'AM';
-    let h12 = h%12; if(h12===0) h12=12;
-    if(h12!==last.h){
-      buildGroups($('hourGroups'), [hourSrc(h12)]);
-      $('hourDigit').textContent = h12;
-      last.h=h12;
-    }
-    if(m!==last.m){
-      const tens=Math.floor(m/10), ones=m%10;
-      const srcs=[];
-      // minutes = tens "ten-houses" + the ones group
-      const tensImgs=[]; for(let i=0;i<tens;i++) tensImgs.push('gfx/'+TEN_COLORS[i]+'.png');
-      const minEl=$('minGroups'); minEl.innerHTML='';
-      if(tensImgs.length){
-        const wrap=document.createElement('div'); wrap.className='tens';
-        for(const s of tensImgs){ const im=document.createElement('img'); im.src=s; im.alt=''; wrap.appendChild(im); }
-        minEl.appendChild(wrap);
-      }
-      const os=onesSrc(ones);
-      if(os){ const im=document.createElement('img'); im.src=os; im.alt=''; minEl.appendChild(im); }
-      if(!tensImgs.length && !os){ minEl.innerHTML='<div style="color:#54709b;font-size:18px;font-weight:700;align-self:center">o’clock</div>'; }
-      [...minEl.querySelectorAll('img')].forEach((im,i)=>{ im.style.animationDelay=(i*0.15)+'s'; });
-      $('minDigit').textContent = (m<10?'0':'')+m;
-      last.m=m;
-    }
-    $('readout').textContent = h12+':'+((m<10?'0':'')+m);
-    $('ampm').textContent = ampm;
+    const ms=d.getMilliseconds(), s=d.getSeconds()+ms/1000, m=d.getMinutes()+s/60, h=(d.getHours()%12)+m/60;
+    $('handHour').style.transform='rotate('+(h*30)+'deg)';
+    $('handMin').style.transform='rotate('+(m*6)+'deg)';
+    $('handSec').style.transform='rotate('+(s*6)+'deg)';
+    let hh=d.getHours()%12; if(hh===0) hh=12;
+    const mm=d.getMinutes();
+    $('readout').textContent = hh+':'+(mm<10?'0':'')+mm;
+    $('ampm').textContent = d.getHours()>=12 ? 'PM':'AM';
   }
+  function frame(ts){ const dt=ts-lastTs; lastTs=ts; simMs += dt*rate(); render(); requestAnimationFrame(frame); }
 
-  function frame(ts){
-    const dt=ts-lastTs; lastTs=ts;
-    simMs += dt*rate();
-    render();
-    requestAnimationFrame(frame);
-  }
+  $('btnFast').addEventListener('click', ()=>{ speedIdx=Math.min(SPEEDS.length-1, speedIdx+1); setGauge(); });
+  $('btnSlow').addEventListener('click', ()=>{ speedIdx=Math.max(0, speedIdx-1); setGauge(); });
+  $('btnReset').addEventListener('click', ()=>{ speedIdx=2; simMs=Date.now(); setGauge(); render(); });
 
-  // ---- controls ----
-  $('btnFast').addEventListener('click', ()=>{ speedIdx=Math.min(SPEEDS.length-1, speedIdx+1); setSpeedLabel(); });
-  $('btnSlow').addEventListener('click', ()=>{ speedIdx=Math.max(0, speedIdx-1); setSpeedLabel(); });
-  $('btnReset').addEventListener('click', ()=>{ speedIdx=2; simMs=Date.now(); last={h:-1,m:-1}; setSpeedLabel(); render(); });
-
-  setSpeedLabel();
-  render();
-  requestAnimationFrame(frame);
-
+  setGauge(); render(); requestAnimationFrame(frame);
   if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
 })();
 </script>

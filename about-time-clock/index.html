@@ -91,9 +91,10 @@
     const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; const mm=d.getMinutes();
     // hour group (one sprite) — sized to roughly the original (bigger for bigger numbers)
     addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110);
-    // minute tens: one ten-triangle per ten, coloured red,orange,yellow,green,blue
+    // minute tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
     const tens=Math.floor(mm/10);
-    for(let i=0;i<tens;i++) addSprite(TENS[i], npx10[i], npy10[i], 104);
+    const tenName=TENS[Math.max(0,tens-1)];
+    for(let i=0;i<tens;i++) addSprite(tenName, npx10[i], npy10[i], 104);
     // minute ones: that many single dots, coloured by the ones digit
     const ones=mm%10;
     for(let i=0;i<ones && i<9;i++) addSprite(ONES[ones], npx9[i], npy9[i], 30);
@@ -133,6 +134,10 @@
       ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
       ctx.restore();
     }
+    // static colon between the hour (left) and the minutes — like a digital clock
+    ctx.fillStyle='#e6eefb';
+    ctx.beginPath(); ctx.arc(232,150,11,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(232,210,11,0,7); ctx.fill();
     ctx.restore();
     requestAnimationFrame(frame);
   }

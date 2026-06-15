@@ -23,7 +23,8 @@
     padding:7px 12px; border-radius:999px; background:rgba(13,27,46,.55);}
   .exit:hover{background:#15294a; color:#fff;}
   .knobs{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:5;
-    display:flex; align-items:center; justify-content:center; gap:14px;}
+    display:none; align-items:center; justify-content:center; gap:14px;}
+  .knobs.show{display:flex;}
   .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
   .knob:active{transform:scale(.9);}
   .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
@@ -33,7 +34,7 @@
 </head>
 <body>
   <a class="exit" href="../games.html">← Games</a>
-  <div class="tip">Tap to drop the time · tilt your phone to tumble the dots</div>
+  <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for buttons</div>
   <canvas id="c"></canvas>
   <div class="knobs">
     <button class="knob" id="btnSlow"  title="Lighter / less bouncy"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
@@ -143,13 +144,25 @@
   }
 
   // ----- interaction -----
-  canvas.addEventListener('pointerdown', ()=>{ simMs=Date.now(); spawnTime(); });
-  window.addEventListener('deviceorientation', e=>{
-    if(e.gamma==null) return;
-    const gx=Math.max(-9,Math.min(9, e.gamma/5));    // tilt L/R
-    const gy=Math.max(-2,Math.min(9, 3 + e.beta/30)); // keep some downward pull
-    world.setGravity(Vec2(gx, gy));
-  });
+  // tap = drop the time; press & hold = show the controls (and ask for motion access)
+  const knobs=document.querySelector('.knobs');
+  let pressTimer=null, longPressed=false, hideTimer=null;
+  function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 6000); }
+  canvas.addEventListener('pointerdown', ()=>{ longPressed=false; clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
+  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed){ simMs=Date.now(); spawnTime(); } });
+  canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
+
+  // accelerometer: the dots fall the way the phone is actually tilted (real device gravity)
+  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(-a.x, a.y)); }
+  let motionOn=false;
+  function enableMotion(){
+    if(motionOn) return; motionOn=true;
+    if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+      DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('devicemotion', onMotion); }).catch(()=>{ motionOn=false; });
+    } else {
+      window.addEventListener('devicemotion', onMotion);
+    }
+  }
   document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); spawnTime(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); spawnTime(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; spawnTime(); });

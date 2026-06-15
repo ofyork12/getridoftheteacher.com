@@ -129,7 +129,11 @@
   $('btnReset').addEventListener('click', ()=>{ speedIdx=2; simMs=Date.now(); setGauge(); render(); });
 
   setGauge(); render(); requestAnimationFrame(frame);
-  if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+  if('serviceWorker' in navigator){
+    let refreshing=false; const had=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(refreshing||!had) return; refreshing=true; location.reload(); });
+    window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
 })();
 </script>
 </body>

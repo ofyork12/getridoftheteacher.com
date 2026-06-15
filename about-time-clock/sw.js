@@ -1,5 +1,5 @@
 /* About Time clock — network-first; own cache prefix so it won't clash with the other apps */
-const CACHE = 'atc-v2';
+const CACHE = 'atc-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/icon-180.png'];
 
@@ -16,7 +16,7 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)).catch(()=>{}); return res; })
+    fetch(req, {cache:'no-cache'}).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)).catch(()=>{}); return res; })
       .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
   );
 });

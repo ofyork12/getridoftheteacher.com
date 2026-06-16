@@ -28,6 +28,7 @@
   .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
   .knob:active{transform:scale(.9);}
   .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
 </style>
@@ -37,6 +38,7 @@
   <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for buttons</div>
   <canvas id="c"></canvas>
   <div class="knobs">
+    <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
     <button class="knob" id="btnSlow"  title="Lighter / less bouncy"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
     <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
     <button class="knob" id="btnFast"  title="Heavier / more bouncy"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
@@ -86,7 +88,7 @@
   }
 
   // ----- build the time as quantities -----
-  let simMs=Date.now(), lastMin=-1;
+  let simMs=Date.now(), lastMin=-1, frozen=false;
   function spawnTime(){
     clearSprites();
     const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; const mm=d.getMinutes();
@@ -120,7 +122,7 @@
     simMs += dt*1000;
     const nowMin=new Date(simMs).getMinutes();
     if(nowMin!==lastMin) spawnTime();
-    world.step(1/60, 8, 3);
+    if(!frozen) world.step(1/60, 8, 3);   // frozen = static clock, no physics
 
     ctx.clearRect(0,0,CW,CH);
     // play-field backdrop (the 640x360 wallpaper area)
@@ -149,7 +151,7 @@
   let pressTimer=null, longPressed=false, hideTimer=null;
   function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 6000); }
   canvas.addEventListener('pointerdown', ()=>{ longPressed=false; clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
-  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed){ simMs=Date.now(); spawnTime(); } });
+  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); spawnTime(); } });
   canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
   // accelerometer: the dots fall the way the phone is actually tilted (real device gravity)
@@ -166,6 +168,12 @@
   document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); spawnTime(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); spawnTime(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; spawnTime(); });
+  document.getElementById('btnFreeze').addEventListener('click', ()=>{
+    frozen=!frozen;
+    document.getElementById('btnFreeze').classList.toggle('active', frozen);
+    if(frozen){ simMs=Date.now(); spawnTime(); }   // snap the numbers to their clean positions and hold
+    showKnobs();
+  });
 
   // ----- go -----
   Promise.all([...needed].map(load)).then(()=>{ resize(); spawnTime(); requestAnimationFrame(frame); });

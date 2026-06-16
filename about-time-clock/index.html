@@ -57,9 +57,22 @@
   const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
   function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
   // original spawn coordinates (top-left in 640x360 world)
-  const npx9=[530,563,596,530,563,596,530,563,596], npy9=[196,196,196,163,163,163,130,130,130];   // ones grid (right)
   const npx10=[296,408,296,408,352], npy10=[164,164,71,71,-22];                                    // ten-triangles (middle)
   const HOURX=8, HOURY=70;                                                                          // hour group (left)
+
+  // canonical ColorMyMath number-line shapes for the minute ONES (grid offsets, unit = a dot)
+  const SHAPES={
+    1:[[0,0]],
+    2:[[-0.5,0],[0.5,0]],
+    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],                       // triangle
+    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],           // square
+    5:[[0,-1],[-0.5,0],[0.5,0],[-0.5,1],[0.5,1]],              // house
+    6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],      // triangle of 6
+    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // flower (centre + 6)
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square with the middle missing
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3x3
+  };
+  const ONES_S=34, ONES_CX=566, ONES_CY=120;                  // dot spacing + cluster centre (world px)
 
   const IMG={};
   function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
@@ -104,7 +117,7 @@
   // tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
   function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, npx10[i], npy10[i], 104, 'triangle', 'tens'); }
   // ones: that many single dots, coloured by the ones digit
-  function spawnOnes(ones){ for(let i=0;i<ones && i<9;i++) addSprite(ONES[ones], npx9[i], npy9[i], 30, 'circle', 'ones'); }
+  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, ONES_CY+o[1]*ONES_S-15, 30, 'circle', 'ones'); }
   function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
   // only re-drop the part that actually changed — the rest keeps tumbling
   function checkTime(){ const t=curT();

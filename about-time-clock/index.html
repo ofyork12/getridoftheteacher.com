@@ -77,31 +77,40 @@
   box(0,357,640,3); box(0,0,640,3); box(0,0,3,360); box(637,0,3,360);
   box(250,140,20,20); box(250,220,20,20);
 
-  let sprites=[];   // {body, img, size}
-  function clearSprites(){ for(const s of sprites) world.destroyBody(s.body); sprites=[]; }
-  function addSprite(name, x, y, size){
+  // colon dots in the middle are SOLID obstacles too — dots bounce off them
+  function pin(cx,cy,r){ statics.createFixture(pl.Circle(m(r), Vec2(m(cx),m(cy))), {density:1,friction:0,restitution:1}); }
+  pin(232,150,13); pin(232,210,13);
+
+  let sprites=[];   // {body, img, size, group}
+  function clearGroup(g){ for(let i=sprites.length-1;i>=0;i--){ if(sprites[i].group===g){ world.destroyBody(sprites[i].body); sprites.splice(i,1); } } }
+  function addSprite(name, x, y, size, shape, group){
     const img=IMG[name]; if(!img) return;
+    const fd={density:pDensity, friction:pFriction, restitution:pElasticity};
     const b=world.createDynamicBody(Vec2(m(x+size/2), m(y+size/2)));
-    b.createFixture(pl.Circle(m(size*0.42)), {density:pDensity, friction:pFriction, restitution:pElasticity});
-    b.setAngularVelocity((Math.random()-0.5)*2);
-    sprites.push({body:b, img, size});
+    if(shape==='triangle'){            // real triangle body (apex up, base down) so it bounces as a triangle
+      const hw=m(size*0.5), hh=m(size*0.5);
+      b.createFixture(pl.Polygon([Vec2(-hw,hh), Vec2(hw,hh), Vec2(0,-hh)]), fd);
+    } else {                            // full-size circle so nothing visually overlaps
+      b.createFixture(pl.Circle(m(size*0.5)), fd);
+    }
+    b.setAngularVelocity((Math.random()-0.5)*1.5);
+    sprites.push({body:b, img, size, group});
   }
 
-  // ----- build the time as quantities -----
-  let simMs=Date.now(), lastMin=-1, frozen=false;
-  function spawnTime(){
-    clearSprites();
-    const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; const mm=d.getMinutes();
-    // hour group (one sprite) — sized to roughly the original (bigger for bigger numbers)
-    addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110);
-    // minute tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
-    const tens=Math.floor(mm/10);
-    const tenName=TENS[Math.max(0,tens-1)];
-    for(let i=0;i<tens;i++) addSprite(tenName, npx10[i], npy10[i], 104);
-    // minute ones: that many single dots, coloured by the ones digit
-    const ones=mm%10;
-    for(let i=0;i<ones && i<9;i++) addSprite(ONES[ones], npx9[i], npy9[i], 30);
-    lastMin=mm;
+  // ----- build the time as quantities; each group updates on its own (no full reset / repeat) -----
+  let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1, frozen=false;
+  function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
+  function spawnHour(h){ addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110, 'circle', 'hour'); }
+  // tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
+  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, npx10[i], npy10[i], 104, 'triangle', 'tens'); }
+  // ones: that many single dots, coloured by the ones digit
+  function spawnOnes(ones){ for(let i=0;i<ones && i<9;i++) addSprite(ONES[ones], npx9[i], npy9[i], 30, 'circle', 'ones'); }
+  function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
+  // only re-drop the part that actually changed — the rest keeps tumbling
+  function checkTime(){ const t=curT();
+    if(t.h!==lastH){ clearGroup('hour'); spawnHour(t.h); lastH=t.h; }
+    if(t.tens!==lastTens){ clearGroup('tens'); spawnTens(t.tens); lastTens=t.tens; }
+    if(t.ones!==lastOnes){ clearGroup('ones'); spawnOnes(t.ones); lastOnes=t.ones; }
   }
 
   // ----- render -----
@@ -120,8 +129,7 @@
   function frame(t){
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     simMs += dt*1000;
-    const nowMin=new Date(simMs).getMinutes();
-    if(nowMin!==lastMin) spawnTime();
+    checkTime();
     if(!frozen) world.step(1/60, 8, 3);   // frozen = static clock, no physics
 
     ctx.clearRect(0,0,CW,CH);
@@ -151,7 +159,7 @@
   let pressTimer=null, longPressed=false, hideTimer=null;
   function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 6000); }
   canvas.addEventListener('pointerdown', ()=>{ longPressed=false; clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
-  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); spawnTime(); } });
+  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); respawnAll(); } });
   canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
   // accelerometer: the dots fall the way the phone is actually tilted (real device gravity)
@@ -165,18 +173,18 @@
       window.addEventListener('devicemotion', onMotion);
     }
   }
-  document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); spawnTime(); });
-  document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); spawnTime(); });
-  document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; spawnTime(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); respawnAll(); });
+  document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); respawnAll(); });
+  document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; respawnAll(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{
     frozen=!frozen;
     document.getElementById('btnFreeze').classList.toggle('active', frozen);
-    if(frozen){ simMs=Date.now(); spawnTime(); }   // snap the numbers to their clean positions and hold
+    if(frozen){ simMs=Date.now(); respawnAll(); }   // snap the numbers to their clean positions and hold
     showKnobs();
   });
 
   // ----- go -----
-  Promise.all([...needed].map(load)).then(()=>{ resize(); spawnTime(); requestAnimationFrame(frame); });
+  Promise.all([...needed].map(load)).then(()=>{ resize(); respawnAll(); requestAnimationFrame(frame); });
 
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;

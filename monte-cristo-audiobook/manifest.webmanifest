@@ -1,14 +1,14 @@
 {
   "name": "The Count of Monte Cristo — Audiobook",
   "short_name": "Monte Cristo",
-  "description": "Free LibriVox audiobook of The Count of Monte Cristo.",
+  "description": "Free LibriVox audiobook of Alexandre Dumas' The Count of Monte Cristo, with read-along text.",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#06201b",
-  "theme_color": "#0f3b33",
+  "background_color": "#16243f",
+  "theme_color": "#16243f",
   "icons": [
-    { "src": "icon.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "cover.jpg", "sizes": "300x300", "type": "image/jpeg" },
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]

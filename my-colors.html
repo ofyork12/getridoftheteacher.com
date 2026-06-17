@@ -120,7 +120,7 @@
 <div id="cmm-gate">
   <div class="gate-card">
     <h2>🎨 Make It Your Colors</h2>
-    <p class="gate-sub">This is a paid feature. Enter the username &amp; password from your purchase email.</p>
+    <p class="gate-sub" id="gate-sub">This is a paid feature. Enter the username &amp; password from your purchase email.</p>
     <input id="gate-user" type="text" placeholder="Username" autocomplete="username" autocapitalize="none" spellcheck="false">
     <input id="gate-pass" type="password" placeholder="Password" autocomplete="current-password">
     <button id="gate-btn">Log In</button>
@@ -170,15 +170,26 @@
 
 <script>
 (function(){
-  // ── Paid access login (shared credentials, given to buyers after purchase) ──
+  // ── Paid access login + 2-month expiry (shared credentials, given to buyers after purchase) ──
   var USER = "colormymath";                                                          // username (typed in lowercase)
   var PASS_SHA256 = "043a3a8002e37ee7e140dbf88337bdb4ed3c3b80f710475062f764e947498fc7"; // sha256 of the password
-  var KEY = "cmm_colors_access";
+  var ACCESS_MONTHS = 2;                                                              // how long access lasts after login
+  var KEY = "cmm_colors_until";                                                       // ms timestamp when access expires
   var gate = document.getElementById('cmm-gate');
+  var sub  = document.getElementById('gate-sub');
   var btn  = document.getElementById('gate-btn');
   var err  = document.getElementById('gate-err');
+  var DEFAULT_SUB = sub.textContent;
   function unlock(){ gate.classList.add('hidden'); }
-  if(localStorage.getItem(KEY) === '1'){ unlock(); }   // remember a logged-in device
+  function showExpired(){
+    gate.classList.remove('hidden');
+    sub.textContent = 'Your ' + ACCESS_MONTHS + ' months are up. Renew for $2 below to keep playing in your colors.';
+  }
+  var until = parseInt(localStorage.getItem(KEY) || '0', 10);
+  if(until){
+    if(Date.now() < until){ unlock(); }                 // still inside the window
+    else { localStorage.removeItem(KEY); showExpired(); } // window has passed
+  }
   async function sha256(str){
     var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
@@ -188,7 +199,9 @@
     var p = document.getElementById('gate-pass').value;
     var h = await sha256(p);
     if(u === USER && h === PASS_SHA256){
-      localStorage.setItem(KEY,'1'); err.textContent=''; unlock();
+      var d = new Date(); d.setMonth(d.getMonth() + ACCESS_MONTHS);   // start the 2-month clock
+      localStorage.setItem(KEY, String(d.getTime()));
+      err.textContent=''; sub.textContent = DEFAULT_SUB; unlock();
     } else {
       err.textContent = 'Wrong username or password. Check your purchase email.';
     }

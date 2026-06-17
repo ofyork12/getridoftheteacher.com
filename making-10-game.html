@@ -351,7 +351,7 @@
     <div class="perfect-partition" id="perfectPartition"></div>
     <div class="perfect-progress" id="perfectProgress"></div>
   </div>
-  <div class="partition-counter" id="partitionCounter">0 / 42</div>
+  <div class="partition-counter" id="partitionCounter">0 / 5</div>
 
 
   <div class="scorebox-left" id="scorebox-left">
@@ -373,7 +373,7 @@
     </div>
   </div>
 
-  <div class="title">Making 10<span class="sub">Mix any colours that add up to 10</span></div>
+  <div class="title">Making 10<span class="sub">Pick two colours that add up to 10</span></div>
 
   <!-- Paint tray.  Only white, red, and orange are enabled for the
        partition-2 game.  Layout stacks them vertically in column 1:
@@ -768,6 +768,11 @@
     // ----- Painting branch -------------------------------------------
     if (d.value > 0) return;       // dot already painted; ignore re-tap
 
+    // Buddies of 10: never allow more than two strokes, so the only
+    // wins are the 5 pairs that make 10 (1+9, 2+8, 3+7, 4+6, 5+5).
+    // Erase a stroke to try a different pair.
+    if (strokes.length >= 2) return;
+
     // Cap each colour at its partition-2 limit (1 orange, 8 reds).
     // If the user has somehow loaded a spent brush, just no-op.
     if (value in STROKE_LIMITS && strokeCount(value) >= STROKE_LIMITS[value]) {
@@ -1103,8 +1108,8 @@
   })();
   function identifyPartition(strokeList) {
     const values = strokeList.map(s => s.value).sort((a, b) => b - a);
-    const idx = PARTITION_INDEX_BY_KEY[_partitionKey(values)];
-    return { index: idx || 0, values };
+    const PAIRS = { '9,1': 1, '8,2': 2, '7,3': 3, '6,4': 4, '5,5': 5 };
+    return { index: PAIRS[values.join(',')] || 0, values };
   }
   // Collection of partition numbers the kid has hit THIS SESSION.  Not
   // persisted -- a refresh starts the hunt over (matches the rest of
@@ -1113,7 +1118,7 @@
   const partitionCounterEl = document.getElementById('partitionCounter');
   function renderPartitionCounter() {
     if (partitionCounterEl) {
-      partitionCounterEl.textContent = collectedPartitions.size + ' / 42';
+      partitionCounterEl.textContent = collectedPartitions.size + ' / 5';
     }
   }
   renderPartitionCounter();
@@ -1134,24 +1139,22 @@
     }
     if (progressEl) {
       const got = collectedPartitions.size;
-      if (got >= 42) {
+      if (got >= 5) {
         progressEl.innerHTML =
-          '<span style="color:#ffe600;">YOU FOUND ALL 42!</span>';
+          '<span style="color:#ffe600;">YOU FOUND ALL 5 WAYS!</span>';
       } else if (isNew) {
         progressEl.innerHTML =
-          'NEW! You\'ve found ' + got + ' of 42 partitions of 10.';
+          'NEW! You\'ve found ' + got + ' of 5 ways to make 10.';
       } else {
         progressEl.innerHTML =
-          'You\'ve already found this one.  ' + got + ' of 42 collected.';
+          'You\'ve already found this one.  ' + got + ' of 5 collected.';
       }
     }
     if (headlineEl) {
       // "PERFECT! NUMBER N" -- bake the partition number into the
       // headline so the kid sees which of the 42 they just made.
-      if (collectedPartitions.size >= 42) {
-        headlineEl.textContent = 'YOU FOUND ALL 42!';
-      } else if (index > 0) {
-        headlineEl.textContent = 'PERFECT!  NUMBER ' + index;
+      if (collectedPartitions.size >= 5) {
+        headlineEl.textContent = 'YOU FOUND ALL 5 WAYS!';
       } else {
         headlineEl.textContent = 'PERFECT!';
       }

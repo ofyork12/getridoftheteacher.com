@@ -43,10 +43,11 @@
     .pal-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
       color:#555;margin:0 0 12px;}
     .palette{
-      display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px;
+      display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;
     }
     .chip{
-      aspect-ratio:1;border-radius:50%;border:3px solid #222;cursor:pointer;
+      aspect-ratio:1;border-radius:50%;border:3px solid #444;cursor:pointer;
+      box-shadow:0 0 0 1px rgba(255,255,255,0.08);
       transition:transform .1s,border-color .1s;
     }
     .chip:hover{transform:scale(1.12);}
@@ -244,30 +245,19 @@
 
   // ── Color palette ──
   const PALETTE = [
-    {name:'Red',       hex:'#ff1a1a'},
-    {name:'Orange',    hex:'#ff7a00'},
-    {name:'Yellow',    hex:'#ffd000'},
-    {name:'Green',     hex:'#15c015'},
-    {name:'Cyan',      hex:'#00ccdd'},
-    {name:'Blue',      hex:'#1565ff'},
-    {name:'Purple',    hex:'#9b1bd6'},
-    {name:'Pink',      hex:'#ff1493'},
-    {name:'Black',     hex:'#333333'},
-    {name:'Lime',      hex:'#9acd00'},
-    {name:'Jade',      hex:'#00c28a'},
-    {name:'Sky',       hex:'#34b0ff'},
-    {name:'Violet',    hex:'#7a2be2'},
-    {name:'Magenta',   hex:'#e612c9'},
-    {name:'Coral',     hex:'#ff6b6b'},
-    {name:'Gold',      hex:'#f0b32a'},
-    {name:'Teal',      hex:'#00897b'},
-    {name:'Indigo',    hex:'#3949ab'},
-    {name:'Rose',      hex:'#e91e63'},
-    {name:'White',     hex:'#eeeeee'},
+    {name:'Red',         hex:'#ff1a1a'},
+    {name:'Orange',      hex:'#ff7a00'},
+    {name:'Yellow',      hex:'#ffd400'},
+    {name:'Light Green', hex:'#7cff00'},
+    {name:'Green',       hex:'#12cc12'},
+    {name:'Dark Green',  hex:'#0b8a2e'},
+    {name:'Sky Blue',    hex:'#00bfff'},
+    {name:'Blue',        hex:'#1a46ff'},
+    {name:'Pink',        hex:'#ff1493'},
   ];
 
-  // Default teacher colors
-  const DEFAULT = ['#ff1a1a','#ff7a00','#ffd000','#15c015','#00ccdd','#1565ff','#9b1bd6','#ff1493','#333333'];
+  // Default starting colors (one per number, drawn from the bright palette)
+  const DEFAULT = ['#ff1a1a','#ff7a00','#ffd400','#7cff00','#12cc12','#0b8a2e','#00bfff','#1a46ff','#ff1493'];
 
   const chosen = new Array(10).fill(null); // index 1-9
   let activeNum = 1;

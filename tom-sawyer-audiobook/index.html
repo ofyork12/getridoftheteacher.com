@@ -205,6 +205,13 @@
   #readerText p{margin:0 0 16px;}
   #readerText .w{border-radius:4px; padding:0 1px; cursor:pointer;}
   #readerText .w:active{background:var(--gold); color:var(--navy2);}  /* brief feedback on tap */
+  #readerCtrls{display:flex; gap:10px; justify-content:center; padding:10px 16px 0;}
+  .rsc{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:11px; padding:9px 14px; font-family:inherit; font-size:14px; cursor:pointer;
+  }
+  .rsc:active{transform:scale(.95);}
+  .rsc.main{background:var(--gold); color:var(--navy2); font-weight:bold; min-width:140px;}
   #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic;
     padding:6px 16px 0;}
 
@@ -286,7 +293,12 @@
       <button class="rnav" onclick="closeReader()" title="Close">&#10005;</button>
     </div>
     <div id="readerText"></div>
-    <div id="readerHint">Read along at your own pace — scroll as the narrator reads.</div>
+    <div id="readerCtrls">
+      <button class="rsc" onclick="changeScrollSpeed(-1)" title="Slower">&#8211; Slower</button>
+      <button class="rsc main" id="autoScrollBtn" onclick="toggleAutoScroll()">&#9654; Auto-scroll</button>
+      <button class="rsc" onclick="changeScrollSpeed(1)" title="Faster">Faster &#43;</button>
+    </div>
+    <div id="readerHint">Speed <span id="scrollSpeedLbl">3</span> · you can also scroll by hand any time.</div>
   </div>
 
   <div id="player">
@@ -787,6 +799,8 @@ function openReader(){
   readerEl().classList.add('show');
   readerEl().style.bottom = document.getElementById('player').offsetHeight + 'px';
   renderReader();
+  updateScrollUI();
+  if(autoScrollOn){ scrollLastTs = 0; if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33); }
 }
 function closeReader(){ readerEl().classList.remove('show'); }
 function readerPrev(){ if(currentIndex > 0) playChapter(currentIndex - 1); }
@@ -820,6 +834,52 @@ function renderReader(){
   }
   cont.innerHTML = html;
   cont.scrollTop = 0;
+}
+
+/* =====================================================================
+   AUTO-SCROLL — a steady crawl down the page, speed you set. It does NOT
+   try to match words to the audio; it just glides so you can read hands-free.
+   ===================================================================== */
+let autoScrollOn = false, scrollTimer = null, scrollLastTs = 0, scrollAccum = 0;
+let scrollLevel = Math.min(10, Math.max(1, parseInt(localStorage.getItem('tomsawyer.scrolllevel')) || 3));
+function levelToPxPerSec(){ return scrollLevel * 11; }   // level 1≈11px/s … 10≈110px/s
+
+function scrollStep(){
+  if(!autoScrollOn || !readerEl().classList.contains('show')) return;
+  const cont = document.getElementById('readerText');
+  const now = Date.now();
+  if(scrollLastTs){
+    scrollAccum += levelToPxPerSec() * (now - scrollLastTs) / 1000;
+    if(scrollAccum >= 1){
+      const inc = Math.floor(scrollAccum); scrollAccum -= inc;
+      const before = cont.scrollTop;
+      cont.scrollTop = before + inc;
+      if(cont.scrollTop === before){ stopAutoScroll(); return; }   // reached the bottom
+    }
+  }
+  scrollLastTs = now;
+}
+function startAutoScroll(){
+  autoScrollOn = true; scrollLastTs = 0; scrollAccum = 0;
+  if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33);   // ~30 fps
+  updateScrollUI();
+}
+function stopAutoScroll(){
+  autoScrollOn = false;
+  if(scrollTimer){ clearInterval(scrollTimer); scrollTimer = null; }
+  updateScrollUI();
+}
+function toggleAutoScroll(){ autoScrollOn ? stopAutoScroll() : startAutoScroll(); }
+function changeScrollSpeed(d){
+  scrollLevel = Math.min(10, Math.max(1, scrollLevel + d));
+  localStorage.setItem('tomsawyer.scrolllevel', scrollLevel);
+  updateScrollUI();
+}
+function updateScrollUI(){
+  const b = document.getElementById('autoScrollBtn');
+  if(b) b.innerHTML = autoScrollOn ? '&#10073;&#10073; Pause scroll' : '&#9654; Auto-scroll';
+  const s = document.getElementById('scrollSpeedLbl');
+  if(s) s.textContent = scrollLevel;
 }
 
 /* =====================================================================

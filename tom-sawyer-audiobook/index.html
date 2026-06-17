@@ -286,7 +286,7 @@
       <button class="rnav" onclick="closeReader()" title="Close">&#10005;</button>
     </div>
     <div id="readerText"></div>
-    <div id="readerHint">Tap any word to jump the narrator there.</div>
+    <div id="readerHint">Read along at your own pace — scroll as the narrator reads.</div>
   </div>
 
   <div id="player">
@@ -812,108 +812,15 @@ function renderReader(){
       });
     return;
   }
-  const weights = [];
-  let html = '', wi = 0;
-  const paras = txt.split(/\n\n+/);
-  for(const para of paras){
-    const words = para.split(/\s+/).filter(Boolean);
-    if(!words.length) continue;
-    html += '<p>';
-    for(let j=0;j<words.length;j++){
-      const tok = words[j];
-      const shown = tok.replace(/_/g, '');   // Gutenberg uses _word_ for italics
-      html += '<span class="w" data-i="'+wi+'">' + escapeHtml(shown) + '</span> ';
-      // Estimated speaking time: syllables + pauses at punctuation / paragraph ends.
-      let weight = 0.5 + syllables(shown) + tailPause(tok);
-      if(j === words.length-1) weight += 5;   // pause at end of paragraph
-      weights.push(weight); wi++;
-    }
-    html += '</p>';
+  // Plain scrollable text — read along at your own pace (no narrator matching).
+  let html = '';
+  for(const para of txt.split(/\n\n+/)){
+    const clean = para.replace(/_/g, '').trim();   // _word_ = Gutenberg italics
+    if(clean) html += '<p>' + escapeHtml(clean) + '</p>';
   }
   cont.innerHTML = html;
-  readerWords = Array.from(cont.querySelectorAll('.w'));
-  const total = weights.reduce((a,b)=>a+b, 0) || 1;
-  readerFrac = new Array(weights.length); let acc = 0;
-  for(let k=0;k<weights.length;k++){ readerFrac[k] = acc/total; acc += weights[k]; }
-  readerWords.forEach((el,k) => el.addEventListener('click', () => jumpToWord(k)));
   cont.scrollTop = 0;
-  userScrollAt = 0; lastSetTop = -1;
-  scheduleScroll();   // glide to the current spot in the narration
 }
-
-// Audio time span [start,end] (seconds) for a chapter inside its shared MP3.
-function chapterSpan(i){
-  const start = CHAPTERS[i].entry/1000;
-  const sameNext = CHAPTERS[i+1] && CHAPTERS[i+1].file === CHAPTERS[i].file;
-  let end = sameNext ? CHAPTERS[i+1].entry/1000
-          : (isFinite(audio.duration) && audio.duration > start ? audio.duration
-             : start + (readerWords.length ? readerWords.length*0.4 : 600));
-  if(!(end > start)) end = start + 600;
-  return [start, end];
-}
-
-// The span actually used for the words: trims the spoken "Chapter N…"
-// announcement at the start and a little silence at the end.
-function effectiveSpan(i){
-  const [s,e] = chapterSpan(i);
-  const dur = e - s;
-  const lead = i === 0 ? Math.min(2, dur*0.04) : Math.min(7, Math.max(2.5, dur*0.013));
-  const tail = Math.min(2, dur*0.01);
-  const a = s + lead, b = Math.max(a + 1, e - tail);
-  return [a, b];
-}
-
-function jumpToWord(k){
-  if(readerChapter !== currentIndex || audio.readyState === 0){ playChapter(readerChapter); }
-  const [s,e] = effectiveSpan(readerChapter);
-  const t = s + (readerFrac[k] || 0)*(e - s);
-  const go = () => { try{ audio.currentTime = t; }catch(_){} audio.play().catch(()=>{}); };
-  if(audio.readyState > 0) go();
-  else audio.addEventListener('loadedmetadata', function o(){ audio.removeEventListener('loadedmetadata', o); go(); }, {once:true});
-}
-
-/* Move-along auto-scroll: glide the page so the spot being read stays in the
-   upper third of the screen. No per-word highlight — the narrator timing is
-   only estimated, so a smooth scroll reads far better than flashing words. */
-let scrollRAF = null, lastSetTop = -1, userScrollAt = 0;
-
-function readerTargetTop(){
-  const cont = document.getElementById('readerText');
-  if(!readerWords.length) return null;
-  const [s,e] = effectiveSpan(currentIndex);
-  let f = (audio.currentTime - s)/(e - s);
-  if(!isFinite(f)) return null;
-  f = Math.max(0, Math.min(0.9999, f));
-  let lo = 0, hi = readerFrac.length - 1, ans = 0;
-  while(lo <= hi){ const mid = (lo+hi)>>1; if(readerFrac[mid] <= f){ ans = mid; lo = mid+1; } else hi = mid-1; }
-  const el = readerWords[ans];
-  if(!el) return null;
-  const max = Math.max(0, cont.scrollHeight - cont.clientHeight);
-  return Math.max(0, Math.min(max, el.offsetTop - cont.clientHeight*0.38));
-}
-
-function scrollFrame(){
-  scrollRAF = null;
-  const cont = document.getElementById('readerText');
-  if(!readerEl().classList.contains('show') || readerChapter !== currentIndex || seeking) return;
-  if(Date.now() - userScrollAt > 3500){              // don't fight a hand-scroll
-    const target = readerTargetTop();
-    if(target != null){
-      const cur = cont.scrollTop;
-      const ease = audio.paused ? 1 : 0.1;           // snap when paused, glide when playing
-      cont.scrollTop = lastSetTop = (Math.abs(target - cur) < 1.5 ? target : cur + (target - cur)*ease);
-    }
-  }
-  if(!audio.paused) scheduleScroll();
-}
-function scheduleScroll(){ if(scrollRAF == null) scrollRAF = requestAnimationFrame(scrollFrame); }
-
-audio.addEventListener('play', scheduleScroll);
-audio.addEventListener('timeupdate', scheduleScroll);
-document.getElementById('readerText').addEventListener('scroll', () => {
-  const cont = document.getElementById('readerText');
-  if(lastSetTop >= 0 && Math.abs(cont.scrollTop - lastSetTop) > 8) userScrollAt = Date.now();
-}, {passive:true});
 
 /* =====================================================================
    INSTALL — "Add to Home Screen" help for iPhone & Android.

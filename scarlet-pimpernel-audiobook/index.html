@@ -3,26 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#3a0c12">
+<meta name="theme-color" content="#16243f">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Scarlet Pimpernel">
+<meta name="apple-mobile-web-app-title" content="Pimpernel">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>The Scarlet Pimpernel — Audiobook</title>
 <style>
   :root{
-    --navy:#3a0c12; --navy2:#1a0507; --gold:#e2455a; --gold-soft:#f3909c;
-    --ink:#ede6d3; --muted:#9fb0c8; --red:#e0524a; --line:rgba(226,69,90,.28);
+    --navy:#16243f; --navy2:#0f1a2e; --gold:#d8b25a; --gold-soft:#e7cf95;
+    --ink:#ede6d3; --muted:#9fb0c8; --red:#e0524a; --line:rgba(216,178,90,.25);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%;}
   body{
     font-family:Georgia,'Times New Roman',serif;
-    background:radial-gradient(120% 100% at 50% 0%, #4a0f15 0%, var(--navy) 45%, var(--navy2) 100%);
+    background:radial-gradient(120% 100% at 50% 0%, #1d3157 0%, var(--navy) 45%, var(--navy2) 100%);
     color:var(--ink);
     display:flex; flex-direction:column; min-height:100%;
     padding-top:env(safe-area-inset-top);
@@ -31,7 +31,7 @@
   #splash{
     position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:18px;
-    background:radial-gradient(120% 100% at 50% 0%, #4a0f15 0%, var(--navy) 60%, var(--navy2) 100%);
+    background:radial-gradient(120% 100% at 50% 0%, #1d3157 0%, var(--navy) 60%, var(--navy2) 100%);
     transition:opacity .6s ease; text-align:center; padding:24px;
   }
   #splash.hide{opacity:0; pointer-events:none;}
@@ -48,11 +48,9 @@
   header .by{margin:3px 0 0; font-size:13px; color:var(--muted); font-style:italic;}
   #quote{margin:12px auto 2px; max-width:560px; font-size:14px; font-style:italic;
     color:var(--gold-soft); min-height:34px; line-height:1.4; padding:0 6px;}
-  .home{position:absolute; left:14px; top:calc(14px + env(safe-area-inset-top));
-    color:var(--gold-soft); text-decoration:none; font-size:13px; opacity:.8;}
 
   /* ---------- Chapter list ---------- */
-  main{flex:1; overflow-y:auto; padding:10px 14px 200px; -webkit-overflow-scrolling:touch;}
+  main{flex:1; overflow-y:auto; padding:10px 14px 190px; -webkit-overflow-scrolling:touch;}
   .chapters{max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:8px;}
   .chap{
     display:flex; align-items:center; gap:12px; width:100%; text-align:left;
@@ -65,17 +63,19 @@
   .chap .nbox{
     flex:0 0 42px; height:42px; border-radius:9px; display:flex; align-items:center;
     justify-content:center; font-size:15px; font-weight:bold;
-    background:rgba(255,255,255,.08); color:var(--gold); border:1px solid var(--line);
+    background:rgba(216,178,90,.13); color:var(--gold); border:1px solid var(--line);
   }
   .chap .ctitle{flex:1;}
-  .chap.active{border-color:var(--gold); background:rgba(255,255,255,.10);}
+  .chap .play-ic{flex:0 0 auto; color:var(--muted); font-size:18px;}
+  .chap.active{border-color:var(--gold); background:rgba(216,178,90,.12);}
   .chap.active .ctitle{color:var(--gold-soft);}
   .chap.active .nbox{background:var(--gold); color:var(--navy2);}
+  .chap.active .play-ic{color:var(--gold);}
 
   /* ---------- Player bar ---------- */
   #player{
     position:fixed; left:0; right:0; bottom:0; z-index:30;
-    background:linear-gradient(180deg, rgba(26,5,7,.92), rgba(26,5,7,.99));
+    background:linear-gradient(180deg, rgba(15,26,46,.92), rgba(15,26,46,.99));
     backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
     border-top:1px solid var(--line); padding:12px 16px;
     padding-bottom:calc(12px + env(safe-area-inset-bottom));
@@ -103,16 +103,16 @@
     border-radius:11px; padding:9px 12px; font-family:inherit; font-size:13px;
     cursor:pointer; min-width:60px; transition:background .15s, transform .08s;
   }
-  .ctrl:active{transform:scale(.93); background:rgba(255,255,255,.14);}
+  .ctrl:active{transform:scale(.93); background:rgba(216,178,90,.18);}
   .ctrl small{display:block; font-size:10px; color:var(--muted); letter-spacing:.05em;}
   #btnPlay{
     background:var(--gold); color:var(--navy2); border:none; font-weight:bold;
     width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 6px 18px rgba(0,0,0,.4); transition:transform .08s;
+    box-shadow:0 6px 18px rgba(216,178,90,.4); transition:transform .08s;
   }
   #btnPlay:active{transform:scale(.92);}
-  #spinner{display:none; width:22px; height:22px; border:3px solid rgba(0,0,0,.25);
+  #spinner{display:none; width:22px; height:22px; border:3px solid rgba(22,36,63,.3);
     border-top-color:var(--navy2); border-radius:50%; animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   #player.loading #spinner{display:block;}
@@ -126,7 +126,7 @@
   #resumeBar.show{display:block;}
   #resumeBtn{
     width:100%; display:flex; align-items:center; gap:12px; cursor:pointer;
-    background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+    background:linear-gradient(180deg, rgba(216,178,90,.20), rgba(216,178,90,.10));
     border:1px solid var(--gold); color:var(--gold-soft);
     border-radius:12px; padding:13px 16px; font-family:inherit; font-size:15px; text-align:left;
   }
@@ -139,7 +139,7 @@
     border-radius:12px; padding:12px 14px; background:rgba(255,255,255,.03);}
   #dlbar .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
   .dlbtn{
-    background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--gold-soft);
+    background:rgba(216,178,90,.13); border:1px solid var(--line); color:var(--gold-soft);
     border-radius:9px; padding:9px 13px; font-family:inherit; font-size:13px; cursor:pointer;
   }
   .dlbtn:active{transform:scale(.96);}
@@ -170,7 +170,7 @@
   .chap .dl.busy{color:var(--gold);}
   .chap .dl .ring{position:absolute; font-size:9px; bottom:-1px; right:-1px;}
 
-  /* ---------- Speed button ---------- */
+  /* ---------- Extra player buttons (Read Along + Speed) ---------- */
   .xrow{display:flex; gap:10px; justify-content:center; margin-top:11px;}
   .xbtn{
     background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
@@ -178,24 +178,59 @@
     display:flex; align-items:center; gap:6px;
   }
   .xbtn:active{transform:scale(.95);}
-  #btnSpeed{min-width:90px; justify-content:center; font-variant-numeric:tabular-nums;}
+  #btnSpeed{min-width:74px; justify-content:center; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Read-Along reader ---------- */
+  #reader{
+    position:fixed; left:0; right:0; top:0; z-index:40; display:none; flex-direction:column;
+    background:linear-gradient(180deg,#1b2c4d,#13203a);
+    /* leave room for the player bar at the bottom */
+    bottom:166px; padding-top:env(safe-area-inset-top);
+  }
+  #reader.show{display:flex;}
+  #reader .rhead{
+    display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line);
+  }
+  #reader .rhead .rtitle{flex:1; text-align:center; color:var(--gold); font-size:17px; font-weight:bold;}
+  #reader .rnav{
+    background:rgba(216,178,90,.13); border:1px solid var(--line); color:var(--gold-soft);
+    width:40px; height:40px; border-radius:10px; font-size:18px; cursor:pointer; flex:0 0 auto;
+  }
+  #reader .rnav:active{transform:scale(.92);}
+  #readerText{
+    flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:18px 20px 28px; font-size:19px; line-height:1.7; color:var(--ink);
+    max-width:720px; margin:0 auto; width:100%;
+  }
+  #readerText p{margin:0 0 16px;}
+  #readerText .w{border-radius:4px; padding:0 1px; cursor:pointer;}
+  #readerText .w:active{background:var(--gold); color:var(--navy2);}  /* brief feedback on tap */
+  #readerCtrls{display:flex; gap:10px; justify-content:center; padding:10px 16px 0;}
+  .rsc{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:11px; padding:9px 14px; font-family:inherit; font-size:14px; cursor:pointer;
+  }
+  .rsc:active{transform:scale(.95);}
+  .rsc.main{background:var(--gold); color:var(--navy2); font-weight:bold; min-width:140px;}
+  #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic;
+    padding:6px 16px 0;}
 
   /* ---------- Install banner + popup ---------- */
   #installBar{max-width:620px; margin:0 auto 14px;}
   #installBtn{
-    width:100%; background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+    width:100%; background:linear-gradient(180deg, rgba(216,178,90,.22), rgba(216,178,90,.10));
     border:1px solid var(--gold); color:var(--gold-soft); border-radius:12px;
     padding:13px 16px; font-family:inherit; font-size:15px; cursor:pointer;
   }
   #installModal{position:fixed; inset:0; z-index:60; display:none; align-items:center;
     justify-content:center; background:rgba(0,0,0,.65); padding:20px;}
   #installModal.show{display:flex;}
-  .imodal{background:var(--navy2); border:1px solid var(--gold); border-radius:16px; max-width:430px;
+  .imodal{background:#13203a; border:1px solid var(--gold); border-radius:16px; max-width:430px;
     width:100%; padding:22px; color:var(--ink); box-shadow:0 20px 60px rgba(0,0,0,.6);}
   .imodal h3{margin:0 0 16px; color:var(--gold); text-align:center; font-size:20px;}
   .imodal .isteps p{font-size:15px; line-height:1.6; margin:0 0 16px;}
   .imodal .isteps b{color:var(--gold-soft);}
-  #androidInstallWrap{margin-bottom:16px; display:none;}
+  #androidInstallWrap{margin-bottom:16px; display:none;}   /* shown only if the browser offers it */
   #androidInstallBtn{width:100%; background:var(--gold); color:var(--navy2); border:none;
     border-radius:10px; padding:13px; font-weight:bold; font-size:15px; cursor:pointer;}
   .iclose{width:100%; margin-top:4px; background:rgba(255,255,255,.06); border:1px solid var(--line);
@@ -205,14 +240,13 @@
 <body>
 
   <div id="splash" onclick="dismissSplash()">
-    <img src="cover.png" alt="" id="splashCover">
+    <img src="cover.png" alt="The Scarlet Pimpernel">
     <div class="tap">Tap to begin</div>
   </div>
 
   <header>
-    <a class="home" href="../audiobooks.html">&#8249; Books</a>
-    <h1 id="bookTitle"></h1>
-    <p class="by" id="bookBy"></p>
+    <h1>The Scarlet Pimpernel</h1>
+    <p class="by">by Baroness Orczy &middot; read by LibriVox volunteers</p>
     <div id="quote"></div>
   </header>
 
@@ -245,8 +279,27 @@
     </div>
 
     <div class="chapters" id="chapterList"></div>
-    <footer id="footer"></footer>
+    <footer>
+      Audio: public-domain LibriVox recording via archive.org.<br>
+      Read the text free at <a href="https://www.gutenberg.org/ebooks/60" target="_blank" rel="noopener">Project Gutenberg</a>.
+    </footer>
   </main>
+
+  <div id="reader">
+    <div class="rhead">
+      <button class="rnav" onclick="readerPrev()" title="Previous chapter">&#8249;</button>
+      <div class="rtitle" id="readerTitle">Read Along</div>
+      <button class="rnav" onclick="readerNext()" title="Next chapter">&#8250;</button>
+      <button class="rnav" onclick="closeReader()" title="Close">&#10005;</button>
+    </div>
+    <div id="readerText"></div>
+    <div id="readerCtrls">
+      <button class="rsc" onclick="changeScrollSpeed(-1)" title="Slower">&#8211; Slower</button>
+      <button class="rsc main" id="autoScrollBtn" onclick="toggleAutoScroll()">&#9654; Auto-scroll</button>
+      <button class="rsc" onclick="changeScrollSpeed(1)" title="Faster">Faster &#43;</button>
+    </div>
+    <div id="readerHint">Speed <span id="scrollSpeedLbl">3</span> · you can also scroll by hand any time.</div>
+  </div>
 
   <div id="player">
     <div class="wrap">
@@ -264,9 +317,8 @@
         <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
       </div>
       <div class="xrow">
-        <button class="xbtn" onclick="prevChapter()">&#9198; Previous</button>
+        <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
         <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
-        <button class="xbtn" onclick="nextChapter()">Next &#9197;</button>
       </div>
     </div>
   </div>
@@ -280,10 +332,10 @@
       <div class="isteps">
         <p><b>&#127822; iPhone &amp; iPad</b><br>
           Open this page in <b>Safari</b>, tap the <b>Share</b> button
-          (the square with an up-arrow), then choose <b>"Add to Home Screen."</b></p>
+          (the square with an up-arrow), then choose <b>“Add to Home Screen.”</b></p>
         <p><b>&#129302; Android</b><br>
           Open this page in <b>Chrome</b>, tap the <b>&#8942;</b> menu (top-right),
-          then choose <b>"Install app"</b> or <b>"Add to Home screen."</b></p>
+          then choose <b>“Install app”</b> or <b>“Add to Home screen.”</b></p>
       </div>
       <button class="iclose" onclick="hideInstall()">Got it</button>
     </div>
@@ -292,66 +344,81 @@
   <audio id="audio" preload="none"></audio>
 
 <script>
-/* =====================================================================
-   BOOK CONFIG — the only part that differs between titles.
-   Each chapter is its own MP3 on archive.org (LibriVox, public domain),
-   so a chapter always starts at 0:00 in its own file.
-   ===================================================================== */
-const BOOK = {
-  key: 'gridbook.pimpernel',
-  title: 'The Scarlet Pimpernel',
-  author: 'Baroness Orczy',
-  by: 'by Baroness Orczy · read by LibriVox volunteers',
-  base: 'https://archive.org/download/scarletpimpernel_1301_librivox/',
-  gutenberg: 'https://www.gutenberg.org/ebooks/60',
-  skip: 20,            // seconds of spoken LibriVox intro to skip at the start of every chapter
-  chapters: [
-    {label:'Chapter 1', file:'scarletpimpernel_01_orczy_64kb.mp3'},
-    {label:'Chapter 2', file:'scarletpimpernel_02_orczy_64kb.mp3'},
-    {label:'Chapter 3', file:'scarletpimpernel_03_orczy_64kb.mp3'},
-    {label:'Chapter 4', file:'scarletpimpernel_04_orczy_64kb.mp3'},
-    {label:'Chapter 5', file:'scarletpimpernel_05_orczy_64kb.mp3'},
-    {label:'Chapter 6', file:'scarletpimpernel_06_orczy_64kb.mp3'},
-    {label:'Chapter 7', file:'scarletpimpernel_07_orczy_64kb.mp3'},
-    {label:'Chapter 8', file:'scarletpimpernel_08_orczy_64kb.mp3'},
-    {label:'Chapter 9', file:'scarletpimpernel_09_orczy_64kb.mp3'},
-    {label:'Chapter 10', file:'scarletpimpernel_10_orczy_64kb.mp3'},
-    {label:'Chapter 11', file:'scarletpimpernel_11_orczy_64kb.mp3'},
-    {label:'Chapter 12', file:'scarletpimpernel_12_orczy_64kb.mp3'},
-    {label:'Chapter 13', file:'scarletpimpernel_13_orczy_64kb.mp3'},
-    {label:'Chapter 14', file:'scarletpimpernel_14_orczy_64kb.mp3'},
-    {label:'Chapter 15', file:'scarletpimpernel_15_orczy_64kb.mp3'},
-    {label:'Chapter 16', file:'scarletpimpernel_16_orczy_64kb.mp3'},
-    {label:'Chapter 17', file:'scarletpimpernel_17_orczy_64kb.mp3'},
-    {label:'Chapter 18', file:'scarletpimpernel_18_orczy_64kb.mp3'},
-    {label:'Chapter 19', file:'scarletpimpernel_19_orczy_64kb.mp3'},
-    {label:'Chapter 20', file:'scarletpimpernel_20_orczy_64kb.mp3'},
-    {label:'Chapter 21', file:'scarletpimpernel_21_orczy_64kb.mp3'},
-    {label:'Chapter 22', file:'scarletpimpernel_22_orczy_64kb.mp3'},
-    {label:'Chapter 23', file:'scarletpimpernel_23_orczy_64kb.mp3'},
-    {label:'Chapter 24', file:'scarletpimpernel_24_orczy_64kb.mp3'},
-    {label:'Chapter 25', file:'scarletpimpernel_25_orczy_64kb.mp3'},
-    {label:'Chapter 26', file:'scarletpimpernel_26_orczy_64kb.mp3'},
-    {label:'Chapter 27', file:'scarletpimpernel_27_orczy_64kb.mp3'},
-    {label:'Chapter 28', file:'scarletpimpernel_28_orczy_64kb.mp3'},
-    {label:'Chapter 29', file:'scarletpimpernel_29_orczy_64kb.mp3'},
-    {label:'Chapter 30', file:'scarletpimpernel_30_orczy_64kb.mp3'},
-    {label:'Chapter 31', file:'scarletpimpernel_31_orczy_64kb.mp3'}
-  ],
-  quotes: [
-    'We seek him here, we seek him there — that demmed elusive Pimpernel. — Baroness Orczy'
-  ]
+// ---- Audio source + chapter map (The Scarlet Pimpernel) ----
+const BASE = "https://archive.org/download/scarletpimpernel_1301_librivox/";
+const FILES = {
+  C0: "scarletpimpernel_01_orczy_64kb.mp3",
+  C1: "scarletpimpernel_02_orczy_64kb.mp3",
+  C2: "scarletpimpernel_03_orczy_64kb.mp3",
+  C3: "scarletpimpernel_04_orczy_64kb.mp3",
+  C4: "scarletpimpernel_05_orczy_64kb.mp3",
+  C5: "scarletpimpernel_06_orczy_64kb.mp3",
+  C6: "scarletpimpernel_07_orczy_64kb.mp3",
+  C7: "scarletpimpernel_08_orczy_64kb.mp3",
+  C8: "scarletpimpernel_09_orczy_64kb.mp3",
+  C9: "scarletpimpernel_10_orczy_64kb.mp3",
+  C10: "scarletpimpernel_11_orczy_64kb.mp3",
+  C11: "scarletpimpernel_12_orczy_64kb.mp3",
+  C12: "scarletpimpernel_13_orczy_64kb.mp3",
+  C13: "scarletpimpernel_14_orczy_64kb.mp3",
+  C14: "scarletpimpernel_15_orczy_64kb.mp3",
+  C15: "scarletpimpernel_16_orczy_64kb.mp3",
+  C16: "scarletpimpernel_17_orczy_64kb.mp3",
+  C17: "scarletpimpernel_18_orczy_64kb.mp3",
+  C18: "scarletpimpernel_19_orczy_64kb.mp3",
+  C19: "scarletpimpernel_20_orczy_64kb.mp3",
+  C20: "scarletpimpernel_21_orczy_64kb.mp3",
+  C21: "scarletpimpernel_22_orczy_64kb.mp3",
+  C22: "scarletpimpernel_23_orczy_64kb.mp3",
+  C23: "scarletpimpernel_24_orczy_64kb.mp3",
+  C24: "scarletpimpernel_25_orczy_64kb.mp3",
+  C25: "scarletpimpernel_26_orczy_64kb.mp3",
+  C26: "scarletpimpernel_27_orczy_64kb.mp3",
+  C27: "scarletpimpernel_28_orczy_64kb.mp3",
+  C28: "scarletpimpernel_29_orczy_64kb.mp3",
+  C29: "scarletpimpernel_30_orczy_64kb.mp3",
+  C30: "scarletpimpernel_31_orczy_64kb.mp3"
 };
+// {label, file, entry(ms into that file)}  — entry points from the original app
+const CHAPTERS = [
+  {label: "1. Paris: September, 1792", file: "C0", entry: 0},
+  {label: "2. Dover: 'The Fisherman's Rest'", file: "C1", entry: 0},
+  {label: "3. The Refugees", file: "C2", entry: 0},
+  {label: "4. The League of the Scarlet Pimpernel", file: "C3", entry: 0},
+  {label: "5. Marguerite", file: "C4", entry: 0},
+  {label: "6. An Exquisite of '92", file: "C5", entry: 0},
+  {label: "7. The Secret Orchard", file: "C6", entry: 0},
+  {label: "8. The Accredited Agent", file: "C7", entry: 0},
+  {label: "9. The Outrage", file: "C8", entry: 0},
+  {label: "10. In The Opera Box", file: "C9", entry: 0},
+  {label: "11. Lord Grenville's Ball", file: "C10", entry: 0},
+  {label: "12. The Scrap of Paper", file: "C11", entry: 0},
+  {label: "13. Either--Or?", file: "C12", entry: 0},
+  {label: "14. One O'Clock Precisely!", file: "C13", entry: 0},
+  {label: "15. Doubt", file: "C14", entry: 0},
+  {label: "16. Richmond", file: "C15", entry: 0},
+  {label: "17. Farewell", file: "C16", entry: 0},
+  {label: "18. The Mysterious Device", file: "C17", entry: 0},
+  {label: "19. The Scarlet Pimpernel", file: "C18", entry: 0},
+  {label: "20. The Friend", file: "C19", entry: 0},
+  {label: "21. Suspense", file: "C20", entry: 0},
+  {label: "22. Calais", file: "C21", entry: 0},
+  {label: "23. Hope", file: "C22", entry: 0},
+  {label: "24. The Death Trap", file: "C23", entry: 0},
+  {label: "25. The Eagle and the Fox", file: "C24", entry: 0},
+  {label: "26. The Jew", file: "C25", entry: 0},
+  {label: "27. On The Track", file: "C26", entry: 0},
+  {label: "28. The Pere Blanchard's Hut", file: "C27", entry: 0},
+  {label: "29. Trapped", file: "C28", entry: 0},
+  {label: "30. The Schooner", file: "C29", entry: 0},
+  {label: "31. The Escape", file: "C30", entry: 0}
+];
 
-/* ---- derived ---- */
-const CHAPTERS = BOOK.chapters;
-document.title = BOOK.title + ' — Audiobook';
-document.getElementById('bookTitle').textContent = BOOK.title;
-document.getElementById('bookBy').textContent = BOOK.by;
-document.getElementById('splashCover').alt = BOOK.title;
-document.getElementById('footer').innerHTML =
-  'Audio: public-domain LibriVox recording via archive.org.' +
-  (BOOK.gutenberg ? '<br>Read the text free at <a href="'+BOOK.gutenberg+'" target="_blank" rel="noopener">Project Gutenberg</a>.' : '');
+const QUOTES = [
+  "We seek him here, we seek him there, those Frenchies seek him everywhere. — The Scarlet Pimpernel",
+  "Is he in heaven? Is he in hell? That demmed, elusive Pimpernel! — The Scarlet Pimpernel",
+  "Sink me! but the fellow has courage. — The Scarlet Pimpernel"
+];
 
 const audio   = document.getElementById('audio');
 const player  = document.getElementById('player');
@@ -370,7 +437,7 @@ CHAPTERS.forEach((c, i) => {
   row.className = 'chap';
   row.dataset.idx = i;
   row.dataset.file = c.file;
-  row.innerHTML = `<span class="nbox">${i+1}</span>`
+  row.innerHTML = `<span class="nbox">${i===0?'★':i}</span>`
               + `<span class="ctitle">${c.label}</span>`
               + `<button class="dl" title="Save this chapter to your device">&#11015;</button>`;
   row.addEventListener('click', e => { if(e.target.closest('.dl')) return; playChapter(i); });
@@ -378,11 +445,9 @@ CHAPTERS.forEach((c, i) => {
   list.appendChild(row);
 });
 
-// Rotating quote
-function newQuote(){
-  if(!BOOK.quotes || !BOOK.quotes.length){ document.getElementById('quote').style.display='none'; return; }
-  document.getElementById('quote').textContent = BOOK.quotes[Math.floor(Math.random()*BOOK.quotes.length)];
-}
+// Random quote, refreshed every 12s
+function newQuote(){ document.getElementById('quote').textContent =
+  QUOTES[Math.floor(Math.random()*QUOTES.length)]; }
 newQuote(); setInterval(newQuote, 12000);
 
 function fmt(sec){
@@ -392,7 +457,6 @@ function fmt(sec){
 }
 
 function playChapter(i, resumeTime){
-  if(i<0 || i>=CHAPTERS.length) return;
   const c = CHAPTERS[i];
   const sameFile = currentIndex>=0 && CHAPTERS[currentIndex].file===c.file;
   currentIndex = i;
@@ -401,11 +465,8 @@ function playChapter(i, resumeTime){
   hideResume();
   nowPlaying.textContent = c.label;
 
-  // Skip the spoken LibriVox intro ("This is a LibriVox recording… visit
-  // librivox.org"). The page already credits LibriVox, so we jump past it.
-  // Per-chapter `entry` overrides the book-wide `skip` if present.
-  const introSkip = (c.entry != null ? c.entry : (BOOK.skip || 0));
-  const target = (resumeTime != null ? resumeTime : introSkip);
+  // Where to start: a saved resume time, or this chapter's entry point.
+  const target = (resumeTime != null ? resumeTime : c.entry/1000);
   const seekTo = () => { try{ audio.currentTime = target; }catch(e){} };
 
   if(sameFile && audio.readyState>0){
@@ -415,7 +476,8 @@ function playChapter(i, resumeTime){
     player.classList.add('loading');
     audio.src = srcFor(c.file);   // offline copy if downloaded, else stream
     audio.load();
-    // iOS/Safari: play() MUST run inside the originating tap, or audio is blocked.
+    // iOS/Safari: play() MUST run inside the tap that triggered this, or the
+    // browser blocks audio. So start it now; jump to the chapter once metadata loads.
     audio.play().catch(()=>{});
     audio.addEventListener('loadedmetadata', function once(){
       audio.removeEventListener('loadedmetadata', once);
@@ -423,11 +485,12 @@ function playChapter(i, resumeTime){
       audio.play().catch(()=>{});
     }, {once:true});
   }
-  if(saveSpaceOn) manageSpace(c.file);
+  if(saveSpaceOn) manageSpace(c.file);   // auto-download current, delete the rest
+  if(readerEl().classList.contains('show')) renderReader();
 }
 
-// Play source: a downloaded blob (offline) if we have it, otherwise stream.
-function srcFor(file){ return (downloaded[file] && downloaded[file].url) || (BOOK.base + file); }
+// Play source: a downloaded blob (works offline) if we have it, otherwise stream.
+function srcFor(file){ return (downloaded[file] && downloaded[file].url) || (BASE + FILES[file]); }
 
 function clearError(){ nowPlaying.classList.remove('err'); }
 function showError(){
@@ -435,20 +498,18 @@ function showError(){
   nowPlaying.classList.add('err');
   nowPlaying.textContent = '⚠ Couldn’t load audio — tap here to try again';
 }
+// Tap the status line to retry the current chapter
 nowPlaying.addEventListener('click', ()=>{ if(nowPlaying.classList.contains('err') && currentIndex>=0) playChapter(currentIndex); });
 
 function highlight(i){
-  document.querySelectorAll('.chap').forEach((el,idx)=> el.classList.toggle('active', idx===i));
-  const el = document.querySelector('.chap[data-idx="'+i+'"]');
-  if(el) el.scrollIntoView({block:'nearest'});
+  document.querySelectorAll('.chap').forEach((el,idx)=>
+    el.classList.toggle('active', idx===i));
 }
 
 function togglePlay(){
   if(currentIndex<0){ playChapter(0); return; }
   if(audio.paused) audio.play(); else audio.pause();
 }
-function nextChapter(){ if(currentIndex < CHAPTERS.length-1) playChapter(currentIndex+1); }
-function prevChapter(){ if(currentIndex > 0) playChapter(currentIndex-1); }
 
 function skip(sec){
   if(currentIndex<0) return;
@@ -460,10 +521,10 @@ audio.addEventListener('playing', ()=>{ player.classList.remove('loading'); play
 audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; });
 audio.addEventListener('waiting', ()=>{ player.classList.add('loading'); });
 audio.addEventListener('canplay', ()=>{ player.classList.remove('loading'); });
-audio.addEventListener('ended',   ()=>{ nextChapter(); });   // auto-advance to next chapter
 audio.addEventListener('error',   ()=>{
+  // Ignore spurious/abort errors (e.g. when switching chapters); only flag real failures.
   const code = audio.error && audio.error.code;
-  if(!audio.src || code === 1) return;        // 1 = MEDIA_ERR_ABORTED (e.g. chapter switch)
+  if(!audio.src || code === 1) return;        // 1 = MEDIA_ERR_ABORTED
   showError();
 });
 audio.addEventListener('loadedmetadata', ()=>{ seek.max = Math.floor(audio.duration||100); totTime.textContent = fmt(audio.duration); });
@@ -478,37 +539,39 @@ audio.addEventListener('timeupdate', ()=>{
 seek.addEventListener('input', ()=>{ seeking=true; curTime.textContent = fmt(seek.value); });
 seek.addEventListener('change',()=>{ audio.currentTime = +seek.value; seeking=false; });
 
-// ---- Media Session (lock-screen controls) ----
+// ---- Media Session (lock-screen controls on phones) ----
 if('mediaSession' in navigator){
   navigator.mediaSession.setActionHandler('play',  ()=>audio.play());
   navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
   navigator.mediaSession.setActionHandler('seekbackward', ()=>skip(-10));
   navigator.mediaSession.setActionHandler('seekforward',  ()=>skip(10));
-  try{
-    navigator.mediaSession.setActionHandler('previoustrack', ()=>prevChapter());
-    navigator.mediaSession.setActionHandler('nexttrack',     ()=>nextChapter());
-  }catch(e){}
 }
 audio.addEventListener('playing', ()=>{
   if('mediaSession' in navigator){
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: CHAPTERS[currentIndex]?.label || BOOK.title,
-      artist: BOOK.author, album: BOOK.title,
-      artwork:[{src:'cover.png', sizes:'480x600', type:'image/png'}]
+      title: CHAPTERS[currentIndex]?.label || "Pimpernel",
+      artist: "Baroness Orczy", album: "The Scarlet Pimpernel",
+      artwork:[{src:'cover.png', sizes:'240x300', type:'image/png'}]
     });
   }
 });
 
-/* ---- BOOKMARK ---- */
-const POS_KEY = BOOK.key + '.pos';
+/* =====================================================================
+   BOOKMARK — remember where you stopped (survives closing the app or a
+   dropped connection). Stored in localStorage as {index, file, time}.
+   ===================================================================== */
+const POS_KEY = 'tomsawyer.pos';
 let lastSave = 0;
 function savePos(){
   if(currentIndex < 0 || !isFinite(audio.currentTime)) return;
   try{ localStorage.setItem(POS_KEY, JSON.stringify({
-    index: currentIndex, time: audio.currentTime, label: CHAPTERS[currentIndex].label
+    index: currentIndex, file: CHAPTERS[currentIndex].file,
+    time: audio.currentTime, label: CHAPTERS[currentIndex].label
   })); }catch(e){}
 }
 function loadPos(){ try{ return JSON.parse(localStorage.getItem(POS_KEY)); }catch(e){ return null; } }
+
+// Save often enough to be safe, but not every frame.
 audio.addEventListener('timeupdate', ()=>{ const t=Date.now(); if(t-lastSave>4000){ lastSave=t; savePos(); } });
 audio.addEventListener('pause', savePos);
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) savePos(); });
@@ -522,10 +585,14 @@ function showResume(p){
 function hideResume(){ document.getElementById('resumeBar').classList.remove('show'); }
 function resumeLast(){ const p = loadPos(); if(p) playChapter(p.index, p.time); }
 
-/* ---- DOWNLOADS (each chapter = one MP3, stored in IndexedDB for offline) ---- */
-const downloaded = {};
-const downloading = {};
-let saveSpaceOn = localStorage.getItem(BOOK.key+'.savespace') === '1';
+/* =====================================================================
+   DOWNLOADS — store whole MP3 tracks (each holds 2–3 chapters) in
+   IndexedDB so they play offline. Object URLs are made once up front so
+   playback can start synchronously inside the tap (needed on iPhone).
+   ===================================================================== */
+const downloaded = {};       // file -> { url, size }
+const downloading = {};      // file -> true while in progress
+let saveSpaceOn = localStorage.getItem('tomsawyer.savespace') === '1';
 
 let _dbPromise = null;
 function idb(){
@@ -533,20 +600,20 @@ function idb(){
   _dbPromise = new Promise((res, rej)=>{
     let settled = false;
     const done = (fn, v) => { if(!settled){ settled = true; fn(v); } };
-    const r = indexedDB.open(BOOK.key+'-audio', 1);
+    const r = indexedDB.open('tomsawyer-audio', 1);
     r.onupgradeneeded = ()=> r.result.createObjectStore('files');
     r.onsuccess = ()=> done(res, r.result);
     r.onerror   = ()=> done(rej, r.error);
     r.onblocked = ()=> done(rej, new Error('idb blocked'));
-    setTimeout(()=> done(rej, new Error('idb timeout')), 2500);
-  }).catch(e => { _dbPromise = null; throw e; });
+    setTimeout(()=> done(rej, new Error('idb timeout')), 2500);  // never hang the app
+  }).catch(e => { _dbPromise = null; throw e; });   // allow a later retry
   return _dbPromise;
 }
 function idbDo(mode, fn){
   return idb().then(db => new Promise((res, rej)=>{
     const tx = db.transaction('files', mode);
     const req = fn(tx.objectStore('files'));
-    req.onsuccess = ()=> res(req.result);
+    req.onsuccess = ()=> res(req.result);   // undefined when no record (correct)
     req.onerror   = ()=> rej(req.error);
   }));
 }
@@ -576,7 +643,7 @@ async function download(file){
   setDlState(file, 'busy');
   if(navigator.storage && navigator.storage.persist) { try{ navigator.storage.persist(); }catch(e){} }
   try{
-    const resp = await fetch(BOOK.base + file);
+    const resp = await fetch(BASE + FILES[file]);
     if(!resp.ok) throw new Error('http '+resp.status);
     const total = +resp.headers.get('content-length') || 0;
     const reader = resp.body.getReader();
@@ -605,11 +672,14 @@ async function removeFile(file){
   if(downloaded[file]){ URL.revokeObjectURL(downloaded[file].url); delete downloaded[file]; }
   refreshAllDlUI(); updateStoreInfo();
 }
+
 function toggleDownload(file){
   if(downloading[file]) return;
   if(downloaded[file]) removeFile(file); else download(file);
 }
+
 async function downloadAll(){
+  try{ await loadText(); }catch(e){}            // download the read-along text too
   const files = uniqueFiles().filter(f=>!downloaded[f]);
   const bar = document.getElementById('dlAllProg');
   bar.classList.add('show');
@@ -619,21 +689,25 @@ async function downloadAll(){
   }
   setTimeout(()=>{ bar.classList.remove('show'); bar.querySelector('i').style.width='0'; }, 800);
 }
+
 async function deleteAll(){
   for(const f of Object.keys(downloaded)) await removeFile(f);
 }
+
+// "Save space": keep ONLY the file you're listening to.
 async function manageSpace(currentFile){
   if(!downloaded[currentFile] && !downloading[currentFile]) download(currentFile);
   for(const f of Object.keys(downloaded)){ if(f !== currentFile) removeFile(f); }
 }
 function onSaveSpaceToggle(){
   saveSpaceOn = document.getElementById('saveSpace').checked;
-  localStorage.setItem(BOOK.key+'.savespace', saveSpaceOn ? '1' : '0');
+  localStorage.setItem('tomsawyer.savespace', saveSpaceOn ? '1' : '0');
   document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
   if(saveSpaceOn && currentIndex>=0) manageSpace(CHAPTERS[currentIndex].file);
 }
 
-function rowsForFile(file){ return list.querySelectorAll('.chap[data-file="'+CSS.escape(file)+'"] .dl'); }
+/* ---- Download UI helpers ---- */
+function rowsForFile(file){ return list.querySelectorAll('.chap[data-file="'+file+'"] .dl'); }
 function setDlState(file, state, pct){
   rowsForFile(file).forEach(btn=>{
     btn.classList.remove('saved','busy');
@@ -652,23 +726,174 @@ function updateStoreInfo(){
   document.getElementById('btnClear').style.display = n ? '' : 'none';
 }
 
-/* ---- PLAYBACK SPEED ---- */
+/* ---- Startup ---- */
+(async function init(){
+  document.getElementById('saveSpace').checked = saveSpaceOn;
+  document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
+  applyRate();
+  if(isInstalled()) document.getElementById('installBar').style.display = 'none';
+  await loadDownloads();
+  loadText().catch(()=>{});   // load Gutenberg text early (cached for offline)
+  updateStoreInfo();
+  const p = loadPos();
+  if(p && CHAPTERS[p.index]){ highlight(p.index); showResume(p); }
+})();
+
+/* =====================================================================
+   PLAYBACK SPEED
+   ===================================================================== */
 const RATES = [0.75, 1, 1.25, 1.5, 2];
-let rate = parseFloat(localStorage.getItem(BOOK.key+'.rate')) || 1;
+let rate = parseFloat(localStorage.getItem('tomsawyer.rate')) || 1;
 function applyRate(){
   try{ audio.playbackRate = rate; }catch(e){}
   document.getElementById('btnSpeed').innerHTML = 'Speed ' + rate + '&times;';
 }
 function cycleSpeed(){
   rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length];
-  localStorage.setItem(BOOK.key+'.rate', rate);
+  localStorage.setItem('tomsawyer.rate', rate);
   applyRate();
 }
-audio.addEventListener('play', applyRate);
+audio.addEventListener('play', applyRate);   // some browsers reset rate on new src
 
-/* ---- INSTALL ---- */
+/* =====================================================================
+   READ ALONG — Project Gutenberg text (#74), shown per chapter, with a
+   follow-along highlight. Text is cached in IndexedDB so it works offline
+   once it has been loaded a single time.
+   ===================================================================== */
+let TEXT = null;
+let textLoading = null;
+async function loadText(){
+  if(TEXT && TEXT['1']) return TEXT;            // already good
+  if(textLoading) return textLoading;           // a load is in progress — share it
+  textLoading = (async () => {
+    // Use a cached copy only if it actually contains chapters (guards bad/old caches).
+    try{ const c = await idbGet('__text__'); if(c && c['1']){ TEXT = c; return TEXT; } }catch(e){}
+    // Otherwise fetch fresh from the site.
+    const res = await fetch('text.json', { cache: 'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if(!(j && j['1'])) throw new Error('bad text');
+    TEXT = j;
+    try{ await idbPut('__text__', j); }catch(e){}   // cache for offline (best effort)
+    return TEXT;
+  })().finally(() => { textLoading = null; });
+  return textLoading;
+}
+
+let readerWords = [], readerFrac = [], readerChapter = -1, lastWord = -1;
+const readerEl = () => document.getElementById('reader');
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// Rough syllable count — a better predictor of speaking time than letter count.
+function syllables(w){
+  w = w.toLowerCase().replace(/[^a-z]/g, '');
+  if(!w) return 1;
+  w = w.replace(/e\b/g, '');               // drop common silent trailing e
+  const m = w.match(/[aeiouy]+/g);
+  return Math.max(1, m ? m.length : 1);
+}
+// Extra time the reader spends pausing after punctuation.
+function tailPause(tok){
+  if(/[.!?…][)"'”’\]]*$/.test(tok)) return 6;   // end of sentence
+  if(/[,;:][)"'”’\]]*$/.test(tok)) return 2.5;  // clause pause
+  if(/[—–-]$/.test(tok)) return 2;              // dash
+  return 0;
+}
+
+function toggleReader(){ readerEl().classList.contains('show') ? closeReader() : openReader(); }
+function openReader(){
+  if(currentIndex < 0){ currentIndex = 0; highlight(0); }
+  readerEl().classList.add('show');
+  readerEl().style.bottom = document.getElementById('player').offsetHeight + 'px';
+  renderReader();
+  updateScrollUI();
+  if(autoScrollOn){ scrollLastTs = 0; if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33); }
+}
+function closeReader(){ readerEl().classList.remove('show'); }
+function readerPrev(){ if(currentIndex > 0) playChapter(currentIndex - 1); }
+function readerNext(){ if(currentIndex < CHAPTERS.length - 1) playChapter(currentIndex + 1); }
+
+function renderReader(){
+  if(!readerEl().classList.contains('show')) return;
+  const i = currentIndex < 0 ? 0 : currentIndex;
+  readerChapter = i; lastWord = -1;
+  document.getElementById('readerTitle').textContent = CHAPTERS[i].label;
+  const cont = document.getElementById('readerText');
+  const txt = TEXT && TEXT[i];
+  if(!txt){
+    // Load the text on demand (handles first open, a slow start, or a stale cache).
+    cont.innerHTML = '<p style="color:var(--muted)">Loading the text…</p>';
+    readerWords = []; readerFrac = [];
+    loadText()
+      .then(() => { if(readerChapter === i) renderReader(); })
+      .catch(() => {
+        if(readerChapter !== i) return;
+        cont.innerHTML = '<p style="color:var(--muted)">Couldn’t load the text. '
+          + '<a onclick="renderReader()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Tap to try again</a></p>';
+      });
+    return;
+  }
+  // Plain scrollable text — read along at your own pace (no narrator matching).
+  let html = '';
+  for(const para of txt.split(/\n\n+/)){
+    const clean = para.replace(/_/g, '').trim();   // _word_ = Gutenberg italics
+    if(clean) html += '<p>' + escapeHtml(clean) + '</p>';
+  }
+  cont.innerHTML = html;
+  cont.scrollTop = 0;
+}
+
+/* =====================================================================
+   AUTO-SCROLL — a steady crawl down the page, speed you set. It does NOT
+   try to match words to the audio; it just glides so you can read hands-free.
+   ===================================================================== */
+let autoScrollOn = false, scrollTimer = null, scrollLastTs = 0, scrollAccum = 0;
+let scrollLevel = Math.min(10, Math.max(1, parseInt(localStorage.getItem('tomsawyer.scrolllevel')) || 3));
+function levelToPxPerSec(){ return scrollLevel * 11; }   // level 1≈11px/s … 10≈110px/s
+
+function scrollStep(){
+  if(!autoScrollOn || !readerEl().classList.contains('show')) return;
+  const cont = document.getElementById('readerText');
+  const now = Date.now();
+  if(scrollLastTs){
+    scrollAccum += levelToPxPerSec() * (now - scrollLastTs) / 1000;
+    if(scrollAccum >= 1){
+      const inc = Math.floor(scrollAccum); scrollAccum -= inc;
+      const before = cont.scrollTop;
+      cont.scrollTop = before + inc;
+      if(cont.scrollTop === before){ stopAutoScroll(); return; }   // reached the bottom
+    }
+  }
+  scrollLastTs = now;
+}
+function startAutoScroll(){
+  autoScrollOn = true; scrollLastTs = 0; scrollAccum = 0;
+  if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33);   // ~30 fps
+  updateScrollUI();
+}
+function stopAutoScroll(){
+  autoScrollOn = false;
+  if(scrollTimer){ clearInterval(scrollTimer); scrollTimer = null; }
+  updateScrollUI();
+}
+function toggleAutoScroll(){ autoScrollOn ? stopAutoScroll() : startAutoScroll(); }
+function changeScrollSpeed(d){
+  scrollLevel = Math.min(10, Math.max(1, scrollLevel + d));
+  localStorage.setItem('tomsawyer.scrolllevel', scrollLevel);
+  updateScrollUI();
+}
+function updateScrollUI(){
+  const b = document.getElementById('autoScrollBtn');
+  if(b) b.innerHTML = autoScrollOn ? '&#10073;&#10073; Pause scroll' : '&#9654; Auto-scroll';
+  const s = document.getElementById('scrollSpeedLbl');
+  if(s) s.textContent = scrollLevel;
+}
+
+/* =====================================================================
+   INSTALL — "Add to Home Screen" help for iPhone & Android.
+   ===================================================================== */
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
+window.addEventListener('beforeinstallprompt', e => {   // Android/Chrome only
   e.preventDefault();
   deferredPrompt = e;
   document.getElementById('androidInstallWrap').style.display = 'block';
@@ -688,26 +913,16 @@ async function androidInstall(){
 }
 window.addEventListener('appinstalled', ()=>{ document.getElementById('installBar').style.display='none'; });
 
-/* ---- SPLASH ---- */
 function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
 setTimeout(dismissSplash, 2600);
 
-/* ---- STARTUP ---- */
-(async function init(){
-  document.getElementById('saveSpace').checked = saveSpaceOn;
-  document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
-  applyRate();
-  if(isInstalled()) document.getElementById('installBar').style.display = 'none';
-  await loadDownloads();
-  updateStoreInfo();
-  const p = loadPos();
-  if(p && CHAPTERS[p.index]){ highlight(p.index); showResume(p); }
-})();
-
-// No service worker: on iPhone, an installed PWA with a service worker hits a
-// WebKit bug that blocks cross-origin audio (archive.org). Clean up any old one.
+// NOTE: No service worker. On iPhone, an installed web app with a service worker
+// has a WebKit bug that blocks audio loaded from another site (archive.org).
+// The app still installs to the home screen via the manifest + Apple meta tags.
+// Clean up any service worker a previous version registered, so old installs self-heal.
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(()=>{});
+  navigator.serviceWorker.getRegistrations()
+    .then(rs => rs.forEach(r => r.unregister())).catch(()=>{});
 }
 if(window.caches && caches.keys){
   caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});

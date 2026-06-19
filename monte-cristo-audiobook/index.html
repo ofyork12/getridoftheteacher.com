@@ -83,6 +83,9 @@
   .dlbtn{background:rgba(216,178,90,.13); border:1px solid var(--line); color:var(--gold-soft);
     border-radius:9px; padding:9px 13px; font-family:inherit; font-size:13px; cursor:pointer;}
   .dlbtn.ghost{background:transparent; color:var(--muted);}
+  #dlAllProg{height:5px; border-radius:5px; background:rgba(255,255,255,.15); margin-top:10px; overflow:hidden; display:none;}
+  #dlAllProg.show{display:block;}
+  #dlAllProg i{display:block; height:100%; width:0; background:var(--gold); transition:width .2s;}
   #storeInfo{font-size:12px; color:var(--muted); margin-left:auto;}
   .toggle{display:flex; align-items:center; gap:10px; margin-top:11px; font-size:13px; color:var(--ink); cursor:pointer;}
   .toggle input{display:none;}
@@ -203,6 +206,7 @@
 
       <div id="dlbar">
         <div class="row">
+          <button class="dlbtn" id="btnDlAll" onclick="downloadAll()">&#11015; Download whole book</button>
           <button class="dlbtn ghost" id="btnClear" onclick="deleteAll()">Clear downloads</button>
           <span id="storeInfo"></span>
         </div>
@@ -213,6 +217,7 @@
             <small>Auto-save the chapter you're listening to and delete the others as you go (best for a long book).</small>
           </span>
         </label>
+        <div id="dlAllProg"><i></i></div>
       </div>
 
       <div class="chapters" id="chapterList"></div>
@@ -434,8 +439,15 @@ async function download(n){
 async function removeFile(n){ try{ await idbDel(n); }catch(e){} if(downloaded[n]){ URL.revokeObjectURL(downloaded[n].url); delete downloaded[n]; } refreshAllDlUI(); updateStoreInfo(); }
 function toggleDownload(n){ if(downloading[n]) return; if(downloaded[n]) removeFile(n); else download(n); }
 async function deleteAll(){ for(const k of Object.keys(downloaded)) await removeFile(k); }
+async function downloadAll(){
+  try{ await loadText(); }catch(e){}                       // grab the read-along text too
+  const todo = CHAPTERS.map(c=>c.n).filter(n=>!downloaded[n]);
+  const bar = document.getElementById('dlAllProg'); bar.classList.add('show');
+  for(let i=0;i<todo.length;i++){ await download(todo[i]); bar.querySelector('i').style.width = Math.round((i+1)/todo.length*100)+'%'; }
+  setTimeout(()=>{ bar.classList.remove('show'); bar.querySelector('i').style.width='0'; }, 800);
+}
 async function manageSpace(n){ if(!downloaded[n]&&!downloading[n]) download(n); for(const k of Object.keys(downloaded)){ if(String(k)!==String(n)) removeFile(k); } }
-function onSaveSpaceToggle(){ saveSpaceOn=document.getElementById('saveSpace').checked; localStorage.setItem('montecristo.savespace', saveSpaceOn?'1':'0'); if(saveSpaceOn && currentIndex>=0) manageSpace(CHAPTERS[currentIndex].n); }
+function onSaveSpaceToggle(){ saveSpaceOn=document.getElementById('saveSpace').checked; localStorage.setItem('montecristo.savespace', saveSpaceOn?'1':'0'); document.getElementById('btnDlAll').style.display = saveSpaceOn?'none':''; if(saveSpaceOn && currentIndex>=0) manageSpace(CHAPTERS[currentIndex].n); }
 
 function dlBtns(n){ return list.querySelectorAll('.chap[data-n="'+n+'"] .dl'); }
 function setDlState(n,state,pct){ dlBtns(n).forEach(b=>{ b.classList.remove('saved','busy');
@@ -525,6 +537,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().the
 // ---- Startup ----
 (async function init(){
   document.getElementById('saveSpace').checked=saveSpaceOn;
+  document.getElementById('btnDlAll').style.display = saveSpaceOn?'none':'';
   applyRate();
   if(isInstalled()) document.getElementById('installBar').style.display='none';
   await loadDownloads();

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Counting to 20 — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      min-height: 100vh; background: #000; color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex; flex-direction: column;
+      overflow: hidden; touch-action: manipulation;
+      user-select: none; -webkit-user-select: none;
+    }
+
+    .top-nav { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 10px 8px 4px; }
+    .top-nav a {
+      padding: 7px 16px; font-size: 13px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; text-decoration: none;
+    }
+
+    /* The whole stage is the tap target */
+    .stage { flex: 1; display: flex; flex-direction: column; align-items: center;
+             justify-content: center; gap: 12px; cursor: pointer; padding: 4px 12px 12px; }
+
+    .numeral { font-size: clamp(64px, 22vw, 150px); font-weight: 900; line-height: 0.9;
+               letter-spacing: 1px; transition: color .2s ease; }
+    .word { font-size: clamp(18px, 5vw, 30px); letter-spacing: 3px; text-transform: uppercase;
+            color: #bbb; min-height: 1.2em; }
+
+    .frames { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 440px; }
+    .frame-label { font-size: 12px; letter-spacing: 2px; color: #777; text-transform: uppercase;
+                   margin: 0 0 5px 4px; }
+    .tenframe {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px;
+      background: rgba(255,255,255,0.04); border: 2px solid #444;
+      border-radius: 12px; padding: 8px;
+    }
+    .cell {
+      aspect-ratio: 1 / 1; border-radius: 50%;
+      border: 2px dashed #333; display: flex; align-items: center; justify-content: center;
+    }
+    .dot {
+      width: 78%; height: 78%; border-radius: 50%;
+      border: 2px solid #000; transform: scale(0);
+      transition: transform .28s cubic-bezier(.34,1.56,.64,1);
+    }
+    .dot.show { transform: scale(1); }
+
+    .hint { font-size: 14px; color: #888; min-height: 1.2em; text-align: center; }
+
+    .controls { display: flex; justify-content: center; gap: 10px; padding: 6px 8px 14px; flex-wrap: wrap; }
+    .controls button {
+      padding: 9px 18px; font-size: 14px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; cursor: pointer;
+    }
+    .controls button:active { background: #fff; color: #000; }
+    .controls button.off { opacity: .45; }
+
+    @media (min-width: 560px) {
+      .frames { max-width: 760px; flex-direction: row; }
+      .frames > div { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <a href="start-here.html">← Start Here</a>
+    <a href="index.html">Home</a>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="numeral" id="numeral">0</div>
+    <div class="word" id="word">tap to count</div>
+
+    <div class="frames">
+      <div>
+        <div class="frame-label">1 – 10</div>
+        <div class="tenframe" id="frame1"></div>
+      </div>
+      <div>
+        <div class="frame-label">11 – 20</div>
+        <div class="tenframe" id="frame2"></div>
+      </div>
+    </div>
+
+    <div class="hint" id="hint">Tap anywhere to add the next one</div>
+  </div>
+
+  <div class="controls">
+    <button id="resetBtn">↺ Start Over</button>
+    <button id="muteBtn">🔊 Sound</button>
+  </div>
+
+  <script>
+    // ── ColorMyMath canonical palette (matches counting-to-10) ──
+    const COLORS = {
+      red:'#FF0000', orange:'#FF8C00', yellow:'#F4FF07', green:'#00C800',
+      blue:'#1D50FE', magenta:'#C814FF', brown:'#B06A1F', pink:'#FF3DD1', cyan:'#1AFFFF'
+    };
+    const NUMBER_COLOR = {1:'red',2:'orange',3:'yellow',4:'green',5:'blue',
+                          6:'magenta',7:'brown',8:'pink',9:'cyan'};
+    // Colors repeat past ten: 11 is red like 1, and 10 / 20 are red.
+    function colorForCount(n){
+      const u = n % 10;            // 0 for 10 and 20
+      if (u === 0) return COLORS.red;
+      return COLORS[NUMBER_COLOR[u]];
+    }
+
+    const WORDS = ['zero','one','two','three','four','five','six','seven','eight','nine','ten',
+      'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'];
+
+    const MAX = 20;
+    let count = 0;
+    let muted = false;
+
+    const numeralEl = document.getElementById('numeral');
+    const wordEl    = document.getElementById('word');
+    const hintEl    = document.getElementById('hint');
+    const f1 = document.getElementById('frame1');
+    const f2 = document.getElementById('frame2');
+
+    // Build 10 cells in each ten-frame
+    const cells = [];
+    [f1, f2].forEach((frame, fi) => {
+      for (let i = 0; i < 10; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        cell.appendChild(dot);
+        frame.appendChild(cell);
+        cells.push(dot);          // index 0..19
+      }
+    });
+
+    // ── Speech (built-in browser voice; safe fallback if unavailable) ──
+    let voiceReady = false;
+    function primeVoices(){
+      if ('speechSynthesis' in window) { try { window.speechSynthesis.getVoices(); } catch(e){} }
+      voiceReady = true;
+    }
+    function say(text){
+      if (muted || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.9; u.pitch = 1.05;
+        window.speechSynthesis.speak(u);
+      } catch(e){}
+    }
+
+    function render(){
+      const col = count === 0 ? '#fff' : colorForCount(count);
+      numeralEl.textContent = count;
+      numeralEl.style.color = col;
+      wordEl.textContent = count === 0 ? 'tap to count' : WORDS[count];
+      for (let i = 0; i < cells.length; i++) {
+        if (i < count) {
+          cells[i].style.background = colorForCount(i + 1);
+          cells[i].classList.add('show');
+        } else {
+          cells[i].classList.remove('show');
+        }
+      }
+      if (count === 0)       hintEl.textContent = 'Tap anywhere to add the next one';
+      else if (count < MAX)  hintEl.textContent = 'Keep tapping…';
+      else                   hintEl.textContent = '🎉 You counted all the way to 20!';
+    }
+
+    function step(){
+      if (!voiceReady) primeVoices();
+      if (count >= MAX) { reset(); return; }
+      count++;
+      render();
+      say(WORDS[count]);
+    }
+
+    function reset(){
+      count = 0;
+      render();
+    }
+
+    document.getElementById('stage').addEventListener('click', step);
+    document.getElementById('resetBtn').addEventListener('click', (e)=>{ e.stopPropagation(); reset(); });
+    document.getElementById('muteBtn').addEventListener('click', (e)=>{
+      e.stopPropagation();
+      muted = !muted;
+      const b = e.currentTarget;
+      b.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+      b.classList.toggle('off', muted);
+      if (muted && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch(e){} }
+    });
+
+    // Keyboard support (desktop): space / arrow up to count, R to reset
+    window.addEventListener('keydown', (e)=>{
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowRight') { e.preventDefault(); step(); }
+      if (e.key === 'r' || e.key === 'R') reset();
+    });
+
+    render();
+  </script>
+</body>
+</html>

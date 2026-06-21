@@ -1,7 +1,7 @@
 # Claude's Knowledge Base — getridoftheteacher.com / ColorMyMath
 
 > My single reference for the kids' education site, so I can pick up context anytime.
-> Published on the site at `getridoftheteacher.com/claude-knowledge.md`. Last consolidated: 2026-06-21 (from a real file scan of the repo).
+> Published on the site at `getridoftheteacher.com/claude-knowledge.md`. Last consolidated: 2026-06-21 — SEO is live, a **Start Here** learning-path page was added, and the Shopify store's date-tag project is **finished** (see `SHOPIFY-KNOWLEDGE.md`).
 
 ---
 
@@ -13,6 +13,7 @@
 - **Cache rule:** after editing a `*-game.html` / `*-play.html` embedded via iframe, **bump the `?v=` cache-buster** in the container page, or phones show the cached old version.
 - **Audio rule (tested on Android):** play recorded clips via **Web Audio** (`decodeAudioData` + `BufferSource`), NOT `<audio>` data: URIs; resume `audioCtx` on tap.
 - **Art:** the user is an art person — **cute concrete/animated characters, NO stick figures / abstract.** I can't generate images; the user downloads them (e.g. Pixabay) and I wire them in.
+- **SEO — ✅ DONE (2026-06-20):** `robots.txt` + `sitemap.xml` (**82 URLs**) at the repo root; `index.html` has a meta description, `rel=canonical`, and Open Graph tags. **Verified in Google Search Console + sitemap submitted.** Root cause it fixed: the site had been **de-indexed while it was password-locked** — now public + crawlable again. When adding new pages, add them to `sitemap.xml`.
 
 ## 2. The ColorMyMath concept
 - Numbers are drawn as **that many colored dots.** Canonical map: **1 red · 2 orange · 3 yellow · 4 green · 5 blue · 6 (…) · 9 cyan** (full 1–9 map in memory `colormymath-number-colors`).
@@ -20,7 +21,7 @@
 
 ## 3. What's on the site (real inventory)
 
-**Landing / hub pages:** `index.html` (home) · `games.html` · `math.html` · `math-five.html` (fives) · `math-ten.html` (tens) · `math-puzzles.html` · `puzzles.html` · `premium-games.html` · `extras.html` · `colormymath/index.html` + `colormymath/gallery.html` · `index-multilang.html`
+**Landing / hub pages:** `index.html` (home) · **`start-here.html`** (Start Here — a guided ColorMyMath learning path, added 2026-06-21) · `games.html` · `math.html` · `math-five.html` (fives) · `math-ten.html` (tens) · `math-puzzles.html` · `puzzles.html` · `premium-games.html` · `extras.html` · `colormymath/index.html` + `colormymath/gallery.html` · `index-multilang.html`
 
 **Counting & number sense:** `counting-to-10` (game/play) · `count-to-5-dots.html` ("Roll to 5" marble-run, Box2D) · `number-practice.html` · `bigger-smaller.html` · `num7-preview.html`
 

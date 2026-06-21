@@ -98,6 +98,7 @@
   </div>
 
   <div class="controls">
+    <button id="dirBtn">⬆ Count Up</button>
     <button id="resetBtn">↺ Start Over</button>
     <button id="muteBtn">🔊 Sound</button>
   </div>
@@ -123,6 +124,7 @@
     const MAX = 20;
     let count = 0;
     let muted = false;
+    let dir = 'up';            // 'up' counts 0→20, 'down' counts 20→0
 
     const numeralEl = document.getElementById('numeral');
     const wordEl    = document.getElementById('word');
@@ -164,7 +166,7 @@
       const col = count === 0 ? '#fff' : colorForCount(count);
       numeralEl.textContent = count;
       numeralEl.style.color = col;
-      wordEl.textContent = count === 0 ? 'tap to count' : WORDS[count];
+      wordEl.textContent = count === 0 ? (dir === 'up' ? 'tap to count' : 'all gone!') : WORDS[count];
       for (let i = 0; i < cells.length; i++) {
         if (i < count) {
           cells[i].style.background = colorForCount(i + 1);
@@ -173,25 +175,45 @@
           cells[i].classList.remove('show');
         }
       }
-      if (count === 0)       hintEl.textContent = 'Tap anywhere to add the next one';
-      else if (count < MAX)  hintEl.textContent = 'Keep tapping…';
-      else                   hintEl.textContent = '🎉 You counted all the way to 20!';
+      if (dir === 'up') {
+        if (count === 0)       hintEl.textContent = 'Tap anywhere to add the next one';
+        else if (count < MAX)  hintEl.textContent = 'Keep tapping…';
+        else                   hintEl.textContent = '🎉 You counted all the way to 20!';
+      } else {
+        if (count === MAX)     hintEl.textContent = 'Tap anywhere to take one away';
+        else if (count > 0)    hintEl.textContent = 'Keep tapping…';
+        else                   hintEl.textContent = '🎉 You counted all the way down to 0!';
+      }
     }
 
     function step(){
       if (!voiceReady) primeVoices();
-      if (count >= MAX) { reset(); return; }
-      count++;
-      render();
-      say(WORDS[count]);
+      if (dir === 'up') {
+        if (count >= MAX) { reset(); return; }
+        count++;
+        render();
+        say(WORDS[count]);
+      } else {
+        if (count <= 0) { reset(); return; }
+        count--;
+        render();
+        say(count === 0 ? 'zero' : WORDS[count]);
+      }
     }
 
     function reset(){
-      count = 0;
+      count = (dir === 'up') ? 0 : MAX;
       render();
     }
 
+    function setDir(newDir){
+      dir = newDir;
+      document.getElementById('dirBtn').textContent = dir === 'up' ? '⬆ Count Up' : '⬇ Count Down';
+      reset();
+    }
+
     document.getElementById('stage').addEventListener('click', step);
+    document.getElementById('dirBtn').addEventListener('click', (e)=>{ e.stopPropagation(); setDir(dir === 'up' ? 'down' : 'up'); });
     document.getElementById('resetBtn').addEventListener('click', (e)=>{ e.stopPropagation(); reset(); });
     document.getElementById('muteBtn').addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -204,7 +226,7 @@
 
     // Keyboard support (desktop): space / arrow up to count, R to reset
     window.addEventListener('keydown', (e)=>{
-      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowRight') { e.preventDefault(); step(); }
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowRight' || e.code === 'ArrowDown' || e.code === 'ArrowLeft') { e.preventDefault(); step(); }
       if (e.key === 'r' || e.key === 'R') reset();
     });
 

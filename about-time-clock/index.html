@@ -31,11 +31,34 @@
   .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
+  /* "Install app" pill (top-right) — only shown when the app can be installed */
+  .install{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:12px; z-index:7;
+    display:none; align-items:center; gap:6px; color:#0b1422; font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    border:none; padding:9px 15px; border-radius:999px; background:#f0b32a; box-shadow:0 4px 14px rgba(0,0,0,.4); cursor:pointer;}
+  .install.show{display:inline-flex;}
+  .install:active{transform:scale(.94);}
+  /* iOS "Add to Home Screen" instructions (Safari has no install prompt) */
+  .iosguide{position:fixed; inset:0; z-index:10; display:none; align-items:center; justify-content:center;
+    background:rgba(6,12,22,.84); padding:24px;}
+  .iosguide.show{display:flex;}
+  .iosguide .card{max-width:330px; background:#10243d; border:1px solid #2b466e; border-radius:18px; padding:22px 20px; text-align:center;}
+  .iosguide h2{margin:.1em 0 .5em; font-size:18px; color:#fff;}
+  .iosguide p{margin:.5em 0; font-size:15px; line-height:1.45; color:#cfe0f5; text-align:left;}
+  .iosguide b{color:#fff;}
+  .iosguide button{margin-top:16px; border:none; background:#f0b32a; color:#0b1422; font-weight:700; font-size:15px; padding:10px 20px; border-radius:999px; cursor:pointer;}
 </style>
 </head>
 <body>
   <a class="exit" href="../games.html">← Games</a>
+  <button class="install" id="btnInstall">⬇ Install app</button>
   <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for buttons</div>
+  <div class="iosguide" id="iosGuide"><div class="card">
+    <h2>Add About Time to your Home Screen</h2>
+    <p>1. Tap the <b>Share</b> button (<b>the square with an ↑</b>) in Safari's toolbar.</p>
+    <p>2. Scroll down and choose <b>“Add to Home Screen.”</b></p>
+    <p>3. Tap <b>Add</b> — it then opens like a real app, full screen.</p>
+    <button id="iosOk">Got it</button>
+  </div></div>
   <canvas id="c"></canvas>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
@@ -44,6 +67,27 @@
     <button class="knob" id="btnFast"  title="Heavier / more bouncy"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
   </div>
 
+<script>
+/* ---- "Install app" experience: makes this PWA installable on Android, desktop Chrome/Edge, and iOS ---- */
+(function(){
+  const btn=document.getElementById('btnInstall'), guide=document.getElementById('iosGuide');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  if(standalone) return;                              // already installed as an app — no button needed
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+             || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);   // iPadOS reports as Mac
+  let deferred=null;
+  // Android + desktop Chrome/Edge fire this when the app is installable
+  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferred=e; btn.classList.add('show'); });
+  window.addEventListener('appinstalled', ()=>{ btn.classList.remove('show'); deferred=null; });
+  if(isIOS) btn.classList.add('show');               // iOS Safari has no prompt — show button -> manual steps
+  btn.addEventListener('click', async ()=>{
+    if(deferred){ deferred.prompt(); const r=await deferred.userChoice; if(r&&r.outcome==='accepted') btn.classList.remove('show'); deferred=null; return; }
+    guide.classList.add('show');                      // iOS / unsupported: show Add-to-Home-Screen instructions
+  });
+  document.getElementById('iosOk').addEventListener('click', ()=>guide.classList.remove('show'));
+  guide.addEventListener('click', e=>{ if(e.target===guide) guide.classList.remove('show'); });
+})();
+</script>
 <script src="planck.min.js"></script>
 <script>
 "use strict";

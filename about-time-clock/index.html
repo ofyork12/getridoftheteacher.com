@@ -49,16 +49,36 @@
 "use strict";
 (function(){
   const pl=planck, Vec2=pl.Vec2;
-  const WORLD_W=640, WORLD_H=360, PM=32;            // world units (px) and pixels-per-metre (matches AndEngine)
+  const PM=32;                                       // pixels-per-metre (matches AndEngine)
   const m=(v)=>v/PM;                                 // world-px -> metres
+  let WORLD_W=640, WORLD_H=360;                      // world size — set by the active layout (landscape vs portrait)
 
   // ----- assets (the original gfx) -----
   const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
   const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
   function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
-  // original spawn coordinates (top-left in 640x360 world)
-  const npx10=[296,408,296,408,352], npy10=[164,164,71,71,-22];                                    // ten-triangles (middle)
-  const HOURX=8, HOURY=70;                                                                          // hour group (left)
+
+  // ---- two layouts: wide for laptops/desktops, tall for upright phones ----
+  // LAND keeps the original 640x360 field exactly (hour left, colon, minutes right).
+  // PORT is a 360x720 field for portrait phones: hour rests on a shelf up top, minutes fill below.
+  const LAND={ W:640, H:360,
+    walls:[[0,357,640,3],[0,0,640,3],[0,0,3,360],[637,0,3,360]],
+    obstacles:[[250,140,20,20],[250,220,20,20]],
+    pins:[[232,150,13],[232,210,13]],
+    colon:[[232,150],[232,210]], shelf:null,
+    hourX:8, hourY:70, hourCenter:false,
+    npx10:[296,408,296,408,352], npy10:[164,164,71,71,-22], tenSize:104,
+    onesCX:566, onesCY:120, onesS:34 };
+  const PORT={ W:360, H:720,
+    walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
+    obstacles:[],
+    pins:[],
+    colon:null, shelf:[0,300,360,14],
+    hourX:0, hourY:60, hourCenter:true,
+    npx10:[128,24,232,76,180], npy10:[613,613,613,520,520], tenSize:104,
+    onesCX:180, onesCY:400, onesS:30 };
+  let L=LAND;                                        // active layout (set on load / orientation change)
+  function pickLayout(){ return (window.innerWidth/window.innerHeight) < 1.0 ? PORT : LAND; }
 
   // canonical ColorMyMath number-line shapes for the minute ONES (grid offsets, unit = a dot)
   const SHAPES={
@@ -72,7 +92,7 @@
     8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square with the middle missing
     9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3x3
   };
-  const ONES_S=34, ONES_CX=566, ONES_CY=120;                  // dot spacing + cluster centre (world px)
+  // (minute-ones spacing + cluster centre now live in the active layout L: L.onesS, L.onesCX, L.onesCY)
 
   const IMG={};
   function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
@@ -85,15 +105,18 @@
   let pDensity=4.0, pElasticity=1.0, pFriction=0.0;
   let SLOWMO=0.5;                                    // <1 = slow motion (everything falls/tumbles slower)
   const world=pl.World(Vec2(0, 3.0));                // gravity DOWN (y increases downward)
-  const statics=world.createBody();                  // one static body holds all the walls
+  let statics=null;                                  // one static body holds the walls/obstacles for the active layout
   function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
-  // walls + the two middle obstacles, exactly as the original
-  box(0,357,640,3); box(0,0,640,3); box(0,0,3,360); box(637,0,3,360);
-  box(250,140,20,20); box(250,220,20,20);
-
-  // colon dots in the middle are SOLID obstacles too — dots bounce off them
   function pin(cx,cy,r){ statics.createFixture(pl.Circle(m(r), Vec2(m(cx),m(cy))), {density:1,friction:0,restitution:1}); }
-  pin(232,150,13); pin(232,210,13);
+  // (re)build the walls/obstacles for layout L — called on load and whenever orientation flips
+  function buildStatics(){
+    if(statics) world.destroyBody(statics);
+    statics=world.createBody();
+    for(const w of L.walls) box(w[0],w[1],w[2],w[3]);
+    for(const o of L.obstacles) box(o[0],o[1],o[2],o[3]);
+    if(L.shelf) box(L.shelf[0],L.shelf[1],L.shelf[2],L.shelf[3]);   // portrait: ledge dividing hour (top) from minutes (below)
+    for(const p of L.pins) pin(p[0],p[1],p[2]);                     // landscape: solid colon dots
+  }
 
   let sprites=[];   // {body, img, size, group}
   function clearGroup(g){ for(let i=sprites.length-1;i>=0;i--){ if(sprites[i].group===g){ world.destroyBody(sprites[i].body); sprites.splice(i,1); } } }
@@ -114,11 +137,11 @@
   // ----- build the time as quantities; each group updates on its own (no full reset / repeat) -----
   let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1, frozen=false;
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
-  function spawnHour(h){ addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110, 'circle', 'hour'); }
+  function spawnHour(h){ const size=h>=5?150:110; const x=L.hourCenter?(L.W-size)/2:L.hourX; addSprite(hourImg(h), x, L.hourY, size, 'circle', 'hour'); }
   // tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
-  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, npx10[i], npy10[i], 104, 'triangle', 'tens'); }
+  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, L.npx10[i], L.npy10[i], L.tenSize, 'triangle', 'tens'); }
   // ones: that many single dots, coloured by the ones digit
-  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, ONES_CY+o[1]*ONES_S-15, 30, 'circle', 'ones'); }
+  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, L.onesCX+o[0]*L.onesS-15, L.onesCY+o[1]*L.onesS-15, 30, 'circle', 'ones'); }
   function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
   // only re-drop the part that actually changed — the rest keeps tumbling
   function checkTime(){ const t=curT();
@@ -137,7 +160,9 @@
     fit=Math.min(CW/WORLD_W, CH/WORLD_H);
     offx=(CW-WORLD_W*fit)/2; offy=(CH-WORLD_H*fit)/2;
   }
-  window.addEventListener('resize', resize);
+  // switch the whole field between landscape and portrait when the screen orientation flips
+  function applyLayout(newL){ L=newL; WORLD_W=L.W; WORLD_H=L.H; buildStatics(); resize(); simMs=Date.now(); respawnAll(); }
+  window.addEventListener('resize', ()=>{ const want=pickLayout(); if(want!==L) applyLayout(want); else resize(); });
 
   let lastT=performance.now();
   function frame(t){
@@ -159,10 +184,15 @@
       ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
       ctx.restore();
     }
-    // static colon between the hour (left) and the minutes — like a digital clock
-    ctx.fillStyle='#e6eefb';
-    ctx.beginPath(); ctx.arc(232,150,11,0,7); ctx.fill();
-    ctx.beginPath(); ctx.arc(232,210,11,0,7); ctx.fill();
+    if(L.colon){
+      // landscape: static colon between the hour (left) and the minutes — like a digital clock
+      ctx.fillStyle='#e6eefb';
+      for(const c of L.colon){ ctx.beginPath(); ctx.arc(c[0],c[1],11,0,7); ctx.fill(); }
+    } else if(L.shelf){
+      // portrait: a visible ledge separating the hour (above) from the minutes (below)
+      ctx.fillStyle='#16314f';
+      ctx.fillRect(L.shelf[0], L.shelf[1], L.shelf[2], L.shelf[3]);
+    }
     ctx.restore();
     requestAnimationFrame(frame);
   }
@@ -198,7 +228,7 @@
   });
 
   // ----- go -----
-  Promise.all([...needed].map(load)).then(()=>{ resize(); respawnAll(); requestAnimationFrame(frame); });
+  Promise.all([...needed].map(load)).then(()=>{ L=pickLayout(); WORLD_W=L.W; WORLD_H=L.H; buildStatics(); resize(); respawnAll(); requestAnimationFrame(frame); });
 
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;

@@ -5,7 +5,7 @@
 <style>
   html,body{margin:0;height:100%;background:#222;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:none}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
-  canvas{height:100%;max-width:100%;background:#fff;display:block;box-shadow:0 0 40px #000a}
+  canvas{max-width:100%;max-height:100%;width:auto;height:auto;background:#fff;display:block;box-shadow:0 0 40px #000a}
   #bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:6;display:flex;gap:14px}
   .btn{padding:0 22px;height:60px;border-radius:30px;border:none;background:#0009;color:#fff;font-size:20px;font-family:Georgia;cursor:pointer}
   .btn:active{background:#000d}
@@ -17,13 +17,31 @@ const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3
 const TENCOL=[COLOR[3],COLOR[7],COLOR[8],COLOR[5],COLOR[4],COLOR[9]]; // 6 ten-groups, easy to tell apart
 const HOURCOL='#E8B923';
 const DOT=27;                      // every dot is the same size
-const ctx=document.getElementById('c').getContext('2d');
+const cv0=document.getElementById('c');
+const ctx=cv0.getContext('2d');
 const sig=new Image(); sig.src='signature.png';
-const W=1080,H=1920;
 
-// two chambers (jars): hour on top, minutes below
-const HOUR={x0:150,y0:350,x1:930,y1:560};
-const MIN ={x0:90,y0:720,x1:990,y1:1340};
+// ---- responsive layout: portrait (phones) stacks the jars, landscape (laptops) puts them side by side ----
+let W=1080,H=1920;                 // internal drawing resolution (set by layout())
+let HOUR={x0:150,y0:350,x1:930,y1:560};   // two chambers (jars)
+let MIN ={x0:90,y0:720,x1:990,y1:1340};
+let UI={titleX:540,titleY:120,subY:166,timeX:540,timeY:710,sig:[900,1800,150,80]};
+function layout(){
+  const portrait = (window.innerWidth/window.innerHeight) < 1.0;
+  if(portrait){
+    W=1080;H=1920;
+    HOUR={x0:150,y0:350,x1:930,y1:560};
+    MIN ={x0:90,y0:720,x1:990,y1:1340};
+    UI={titleX:540,titleY:120,subY:166,timeX:540,timeY:710,sig:[900,1800,150,80]};
+  }else{
+    W=1920;H=1080;                 // wide layout for laptops/desktops
+    HOUR={x0:160,y0:710,x1:640,y1:920};   // hours jar — left, floor aligned with minutes
+    MIN ={x0:760,y0:300,x1:1800,y1:920};  // minutes jar — right, taller for up to 59
+    UI={titleX:960,titleY:90,subY:138,timeX:960,timeY:235,sig:[1740,985,150,80]};
+  }
+  cv0.width=W; cv0.height=H;
+}
+layout();
 let dots=[];                       // {x,y,vx,vy,r,c,jar,tx,ty,settled}
 let gx=0, gy=0.55;                 // gravity (tilt changes it)
 let tiltOn=false;
@@ -143,14 +161,14 @@ function jarBox(J,label){
 
 function draw(){
   ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 74px Georgia';ctx.fillText('ColorMyMath Clock',540,120);
-  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('count the dots · shake them and watch them fall back into place',540,166);
+  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 74px Georgia';ctx.fillText('ColorMyMath Clock',UI.titleX,UI.titleY);
+  ctx.fillStyle='#888';ctx.font='italic 30px Georgia';ctx.fillText('count the dots · shake them and watch them fall back into place',UI.titleX,UI.subY);
   jarBox(HOUR,'hours'); jarBox(MIN,'minutes');
   for(const d of dots) dot(d);
   const now=new Date(), h12=((now.getHours()%12)===0?12:now.getHours()%12);
   ctx.fillStyle='#333';ctx.font='bold 70px Georgia';ctx.textAlign='center';
-  ctx.fillText(h12+' : '+String(now.getMinutes()).padStart(2,'0'),540,710);
-  if(sig.complete&&sig.naturalWidth) ctx.drawImage(sig,900,1800,150,80);
+  ctx.fillText(h12+' : '+String(now.getMinutes()).padStart(2,'0'),UI.timeX,UI.timeY);
+  if(sig.complete&&sig.naturalWidth) ctx.drawImage(sig,UI.sig[0],UI.sig[1],UI.sig[2],UI.sig[3]);
 }
 function loop(){ step(); draw(); requestAnimationFrame(loop); }
 
@@ -166,6 +184,18 @@ function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
 }
 build(new Date().getHours(), new Date().getMinutes());
 loop(); setInterval(tick,1000);
+
+// re-fit when the window resizes or a phone rotates (portrait <-> landscape)
+let lastPortrait = (window.innerWidth/window.innerHeight) < 1.0;
+function refit(){
+  const nowPortrait = (window.innerWidth/window.innerHeight) < 1.0;
+  if(nowPortrait===lastPortrait) return;   // only rebuild when orientation actually flips
+  lastPortrait=nowPortrait;
+  layout();
+  build(new Date().getHours(), new Date().getMinutes());
+}
+window.addEventListener('resize', refit);
+window.addEventListener('orientationchange', refit);
 
 // interaction
 document.getElementById('shake').onclick=()=>{ for(const d of dots){ d.vx+=(Math.random()-.5)*50; d.vy-=(Math.random()*18+12); d.settled=false; } };

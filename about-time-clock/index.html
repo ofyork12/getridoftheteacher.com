@@ -83,6 +83,7 @@
 
   // ----- physics -----
   let pDensity=4.0, pElasticity=1.0, pFriction=0.0;
+  let SLOWMO=0.5;                                    // <1 = slow motion (everything falls/tumbles slower)
   const world=pl.World(Vec2(0, 3.0));                // gravity DOWN (y increases downward)
   const statics=world.createBody();                  // one static body holds all the walls
   function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
@@ -143,7 +144,7 @@
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     simMs += dt*1000;
     checkTime();
-    if(!frozen) world.step(1/60, 8, 3);   // frozen = static clock, no physics
+    if(!frozen) world.step(SLOWMO/60, 8, 3);   // SLOWMO<1 = slow motion (frozen = static clock, no physics)
 
     ctx.clearRect(0,0,CW,CH);
     // play-field backdrop (the 640x360 wallpaper area)

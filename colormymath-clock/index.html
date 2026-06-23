@@ -13,9 +13,13 @@
 <body><div id="wrap"><canvas id="c" width="1080" height="1920"></canvas></div>
 <div id="bar"><button class="btn" id="shake">🤚 Shake</button><button class="btn" id="tilt">📱 Tilt on</button></div>
 <script>
-const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3192',7:'#F7941D',8:'#FFF200',9:'#C724B1'};
-const TENCOL=[COLOR[3],COLOR[7],COLOR[8],COLOR[5],COLOR[4],COLOR[9]]; // 6 ten-groups, easy to tell apart
-const HOURCOL='#E8B923';
+// canonical ColorMyMath number-line colors: each quantity 1-9 has its own fixed color
+const COLOR={1:'#fa0404',2:'#faa018',3:'#f0f000',4:'#04fa04',5:'#0404fa',6:'#a32cc4',7:'#803004',8:'#f070aa',9:'#2e9bf0'};
+// color a dot by the number it helps form: each ten-group takes the color of WHICH ten it is
+// (1st ten = color of 1 = red, 2nd = orange ...); the leftover ones take the ones-digit color.
+function numColor(n,i){ const tens=Math.floor(n/10);
+  if(i < tens*10) return COLOR[Math.floor(i/10)+1] || COLOR[9];
+  return COLOR[n%10] || COLOR[1]; }
 const DOT=27;                      // every dot is the same size
 const cv0=document.getElementById('c');
 const ctx=cv0.getContext('2d');
@@ -79,12 +83,12 @@ function spawn(jar,c,side){ const J=jar==='h'?HOUR:MIN;
   const vx = side ? -(Math.random()*3+1) : (Math.random()*3+1);
   return {x, y, vx, vy:0, r:DOT, c:c, jar:jar, tx:0, ty:0, settled:false}; }
 function assignTargets(jar,count){ const J=jar==='h'?HOUR:MIN, T=figureTargets(count,J);
-  let k=0; for(const d of dots){ if(d.jar===jar){ if(T[k]){d.tx=T[k].tx; d.ty=T[k].ty;} k++; } } }
+  let k=0; for(const d of dots){ if(d.jar===jar){ if(T[k]){d.tx=T[k].tx; d.ty=T[k].ty;} d.c=numColor(count,k); k++; } } }
 function build(h,m){
   dots=[];
   const h12=((h%12)===0?12:(h%12));
-  for(let i=0;i<h12;i++) dots.push(spawn('h',HOURCOL,i%2));
-  for(let i=0;i<m;i++)   dots.push(spawn('m',TENCOL[Math.floor(i/10)%6],i%2));
+  for(let i=0;i<h12;i++) dots.push(spawn('h',null,i%2));
+  for(let i=0;i<m;i++)   dots.push(spawn('m',null,i%2));
   assignTargets('h',h12); assignTargets('m',m);
   lastHour=h12; lastMin=m;
 }
@@ -177,7 +181,7 @@ function tick(){ const n=new Date(), h=n.getHours(), m=n.getMinutes();
   const h12=((h%12)===0?12:h%12);
   if(h12!==lastHour || m<lastMin){ build(h,m); return; }       // new hour or wrap: rebuild
   if(m!==lastMin){
-    for(let i=lastMin;i<m;i++) dots.push(spawn('m',TENCOL[Math.floor(i/10)%6],i%2));  // new minute dots roll in from a side
+    for(let i=lastMin;i<m;i++) dots.push(spawn('m',null,i%2));  // new minute dots roll in from a side
     assignTargets('m',m);                                       // re-form the whole minute figure
     lastMin=m;
   }

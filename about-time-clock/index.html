@@ -104,7 +104,8 @@
 
   // ---- two layouts: wide for laptops/desktops, tall for upright phones ----
   // LAND keeps the original 640x360 field exactly (hour left, colon, minutes right).
-  // PORT is a 360x720 field for portrait phones: hour rests on a shelf up top, minutes fill below.
+  // PORT reads like a real clock too — hour : minutes ACROSS — but in a tall 600x1180 field
+  // so it fills an upright phone: the clock forms across the lower area, dots rain from above.
   const LAND={ W:640, H:360,
     walls:[[0,357,640,3],[0,0,640,3],[0,0,3,360],[637,0,3,360]],
     obstacles:[[250,140,20,20],[250,220,20,20]],
@@ -113,14 +114,14 @@
     hourX:8, hourY:70, hourCenter:false,
     npx10:[296,408,296,408,352], npy10:[164,164,71,71,-22], tenSize:104,
     onesCX:566, onesCY:120, onesS:34 };
-  const PORT={ W:360, H:720,
-    walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
+  const PORT={ W:600, H:1180,                                  // tall field; same H:MM reading as landscape
+    walls:[[0,1177,600,3],[0,0,600,3],[0,0,3,1180],[597,0,3,1180]],
     obstacles:[],
-    pins:[],
-    colon:[[180,318],[180,384]], colonR:18, shelf:[0,300,360,14],   // bigger, farther-apart colon dots; shelf is an INVISIBLE physics ledge
-    hourX:0, hourY:60, hourCenter:true,
-    npx10:[128,24,232,76,180], npy10:[613,613,613,520,520], tenSize:104,
-    onesCX:180, onesCY:432, onesS:30 };
+    pins:[[232,1035,14],[232,1105,14]],                        // solid colon dots (between hour and minutes)
+    colon:[[232,1035],[232,1105]], colonR:14, shelf:null,      // colon sits at digit height, like a clock
+    hourX:8, hourY:850, hourCenter:false,                      // hour on the LEFT, like a clock
+    npx10:[296,408,296,408,352], npy10:[960,960,860,860,770], tenSize:104,
+    onesCX:566, onesCY:880, onesS:34 };                        // minutes on the RIGHT
   let L=LAND;                                        // active layout (set on load / orientation change)
   function pickLayout(){ return (window.innerWidth/window.innerHeight) < 1.0 ? PORT : LAND; }
 

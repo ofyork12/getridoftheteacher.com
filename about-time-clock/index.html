@@ -117,7 +117,7 @@
     walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
     obstacles:[],
     pins:[],
-    colon:null, shelf:[0,300,360,14],
+    colon:[[180,330],[180,366]], shelf:[0,300,360,14],   // two colon dots centred; shelf is an INVISIBLE physics ledge
     hourX:0, hourY:60, hourCenter:true,
     npx10:[128,24,232,76,180], npy10:[613,613,613,520,520], tenSize:104,
     onesCX:180, onesCY:400, onesS:30 };
@@ -229,13 +229,10 @@
       ctx.restore();
     }
     if(L.colon){
-      // landscape: static colon between the hour (left) and the minutes — like a digital clock
+      // the two clock-colon dots — digital-clock look, in BOTH layouts
+      // (portrait keeps an invisible physics shelf to hold the hour up — it is no longer drawn as a line)
       ctx.fillStyle='#e6eefb';
       for(const c of L.colon){ ctx.beginPath(); ctx.arc(c[0],c[1],11,0,7); ctx.fill(); }
-    } else if(L.shelf){
-      // portrait: a visible ledge separating the hour (above) from the minutes (below)
-      ctx.fillStyle='#16314f';
-      ctx.fillRect(L.shelf[0], L.shelf[1], L.shelf[2], L.shelf[3]);
     }
     ctx.restore();
     requestAnimationFrame(frame);

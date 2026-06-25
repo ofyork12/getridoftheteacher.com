@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clock Lab</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0; height:100%; overflow:hidden; background:#0b1422;}
+  #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
+  .cap{position:fixed; left:0; right:0; top:6px; z-index:4; text-align:center; pointer-events:none;
+    font:600 11px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:#8aa1c2;}
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="cap" id="cap"></div>
+<script src="planck.min.js"></script>
+<script>
+"use strict";
+(function(){
+  const pl=planck, Vec2=pl.Vec2;
+  const PM=32, m=(v)=>v/PM;
+  let WORLD_W=640, WORLD_H=360;
+
+  const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
+  const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];
+  function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
+
+  // ---- every design the clock has worn, as a selectable preset (?p=KEY) ----
+  const PRESETS={
+    // #1 — the original wide field (the screenshot): hour : minutes, side by side
+    'landscape':{ name:'#1 Landscape Classic (the screenshot)', W:640,H:360,
+      walls:[[0,357,640,3],[0,0,640,3],[0,0,3,360],[637,0,3,360]],
+      obstacles:[[250,140,20,20],[250,220,20,20]],
+      pins:[[232,150,13],[232,210,13]], colon:[[232,150],[232,210]], colonR:11, shelf:null, drawShelf:false,
+      hourX:8,hourY:70,hourCenter:false,
+      npx10:[296,408,296,408,352], npy10:[164,164,71,71,-22], tenSize:104,
+      onesCX:566,onesCY:120,onesS:34 },
+    // #2 — tall field, still hour : minutes across (fills an upright phone)
+    'hmm':{ name:'#2 Tall — hour:minutes across', W:600,H:1180,
+      walls:[[0,1177,600,3],[0,0,600,3],[0,0,3,1180],[597,0,3,1180]],
+      obstacles:[],
+      pins:[[232,1035,14],[232,1105,14]], colon:[[232,1035],[232,1105]], colonR:14, shelf:null, drawShelf:false,
+      hourX:8,hourY:850,hourCenter:false,
+      npx10:[296,408,296,408,352], npy10:[960,960,860,860,770], tenSize:104,
+      onesCX:566,onesCY:880,onesS:34 },
+    // #3 — stacked: hour on top, minutes below, with a divider LINE
+    'stack-line':{ name:'#3 Stacked — divider line', W:360,H:720,
+      walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
+      obstacles:[], pins:[], colon:null, colonR:11, shelf:[0,300,360,14], drawShelf:true,
+      hourX:0,hourY:60,hourCenter:true,
+      npx10:[128,24,232,76,180], npy10:[613,613,613,520,520], tenSize:104,
+      onesCX:180,onesCY:400,onesS:30 },
+    // #4 — stacked, with two BIG colon dots instead of the line
+    'stack-big':{ name:'#4 Stacked — two big dots', W:360,H:720,
+      walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
+      obstacles:[], pins:[], colon:[[180,326],[180,382]], colonR:18, shelf:[0,300,360,14], drawShelf:false,
+      hourX:0,hourY:60,hourCenter:true,
+      npx10:[128,24,232,76,180], npy10:[633,633,633,540,540], tenSize:104,
+      onesCX:180,onesCY:440,onesS:30 },
+    // #5 — stacked, with two SMALL colon dots
+    'stack-small':{ name:'#5 Stacked — two small dots', W:360,H:720,
+      walls:[[0,717,360,3],[0,0,360,3],[0,0,3,720],[357,0,3,720]],
+      obstacles:[], pins:[], colon:[[180,330],[180,366]], colonR:11, shelf:[0,300,360,14], drawShelf:false,
+      hourX:0,hourY:60,hourCenter:true,
+      npx10:[128,24,232,76,180], npy10:[613,613,613,520,520], tenSize:104,
+      onesCX:180,onesCY:400,onesS:30 }
+  };
+  const key=(new URLSearchParams(location.search).get('p'))||'landscape';
+  let L=PRESETS[key]||PRESETS['landscape'];
+  WORLD_W=L.W; WORLD_H=L.H;
+  document.getElementById('cap').textContent=L.name;
+
+  const SHAPES={
+    1:[[0,0]],
+    2:[[-0.5,0],[0.5,0]],
+    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
+    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
+    5:[[0,-1],[-0.5,0],[0.5,0],[-0.5,1],[0.5,1]],
+    6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],
+    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]
+  };
+
+  const IMG={};
+  function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
+  const needed=new Set(['a_five_house']);
+  for(let n=1;n<=9;n++) needed.add(ONES[n]);
+  TENS.forEach(t=>needed.add(t));
+  for(let h=1;h<=12;h++) needed.add(hourImg(h));
+
+  let pDensity=4.0, pElasticity=1.0, pFriction=0.0, SLOWMO=0.5;
+  const world=pl.World(Vec2(0, 3.0));
+  let statics=null;
+  function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
+  function pin(cx,cy,r){ statics.createFixture(pl.Circle(m(r), Vec2(m(cx),m(cy))), {density:1,friction:0,restitution:1}); }
+  function buildStatics(){
+    if(statics) world.destroyBody(statics);
+    statics=world.createBody();
+    for(const w of L.walls) box(w[0],w[1],w[2],w[3]);
+    for(const o of L.obstacles) box(o[0],o[1],o[2],o[3]);
+    if(L.shelf) box(L.shelf[0],L.shelf[1],L.shelf[2],L.shelf[3]);
+    for(const p of L.pins) pin(p[0],p[1],p[2]);
+  }
+
+  let sprites=[];
+  function clearGroup(g){ for(let i=sprites.length-1;i>=0;i--){ if(sprites[i].group===g){ world.destroyBody(sprites[i].body); sprites.splice(i,1); } } }
+  function addSprite(name, x, y, size, shape, group){
+    const img=IMG[name]; if(!img) return;
+    const fd={density:pDensity, friction:pFriction, restitution:pElasticity};
+    const b=world.createDynamicBody(Vec2(m(x+size/2), m(y+size/2)));
+    if(shape==='triangle'){ const hw=m(size*0.5), hh=m(size*0.5); b.createFixture(pl.Polygon([Vec2(-hw,hh), Vec2(hw,hh), Vec2(0,-hh)]), fd); }
+    else { b.createFixture(pl.Circle(m(size*0.5)), fd); }
+    b.setAngularVelocity((Math.random()-0.5)*1.5);
+    sprites.push({body:b, img, size, group});
+  }
+
+  let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1;
+  function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
+  function spawnHour(h){ const size=h>=5?150:110; const x=L.hourCenter?(L.W-size)/2:L.hourX; addSprite(hourImg(h), x, L.hourY, size, 'circle', 'hour'); }
+  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, L.npx10[i], L.npy10[i], L.tenSize, 'triangle', 'tens'); }
+  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, L.onesCX+o[0]*L.onesS-15, L.onesCY+o[1]*L.onesS-15, 30, 'circle', 'ones'); }
+  function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
+  function checkTime(){ const t=curT();
+    if(t.h!==lastH){ clearGroup('hour'); spawnHour(t.h); lastH=t.h; }
+    if(t.tens!==lastTens){ clearGroup('tens'); spawnTens(t.tens); lastTens=t.tens; }
+    if(t.ones!==lastOnes){ clearGroup('ones'); spawnOnes(t.ones); lastOnes=t.ones; }
+  }
+
+  const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
+  let CW=0,CH=0,DPR=Math.min(2,window.devicePixelRatio||1), fit=1, offx=0, offy=0;
+  function resize(){
+    CW=window.innerWidth; CH=window.innerHeight;
+    canvas.width=CW*DPR; canvas.height=CH*DPR; canvas.style.width=CW+'px'; canvas.style.height=CH+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    fit=Math.min(CW/WORLD_W, CH/WORLD_H);
+    offx=(CW-WORLD_W*fit)/2; offy=(CH-WORLD_H*fit)/2;
+  }
+  window.addEventListener('resize', resize);
+
+  let lastT=performance.now();
+  function frame(t){
+    const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+    simMs += dt*1000;
+    checkTime();
+    world.step(SLOWMO/60, 8, 3);
+    ctx.clearRect(0,0,CW,CH);
+    ctx.save(); ctx.translate(offx,offy); ctx.scale(fit,fit);
+    ctx.fillStyle='#0d1b2e'; ctx.fillRect(0,0,WORLD_W,WORLD_H);
+    for(const s of sprites){
+      const p=s.body.getPosition(), a=s.body.getAngle();
+      const x=p.x*PM, y=p.y*PM;
+      const iw=s.img.naturalWidth||s.size, ih=s.img.naturalHeight||s.size;
+      const scale=s.size/Math.max(iw,ih), dw=iw*scale, dh=ih*scale;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(a);
+      ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
+      ctx.restore();
+    }
+    if(L.drawShelf && L.shelf){ ctx.fillStyle='#16314f'; ctx.fillRect(L.shelf[0],L.shelf[1],L.shelf[2],L.shelf[3]); }
+    if(L.colon){ ctx.fillStyle='#e6eefb'; for(const c of L.colon){ ctx.beginPath(); ctx.arc(c[0],c[1],L.colonR||11,0,7); ctx.fill(); } }
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+
+  // tap to re-drop the time
+  canvas.addEventListener('pointerup', ()=>{ simMs=Date.now(); respawnAll(); });
+
+  Promise.all([...needed].map(load)).then(()=>{ buildStatics(); resize(); respawnAll(); requestAnimationFrame(frame); });
+})();
+</script>
+</body>
+</html>

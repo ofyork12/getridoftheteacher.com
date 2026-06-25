@@ -51,7 +51,7 @@
 <body>
   <a class="exit" href="../games.html">← Games</a>
   <button class="install" id="btnInstall">⬇ Install app</button>
-  <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for buttons</div>
+  <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for speed &amp; freeze</div>
   <div class="iosguide" id="iosGuide"><div class="card">
     <h2>Add About Time to your Home Screen</h2>
     <p>1. Tap the <b>Share</b> button (<b>the square with an ↑</b>) in Safari's toolbar.</p>
@@ -62,9 +62,9 @@
   <canvas id="c"></canvas>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
-    <button class="knob" id="btnSlow"  title="Lighter / less bouncy"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
+    <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
     <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
-    <button class="knob" id="btnFast"  title="Heavier / more bouncy"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
+    <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
   </div>
 
 <script>
@@ -76,7 +76,6 @@
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
              || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);   // iPadOS reports as Mac
   let deferred=null;
-  // Android + desktop Chrome/Edge fire this when the app is installable
   window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferred=e; btn.classList.add('show'); });
   window.addEventListener('appinstalled', ()=>{ btn.classList.remove('show'); deferred=null; });
   if(isIOS) btn.classList.add('show');               // iOS Safari has no prompt — show button -> manual steps
@@ -95,35 +94,22 @@
   const pl=planck, Vec2=pl.Vec2;
   const PM=32;                                       // pixels-per-metre (matches AndEngine)
   const m=(v)=>v/PM;                                 // world-px -> metres
-  let WORLD_W=640, WORLD_H=360;                      // world size — set by the active layout (landscape vs portrait)
+  // ---- #1 "Landscape Classic" — the only layout now (the screenshot the user picked) ----
+  const WORLD_W=640, WORLD_H=360;
 
   // ----- assets (the original gfx) -----
   const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
   const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
   function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
+  // spawn coordinates (top-left in the 640x360 world)
+  const npx10=[296,408,296,408,352], npy10=[164,164,71,71,-22];   // ten-triangles (middle), fall in from here
+  const HOURX=8, HOURY=70;                                        // hour group (left)
+  const ONES_S=34, ONES_CX=566, ONES_CY=120;                     // minute-ones: dot spacing + cluster centre
 
-  // ---- two layouts: wide for laptops/desktops, tall for upright phones ----
-  // LAND keeps the original 640x360 field exactly (hour left, colon, minutes right).
-  // PORT reads like a real clock too — hour : minutes ACROSS — but in a tall 600x1180 field
-  // so it fills an upright phone: the clock forms across the lower area, dots rain from above.
-  const LAND={ W:640, H:360,
-    walls:[[0,357,640,3],[0,0,640,3],[0,0,3,360],[637,0,3,360]],
-    obstacles:[[250,140,20,20],[250,220,20,20]],
-    pins:[[232,150,13],[232,210,13]],
-    colon:[[232,150],[232,210]], colonR:11, shelf:null,
-    hourX:8, hourY:70, hourCenter:false,
-    npx10:[296,408,296,408,352], npy10:[164,164,71,71,-22], tenSize:104,
-    onesCX:566, onesCY:120, onesS:34 };
-  const PORT={ W:600, H:1180,                                  // tall field; same H:MM reading as landscape
-    walls:[[0,1177,600,3],[0,0,600,3],[0,0,3,1180],[597,0,3,1180]],
-    obstacles:[],
-    pins:[[232,1035,14],[232,1105,14]],                        // solid colon dots (between hour and minutes)
-    colon:[[232,1035],[232,1105]], colonR:14, shelf:null,      // colon sits at digit height, like a clock
-    hourX:8, hourY:850, hourCenter:false,                      // hour on the LEFT, like a clock
-    npx10:[296,408,296,408,352], npy10:[960,960,860,860,770], tenSize:104,
-    onesCX:566, onesCY:880, onesS:34 };                        // minutes on the RIGHT
-  let L=LAND;                                        // active layout (set on load / orientation change)
-  function pickLayout(){ return (window.innerWidth/window.innerHeight) < 1.0 ? PORT : LAND; }
+  // the two white colon squares (centre x, centre y) — SOLID so dots bounce off them
+  const COLON=[[232,150],[232,210]];
+  const COLON_HALF=14;     // physics half-size (square) — a touch bigger so dots never sink in
+  const COLON_DRAW=13;     // drawn half-size
 
   // canonical ColorMyMath number-line shapes for the minute ONES (grid offsets, unit = a dot)
   const SHAPES={
@@ -131,13 +117,12 @@
     2:[[-0.5,0],[0.5,0]],
     3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],                       // triangle
     4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],           // square
-    5:[[0,-1],[-0.5,0],[0.5,0],[-0.5,1],[0.5,1]],              // house
+    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],                   // ColorMyMath 5: THREE on the bottom, TWO on top
     6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],      // triangle of 6
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // flower (centre + 6)
     8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square with the middle missing
     9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3x3
   };
-  // (minute-ones spacing + cluster centre now live in the active layout L: L.onesS, L.onesCX, L.onesCY)
 
   const IMG={};
   function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
@@ -148,24 +133,19 @@
 
   // ----- physics -----
   let pDensity=4.0, pElasticity=1.0, pFriction=0.0;
-  let SLOWMO=0.5;                                    // <1 = slow motion (everything falls/tumbles slower)
+  let SLOWMO=0.7;                                    // <1 = slow motion; higher = faster (user wanted #1 a bit faster)
   const world=pl.World(Vec2(0, 3.0));                // gravity DOWN (y increases downward)
-  let statics=null;                                  // one static body holds the walls/obstacles for the active layout
+  const statics=world.createBody();                  // one static body holds all the walls + solid colon
   function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
-  function pin(cx,cy,r){ statics.createFixture(pl.Circle(m(r), Vec2(m(cx),m(cy))), {density:1,friction:0,restitution:1}); }
-  // (re)build the walls/obstacles for layout L — called on load and whenever orientation flips
-  function buildStatics(){
-    if(statics) world.destroyBody(statics);
-    statics=world.createBody();
-    for(const w of L.walls) box(w[0],w[1],w[2],w[3]);
-    for(const o of L.obstacles) box(o[0],o[1],o[2],o[3]);
-    if(L.shelf) box(L.shelf[0],L.shelf[1],L.shelf[2],L.shelf[3]);   // portrait: ledge dividing hour (top) from minutes (below)
-    for(const p of L.pins) pin(p[0],p[1],p[2]);                     // landscape: solid colon dots
-  }
+  // walls + the two middle bumpers, exactly as the original
+  box(0,357,640,3); box(0,0,640,3); box(0,0,3,360); box(637,0,3,360);
+  box(250,140,20,20); box(250,220,20,20);
+  // the colon squares are SOLID obstacles — the falling dots collide with them, they don't float through
+  for(const c of COLON) box(c[0]-COLON_HALF, c[1]-COLON_HALF, COLON_HALF*2, COLON_HALF*2);
 
   let sprites=[];   // {body, img, size, group}
   function clearGroup(g){ for(let i=sprites.length-1;i>=0;i--){ if(sprites[i].group===g){ world.destroyBody(sprites[i].body); sprites.splice(i,1); } } }
-  function addSprite(name, x, y, size, shape, group){
+  function addSprite(name, x, y, size, shape, group, still){
     const img=IMG[name]; if(!img) return;
     const fd={density:pDensity, friction:pFriction, restitution:pElasticity};
     const b=world.createDynamicBody(Vec2(m(x+size/2), m(y+size/2)));
@@ -175,21 +155,36 @@
     } else {                            // full-size circle so nothing visually overlaps
       b.createFixture(pl.Circle(m(size*0.5)), fd);
     }
-    b.setAngularVelocity((Math.random()-0.5)*1.5);
+    if(still){ b.setType('static'); }   // frozen mode: the piece is locked in place, centred and still
+    else b.setAngularVelocity((Math.random()-0.5)*1.5);
     sprites.push({body:b, img, size, group});
   }
 
   // ----- build the time as quantities; each group updates on its own (no full reset / repeat) -----
   let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1, frozen=false;
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
-  function spawnHour(h){ const size=h>=5?150:110; const x=L.hourCenter?(L.W-size)/2:L.hourX; addSprite(hourImg(h), x, L.hourY, size, 'circle', 'hour'); }
+  function spawnHour(h){ addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110, 'circle', 'hour'); }
   // tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
-  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, L.npx10[i], L.npy10[i], L.tenSize, 'triangle', 'tens'); }
+  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, npx10[i], npy10[i], 104, 'triangle', 'tens'); }
   // ones: that many single dots, coloured by the ones digit
-  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, L.onesCX+o[0]*L.onesS-15, L.onesCY+o[1]*L.onesS-15, 30, 'circle', 'ones'); }
+  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, ONES_CY+o[1]*ONES_S-15, 30, 'circle', 'ones'); }
   function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
-  // only re-drop the part that actually changed — the rest keeps tumbling
+
+  // ----- frozen mode: a clean, centred, STILL clock (everything snapped to tidy rest spots, no physics) -----
+  const FZ_TENX=[296,408,296,408,352], FZ_TENY=[194,194,101,101,8];   // on-screen tidy ten-triangle cluster
+  function spawnFrozen(){
+    const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones');
+    const hs=t.h>=5?150:110;
+    addSprite(hourImg(t.h), 22, 357-hs, hs, 'circle', 'hour', true);                 // hour resting on the floor, left
+    const name=TENS[Math.max(0,t.tens-1)];
+    for(let i=0;i<t.tens;i++) addSprite(name, FZ_TENX[i], FZ_TENY[i], 104, 'triangle', 'tens', true);
+    if(t.ones){ const col=ONES[t.ones]; for(const o of SHAPES[t.ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, 150+o[1]*ONES_S-15, 30, 'circle', 'ones', true); }
+    lastH=t.h; lastTens=t.tens; lastOnes=t.ones;
+  }
+
+  // only re-drop the part that actually changed — the rest keeps tumbling (or, if frozen, re-snap tidily)
   function checkTime(){ const t=curT();
+    if(frozen){ if(t.h!==lastH||t.tens!==lastTens||t.ones!==lastOnes) spawnFrozen(); return; }
     if(t.h!==lastH){ clearGroup('hour'); spawnHour(t.h); lastH=t.h; }
     if(t.tens!==lastTens){ clearGroup('tens'); spawnTens(t.tens); lastTens=t.tens; }
     if(t.ones!==lastOnes){ clearGroup('ones'); spawnOnes(t.ones); lastOnes=t.ones; }
@@ -205,21 +200,18 @@
     fit=Math.min(CW/WORLD_W, CH/WORLD_H);
     offx=(CW-WORLD_W*fit)/2; offy=(CH-WORLD_H*fit)/2;
   }
-  // switch the whole field between landscape and portrait when the screen orientation flips
-  function applyLayout(newL){ L=newL; WORLD_W=L.W; WORLD_H=L.H; buildStatics(); resize(); simMs=Date.now(); respawnAll(); }
-  window.addEventListener('resize', ()=>{ const want=pickLayout(); if(want!==L) applyLayout(want); else resize(); });
+  window.addEventListener('resize', resize);
 
   let lastT=performance.now();
   function frame(t){
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     simMs += dt*1000;
     checkTime();
-    if(!frozen) world.step(SLOWMO/60, 8, 3);   // SLOWMO<1 = slow motion (frozen = static clock, no physics)
+    if(!frozen) world.step(SLOWMO/60, 8, 3);   // frozen = static clock, no physics
 
     ctx.clearRect(0,0,CW,CH);
-    // play-field backdrop (the 640x360 wallpaper area)
     ctx.save(); ctx.translate(offx,offy); ctx.scale(fit,fit);
-    ctx.fillStyle='#0d1b2e'; ctx.fillRect(0,0,WORLD_W,WORLD_H);
+    ctx.fillStyle='#0d1b2e'; ctx.fillRect(0,0,WORLD_W,WORLD_H);   // play-field backdrop
     for(const s of sprites){
       const p=s.body.getPosition(), a=s.body.getAngle();
       const x=p.x*PM, y=p.y*PM;
@@ -229,48 +221,49 @@
       ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
       ctx.restore();
     }
-    if(L.colon){
-      // the two clock-colon dots — digital-clock look, in BOTH layouts
-      // (portrait keeps an invisible physics shelf to hold the hour up — it is no longer drawn as a line)
-      ctx.fillStyle='#e6eefb';
-      for(const c of L.colon){ ctx.beginPath(); ctx.arc(c[0],c[1],L.colonR||11,0,7); ctx.fill(); }
-    }
+    // the two white colon SQUARES — like a digital clock, solid (dots bounce off them)
+    ctx.fillStyle='#e6eefb';
+    for(const c of COLON){ ctx.fillRect(c[0]-COLON_DRAW, c[1]-COLON_DRAW, COLON_DRAW*2, COLON_DRAW*2); }
     ctx.restore();
     requestAnimationFrame(frame);
   }
 
   // ----- interaction -----
-  // tap = drop the time; press & hold = show the controls (and ask for motion access)
+  // tap = drop the time; press & hold = show the controls (and turn on tilt)
   const knobs=document.querySelector('.knobs');
   let pressTimer=null, longPressed=false, hideTimer=null;
-  function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 6000); }
+  function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 7000); }
   canvas.addEventListener('pointerdown', ()=>{ longPressed=false; clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
   canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); respawnAll(); } });
   canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
-  // accelerometer: the dots fall the way the phone is actually tilted (real device gravity)
-  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(-a.x, a.y)); }
+  // accelerometer: tilt the phone and the dots fall that way.
+  // FIX: tilt LEFT now sends them LEFT (the sign was flipped before, so they went the wrong way).
+  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(a.x, a.y)); }
   let motionOn=false;
+  const needsPerm = (typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
   function enableMotion(){
-    if(motionOn) return; motionOn=true;
-    if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
-      DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('devicemotion', onMotion); }).catch(()=>{ motionOn=false; });
-    } else {
-      window.addEventListener('devicemotion', onMotion);
-    }
+    if(motionOn) return;
+    if(needsPerm){   // iOS: must ask, and only from a tap
+      DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{});
+    } else { motionOn=true; window.addEventListener('devicemotion', onMotion); }
   }
-  document.getElementById('btnReset').addEventListener('click', ()=>{ pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); simMs=Date.now(); respawnAll(); });
-  document.getElementById('btnSlow').addEventListener('click', ()=>{ pDensity=Math.max(0.25,pDensity-0.75); pElasticity=Math.max(0,pElasticity-0.05); respawnAll(); });
-  document.getElementById('btnFast').addEventListener('click', ()=>{ pDensity+=4; pElasticity+=0.06; respawnAll(); });
+  // Android / desktop don't need permission — start listening right away so tilt just works
+  if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
+
+  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=0.7; pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); respawnAll(); showKnobs(); });
+  document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.2, SLOWMO-0.15); showKnobs(); });   // slower
+  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(1.6, SLOWMO+0.15); showKnobs(); });   // faster
   document.getElementById('btnFreeze').addEventListener('click', ()=>{
     frozen=!frozen;
     document.getElementById('btnFreeze').classList.toggle('active', frozen);
-    if(frozen){ simMs=Date.now(); respawnAll(); }   // snap the numbers to their clean positions and hold
+    if(frozen) spawnFrozen();                         // snap to the clean centred layout and hold
+    else { simMs=Date.now(); respawnAll(); }          // let it tumble again
     showKnobs();
   });
 
   // ----- go -----
-  Promise.all([...needed].map(load)).then(()=>{ L=pickLayout(); WORLD_W=L.W; WORLD_H=L.H; buildStatics(); resize(); respawnAll(); requestAnimationFrame(frame); });
+  Promise.all([...needed].map(load)).then(()=>{ resize(); respawnAll(); requestAnimationFrame(frame); });
 
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;

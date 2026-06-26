@@ -56,10 +56,10 @@
   const TEN=(function(){const p=[];let y=0;for(const c of [4,3,2,1]){const x0=-(c-1);for(let i=0;i<c;i++)p.push([x0+2*i,y]);y-=SQ3;}return p;})();
 
   // ----- physics -----
-  let pDensity=3.0, pElasticity=0.55, SLOWMO=0.8;
-  const world=pl.World(Vec2(0, 6.0));            // gravity DOWN
+  let pDensity=4.0, pElasticity=1.0, SLOWMO=0.7;   // bouncy & lively, like About Time (which the user liked)
+  const world=pl.World(Vec2(0, 3.0));            // gravity DOWN
   const statics=world.createBody();
-  function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{restitution:0.4}); }
+  function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{restitution:1.0}); }
   box(0,WORLD_H-3,WORLD_W,3); box(0,0,WORLD_W,3); box(0,0,3,WORLD_H); box(WORLD_W-3,0,3,WORLD_H);   // walls
   // the two colon squares in the middle are SOLID — the number-groups bounce off them
   const COLON=[[214,150],[214,210]], COLON_HALF=13;
@@ -73,7 +73,7 @@
     const drawn=[];
     for(const d of dotsRU){
       const ox=d.dx*R, oy=d.dy*R;
-      b.createFixture(pl.Circle(Vec2(m(ox), m(oy)), m(R)), {density:pDensity, friction:0.2, restitution:pElasticity});
+      b.createFixture(pl.Circle(Vec2(m(ox), m(oy)), m(R)), {density:pDensity, friction:0.0, restitution:pElasticity});
       drawn.push({ox, oy, color:d.color});
     }
     b.setAngularVelocity((Math.random()-0.5)*2);
@@ -92,11 +92,11 @@
   }
   function spawnMinutes(min){
     const tens=Math.floor(min/10), ones=min%10;
+    const ct=COLOR[tens]||COLOR[9];                                                  // ALL tens share the tens-digit colour
     for(let i=0;i<tens;i++){                                                          // each ten = its own bouncing triangle
-      const c=COLOR[i+1]||COLOR[9];
-      makeGroup(TEN.map(o=>({dx:o[0],dy:o[1],color:c})), 300+i*58, 36+(i%2)*34, 'min');
+      makeGroup(TEN.map(o=>({dx:o[0],dy:o[1],color:ct})), 300+i*58, 36+(i%2)*34, 'min');
     }
-    if(ones){ const c=COLOR[ones]; makeGroup(ONES[ones].map(o=>({dx:o[0],dy:o[1],color:c})), 580, 60, 'min'); }
+    if(ones){ const c=COLOR[ones]; makeGroup(ONES[ones].map(o=>({dx:o[0],dy:o[1],color:c})), 580, 60, 'min'); }   // ones = ones-digit colour -> 2 colours max
   }
   function respawnAll(){ const t=curT(); clearTag('hour'); clearTag('min'); spawnHour(t.h); spawnMinutes(t.m); lastH=t.h; lastMin=t.m; }
   function checkTime(){ const t=curT();

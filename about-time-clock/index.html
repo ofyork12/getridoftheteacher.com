@@ -238,8 +238,8 @@
   canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
   // accelerometer: tilt the phone and the dots fall that way.
-  // FIX: tilt LEFT now sends them LEFT (the sign was flipped before, so they went the wrong way).
-  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(a.x, a.y)); }
+  // tilt LEFT sends them LEFT (gravity x must be -a.x so the low edge pulls the dots toward it).
+  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(-a.x, a.y)); }
   let motionOn=false;
   const needsPerm = (typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
   function enableMotion(){

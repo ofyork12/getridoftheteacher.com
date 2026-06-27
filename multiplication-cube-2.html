@@ -60,21 +60,28 @@ let N=3;
 const R=0.5, STEP=2*R;
 
 let targetLen=12;
+let dots=[];        // {mesh, gy}  — gy = vertical layer index (for layered coloring)
+let edgeC=3;        // edge of the current biggest full cube (drives the solid color)
 
 // Build TOTAL of n spheres: the biggest full cube we can, then leftover dots
 // as a flat wall stacked on top, filled row-by-row from a corner so the
 // partial shape stays recognizable (e.g. 9 leftover on a 3-cube = a 3×3 wall).
 function buildShape(n){
   while(group.children.length) group.remove(group.children[0]);
+  dots=[];
   n=Math.max(1, Math.round(n));
   N=n;
   const c=Math.floor(Math.cbrt(n)+1e-9);      // edge of the biggest full cube
+  edgeC=c;
   const base=c*c*c, rem=n-base;
-  const col=hex2three(COLOR[((c-1)%9)+1]||'#ffffff');   // color by the cube's number
   const geo=new THREE.SphereGeometry(R,20,16);
-  const mat=new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:0.12,shininess:70});
   const o=(c-1)*STEP/2;                        // center the cube on origin
-  const add=(x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x*STEP-o,y*STEP-o,z*STEP-o);m.castShadow=true;group.add(m);};
+  const add=(x,y,z)=>{
+    const mat=new THREE.MeshPhongMaterial({emissiveIntensity:0.12,shininess:70});
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(x*STEP-o,y*STEP-o,z*STEP-o); m.castShadow=true;
+    group.add(m); dots.push({mesh:m, gy:y});
+  };
   // full cube
   for(let xi=0;xi<c;xi++) for(let yi=0;yi<c;yi++) for(let zi=0;zi<c;zi++) add(xi,yi,zi);
   // leftover wall(s) on top (+Y), corner-first
@@ -88,6 +95,18 @@ function buildShape(n){
   // fit camera
   const height=c+Math.ceil(rem/(c*c));
   targetLen=Math.max(4, Math.max(c,height)*STEP*2.6);
+}
+
+// Color the dots. 'solid' = one number-color (while spinning).
+// 'layered' = each vertical layer takes the next number-color (1 red, 2 orange,
+// 3 yellow …) so you can READ the cube's size by counting the colors at rest.
+function applyColors(mode){
+  dots.forEach(d=>{
+    const idx = (mode==='layered') ? (d.gy%9)+1 : ((edgeC-1)%9)+1;
+    const col = hex2three(COLOR[idx]||'#ffffff');
+    d.mesh.material.color.copy(col);
+    d.mesh.material.emissive.copy(col);
+  });
 }
 
 // ── Number pad 1–9 ──
@@ -104,6 +123,7 @@ function select(i){
   btns.forEach((b,idx)=>b.classList.toggle('on', idx+1===i));
   document.getElementById('any').value='';
   buildShape(i*i*i);                 // pad N → a full N×N×N cube
+  startSpin();
 }
 
 // Free-type any total
@@ -113,17 +133,28 @@ anyIn.addEventListener('input',()=>{
   if(!v||v<1) return;
   btns.forEach(b=>b.classList.remove('on'));
   buildShape(v);
+  startSpin();
 });
+
+// ── Spin state machine: spin (solid color) → ease to a stop → settle into
+//    layered colors so the number is readable on a flat screen. ──
+let phase='spin', spinSpeed=0.03;
+function startSpin(){ phase='spin'; spinSpeed=0.03; applyColors('solid'); }
 
 // ── Orbit: mouse + touch ──
 let rotX=-0.4, rotY=0.6, dist=1;
-let lastX=0,lastY=0,lastD=0,dragging=false;
+let lastX=0,lastY=0,lastD=0,dragging=false,moved=0;
 const el=renderer.domElement;
-el.addEventListener('pointerdown',e=>{dragging=true;autoSpin=false;lastX=e.clientX;lastY=e.clientY;});
-window.addEventListener('pointerup',()=>dragging=false);
+el.addEventListener('pointerdown',e=>{dragging=true;moved=0;phase='rest';lastX=e.clientX;lastY=e.clientY;});
+window.addEventListener('pointerup',()=>{
+  if(dragging && moved<6) startSpin();   // a tap (not a drag) re-spins
+  dragging=false;
+});
 window.addEventListener('pointermove',e=>{
   if(!dragging) return;
-  rotY+=(e.clientX-lastX)*0.012; rotX+=(e.clientY-lastY)*0.012;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  moved+=Math.abs(dx)+Math.abs(dy);
+  rotY+=dx*0.012; rotX+=dy*0.012;
   lastX=e.clientX; lastY=e.clientY;
 });
 el.addEventListener('touchstart',e=>{if(e.touches.length===2){lastD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
@@ -134,9 +165,6 @@ el.addEventListener('touchmove',e=>{
   }
 },{passive:true});
 el.addEventListener('wheel',e=>{dist*=1+e.deltaY*0.001; dist=Math.max(0.4,Math.min(3,dist));},{passive:true});
-
-// ── Auto-spin when idle ──
-let autoSpin=true;
 
 // ── Resize ──
 function resize(){
@@ -149,7 +177,17 @@ window.addEventListener('resize',resize); resize();
 // ── Animate ──
 function animate(){
   requestAnimationFrame(animate);
-  if(autoSpin) rotY+=0.006;
+  if(phase==='spin'){
+    rotY+=spinSpeed;
+    spinSpeed*=0.985;                       // gradually slow down
+    if(spinSpeed<0.0015){                   // come to rest
+      phase='settle';
+      applyColors('layered');               // show readable colors
+    }
+  } else if(phase==='settle'){
+    rotX+=(-0.5-rotX)*0.08;                 // gentle tilt so layers are visible
+    if(Math.abs(rotX+0.5)<0.01){ rotX=-0.5; phase='rest'; }
+  }
   group.rotation.x=rotX; group.rotation.y=rotY;
   cam.position.setLength(cam.position.length()*0.9 + targetLen*dist*0.1);
   cam.lookAt(0,0,0);

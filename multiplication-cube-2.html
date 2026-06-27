@@ -1,40 +1,37 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ColorMyMath · 3D Multiplication</title>
+<title>ColorMyMath · 3D Cubes</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:#111;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:none}
-  #ui{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 16px 10px}
+  #ui{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 16px 10px}
   #title{color:#fff;font-size:clamp(18px,4vw,28px);font-weight:bold;text-shadow:0 2px 8px #000}
   #eq{color:#ffd700;font-size:clamp(22px,6vw,42px);font-weight:bold;letter-spacing:2px;text-shadow:0 2px 12px #000a}
-  #controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
-  .lbl{color:#aaa;font-size:14px}
-  .spin{display:flex;align-items:center;gap:4px}
-  input[type=range]{width:80px;accent-color:#ffd700}
-  .val{color:#ffd700;font-size:16px;min-width:18px;text-align:center}
+  #pad{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:420px}
+  .num{width:44px;height:44px;border:none;border-radius:10px;font:bold 22px Georgia;
+       color:#fff;background:#2a2a2a;cursor:pointer;box-shadow:0 2px 6px #0006;transition:transform .08s}
+  .num:active{transform:scale(.92)}
+  .num.on{box-shadow:0 0 0 3px #fff, 0 3px 10px #000a}
   #hint{color:#777;font-size:12px;padding-bottom:2px}
   canvas{display:block}
 </style>
 </head><body>
 <div id="ui">
-  <div id="title">ColorMyMath 3D</div>
-  <div id="eq">4 × 4 × 4 = 64</div>
-  <div id="controls">
-    <div class="spin"><span class="lbl">X</span><input type="range" id="sx" min="1" max="9" value="4"><span class="val" id="vx">4</span></div>
-    <div class="spin"><span class="lbl">Y</span><input type="range" id="sy" min="1" max="9" value="4"><span class="val" id="vy">4</span></div>
-    <div class="spin"><span class="lbl">Z</span><input type="range" id="sz" min="1" max="9" value="4"><span class="val" id="vz">4</span></div>
-  </div>
-  <div id="hint">drag to spin · pinch to zoom</div>
+  <div id="title">ColorMyMath 3D — Cubes</div>
+  <div id="eq">3 × 3 × 3 = 27</div>
+  <div id="pad"></div>
+  <div id="hint">tap a number · drag to spin · pinch to zoom</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
 <script>
-// ColorMyMath colors
-const COLOR={1:'#FF7FD4',2:'#0F8A2E',3:'#ED1C24',4:'#44C8F5',5:'#5BD11E',6:'#2E3192',7:'#F7941D',8:'#FFF200',9:'#C724B1'};
+// ── Canonical ColorMyMath colors (1 red … 9 sky blue) ──
+const COLOR={1:'#ed1c24',2:'#f7941d',3:'#FFF200',4:'#22b14c',5:'#0d3df5',
+             6:'#7030a0',7:'#803004',8:'#f070aa',9:'#00bff3'};
 const hex2three=h=>new THREE.Color(h);
 
-// Scene setup
+// ── Scene ──
 const scene=new THREE.Scene();
 scene.background=new THREE.Color('#111');
 const cam=new THREE.PerspectiveCamera(45,1,0.1,1000);
@@ -43,85 +40,64 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.shadowMap.enabled=true;
 document.body.appendChild(renderer.domElement);
 
-// Lighting
+// ── Lighting ──
 scene.add(new THREE.AmbientLight(0xffffff,0.55));
 const sun=new THREE.DirectionalLight(0xffffff,1.2);
 sun.position.set(10,18,20); sun.castShadow=true; scene.add(sun);
 const fill=new THREE.DirectionalLight(0x8899ff,0.4);
 fill.position.set(-10,-8,-10); scene.add(fill);
 
-// Dot group
+// ── Cube of touching spheres ──
 const group=new THREE.Group(); scene.add(group);
-let nx=4,ny=4,nz=4;
+let N=3;
 
-function buildCube(x,y,z){
+// Spheres TOUCH tangentially: centers one diameter apart (radius 0.5, step 1.0).
+const R=0.5, STEP=2*R;
+
+function buildCube(n){
   while(group.children.length) group.remove(group.children[0]);
-  nx=x; ny=y; nz=z;
-  const geo=new THREE.SphereGeometry(0.44,16,12);
-  const step=1.1;
-  const ox=(x-1)*step/2, oy=(y-1)*step/2, oz=(z-1)*step/2;
-  for(let xi=0;xi<x;xi++) for(let yi=0;yi<y;yi++) for(let zi=0;zi<z;zi++){
-    // color by which dimension "layer" — zi picks the color (depth = Z dimension)
-    const layerColor = hex2three(COLOR[(zi%9)+1]);
-    // edge dots brighter, interior slightly dimmer for depth feel
-    const edge = xi===0||xi===x-1||yi===0||yi===y-1||zi===0||zi===z-1;
-    const mat=new THREE.MeshPhongMaterial({
-      color: layerColor,
-      emissive: layerColor,
-      emissiveIntensity: edge ? 0.18 : 0.06,
-      shininess: 80,
-      transparent: !edge,
-      opacity: edge ? 1.0 : 0.55,
-    });
-    const mesh=new THREE.Mesh(geo,mat);
-    mesh.position.set(xi*step-ox, yi*step-oy, zi*step-oz);
-    mesh.castShadow=true;
-    group.add(mesh);
+  N=n;
+  const col=hex2three(COLOR[n]||'#ffffff');
+  const geo=new THREE.SphereGeometry(R,20,16);
+  const mat=new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:0.12,shininess:70});
+  const o=(n-1)*STEP/2;                       // center the cube on origin
+  for(let xi=0;xi<n;xi++) for(let yi=0;yi<n;yi++) for(let zi=0;zi<n;zi++){
+    const m=new THREE.Mesh(geo,mat);
+    m.position.set(xi*STEP-o, yi*STEP-o, zi*STEP-o);
+    m.castShadow=true;
+    group.add(m);
   }
-  // axis labels as sprites
-  addLabel('+X', (x-1)*step/2+1.4, 0, 0, COLOR[nx]||'#fff');
-  addLabel('+Y', 0, (y-1)*step/2+1.4, 0, COLOR[ny]||'#fff');
-  addLabel('+Z', 0, 0, (z-1)*step/2+1.4, COLOR[nz]||'#fff');
   updateEq();
-  fitCamera(x,y,z);
-}
-
-function addLabel(text, lx, ly, lz, color){
-  const cv=document.createElement('canvas'); cv.width=128; cv.height=64;
-  const c=cv.getContext('2d');
-  c.clearRect(0,0,128,64);
-  c.font='bold 36px Georgia'; c.fillStyle=color; c.textAlign='center'; c.textBaseline='middle';
-  c.fillText(text,64,32);
-  const tex=new THREE.CanvasTexture(cv);
-  const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});
-  const sp=new THREE.Sprite(mat); sp.scale.set(1.2,0.6,1);
-  sp.position.set(lx,ly,lz); group.add(sp);
-}
-
-function fitCamera(x,y,z){
-  const maxDim=Math.max(x,y,z)*1.1*1.1;
-  cam.position.setLength(maxDim*3.2);
-  cam.lookAt(0,0,0);
+  fitCamera(n);
 }
 
 function updateEq(){
-  document.getElementById('eq').textContent=`${nx} × ${ny} × ${nz} = ${nx*ny*nz}`;
+  document.getElementById('eq').textContent=`${N} × ${N} × ${N} = ${N*N*N}`;
 }
 
-// Sliders
-['x','y','z'].forEach(ax=>{
-  const sl=document.getElementById('s'+ax), vl=document.getElementById('v'+ax);
-  sl.addEventListener('input',()=>{
-    vl.textContent=sl.value;
-    buildCube(+document.getElementById('sx').value,+document.getElementById('sy').value,+document.getElementById('sz').value);
-  });
-});
+let targetLen=12;
+function fitCamera(n){ targetLen=Math.max(4, n*STEP*2.6); }
 
-// Orbit: mouse + touch
+// ── Number pad 1–9 ──
+const pad=document.getElementById('pad');
+const btns=[];
+for(let i=1;i<=9;i++){
+  const b=document.createElement('button');
+  b.className='num'; b.textContent=i; b.style.background=COLOR[i];
+  b.style.color = (i===3) ? '#000' : '#fff';   // yellow needs a dark numeral
+  b.addEventListener('click',()=>{select(i);});
+  pad.appendChild(b); btns.push(b);
+}
+function select(i){
+  btns.forEach((b,idx)=>b.classList.toggle('on', idx+1===i));
+  buildCube(i);
+}
+
+// ── Orbit: mouse + touch ──
 let rotX=-0.4, rotY=0.6, dist=1;
 let lastX=0,lastY=0,lastD=0,dragging=false;
 const el=renderer.domElement;
-el.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;lastY=e.clientY;});
+el.addEventListener('pointerdown',e=>{dragging=true;autoSpin=false;lastX=e.clientX;lastY=e.clientY;});
 window.addEventListener('pointerup',()=>dragging=false);
 window.addEventListener('pointermove',e=>{
   if(!dragging) return;
@@ -137,11 +113,10 @@ el.addEventListener('touchmove',e=>{
 },{passive:true});
 el.addEventListener('wheel',e=>{dist*=1+e.deltaY*0.001; dist=Math.max(0.4,Math.min(3,dist));},{passive:true});
 
-// Auto-spin when idle
+// ── Auto-spin when idle ──
 let autoSpin=true;
-el.addEventListener('pointerdown',()=>autoSpin=false);
 
-// Resize
+// ── Resize ──
 function resize(){
   const w=window.innerWidth, h=window.innerHeight;
   renderer.setSize(w,h); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -149,14 +124,15 @@ function resize(){
 }
 window.addEventListener('resize',resize); resize();
 
-// Animate
+// ── Animate ──
 function animate(){
   requestAnimationFrame(animate);
   if(autoSpin) rotY+=0.006;
   group.rotation.x=rotX; group.rotation.y=rotY;
-  cam.position.setLength(cam.position.length()*0.9 + Math.max(4,Math.max(nx,ny,nz)*3.2)*dist*0.1);
+  cam.position.setLength(cam.position.length()*0.9 + targetLen*dist*0.1);
+  cam.lookAt(0,0,0);
   renderer.render(scene,cam);
 }
-buildCube(4,4,4);
+select(3);
 animate();
 </script></body></html>

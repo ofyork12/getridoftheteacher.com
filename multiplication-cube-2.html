@@ -13,6 +13,10 @@
        color:#fff;background:#2a2a2a;cursor:pointer;box-shadow:0 2px 6px #0006;transition:transform .08s}
   .num:active{transform:scale(.92)}
   .num.on{box-shadow:0 0 0 3px #fff, 0 3px 10px #000a}
+  #anyrow{display:flex;gap:8px;align-items:center}
+  .lbl{color:#aaa;font-size:14px}
+  #any{width:80px;height:34px;border:none;border-radius:8px;background:#2a2a2a;color:#fff;
+       font:bold 18px Georgia;text-align:center}
   #hint{color:#777;font-size:12px;padding-bottom:2px}
   canvas{display:block}
 </style>
@@ -21,6 +25,7 @@
   <div id="title">ColorMyMath 3D — Cubes</div>
   <div id="eq">3 × 3 × 3 = 27</div>
   <div id="pad"></div>
+  <div id="anyrow"><span class="lbl">or type a total:</span><input id="any" type="number" min="1" inputmode="numeric" placeholder="#"></div>
   <div id="hint">tap a number · drag to spin · pinch to zoom</div>
 </div>
 
@@ -54,29 +59,36 @@ let N=3;
 // Spheres TOUCH tangentially: centers one diameter apart (radius 0.5, step 1.0).
 const R=0.5, STEP=2*R;
 
-function buildCube(n){
+let targetLen=12;
+
+// Build TOTAL of n spheres: the biggest full cube we can, then leftover dots
+// as a flat wall stacked on top, filled row-by-row from a corner so the
+// partial shape stays recognizable (e.g. 9 leftover on a 3-cube = a 3×3 wall).
+function buildShape(n){
   while(group.children.length) group.remove(group.children[0]);
+  n=Math.max(1, Math.round(n));
   N=n;
-  const col=hex2three(COLOR[n]||'#ffffff');
+  const c=Math.floor(Math.cbrt(n)+1e-9);      // edge of the biggest full cube
+  const base=c*c*c, rem=n-base;
+  const col=hex2three(COLOR[((c-1)%9)+1]||'#ffffff');   // color by the cube's number
   const geo=new THREE.SphereGeometry(R,20,16);
   const mat=new THREE.MeshPhongMaterial({color:col,emissive:col,emissiveIntensity:0.12,shininess:70});
-  const o=(n-1)*STEP/2;                       // center the cube on origin
-  for(let xi=0;xi<n;xi++) for(let yi=0;yi<n;yi++) for(let zi=0;zi<n;zi++){
-    const m=new THREE.Mesh(geo,mat);
-    m.position.set(xi*STEP-o, yi*STEP-o, zi*STEP-o);
-    m.castShadow=true;
-    group.add(m);
+  const o=(c-1)*STEP/2;                        // center the cube on origin
+  const add=(x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x*STEP-o,y*STEP-o,z*STEP-o);m.castShadow=true;group.add(m);};
+  // full cube
+  for(let xi=0;xi<c;xi++) for(let yi=0;yi<c;yi++) for(let zi=0;zi<c;zi++) add(xi,yi,zi);
+  // leftover wall(s) on top (+Y), corner-first
+  for(let k=0;k<rem;k++){
+    const layer=Math.floor(k/(c*c)), idx=k%(c*c);
+    add(idx%c, c+layer, Math.floor(idx/c));
   }
-  updateEq();
-  fitCamera(n);
+  // equation
+  const eq=document.getElementById('eq');
+  eq.textContent = rem===0 ? `${c} × ${c} × ${c} = ${n}` : `${c}×${c}×${c} + ${rem} = ${n}`;
+  // fit camera
+  const height=c+Math.ceil(rem/(c*c));
+  targetLen=Math.max(4, Math.max(c,height)*STEP*2.6);
 }
-
-function updateEq(){
-  document.getElementById('eq').textContent=`${N} × ${N} × ${N} = ${N*N*N}`;
-}
-
-let targetLen=12;
-function fitCamera(n){ targetLen=Math.max(4, n*STEP*2.6); }
 
 // ── Number pad 1–9 ──
 const pad=document.getElementById('pad');
@@ -90,8 +102,18 @@ for(let i=1;i<=9;i++){
 }
 function select(i){
   btns.forEach((b,idx)=>b.classList.toggle('on', idx+1===i));
-  buildCube(i);
+  document.getElementById('any').value='';
+  buildShape(i*i*i);                 // pad N → a full N×N×N cube
 }
+
+// Free-type any total
+const anyIn=document.getElementById('any');
+anyIn.addEventListener('input',()=>{
+  const v=parseInt(anyIn.value,10);
+  if(!v||v<1) return;
+  btns.forEach(b=>b.classList.remove('on'));
+  buildShape(v);
+});
 
 // ── Orbit: mouse + touch ──
 let rotX=-0.4, rotY=0.6, dist=1;

@@ -258,7 +258,10 @@ function updateHint(){
 }
 
 // ── Orbit: mouse + touch.  A TAP separates one step; a DRAG spins. ──
-let rotX=-0.5, rotY=0.6, dist=1;
+// Resting view: the front face (the ones-shape, e.g. the 7-flower) faces us,
+// turned a little so the rest of the dots behind it also show.
+const REST_RX=-0.32, REST_RY=-0.5;
+let rotX=REST_RX, rotY=REST_RY, dist=1;
 let lastX=0,lastY=0,lastD=0,dragging=false,moved=0;
 const el=renderer.domElement;
 el.addEventListener('pointerdown',e=>{dragging=true;moved=0;lastX=e.clientX;lastY=e.clientY;});
@@ -302,12 +305,18 @@ function animate(){
     d.mesh.position.y += (d.base.y  - d.mesh.position.y)*0.18;
     d.mesh.position.z += (d.base.z  - d.mesh.position.z)*0.18;
   });
+  // No idle spin — it comes to REST showing the front face, turned a little.
+  // Drag to look around; on release it eases back to this readable view.
   if(!dragging){
-    rotX += (-0.5 - rotX)*0.04;              // ease back to a readable tilt
-    if(sep===0) rotY += 0.004;               // gentle idle spin while together
+    rotX += (REST_RX - rotX)*0.05;
+    let dY = REST_RY - rotY;
+    dY = Math.atan2(Math.sin(dY), Math.cos(dY));   // shortest way back, no long unwind
+    rotY += dY*0.05;
   }
   group.rotation.x=rotX; group.rotation.y=rotY;
-  const len = targetLen * (1 + frac*(G-1)*0.9);   // zoom out as it spreads
+  // Fit to screen — on a tall phone (portrait) zoom out so the WHOLE number fits.
+  const fit = Math.max(1, 1.0/cam.aspect);
+  const len = targetLen * (1 + frac*(G-1)*0.9) * fit;   // zoom out as it spreads / on mobile
   cam.position.setLength(cam.position.length()*0.9 + len*dist*0.1);
   cam.lookAt(0,0,0);
   renderer.render(scene,cam);

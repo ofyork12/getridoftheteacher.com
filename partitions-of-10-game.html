@@ -769,6 +769,12 @@
     0: '#ffffff', 1: '#e63946', 2: '#ff6200', 3: '#e6c800', 4: '#00a12c',
     5: '#0066ff', 6: '#7700dd', 7: '#7a3b00', 8: '#ff3fa6', 9: '#38c7ff',
   };
+  // shared "Your colors" palette chosen on the Games page (localStorage, key cmm-colors).
+  // gameplay keys off the numeric VALUE, not the hex, so recoloring is purely visual & safe.
+  try{ const _c=JSON.parse(localStorage.getItem('cmm-colors'));
+    if(_c){ for(let d=1;d<=9;d++) if(_c[d]){ DIGIT_COLORS[d]=_c[d];
+      document.querySelectorAll('.paint-slot[data-value="'+d+'"]').forEach(b=>{ b.dataset.color=_c[d]; b.style.setProperty('--c',_c[d]); }); } }
+  }catch(e){}
   const DIGIT_ARRANGEMENT = {
     0: [1], 1: [1], 2: [2], 3: [1, 2], 4: [2, 2], 5: [2, 3],
     6: [1, 2, 3], 7: [2, 3, 2], 8: [3, 'split', 3], 9: [3, 3, 3],

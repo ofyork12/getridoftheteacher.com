@@ -111,6 +111,8 @@
     };
     const NUMBER_COLOR = {1:'red',2:'orange',3:'yellow',4:'green',5:'blue',
                           6:'magenta',7:'brown',8:'pink',9:'cyan'};
+    // shared "Your colors" palette chosen on the Games page (localStorage, key cmm-colors)
+    try{ const _c=JSON.parse(localStorage.getItem('cmm-colors')); if(_c) for(let d=1;d<=9;d++) if(_c[d]) COLORS[NUMBER_COLOR[d]]=_c[d]; }catch(e){}
     // Colors repeat past ten: 11 is red like 1, and 10 / 20 are red.
     function colorForCount(n){
       const u = n % 10;            // 0 for 10 and 20

@@ -147,7 +147,7 @@ function buildShape(n){
     const mat=new THREE.MeshPhongMaterial({emissiveIntensity:0.12,shininess:70});
     const m=new THREE.Mesh(geo,mat);
     m.position.set(x*STEP-o,y*STEP-o,z*STEP-o); m.castShadow=true;
-    group.add(m); dots.push({mesh:m, gy:y});
+    group.add(m); dots.push({mesh:m, gy:y, grp:0, base:m.position.clone()});
   };
   // full cube
   for(let xi=0;xi<c;xi++) for(let yi=0;yi<c;yi++) for(let zi=0;zi<c;zi++) add(xi,yi,zi);
@@ -175,25 +175,29 @@ function buildShape(n){
   if(shaped){ let mY=0; shaped.forEach(p=>mY=Math.max(mY,Math.abs(p[1]))); height=Math.max(c+1, 2*mY+1); }
   else if(rem>0){ height=c+Math.ceil(rem/(c*c)); }
   targetLen=Math.max(4, height*STEP*2.6);
+  // show it ALREADY colored by place value, all together (readable by color)
+  sep=0;
+  colorByPlace();
+  updateHint();
 }
 
-// Color the dots. 'solid' = one color (while spinning, hides the answer).
-// 'place' = group the balls by PLACE VALUE — never rainbow-by-layer. The UNITS
-// digit is drawn in its ORIGINAL number-line shape on the front (+Z) face
-// (64 → a green 2×2 square for the 4); the higher places fill the rest of the
-// cluster, banded bottom→top (the biggest place on the bottom). So 64 reads as
-// "60 purple + a green 2×2 square", exactly like the number line draws it.
-function applyColors(mode){
+// ── Place-value grouping + separation state ──
+// The number shows up ALREADY colored so the child can read it by color right
+// away. Tapping pulls the place-value groups apart one step at a time — a
+// 3-digit number takes 3 taps to fully separate into hundreds · tens · units.
+let G=1;     // number of place-value groups in the current number
+let sep=0;   // separation step: 0 = together … G = fully pulled apart
+
+// Paint by PLACE VALUE and tag each ball with its group index (grp 0 = biggest
+// place … grp G-1 = units). The UNITS digit is drawn in its ORIGINAL
+// number-line shape on the front (+Z) face (64 → a green 2×2 square for the 4);
+// the higher places fill the rest, banded bottom→top.
+function colorByPlace(){
   const paint=(d,hex)=>{const c=hex2three(hex);d.mesh.material.color.copy(c);d.mesh.material.emissive.copy(c);};
   const groups=placeGroups(N);
-  if(mode==='solid'){
-    const col=groups.length?groups[0].color:'#ffffff';
-    dots.forEach(d=>paint(d,col));
-    return;
-  }
-  const unitsDigit = N%10;
-  // 1 ─ units balls = the number-line shape for that digit, snapped onto the
-  //     front (+Z) face so it stands out as a readable little picture.
+  G=Math.max(1,groups.length);
+  const unitsDigit=N%10;
+  // 1 ─ units balls = the number-line shape for that digit, on the front face
   const unitsSet=new Set();
   if(unitsDigit>0){
     let maxZ=-1e9; dots.forEach(d=>maxZ=Math.max(maxZ,d.mesh.position.z));
@@ -207,15 +211,17 @@ function applyColors(mode){
         if(dd<bd){bd=dd;best=d;} });
       if(best) unitsSet.add(best);
     });
-    unitsSet.forEach(d=>paint(d,DIGIT[unitsDigit]));
+    unitsSet.forEach(d=>{ paint(d,DIGIT[unitsDigit]); d.grp=G-1; });
   }
   // 2 ─ everything else = the higher places (tens, hundreds…), banded bottom→top
   let higher=groups.slice();
   if(unitsDigit>0) higher=higher.slice(0,higher.length-1);   // drop the units group
-  const list=[]; higher.forEach(g=>{ for(let i=0;i<g.count;i++) list.push(g.color); });
+  const list=[], grpList=[];
+  higher.forEach((g,gi)=>{ for(let i=0;i<g.count;i++){ list.push(g.color); grpList.push(gi); } });
   const rest=dots.filter(d=>!unitsSet.has(d))
                  .sort((a,b)=>(a.mesh.position.y-b.mesh.position.y));
-  rest.forEach((d,i)=>paint(d, list[i] || DIGIT[unitsDigit] || '#ffffff'));
+  rest.forEach((d,i)=>{ paint(d, list[i]||DIGIT[unitsDigit]||'#ffffff');
+                        d.grp = (grpList[i]!==undefined)?grpList[i]:(G-1); });
 }
 
 // ── Number pad 1–9 ──
@@ -231,8 +237,7 @@ for(let i=1;i<=9;i++){
 function select(i){
   btns.forEach((b,idx)=>b.classList.toggle('on', idx+1===i));
   document.getElementById('any').value='';
-  buildShape(i*i*i);                 // pad N → a full N×N×N cube
-  startSpin();
+  buildShape(i*i*i);                 // pad N → a full N×N×N cube, already colored
 }
 
 // Free-type any total
@@ -242,21 +247,23 @@ anyIn.addEventListener('input',()=>{
   if(!v||v<1) return;
   btns.forEach(b=>b.classList.remove('on'));
   buildShape(v);
-  startSpin();
 });
 
-// ── Spin state machine: spin (solid color) → ease to a stop → settle into
-//    layered colors so the number is readable on a flat screen. ──
-let phase='spin', spinSpeed=0.03;
-function startSpin(){ phase='spin'; spinSpeed=0.03; applyColors('solid'); }
+// ── Hint text reflects how many taps fully separate the current number ──
+function updateHint(){
+  const h=document.getElementById('hint');
+  h.textContent = G>1
+    ? `tap to separate the colors (${G} taps) · drag to spin`
+    : `tap a number · drag to spin · pinch to zoom`;
+}
 
-// ── Orbit: mouse + touch ──
-let rotX=-0.4, rotY=0.6, dist=1;
+// ── Orbit: mouse + touch.  A TAP separates one step; a DRAG spins. ──
+let rotX=-0.5, rotY=0.6, dist=1;
 let lastX=0,lastY=0,lastD=0,dragging=false,moved=0;
 const el=renderer.domElement;
-el.addEventListener('pointerdown',e=>{dragging=true;moved=0;phase='rest';lastX=e.clientX;lastY=e.clientY;});
+el.addEventListener('pointerdown',e=>{dragging=true;moved=0;lastX=e.clientX;lastY=e.clientY;});
 window.addEventListener('pointerup',()=>{
-  if(dragging && moved<6) startSpin();   // a tap (not a drag) re-spins
+  if(dragging && moved<6) sep=(sep+1)%(G+1);   // tap → pull apart one more step (wraps back together)
   dragging=false;
 });
 window.addEventListener('pointermove',e=>{
@@ -286,19 +293,22 @@ window.addEventListener('resize',resize); resize();
 // ── Animate ──
 function animate(){
   requestAnimationFrame(animate);
-  if(phase==='spin'){
-    rotY+=spinSpeed;
-    spinSpeed*=0.985;                       // gradually slow down
-    if(spinSpeed<0.0015){                   // come to rest
-      phase='settle';
-      applyColors('place');                 // reveal place-value colors
-    }
-  } else if(phase==='settle'){
-    rotX+=(-0.5-rotX)*0.08;                 // gentle tilt so layers are visible
-    if(Math.abs(rotX+0.5)<0.01){ rotX=-0.5; phase='rest'; }
+  const frac = sep/G;                        // 0 = together … 1 = fully apart
+  const gap  = (edgeC+2)*STEP*1.7;
+  // each ball eases toward its base position + its group's outward slot
+  dots.forEach(d=>{
+    const tx = d.base.x + (d.grp-(G-1)/2)*gap*frac;   // spread along X by place
+    d.mesh.position.x += (tx        - d.mesh.position.x)*0.18;
+    d.mesh.position.y += (d.base.y  - d.mesh.position.y)*0.18;
+    d.mesh.position.z += (d.base.z  - d.mesh.position.z)*0.18;
+  });
+  if(!dragging){
+    rotX += (-0.5 - rotX)*0.04;              // ease back to a readable tilt
+    if(sep===0) rotY += 0.004;               // gentle idle spin while together
   }
   group.rotation.x=rotX; group.rotation.y=rotY;
-  cam.position.setLength(cam.position.length()*0.9 + targetLen*dist*0.1);
+  const len = targetLen * (1 + frac*(G-1)*0.9);   // zoom out as it spreads
+  cam.position.setLength(cam.position.length()*0.9 + len*dist*0.1);
   cam.lookAt(0,0,0);
   renderer.render(scene,cam);
 }

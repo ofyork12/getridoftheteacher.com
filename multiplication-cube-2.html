@@ -178,27 +178,44 @@ function buildShape(n){
 }
 
 // Color the dots. 'solid' = one color (while spinning, hides the answer).
-// 'place' = group the balls by PLACE VALUE — never rainbow-by-layer. Each
-// place gets ONE solid color: 512 → 500 blue, 10 red, 2 orange. Groups stack
-// bottom→top (biggest place on the bottom) so the cluster reads like the notes.
+// 'place' = group the balls by PLACE VALUE — never rainbow-by-layer. The UNITS
+// digit is drawn in its ORIGINAL number-line shape on the front (+Z) face
+// (64 → a green 2×2 square for the 4); the higher places fill the rest of the
+// cluster, banded bottom→top (the biggest place on the bottom). So 64 reads as
+// "60 purple + a green 2×2 square", exactly like the number line draws it.
 function applyColors(mode){
+  const paint=(d,hex)=>{const c=hex2three(hex);d.mesh.material.color.copy(c);d.mesh.material.emissive.copy(c);};
   const groups=placeGroups(N);
   if(mode==='solid'){
-    const col=hex2three(groups.length?groups[0].color:'#ffffff');
-    dots.forEach(d=>{ d.mesh.material.color.copy(col); d.mesh.material.emissive.copy(col); });
+    const col=groups.length?groups[0].color:'#ffffff';
+    dots.forEach(d=>paint(d,col));
     return;
   }
-  // flat list of one color per ball, in place-value order (largest place first)
-  const colorList=[];
-  groups.forEach(g=>{ for(let i=0;i<g.count;i++) colorList.push(g.color); });
-  // assign bottom→top so the largest place fills the base of the cluster
-  const order=dots.map((d,idx)=>({d,idx}))
-                  .sort((a,b)=>(a.d.mesh.position.y-b.d.mesh.position.y)||(a.idx-b.idx));
-  order.forEach((o,i)=>{
-    const col=hex2three(colorList[i]||'#ffffff');
-    o.d.mesh.material.color.copy(col);
-    o.d.mesh.material.emissive.copy(col);
-  });
+  const unitsDigit = N%10;
+  // 1 ─ units balls = the number-line shape for that digit, snapped onto the
+  //     front (+Z) face so it stands out as a readable little picture.
+  const unitsSet=new Set();
+  if(unitsDigit>0){
+    let maxZ=-1e9; dots.forEach(d=>maxZ=Math.max(maxZ,d.mesh.position.z));
+    const front=dots.filter(d=>Math.abs(d.mesh.position.z-maxZ)<1e-6);
+    let targets=shapeOffsets(unitsDigit);
+    if(!targets){ targets=[]; for(let k=0;k<unitsDigit;k++) targets.push([k%3-1,1-Math.floor(k/3)]); }
+    targets.forEach(t=>{
+      const tx=t[0]*STEP, ty=t[1]*STEP; let best=null,bd=1e9;
+      front.forEach(d=>{ if(unitsSet.has(d)) return;
+        const dx=d.mesh.position.x-tx, dy=d.mesh.position.y-ty, dd=dx*dx+dy*dy;
+        if(dd<bd){bd=dd;best=d;} });
+      if(best) unitsSet.add(best);
+    });
+    unitsSet.forEach(d=>paint(d,DIGIT[unitsDigit]));
+  }
+  // 2 ─ everything else = the higher places (tens, hundreds…), banded bottom→top
+  let higher=groups.slice();
+  if(unitsDigit>0) higher=higher.slice(0,higher.length-1);   // drop the units group
+  const list=[]; higher.forEach(g=>{ for(let i=0;i<g.count;i++) list.push(g.color); });
+  const rest=dots.filter(d=>!unitsSet.has(d))
+                 .sort((a,b)=>(a.mesh.position.y-b.mesh.position.y));
+  rest.forEach((d,i)=>paint(d, list[i] || DIGIT[unitsDigit] || '#ffffff'));
 }
 
 // ── Number pad 1–9 ──

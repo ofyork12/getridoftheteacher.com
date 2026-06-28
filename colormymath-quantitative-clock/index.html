@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Quantitative Clock — ColorMyMath</title>
+<style>
+  html,body{margin:0;height:100%;background:#222;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:manipulation}
+  #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas{height:100%;max-width:100%;background:#fff;display:block;box-shadow:0 0 40px #000a}
+</style></head>
+<body><div id="wrap"><canvas id="c" width="1080" height="1920"></canvas></div>
+<script>
+// Canonical ColorMyMath palette: 1 red, 2 orange, 3 lemon, 4 green, 5 blue, 6 purple, 7 brown, 8 pink, 9 cyan
+const COLOR={1:'#ED1C24',2:'#F7941D',3:'#FFF200',4:'#22B14C',5:'#0D3DF5',6:'#7030A0',7:'#803004',8:'#F070AA',9:'#00BFF3',
+ 0:'#ED1C24'};
+const SQ3=Math.sqrt(3);
+const ONES={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
+ 4:[[-1,0],[1,0],[-1,-2],[1,-2]],
+ 5:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3]],
+ 6:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[0,-2*SQ3]],
+ 7:[[0,0],[2,0],[1,SQ3],[-1,SQ3],[-2,0],[-1,-SQ3],[1,-SQ3]],
+ 8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
+ 9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]};
+const ctx=document.getElementById('c').getContext('2d');
+const sig=new Image(); sig.src='signature.png';
+
+function dot(x,y,r,c){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=c;ctx.fill();ctx.lineWidth=Math.max(1,r*.08);ctx.strokeStyle='#161616';ctx.stroke();}
+// a small triangle-of-ten with outline (for tens), centre x=cx, bottom on baseY
+function ten(cx,baseY,r,c){const RH=SQ3*r,topY=baseY-3*RH,H=4.732*r;
+  ctx.beginPath();ctx.moveTo(cx,topY-2*r);ctx.lineTo(cx-H,baseY+r);ctx.lineTo(cx+H,baseY+r);ctx.closePath();
+  ctx.lineWidth=Math.max(1.5,r*.12);ctx.strokeStyle='#161616';ctx.stroke();
+  for(let row=1;row<=4;row++){const y=baseY-(4-row)*RH,x0=cx-(row-1)*r;for(let j=0;j<row;j++)dot(x0+j*2*r,y,r,c);}}
+
+// draw the number figure (ones + tens) centred exactly on (cx,cy), dot radius r
+function figure(num,cx,cy,r){
+  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
+  const ops=[]; let curX=0;
+  if(t){ for(let k=0;k<t;k++){ ops.push({ten:1, x:curX+TEN_W/2, c:COLOR[t]}); curX+=TEN_W; } if(o) curX+=gap; }
+  if(o){ const cells=ONES[o]; const hw=(Math.max(...cells.map(c=>Math.abs(c[0])))+1)*r;
+    const bx=curX+hw; for(const[gx,gy]of cells) ops.push({x:bx+gx*r, y:gy*r, c:COLOR[o]}); }
+  // bounding box, then centre on (cx,cy)
+  let a=1e9,b=-1e9,d=1e9,e=-1e9;
+  for(const p of ops){ if(p.ten){a=Math.min(a,p.x-TEN_W/2);b=Math.max(b,p.x+TEN_W/2);d=Math.min(d,-3*RH-2*r);e=Math.max(e,r);}
+    else{a=Math.min(a,p.x-r);b=Math.max(b,p.x+r);d=Math.min(d,p.y-r);e=Math.max(e,p.y+r);} }
+  const ox=cx-(a+b)/2, oy=cy-(d+e)/2;
+  for(const p of ops){ if(p.ten) ten(p.x+ox, oy+e, r, p.c); else dot(p.x+ox, p.y+oy, r, p.c); }
+}
+// approximate figure width/height in px for a given dot radius r
+function figSize(num,r){
+  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
+  let w=t*TEN_W, hh=t?(3*RH+3*r):0;
+  if(o){ const cells=ONES[o]; w+=(t?gap:0)+(Math.max(...cells.map(c=>Math.abs(c[0])))*2+2)*r;
+    const sy=Math.max(...cells.map(c=>Math.abs(c[1])))*r+2*r; hh=Math.max(hh,sy); }
+  return {w,h:hh};
+}
+// draw centred, shrinking r until it fits maxW x maxH (capped at capR)
+function figFit(num,cx,cy,maxW,maxH,capR){
+  let r=capR; while(r>4){ const s=figSize(num,r); if(s.w<=maxW && s.h<=maxH) break; r-=1; }
+  figure(num,cx,cy,r);
+}
+
+function hand(cx,cy,angle,len,wide,color){
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+  ctx.beginPath();ctx.moveTo(0,wide);ctx.lineTo(0,-len);ctx.lineWidth=wide;ctx.lineCap='round';ctx.strokeStyle=color;ctx.stroke();
+  ctx.restore();
+}
+
+function draw(){
+  const W=1080,H=1920; ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  // header
+  ctx.fillStyle='#111';ctx.textAlign='center';ctx.font='bold 76px Georgia';ctx.fillText("ColorMyMath Clock",540,116);
+  ctx.fillStyle='#888';ctx.font='italic 32px Georgia';ctx.fillText('count the dots to tell the time',540,162);
+  if(sig.complete&&sig.naturalWidth) ctx.drawImage(sig,470,1820,140,74);
+
+  const now=new Date();
+  const h=now.getHours(), m=now.getMinutes(), s=now.getSeconds();
+  const h12=((h%12)===0?12:(h%12));
+
+  // ---- analog clock face ----
+  const cx=540, cy=720, R=440;
+  ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.lineWidth=8;ctx.strokeStyle='#222';ctx.stroke();
+  // hour positions: show each hour 1..12 as a dot-figure
+  for(let n=1;n<=12;n++){
+    const a=(n/12)*2*Math.PI - Math.PI/2;     // 12 at top
+    const px=cx+Math.cos(a)*(R-86), py=cy+Math.sin(a)*(R-86);
+    figFit(n,px,py,150,150,13);
+  }
+  // hands
+  const ha=((h12%12)+m/60)/12*2*Math.PI;
+  const ma=(m+s/60)/60*2*Math.PI;
+  const sa=s/60*2*Math.PI;
+  hand(cx,cy,ha,R*0.5,16,'#111');
+  hand(cx,cy,ma,R*0.72,10,'#111');
+  hand(cx,cy,sa,R*0.8,4,'#ED1C24');
+  ctx.beginPath();ctx.arc(cx,cy,16,0,7);ctx.fillStyle='#111';ctx.fill();
+
+  // ---- quantitative readout: HOUR  :  MINUTES ----
+  ctx.fillStyle='#111';ctx.font='bold 40px Georgia';ctx.textAlign='center';
+  ctx.fillText('hour',330,1280); ctx.fillText('minutes',760,1280);
+  figFit(h12,330,1460,300,260,46);
+  ctx.fillStyle='#111';ctx.font='bold 120px Georgia';ctx.fillText(':',545,1490);
+  figFit(m,770,1460,360,260,40);
+  // digital time small
+  ctx.fillStyle='#444';ctx.font='40px Georgia';
+  ctx.fillText(h12+':'+String(m).padStart(2,'0'),540,1700);
+}
+draw(); setInterval(draw,1000); sig.onload=draw;
+</script></body></html>

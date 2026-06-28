@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>Games — ColorMyMath</title>
+  <title>3D Multiplication — ColorMyMath</title>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -41,7 +41,6 @@
       color: #fff; transition: all 0.25s ease; min-height: 220px; justify-content: center;
     }
     .card:hover { background: #fff; color: #000; transform: translateY(-3px); }
-    .card .art { font-size: 84px; line-height: 1; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.5)); }
     .card h2 { margin: 0; font-size: 22px; text-align: center; letter-spacing: 1px; }
     .card p { margin: 0; font-size: 14px; text-align: center; opacity: 0.8; line-height: 1.45; }
     .card:hover p { opacity: 1; }
@@ -67,28 +66,39 @@
 <body>
   <div class="wrap">
     <div class="top-nav"><a href="index.html">← Back to Home</a></div>
-    <h1>Games</h1>
-    <p class="sub">Things to play with.</p>
+    <h1>3D Multiplication</h1>
+    <p class="sub">See multiplication as a real cube you can spin.</p>
 
     <div class="grid">
-      <a href="count-to-20.html" class="card">
-        <span class="art">🔢</span>
-        <h2>Count to 20</h2>
-        <p>Count past ten — a second ten-frame fills with colored dots.</p>
+      <a href="multiplication-cube.html" class="card">
+        <div class="cube-stage">
+          <div class="cube">
+            <div class="face f-front">4</div>
+            <div class="face f-back">4</div>
+            <div class="face f-right">4</div>
+            <div class="face f-left">4</div>
+            <div class="face f-top">×</div>
+            <div class="face f-bot">64</div>
+          </div>
+        </div>
+        <h2>3D Multiplication</h2>
+        <p>See 4×4×4=64 as a real cube. Spin it. Change the numbers.</p>
       </a>
 
-      <a href="making-10-game.html" class="card">
-        <span class="art">🔟</span>
-        <h2>Making 10</h2>
-        <p>Find the pairs that add up to 10.</p>
+      <a href="multiplication-cube-2.html" class="card">
+        <div class="cube-stage">
+          <div class="cube">
+            <div class="face f-front">4</div>
+            <div class="face f-back">4</div>
+            <div class="face f-right">4</div>
+            <div class="face f-left">4</div>
+            <div class="face f-top">×</div>
+            <div class="face f-bot">64</div>
+          </div>
+        </div>
+        <h2>3D Multiplication — Part Two</h2>
+        <p>The next 3D build. Starts as a copy — we branch from here.</p>
       </a>
-
-      <a href="partitions-of-10-game.html" class="card">
-        <span class="art">➕</span>
-        <h2>Partitions of 10</h2>
-        <p>Every way to split 10 into two parts.</p>
-      </a>
-
     </div>
   </div>
 </body>

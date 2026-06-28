@@ -220,13 +220,18 @@ function colorByPlace(){
     });
     unitsSet.forEach(d=>{ paint(d,DIGIT[unitsDigit]); d.grp=G-1; });
   }
-  // 2 ─ everything else = the higher places (tens, hundreds…), banded bottom→top
+  // 2 ─ everything else = the higher places. Fill from the CORE outward, biggest
+  //     place first, so the SMALLER places (the tens) end up on the OUTER SURFACE
+  //     where their colour shows — the big place (hundreds) hides in the core.
   let higher=groups.slice();
   if(unitsDigit>0) higher=higher.slice(0,higher.length-1);   // drop the units group
   const list=[], grpList=[];
   higher.forEach((g,gi)=>{ for(let i=0;i<g.count;i++){ list.push(g.color); grpList.push(gi); } });
-  const rest=dots.filter(d=>!unitsSet.has(d))
-                 .sort((a,b)=>(a.mesh.position.y-b.mesh.position.y));
+  const restAll=dots.filter(d=>!unitsSet.has(d));
+  let cxs=0,cys=0,czs=0; restAll.forEach(d=>{cxs+=d.mesh.position.x;cys+=d.mesh.position.y;czs+=d.mesh.position.z;});
+  const nn=restAll.length||1; cxs/=nn; cys/=nn; czs/=nn;
+  const d2=d=>{const p=d.mesh.position;return (p.x-cxs)**2+(p.y-cys)**2+(p.z-czs)**2;};
+  const rest=restAll.sort((a,b)=>d2(a)-d2(b));               // core → surface
   rest.forEach((d,i)=>{ paint(d, list[i]||DIGIT[unitsDigit]||'#ffffff');
                         d.grp = (grpList[i]!==undefined)?grpList[i]:(G-1); });
 }

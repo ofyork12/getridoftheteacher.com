@@ -13,13 +13,21 @@
 const COLOR={1:'#ED1C24',2:'#F7941D',3:'#FFF200',4:'#22B14C',5:'#0D3DF5',6:'#7030A0',7:'#803004',8:'#F070AA',9:'#00BFF3',
  0:'#ED1C24'};
 const SQ3=Math.sqrt(3);
-const ONES={0:[],1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
+// ONES = dot pip-pattern for the ones digit (canonical ColorMyMath renderer)
+const ONES={1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
  4:[[-1,0],[1,0],[-1,-2],[1,-2]],
  5:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3]],
  6:[[-2,0],[0,0],[2,0],[-1,-SQ3],[1,-SQ3],[0,-2*SQ3]],
- 7:[[0,0],[2,0],[1,SQ3],[-1,SQ3],[-2,0],[-1,-SQ3],[1,-SQ3]],
+ 7:[[0,-SQ3],[-1,0],[1,0],[-2,-SQ3],[2,-SQ3],[-1,-2*SQ3],[1,-2*SQ3]],
  8:[[-2,0],[0,0],[2,0],[-2,-2],[2,-2],[-2,-4],[0,-4],[2,-4]],
  9:[[-2,0],[0,0],[2,0],[-2,-2],[0,-2],[2,-2],[-2,-4],[0,-4],[2,-4]]};
+// TENS = the ten-triangles arranged in the SHAPE of the tens digit (so 50 stacks like a 5, 90 like a 9)
+const TENS={1:[[0,0]],2:[[-.5,0],[.5,0]],3:[[-.5,0],[.5,0],[0,-1]],
+ 4:[[-.5,0],[.5,0],[-.5,-1],[.5,-1]],5:[[-1,0],[0,0],[1,0],[-.5,-1],[.5,-1]],
+ 6:[[-1,0],[0,0],[1,0],[-.5,-1],[.5,-1],[0,-2]],
+ 7:[[-.5,0],[.5,0],[-1,-1],[0,-1],[1,-1],[-.5,-2],[.5,-2]],
+ 8:[[-1,0],[0,0],[1,0],[-1,-1],[1,-1],[-1,-2],[0,-2],[1,-2]],
+ 9:[[-1,0],[0,0],[1,0],[-1,-1],[0,-1],[1,-1],[-1,-2],[0,-2],[1,-2]]};
 const ctx=document.getElementById('c').getContext('2d');
 const sig=new Image(); sig.src='signature.png';
 
@@ -30,28 +38,32 @@ function ten(cx,baseY,r,c){const RH=SQ3*r,topY=baseY-3*RH,H=4.732*r;
   ctx.lineWidth=Math.max(1.5,r*.12);ctx.strokeStyle='#161616';ctx.stroke();
   for(let row=1;row<=4;row++){const y=baseY-(4-row)*RH,x0=cx-(row-1)*r;for(let j=0;j<row;j++)dot(x0+j*2*r,y,r,c);}}
 
-// draw the number figure (ones + tens) centred exactly on (cx,cy), dot radius r
-function figure(num,cx,cy,r){
-  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
-  const ops=[]; let curX=0;
-  if(t){ for(let k=0;k<t;k++){ ops.push({ten:1, x:curX+TEN_W/2, c:COLOR[t]}); curX+=TEN_W; } if(o) curX+=gap; }
-  if(o){ const cells=ONES[o]; const hw=(Math.max(...cells.map(c=>Math.abs(c[0])))+1)*r;
-    const bx=curX+hw; for(const[gx,gy]of cells) ops.push({x:bx+gx*r, y:gy*r, c:COLOR[o]}); }
-  // bounding box, then centre on (cx,cy)
+// build the figure in local coords (baseline y=0, grows up into -y): tens shaped like the
+// tens digit, then ones; returns the draw ops + bounding box {a,b,d,e}
+function figParts(num,r){
+  const t=Math.floor(num/10), o=num%10;
+  const RH=SQ3*r, TEN_W=9.4641*r, TEN_H=(3*SQ3+3)*r, H=4.7320508*r;
+  const tris=[], dots=[]; let x=0;
+  if(t){ const cells=TENS[t]; const minx=Math.min(...cells.map(c=>c[0]));
+    const cx0=x+(0-minx)*TEN_W+TEN_W/2;
+    for(const[gx,gy]of cells) tris.push([cx0+gx*TEN_W, gy*TEN_H, COLOR[t]]);
+    const maxx=Math.max(...cells.map(c=>c[0])); x=cx0+maxx*TEN_W+TEN_W/2; }
+  if(o){ const cells=ONES[o]; const minx=Math.min(...cells.map(c=>c[0]));
+    const cx0=x+(0-minx+0.62)*r; for(const[gx,gy]of cells) dots.push([cx0+gx*r, gy*r, COLOR[o]]); }
+  if(num===0) dots.push([0,0,'#fff']);
   let a=1e9,b=-1e9,d=1e9,e=-1e9;
-  for(const p of ops){ if(p.ten){a=Math.min(a,p.x-TEN_W/2);b=Math.max(b,p.x+TEN_W/2);d=Math.min(d,-3*RH-2*r);e=Math.max(e,r);}
-    else{a=Math.min(a,p.x-r);b=Math.max(b,p.x+r);d=Math.min(d,p.y-r);e=Math.max(e,p.y+r);} }
-  const ox=cx-(a+b)/2, oy=cy-(d+e)/2;
-  for(const p of ops){ if(p.ten) ten(p.x+ox, oy+e, r, p.c); else dot(p.x+ox, p.y+oy, r, p.c); }
+  for(const[tx,tby]of tris){ a=Math.min(a,tx-H);b=Math.max(b,tx+H);d=Math.min(d,tby-3*RH-2*r);e=Math.max(e,tby+r); }
+  for(const[dx,dy]of dots){ a=Math.min(a,dx-r);b=Math.max(b,dx+r);d=Math.min(d,dy-r);e=Math.max(e,dy+r); }
+  return {a,b,d,e,tris,dots};
 }
-// approximate figure width/height in px for a given dot radius r
-function figSize(num,r){
-  const t=Math.floor(num/10), o=num%10, RH=SQ3*r, TEN_W=9.464*r, gap=1.2*r;
-  let w=t*TEN_W, hh=t?(3*RH+3*r):0;
-  if(o){ const cells=ONES[o]; w+=(t?gap:0)+(Math.max(...cells.map(c=>Math.abs(c[0])))*2+2)*r;
-    const sy=Math.max(...cells.map(c=>Math.abs(c[1])))*r+2*r; hh=Math.max(hh,sy); }
-  return {w,h:hh};
+// draw the number figure centred exactly on (cx,cy), dot radius r
+function figure(num,cx,cy,r){
+  const p=figParts(num,r), ox=cx-(p.a+p.b)/2, oy=cy-(p.d+p.e)/2;
+  for(const[tx,tby,c]of p.tris) ten(tx+ox, tby+oy, r, c);
+  for(const[dx,dy,c]of p.dots) dot(dx+ox, dy+oy, r, c);
 }
+// figure width/height in px for a given dot radius r
+function figSize(num,r){ const p=figParts(num,r); return {w:p.b-p.a, h:p.e-p.d}; }
 // draw centred, shrinking r until it fits maxW x maxH (capped at capR)
 function figFit(num,cx,cy,maxW,maxH,capR){
   let r=capR; while(r>4){ const s=figSize(num,r); if(s.w<=maxW && s.h<=maxH) break; r-=1; }

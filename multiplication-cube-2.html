@@ -105,16 +105,13 @@ sun.position.set(10,18,20); sun.castShadow=true; scene.add(sun);
 const fill=new THREE.DirectionalLight(0x8899ff,0.4);
 fill.position.set(-10,-8,-10); scene.add(fill);
 
-// ── Cube of touching spheres ──
+// ── Spheres ──
 const group=new THREE.Group(); scene.add(group);
 let N=3;
-
-// Spheres TOUCH tangentially: centers one diameter apart (radius 0.5, step 1.0).
-const R=0.5, STEP=2*R;
-
+const R=0.5, STEP=2*R;          // spheres touch tangentially (centers 1 diameter apart)
 let targetLen=12;
-let dots=[];        // {mesh, gy}  — gy = vertical layer index (for layered coloring)
-let edgeC=3;        // edge of the current biggest full cube (drives the solid color)
+let dots=[];                    // {mesh, gy, grp, base}
+let edgeC=3;
 
 // ColorMyMath canonical number-line shapes (rows top→bottom) — the SYMBOL for a
 // count, the way the number line / Color Line books draw it. Returns [x,y]
@@ -130,111 +127,71 @@ function shapeOffsets(rem){
   return out;
 }
 
-// Build TOTAL of n spheres: the biggest full cube we can, then leftover dots
-// as a flat wall stacked on top, filled row-by-row from a corner so the
-// partial shape stays recognizable (e.g. 9 leftover on a 3-cube = a 3×3 wall).
+// Local dot positions for ONE place-value group of `count` dots (origin at the
+// bottom-left-back corner). Ones (1–9) take their number-true shape — a cube for
+// cube-numbers (8 = 2×2×2), else the flat canonical symbol (7 = 2-3-2 flower).
+// Tens fill a 5-wide block, hundreds a 10-wide block (so 20 reads as a tidy 20).
+function clusterPositions(count){
+  if(count<10){
+    const k=Math.round(Math.cbrt(count));
+    if(k*k*k===count){                 // 1 or 8 → a real cube
+      const pts=[]; for(let x=0;x<k;x++)for(let y=0;y<k;y++)for(let z=0;z<k;z++) pts.push([x,y,z]);
+      return {pts, w:k, h:k, d:k};
+    }
+    const off=shapeOffsets(count)||[[0,0]];
+    let mnx=9,mny=9; off.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);});
+    let mxx=0,mxy=0; const pts=off.map(p=>{const x=p[0]-mnx,y=p[1]-mny;mxx=Math.max(mxx,x);mxy=Math.max(mxy,y);return [x,y,0];});
+    return {pts, w:mxx+1, h:mxy+1, d:1};
+  }
+  const wdt = count>=100 ? 10 : 5;
+  const pts=[]; for(let i=0;i<count;i++) pts.push([i%wdt, Math.floor(i/wdt), 0]);
+  return {pts, w:wdt, h:Math.ceil(count/wdt), d:1};
+}
+
+// Build the figure for n by PLACE VALUE: each place's group as its own cluster,
+// laid side by side (biggest place on the left), bottoms aligned, so the ones
+// land on the bottom-right corner. e.g. 125 = a 100-block + a 20-block (kept
+// together) + the 5 on the corner; 28 = a 20-block + an 8-cube on the corner.
 function buildShape(n){
   while(group.children.length) group.remove(group.children[0]);
   dots=[];
   n=Math.max(1, Math.round(n));
   N=n;
-  const c=Math.floor(Math.cbrt(n)+1e-9);      // edge of the biggest full cube
-  edgeC=c;
-  const base=c*c*c, rem=n-base;
   const geo=new THREE.SphereGeometry(R,20,16);
-  const o=(c-1)*STEP/2;                        // center the cube on origin
-  const add=(x,y,z)=>{
-    const mat=new THREE.MeshPhongMaterial({emissiveIntensity:0.12,shininess:70});
+  const add=(x,y,z,grp,hex)=>{
+    const cc=hex2three(hex);
+    const mat=new THREE.MeshPhongMaterial({color:cc,emissive:cc,emissiveIntensity:0.12,shininess:70});
     const m=new THREE.Mesh(geo,mat);
-    m.position.set(x*STEP-o,y*STEP-o,z*STEP-o); m.castShadow=true;
-    group.add(m); dots.push({mesh:m, gy:y, grp:0, base:m.position.clone()});
+    m.position.set(x*STEP,y*STEP,z*STEP); m.castShadow=true;
+    group.add(m); dots.push({mesh:m, gy:Math.round(y), grp:grp||0, base:m.position.clone()});
   };
-  // full cube
-  for(let xi=0;xi<c;xi++) for(let yi=0;yi<c;yi++) for(let zi=0;zi<c;zi++) add(xi,yi,zi);
-  // leftover dots. If the leftover is itself a CUBE number (8, 27, …) show it as
-  // a real cube — 8 = 2×2×2 — sitting in front (a cube number stays a cube).
-  // Otherwise draw the flat ColorMyMath SYMBOL for that count (7 = 2-3-2 flower)
-  // on the front (+Z) face. Counts with no canonical shape (>10) fall back to a
-  // corner-filled top wall so they still read.
-  const kc = Math.round(Math.cbrt(rem));
-  const remIsCube = rem>=1 && kc*kc*kc===rem;
-  const shaped = remIsCube ? null : shapeOffsets(rem);
-  const cx=(c-1)/2, cy=(c-1)/2;
-  if(remIsCube){
-    for(let xi=0;xi<kc;xi++) for(let yi=0;yi<kc;yi++) for(let zi=0;zi<kc;zi++)
-      add(cx-(kc-1)/2+xi, cy-(kc-1)/2+yi, c+zi);   // centered small cube, in front, touching
-  } else if(shaped){
-    shaped.forEach(p=> add(cx+p[0], cy+p[1], c));   // z=c → just in front, touching
-  } else {
-    for(let k=0;k<rem;k++){
-      const layer=Math.floor(k/(c*c)), idx=k%(c*c);
-      add(idx%c, c+layer, Math.floor(idx/c));
-    }
-  }
-  // equation
-  const eq=document.getElementById('eq');
-  const lead = rem===0 ? `${c} × ${c} × ${c} = ` : `${c} × ${c} × ${c} + ${rem} = `;
-  eq.innerHTML = `<span class="op">${lead}</span>` + colorNumber(n);
-  document.getElementById('expand').innerHTML = expandedForm(n);
-  // fit camera
-  let height=c;
-  if(remIsCube){ height=Math.max(c+1, c+kc-1); }
-  else if(shaped){ let mY=0; shaped.forEach(p=>mY=Math.max(mY,Math.abs(p[1]))); height=Math.max(c+1, 2*mY+1); }
-  else if(rem>0){ height=c+Math.ceil(rem/(c*c)); }
-  targetLen=Math.max(4, height*STEP*2.6);
-  // show it ALREADY colored by place value, all together (readable by color)
+  const groups=placeGroups(n);                 // [{count,color}] largest place first
+  G=Math.max(1,groups.length);
+  const cls=groups.map(g=>clusterPositions(g.count));
+  const GAP=1.6;
+  const totalW=cls.reduce((s,c)=>s+c.w,0)+GAP*(cls.length-1);
+  const maxH=Math.max(...cls.map(c=>c.h));
+  let xCur=-totalW/2;
+  cls.forEach((cl,gi)=>{
+    const col=groups[gi].color;
+    cl.pts.forEach(p=> add(xCur+p[0], -maxH/2+p[1], -(cl.d-1)/2+p[2], gi, col));
+    xCur += cl.w + GAP;
+  });
+  edgeC=Math.max(2, ...cls.map(c=>Math.max(c.w,c.h,c.d)));
   sep=0;
-  colorByPlace();
+  targetLen=Math.max(4, Math.max(maxH,totalW)*STEP*1.5);
+  // equation — keep the cube product when n is a perfect cube (5×5×5 = 125)
+  const k=Math.round(Math.cbrt(n)), isCube=k*k*k===n;
+  document.getElementById('eq').innerHTML =
+    isCube ? `<span class="op">${k} × ${k} × ${k} = </span>`+colorNumber(n) : colorNumber(n);
+  document.getElementById('expand').innerHTML = expandedForm(n);
+  spinFrames=SPIN_FRAMES; sinceTouch=0;        // gentle intro spin, then ease to readable
   updateHint();
 }
 
-// ── Place-value grouping + separation state ──
-// The number shows up ALREADY colored so the child can read it by color right
-// away. Tapping pulls the place-value groups apart one step at a time — a
-// 3-digit number takes 3 taps to fully separate into hundreds · tens · units.
-let G=1;     // number of place-value groups in the current number
+// ── Place-value separation state ──
+let G=1;     // number of place-value groups
 let sep=0;   // separation step: 0 = together … G = fully pulled apart
-
-// Paint by PLACE VALUE and tag each ball with its group index (grp 0 = biggest
-// place … grp G-1 = units). The UNITS digit is drawn in its ORIGINAL
-// number-line shape on the front (+Z) face (64 → a green 2×2 square for the 4);
-// the higher places fill the rest, banded bottom→top.
-function colorByPlace(){
-  const paint=(d,hex)=>{const c=hex2three(hex);d.mesh.material.color.copy(c);d.mesh.material.emissive.copy(c);};
-  const groups=placeGroups(N);
-  G=Math.max(1,groups.length);
-  const unitsDigit=N%10;
-  // 1 ─ units balls = the number-line shape for that digit, on the front face
-  const unitsSet=new Set();
-  if(unitsDigit>0){
-    let maxZ=-1e9; dots.forEach(d=>maxZ=Math.max(maxZ,d.mesh.position.z));
-    const front=dots.filter(d=>Math.abs(d.mesh.position.z-maxZ)<1e-6);
-    let targets=shapeOffsets(unitsDigit);
-    if(!targets){ targets=[]; for(let k=0;k<unitsDigit;k++) targets.push([k%3-1,1-Math.floor(k/3)]); }
-    targets.forEach(t=>{
-      const tx=t[0]*STEP, ty=t[1]*STEP; let best=null,bd=1e9;
-      front.forEach(d=>{ if(unitsSet.has(d)) return;
-        const dx=d.mesh.position.x-tx, dy=d.mesh.position.y-ty, dd=dx*dx+dy*dy;
-        if(dd<bd){bd=dd;best=d;} });
-      if(best) unitsSet.add(best);
-    });
-    unitsSet.forEach(d=>{ paint(d,DIGIT[unitsDigit]); d.grp=G-1; });
-  }
-  // 2 ─ everything else = the higher places. Fill from the CORE outward, biggest
-  //     place first, so the SMALLER places (the tens) end up on the OUTER SURFACE
-  //     where their colour shows — the big place (hundreds) hides in the core.
-  let higher=groups.slice();
-  if(unitsDigit>0) higher=higher.slice(0,higher.length-1);   // drop the units group
-  const list=[], grpList=[];
-  higher.forEach((g,gi)=>{ for(let i=0;i<g.count;i++){ list.push(g.color); grpList.push(gi); } });
-  const restAll=dots.filter(d=>!unitsSet.has(d));
-  let cxs=0,cys=0,czs=0; restAll.forEach(d=>{cxs+=d.mesh.position.x;cys+=d.mesh.position.y;czs+=d.mesh.position.z;});
-  const nn=restAll.length||1; cxs/=nn; cys/=nn; czs/=nn;
-  const d2=d=>{const p=d.mesh.position;return (p.x-cxs)**2+(p.y-cys)**2+(p.z-czs)**2;};
-  const rest=restAll.sort((a,b)=>d2(a)-d2(b));               // core → surface
-  rest.forEach((d,i)=>{ paint(d, list[i]||DIGIT[unitsDigit]||'#ffffff');
-                        d.grp = (grpList[i]!==undefined)?grpList[i]:(G-1); });
-}
 
 // ── Number pad 1–9 ──
 const pad=document.getElementById('pad');
@@ -249,7 +206,7 @@ for(let i=1;i<=9;i++){
 function select(i){
   btns.forEach((b,idx)=>b.classList.toggle('on', idx+1===i));
   document.getElementById('any').value='';
-  buildShape(i*i*i);                 // pad N → a full N×N×N cube, already colored
+  buildShape(i*i*i);                 // pad N → N³, shown by place value
 }
 
 // Free-type any total
@@ -265,27 +222,27 @@ anyIn.addEventListener('input',()=>{
 function updateHint(){
   const h=document.getElementById('hint');
   h.textContent = G>1
-    ? `tap to separate the colors (${G} taps) · drag to spin`
+    ? `tap to pull the places apart (${G}) · drag to spin`
     : `tap a number · drag to spin · pinch to zoom`;
 }
 
-// ── Orbit: mouse + touch.  A TAP separates one step; a DRAG spins. ──
-// Resting view: the front face (the ones-shape, e.g. the 7-flower) faces us,
-// turned a little so the rest of the dots behind it also show.
+// ── Orbit + spin.  Readable resting view: turned a little so you read it. ──
 const REST_RX=-0.32, REST_RY=-0.5;
 let rotX=REST_RX, rotY=REST_RY, dist=1;
+let spinFrames=0, sinceTouch=999;
+const SPIN_FRAMES=170, IDLE_FRAMES=140;   // ~3s intro spin · ~2.3s idle → ease back
 let lastX=0,lastY=0,lastD=0,dragging=false,moved=0;
 const el=renderer.domElement;
-el.addEventListener('pointerdown',e=>{dragging=true;moved=0;lastX=e.clientX;lastY=e.clientY;});
+el.addEventListener('pointerdown',e=>{dragging=true;moved=0;spinFrames=0;sinceTouch=0;lastX=e.clientX;lastY=e.clientY;});
 window.addEventListener('pointerup',()=>{
-  if(dragging && moved<6) sep=(sep+1)%(G+1);   // tap → pull apart one more step (wraps back together)
-  dragging=false;
+  if(dragging && moved<6) sep=(sep+1)%(G+1);   // a tap pulls the places apart one step (wraps)
+  dragging=false; sinceTouch=0;
 });
 window.addEventListener('pointermove',e=>{
   if(!dragging) return;
   const dx=e.clientX-lastX, dy=e.clientY-lastY;
   moved+=Math.abs(dx)+Math.abs(dy);
-  rotY+=dx*0.012; rotX+=dy*0.012;
+  rotY+=dx*0.012; rotX+=dy*0.012; sinceTouch=0;
   lastX=e.clientX; lastY=e.clientY;
 });
 el.addEventListener('touchstart',e=>{if(e.touches.length===2){lastD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:true});
@@ -308,27 +265,32 @@ window.addEventListener('resize',resize); resize();
 // ── Animate ──
 function animate(){
   requestAnimationFrame(animate);
-  const frac = sep/G;                        // 0 = together … 1 = fully apart
+  const frac = sep/G;                          // 0 = together … 1 = fully apart
   const gap  = (edgeC+2)*STEP*1.7;
-  // each ball eases toward its base position + its group's outward slot
   dots.forEach(d=>{
     const tx = d.base.x + (d.grp-(G-1)/2)*gap*frac;   // spread along X by place
-    d.mesh.position.x += (tx        - d.mesh.position.x)*0.18;
-    d.mesh.position.y += (d.base.y  - d.mesh.position.y)*0.18;
-    d.mesh.position.z += (d.base.z  - d.mesh.position.z)*0.18;
+    d.mesh.position.x += (tx       - d.mesh.position.x)*0.18;
+    d.mesh.position.y += (d.base.y - d.mesh.position.y)*0.18;
+    d.mesh.position.z += (d.base.z - d.mesh.position.z)*0.18;
   });
-  // No idle spin — it comes to REST showing the front face, turned a little.
-  // Drag to look around; on release it eases back to this readable view.
-  if(!dragging){
-    rotX += (REST_RX - rotX)*0.05;
-    let dY = REST_RY - rotY;
-    dY = Math.atan2(Math.sin(dY), Math.cos(dY));   // shortest way back, no long unwind
-    rotY += dY*0.05;
+  // Spin: a gentle intro spin so you see it's 3-D; touch stops it; after a
+  // moment idle it eases back to the readable resting view.
+  if(dragging){
+    sinceTouch=0;
+  } else if(spinFrames>0){
+    rotY += 0.012;
+    if(--spinFrames===0) sinceTouch=IDLE_FRAMES+1;   // after intro spin, ease back right away
+  } else {
+    sinceTouch++;
+    if(sinceTouch>IDLE_FRAMES){
+      rotX += (REST_RX-rotX)*0.05;
+      let dY=REST_RY-rotY; dY=Math.atan2(Math.sin(dY),Math.cos(dY)); rotY+=dY*0.05;
+    }
   }
   group.rotation.x=rotX; group.rotation.y=rotY;
   // Fit to screen — on a tall phone (portrait) zoom out so the WHOLE number fits.
   const fit = Math.max(1, 1.0/cam.aspect);
-  const len = targetLen * (1 + frac*(G-1)*0.9) * fit;   // zoom out as it spreads / on mobile
+  const len = targetLen * (1 + frac*(G-1)*0.9) * fit;
   cam.position.setLength(cam.position.length()*0.9 + len*dist*0.1);
   cam.lookAt(0,0,0);
   renderer.render(scene,cam);

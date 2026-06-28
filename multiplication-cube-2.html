@@ -116,6 +116,20 @@ let targetLen=12;
 let dots=[];        // {mesh, gy}  — gy = vertical layer index (for layered coloring)
 let edgeC=3;        // edge of the current biggest full cube (drives the solid color)
 
+// ColorMyMath canonical number-line shapes (rows top→bottom) — the SYMBOL for a
+// count, the way the number line / Color Line books draw it. Returns [x,y]
+// offsets centered on (0,0) for counts 1–10; null for counts with no set shape.
+//   7 = 2-3-2 flower · 3 = 1-over-2 triangle · 9 = 3×3 · 8 = ring (empty center)
+function shapeOffsets(rem){
+  if(rem===8) return [[-1,1],[0,1],[1,1],[-1,0],[1,0],[-1,-1],[0,-1],[1,-1]];
+  const ROWS={1:[1],2:[2],3:[1,2],4:[2,2],5:[2,3],6:[1,2,3],7:[2,3,2],9:[3,3,3],10:[4,3,2,1]};
+  const rows=ROWS[rem]; if(!rows) return null;
+  const nR=rows.length, out=[];
+  for(let r=0;r<nR;r++){ const cnt=rows[r], y=(nR-1)/2-r;
+    for(let i=0;i<cnt;i++) out.push([i-(cnt-1)/2, y]); }
+  return out;
+}
+
 // Build TOTAL of n spheres: the biggest full cube we can, then leftover dots
 // as a flat wall stacked on top, filled row-by-row from a corner so the
 // partial shape stays recognizable (e.g. 9 leftover on a 3-cube = a 3×3 wall).
@@ -137,10 +151,19 @@ function buildShape(n){
   };
   // full cube
   for(let xi=0;xi<c;xi++) for(let yi=0;yi<c;yi++) for(let zi=0;zi<c;zi++) add(xi,yi,zi);
-  // leftover wall(s) on top (+Y), corner-first
-  for(let k=0;k<rem;k++){
-    const layer=Math.floor(k/(c*c)), idx=k%(c*c);
-    add(idx%c, c+layer, Math.floor(idx/c));
+  // leftover dots — drawn in the ColorMyMath SYMBOL for that count (e.g. 7 =
+  // 2-3-2 flower), standing as a wall on the front (+Z) face, centered on the
+  // cube. Counts with no canonical shape (>10) fall back to a corner-filled
+  // top wall so they still read.
+  const shaped = shapeOffsets(rem);
+  if(shaped){
+    const cx=(c-1)/2, cy=(c-1)/2;
+    shaped.forEach(p=> add(cx+p[0], cy+p[1], c));   // z=c → just in front, touching
+  } else {
+    for(let k=0;k<rem;k++){
+      const layer=Math.floor(k/(c*c)), idx=k%(c*c);
+      add(idx%c, c+layer, Math.floor(idx/c));
+    }
   }
   // equation
   const eq=document.getElementById('eq');
@@ -148,8 +171,10 @@ function buildShape(n){
   eq.innerHTML = `<span class="op">${lead}</span>` + colorNumber(n);
   document.getElementById('expand').innerHTML = expandedForm(n);
   // fit camera
-  const height=c+Math.ceil(rem/(c*c));
-  targetLen=Math.max(4, Math.max(c,height)*STEP*2.6);
+  let height=c;
+  if(shaped){ let mY=0; shaped.forEach(p=>mY=Math.max(mY,Math.abs(p[1]))); height=Math.max(c+1, 2*mY+1); }
+  else if(rem>0){ height=c+Math.ceil(rem/(c*c)); }
+  targetLen=Math.max(4, height*STEP*2.6);
 }
 
 // Color the dots. 'solid' = one color (while spinning, hides the answer).

@@ -6,12 +6,33 @@
   html,body{margin:0;height:100%;background:#222;overflow:hidden;font-family:Georgia,'Times New Roman',serif;touch-action:manipulation}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
   canvas{height:100%;max-width:100%;background:#fff;display:block;box-shadow:0 0 40px #000a}
+  .ckBtn{position:fixed;top:10px;right:10px;z-index:10;font-size:22px;line-height:1;background:#fff;
+    border:2px solid #161616;border-radius:12px;padding:6px 9px;cursor:pointer;font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+  .ckPanel{position:fixed;top:54px;right:10px;z-index:10;background:#fff;color:#161616;border:2px solid #161616;
+    border-radius:14px;padding:10px;width:190px;box-shadow:0 8px 30px #0007;font-family:Arial,sans-serif}
+  .ckPanel[hidden]{display:none}
+  .ckHead{font-size:12px;font-weight:bold;display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+  .ckHead button{border:none;background:none;font-size:16px;cursor:pointer;line-height:1}
+  .ckGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .ckSw{position:relative;height:46px;border-radius:10px;border:2px solid #161616;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}
+  .ckSw span{font-size:22px;font-weight:bold;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000;pointer-events:none}
+  .ckSw input{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0}
+  .ckFoot{margin-top:9px;text-align:center}
+  .ckFoot button{font-size:12px;padding:5px 10px;border:1.5px solid #161616;background:#f3f3f3;border-radius:8px;cursor:pointer}
 </style></head>
 <body><div id="wrap"><canvas id="c" width="1080" height="1920"></canvas></div>
+<button id="ckBtn" class="ckBtn" aria-label="Pick colors">🎨</button>
+<div id="ckPanel" class="ckPanel" hidden>
+  <div class="ckHead"><span>Tap a number → pick its color</span><button id="ckClose" aria-label="Close">✕</button></div>
+  <div class="ckGrid" id="ckGrid"></div>
+  <div class="ckFoot"><button id="ckReset">Reset colors</button></div>
+</div>
 <script>
 // Canonical ColorMyMath palette: 1 red, 2 orange, 3 lemon, 4 green, 5 blue, 6 purple, 7 brown, 8 pink, 9 cyan
-const COLOR={1:'#ED1C24',2:'#F7941D',3:'#FFF200',4:'#22B14C',5:'#0D3DF5',6:'#7030A0',7:'#803004',8:'#F070AA',9:'#00BFF3',
- 0:'#ED1C24'};
+const DEFAULTS={1:'#ED1C24',2:'#F7941D',3:'#FFF200',4:'#22B14C',5:'#0D3DF5',6:'#7030A0',7:'#803004',8:'#F070AA',9:'#00BFF3'};
+const CKEY='cmm-analog-clock-colors';
+let COLOR=Object.assign({},DEFAULTS);   // mutable: the color picker overrides these, saved on the device
+try{ const sv=JSON.parse(localStorage.getItem(CKEY)||'{}'); for(let n=1;n<=9;n++) if(sv[n]) COLOR[n]=sv[n]; }catch(e){}
 const SQ3=Math.sqrt(3);
 // ONES = dot pip-pattern for the ones digit (canonical ColorMyMath renderer)
 const ONES={1:[[0,0]],2:[[-1,0],[1,0]],3:[[-1,0],[1,0],[0,-SQ3]],
@@ -115,5 +136,17 @@ function draw(){
   ctx.fillStyle='#444';ctx.font='40px Georgia';
   ctx.fillText(h12+':'+String(m).padStart(2,'0'),540,1700);
 }
+// ── color picker: recolor each number 1–9; choices saved on this device ──
+function ckSave(){ try{ const o={}; for(let n=1;n<=9;n++)o[n]=COLOR[n]; localStorage.setItem(CKEY,JSON.stringify(o)); }catch(e){} }
+function ckBuild(){ const g=document.getElementById('ckGrid'); g.innerHTML='';
+  for(let n=1;n<=9;n++){ const lab=document.createElement('label'); lab.className='ckSw'; lab.style.background=COLOR[n];
+    const sp=document.createElement('span'); sp.textContent=n;
+    const inp=document.createElement('input'); inp.type='color'; inp.value=COLOR[n];
+    inp.addEventListener('input',()=>{ COLOR[n]=inp.value; lab.style.background=inp.value; ckSave(); draw(); });
+    lab.appendChild(sp); lab.appendChild(inp); g.appendChild(lab); } }
+document.getElementById('ckBtn').addEventListener('click',()=>{ const p=document.getElementById('ckPanel'); p.hidden=!p.hidden; if(!p.hidden) ckBuild(); });
+document.getElementById('ckClose').addEventListener('click',()=>{ document.getElementById('ckPanel').hidden=true; });
+document.getElementById('ckReset').addEventListener('click',()=>{ for(let n=1;n<=9;n++)COLOR[n]=DEFAULTS[n]; ckSave(); ckBuild(); draw(); });
+
 draw(); setInterval(draw,1000); sig.onload=draw;
 </script></body></html>

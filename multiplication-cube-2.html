@@ -23,6 +23,10 @@
   .lbl{color:#aaa;font-size:14px}
   #any{width:80px;height:34px;border:none;border-radius:8px;background:#2a2a2a;color:#fff;
        font:bold 18px Georgia;text-align:center}
+  #dims{display:flex;gap:6px}
+  .dim{padding:5px 11px;border:none;border-radius:8px;background:#2a2a2a;color:#ddd;
+       font:bold 13px Georgia;cursor:pointer;box-shadow:0 2px 6px #0006}
+  .dim.on{background:#4a4a4a;color:#fff;box-shadow:0 0 0 2px #fff,0 2px 6px #0006}
   #hint{color:#777;font-size:12px;padding-bottom:2px}
   canvas{display:block}
 </style>
@@ -33,6 +37,7 @@
   <div id="expand"></div>
   <div id="pad"></div>
   <div id="anyrow"><span class="lbl">or type a total:</span><input id="any" type="number" min="1" inputmode="numeric" placeholder="#"></div>
+  <div id="dims"></div>
   <div id="hint">tap a number · drag to spin · pinch to zoom</div>
 </div>
 
@@ -127,36 +132,40 @@ function shapeOffsets(rem){
   return out;
 }
 
-// Local dot positions for ONE place-value group of `count` dots (origin at the
-// bottom-left-back corner). Ones (1–9) take their number-true shape — a cube for
-// cube-numbers (8 = 2×2×2), else the flat canonical symbol (7 = 2-3-2 flower).
-// Tens fill a 5-wide block, hundreds a 10-wide block (so 20 reads as a tidy 20).
-function clusterPositions(count){
-  if(count<10){
-    const k=Math.round(Math.cbrt(count));
-    if(k*k*k===count){                 // 1 or 8 → a real cube
-      const pts=[]; for(let x=0;x<k;x++)for(let y=0;y<k;y++)for(let z=0;z<k;z++) pts.push([x,y,z]);
-      return {pts, w:k, h:k, d:k};
-    }
-    const off=shapeOffsets(count)||[[0,0]];
-    let mnx=9,mny=9; off.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);});
-    let mxx=0,mxy=0; const pts=off.map(p=>{const x=p[0]-mnx,y=p[1]-mny;mxx=Math.max(mxx,x);mxy=Math.max(mxy,y);return [x,y,0];});
-    return {pts, w:mxx+1, h:mxy+1, d:1};
-  }
-  const wdt = count>=100 ? 10 : 5;
-  const pts=[]; for(let i=0;i<count;i++) pts.push([i%wdt, Math.floor(i/wdt), 0]);
-  return {pts, w:wdt, h:Math.ceil(count/wdt), d:1};
+// ── Dimension mode (button: 1-D · 2-D · 3-D · Mixed) ──
+let dimMode='3d';
+
+// Greedy CUBE decomposition: pull out the biggest cube we can, again and again
+// (28 → an 8-cube + 20… 35 → a 27-cube + an 8-cube), leaving a small remainder
+// 1–7. Each cube is coloured by its ROOT (3³ = yellow), the remainder by its
+// own number colour, so you can read the pieces.
+function decompose(n){
+  const parts=[]; let r=Math.max(1,Math.round(n));
+  while(r>=8){ const k=Math.floor(Math.cbrt(r)+1e-9);
+               parts.push({k, count:k*k*k, color:COLOR[k]||'#cfd2d6', cube:true}); r-=k*k*k; }
+  if(r>0) parts.push({k:0, count:r, color:COLOR[r]||'#cfd2d6', cube:false});
+  return parts;
+}
+// Flat dot offsets for a leftover count — its number-line shape if it has one
+// (7 = 2-3-2 flower), else a tidy square-ish grid.
+function flatShape(count){
+  const off=shapeOffsets(count);
+  if(off){ let mnx=99,mny=99; off.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);});
+           return off.map(p=>[p[0]-mnx,p[1]-mny]); }
+  const a=[], W=Math.max(1,Math.ceil(Math.sqrt(count)));
+  for(let i=0;i<count;i++) a.push([i%W, Math.floor(i/W)]);
+  return a;
 }
 
-// Build the figure for n by PLACE VALUE: each place's group as its own cluster,
-// laid side by side (biggest place on the left), bottoms aligned, so the ones
-// land on the bottom-right corner. e.g. 125 = a 100-block + a 20-block (kept
-// together) + the 5 on the corner; 28 = a 20-block + an 8-cube on the corner.
+// Build the figure for n from its CUBE pieces, arranged by the dimension button.
+//  3-D  → stack the cubes (biggest on the bottom), remainder sits flat on top
+//  Mixed→ the biggest cube in 3-D, everything left flattened on top of it
+//  2-D  → one flat slab, coloured by the cube pieces
+//  1-D  → a single line, coloured by the cube pieces
 function buildShape(n){
   while(group.children.length) group.remove(group.children[0]);
   dots=[];
-  n=Math.max(1, Math.round(n));
-  N=n;
+  N=Math.max(1, Math.round(n));
   const geo=new THREE.SphereGeometry(R,20,16);
   const add=(x,y,z,grp,hex)=>{
     const cc=hex2three(hex);
@@ -165,26 +174,51 @@ function buildShape(n){
     m.position.set(x*STEP,y*STEP,z*STEP); m.castShadow=true;
     group.add(m); dots.push({mesh:m, gy:Math.round(y), grp:grp||0, base:m.position.clone()});
   };
-  const groups=placeGroups(n);                 // [{count,color}] largest place first
-  G=Math.max(1,groups.length);
-  const cls=groups.map(g=>clusterPositions(g.count));
-  const GAP=1.6;
-  const totalW=cls.reduce((s,c)=>s+c.w,0)+GAP*(cls.length-1);
-  const maxH=Math.max(...cls.map(c=>c.h));
-  let xCur=-totalW/2;
-  cls.forEach((cl,gi)=>{
-    const col=groups[gi].color;
-    cl.pts.forEach(p=> add(xCur+p[0], -maxH/2+p[1], -(cl.d-1)/2+p[2], gi, col));
-    xCur += cl.w + GAP;
-  });
-  edgeC=Math.max(2, ...cls.map(c=>Math.max(c.w,c.h,c.d)));
+  const parts=decompose(N);
+  G=Math.max(1, parts.length);
+  const specs=[];                              // {x,y,z,color,grp}
+  if(dimMode==='1d'){
+    let x=0;
+    parts.forEach((p,gi)=>{ for(let i=0;i<p.count;i++) specs.push({x:x++,y:0,z:0,color:p.color,grp:gi}); x+=1.2; });
+  } else if(dimMode==='2d'){
+    const W=Math.max(1,Math.ceil(Math.sqrt(N)));
+    let idx=0;
+    parts.forEach((p,gi)=>{ for(let i=0;i<p.count;i++){ specs.push({x:idx%W,y:0,z:Math.floor(idx/W),color:p.color,grp:gi}); idx++; } });
+  } else {                                     // 3-D stack / Mixed
+    const flattenRest = (dimMode==='mix');
+    let yTop=0;
+    parts.forEach((p,gi)=>{
+      const solid = p.cube && (!flattenRest || gi===0);
+      if(solid){
+        const k=p.k, o=-(k-1)/2;
+        for(let y=0;y<k;y++)for(let z=0;z<k;z++)for(let x=0;x<k;x++)
+          specs.push({x:o+x, y:yTop+y, z:o+z, color:p.color, grp:gi});
+        yTop+=k;
+      } else {                                 // leftover (or flattened piece) on top
+        const sh=flatShape(p.count);
+        let mxx=0,mxz=0; sh.forEach(s=>{mxx=Math.max(mxx,s[0]);mxz=Math.max(mxz,s[1]);});
+        const ox=-mxx/2, oz=-mxz/2;
+        sh.forEach(s=> specs.push({x:ox+s[0], y:yTop, z:oz+s[1], color:p.color, grp:gi}));
+        yTop+=1;
+      }
+    });
+  }
+  // center the whole figure on the origin
+  let cx=0,cy=0,cz=0; specs.forEach(s=>{cx+=s.x;cy+=s.y;cz+=s.z;});
+  const m=specs.length||1; cx/=m; cy/=m; cz/=m;
+  let maxR=2;
+  specs.forEach(s=>{ add(s.x-cx, s.y-cy, s.z-cz, s.grp, s.color);
+                     maxR=Math.max(maxR, Math.abs(s.x-cx), Math.abs(s.y-cy), Math.abs(s.z-cz)); });
+  edgeC=Math.max(2, maxR*2);
   sep=0;
-  targetLen=Math.max(4, Math.max(maxH,totalW)*STEP*1.5);
-  // equation — keep the cube product when n is a perfect cube (5×5×5 = 125)
-  const k=Math.round(Math.cbrt(n)), isCube=k*k*k===n;
-  document.getElementById('eq').innerHTML =
-    isCube ? `<span class="op">${k} × ${k} × ${k} = </span>`+colorNumber(n) : colorNumber(n);
-  document.getElementById('expand').innerHTML = expandedForm(n);
+  targetLen=Math.max(4, (maxR*2+2)*STEP*1.4);
+  // notes: the cube breakdown  (3³ + 2 = 29)
+  const eqStr=parts.map((p,i)=>{
+    const t=p.cube? `${p.k}<sup>3</sup>` : `${p.count}`;
+    return `<span class="d3" style="color:${p.color};text-shadow:${extrude(p.color)}">${t}</span>`;
+  }).join('<span class="op"> + </span>');
+  document.getElementById('eq').innerHTML = eqStr + `<span class="op"> = </span>` + colorNumber(N);
+  document.getElementById('expand').innerHTML = expandedForm(N);
   spinFrames=SPIN_FRAMES; sinceTouch=0;        // gentle intro spin, then ease to readable
   updateHint();
 }
@@ -218,11 +252,21 @@ anyIn.addEventListener('input',()=>{
   buildShape(v);
 });
 
+// ── Dimension buttons: 1-D · 2-D · 3-D · Mixed (rebuilds the current number) ──
+const dimWrap=document.getElementById('dims'), dimBtns=[];
+[['1d','1-D'],['2d','2-D'],['3d','3-D'],['mix','Mixed']].forEach(([mode,label])=>{
+  const b=document.createElement('button'); b.className='dim'; b.textContent=label;
+  if(mode===dimMode) b.classList.add('on');
+  b.addEventListener('click',()=>{ dimMode=mode;
+    dimBtns.forEach(x=>x.classList.toggle('on', x===b)); buildShape(N); });
+  dimWrap.appendChild(b); dimBtns.push(b);
+});
+
 // ── Hint text reflects how many taps fully separate the current number ──
 function updateHint(){
   const h=document.getElementById('hint');
   h.textContent = G>1
-    ? `tap to pull the places apart (${G}) · drag to spin`
+    ? `tap to split the pieces · tap again to rejoin · drag to spin`
     : `tap a number · drag to spin · pinch to zoom`;
 }
 

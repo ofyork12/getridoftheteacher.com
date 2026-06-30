@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>3D Multiplication — ColorMyMath</title>
+  <title>Squares & Cubes — ColorMyMath</title>
   <style>
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
@@ -45,7 +45,11 @@
     .card p { margin: 0; font-size: 14px; text-align: center; opacity: 0.8; line-height: 1.45; }
     .card:hover p { opacity: 1; }
 
-    /* ── 3-D spinning cube inside the card ── */
+    /* ── flat 2-D square of dots (Squares card icon) ── */
+    .sq-stage{display:grid;grid-template-columns:repeat(3,22px);grid-auto-rows:22px;gap:2px}
+    .sq-stage span{border-radius:50%;border:2px solid rgba(0,0,0,0.35)}
+
+    /* ── 3-D spinning cube (Cubes card icon) ── */
     .cube-stage{width:90px;height:90px;perspective:220px;flex-shrink:0}
     .cube{width:100%;height:100%;position:relative;transform-style:preserve-3d;
           animation:spin3d 5s linear infinite}
@@ -65,24 +69,19 @@
 </head>
 <body>
   <div class="wrap">
-    <div class="top-nav"><a href="index.html">← Back to Home</a></div>
-    <h1>3D Multiplication</h1>
-    <p class="sub">See multiplication as a real cube you can spin.</p>
+    <div class="top-nav"><a href="index.html">← Back to Home</a> <a href="shop.html" style="margin-left:12px;">🛍️ Shop</a></div>
+    <h1>Squares &amp; Cubes</h1>
+    <p class="sub">A number as a flat square, or as a cube you can spin.</p>
 
     <div class="grid">
-      <a href="multiplication-cube.html" class="card">
-        <div class="cube-stage">
-          <div class="cube">
-            <div class="face f-front">4</div>
-            <div class="face f-back">4</div>
-            <div class="face f-right">4</div>
-            <div class="face f-left">4</div>
-            <div class="face f-top">×</div>
-            <div class="face f-bot">64</div>
-          </div>
+      <a href="squares-2d.html" class="card">
+        <div class="sq-stage">
+          <span style="background:#22b14c"></span><span style="background:#22b14c"></span><span style="background:#22b14c"></span>
+          <span style="background:#22b14c"></span><span style="background:#22b14c"></span><span style="background:#22b14c"></span>
+          <span style="background:#22b14c"></span><span style="background:#22b14c"></span><span style="background:#22b14c"></span>
         </div>
-        <h2>3D Multiplication</h2>
-        <p>See 4×4×4=64 as a real cube. Spin it. Change the numbers.</p>
+        <h2>Squares</h2>
+        <p>See a number as a flat square — 3 × 3 = 9.</p>
       </a>
 
       <a href="multiplication-cube-2.html" class="card">
@@ -96,8 +95,8 @@
             <div class="face f-bot">64</div>
           </div>
         </div>
-        <h2>3D Multiplication — Part Two</h2>
-        <p>The next 3D build. Starts as a copy — we branch from here.</p>
+        <h2>Cubes</h2>
+        <p>See a number as a real cube you can spin — 4 × 4 × 4 = 64.</p>
       </a>
     </div>
   </div>

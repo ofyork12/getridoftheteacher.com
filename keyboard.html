@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>ColorMyMath Keyboard — the standard number pad</title>
+  <meta name="description" content="The standard ColorMyMath number keyboard — colored dots and digits, resizable, for every game.">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #000; color: #fff; font-family: Arial, sans-serif;
+      padding: 40px 18px 70px; display: flex; flex-direction: column; align-items: center; }
+    .top-nav { width: 100%; max-width: 760px; }
+    .top-nav a { display:inline-block; padding:8px 14px; border:2px solid #fff; border-radius:10px;
+      color:#fff; text-decoration:none; font-size:14px; }
+    .top-nav a:hover { background:#fff; color:#000; }
+    h1 { font-size: clamp(28px, 6vw, 48px); letter-spacing: 2px; text-transform: uppercase; margin: 28px 0 4px; text-align:center; }
+    .sub { color:#aaa; margin:0 0 28px; text-align:center; font-size: clamp(13px,2.2vw,16px); }
+    .display { width:100%; max-width:420px; min-height:64px; border:3px solid #fff; border-radius:16px;
+      display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 16px; margin-bottom:26px;
+      font-size:40px; font-weight:800; letter-spacing:6px; background:rgba(255,255,255,.04); min-height:74px; }
+    .display .ph { color:#555; font-size:20px; letter-spacing:1px; font-weight:600; }
+    .reuse { margin-top:40px; width:100%; max-width:620px; color:#9aa3ad; font-size:13px; }
+    .reuse code { background:#111; border:1px solid #333; border-radius:6px; padding:1px 6px; color:#cfe3ff; }
+    details { margin-top:16px; } summary { cursor:pointer; color:#cfe3ff; }
+    pre { background:#0c0c0c; border:1px solid #222; border-radius:10px; padding:12px; overflow:auto; color:#d6e6ff; font-size:12.5px; }
+  </style>
+</head>
+<body>
+  <div class="top-nav"><a href="index.html">← Back to Home</a> <a href="shop.html" style="margin-left:8px;">🛍️ Shop</a></div>
+
+  <h1>ColorMyMath Keyboard</h1>
+  <p class="sub">The standard number pad — colored dots + digit, in every game. Tap the + / − to make it bigger or smaller.</p>
+
+  <div class="display" id="display"><span class="ph">tap a number…</span></div>
+
+  <div id="kb"></div>
+
+  <div class="reuse">
+    <b>Drop it into any game:</b> add <code>&lt;script src="/cmm-keyboard.js"&gt;&lt;/script&gt;</code> then mount it.
+    <details>
+      <summary>Show the snippet</summary>
+<pre>&lt;div id="myKeyboard"&gt;&lt;/div&gt;
+&lt;script src="/cmm-keyboard.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const kb = CMMKeyboard.mount('#myKeyboard', {
+    onPress: n =&gt; addDigit(n),   // 0–9 pressed
+    onErase: ()  =&gt; backspace(),  // erase pressed
+    size: 64,                     // start size in px
+    controls: true                // show bigger/smaller buttons
+  });
+  // kb.setScale(90)  // resize from code any time
+&lt;/script&gt;</pre>
+    </details>
+  </div>
+
+  <script src="cmm-keyboard.js"></script>
+  <script>
+    var disp = document.getElementById('display');
+    var typed = '';
+    function show() {
+      disp.textContent = '';
+      if (!typed) { var s = document.createElement('span'); s.className='ph'; s.textContent='tap a number…'; disp.appendChild(s); return; }
+      disp.textContent = typed;
+    }
+    CMMKeyboard.mount('#kb', {
+      size: 66,
+      controls: true,
+      dotsBase: 'color-my-sudoku/img/',
+      onPress: function (n) { if (typed.length < 12) { typed += n; show(); } },
+      onErase: function () { typed = typed.slice(0, -1); show(); }
+    });
+  </script>
+</body>
+</html>

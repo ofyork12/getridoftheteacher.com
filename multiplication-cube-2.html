@@ -23,6 +23,10 @@
   .lbl{color:#aaa;font-size:14px}
   #any{width:80px;height:34px;border:none;border-radius:8px;background:#2a2a2a;color:#fff;
        font:bold 18px Georgia;text-align:center}
+  #dims{display:flex;gap:6px}
+  .dim{padding:5px 12px;border:none;border-radius:8px;background:#2a2a2a;color:#ddd;
+       font:bold 13px Georgia;cursor:pointer;box-shadow:0 2px 6px #0006}
+  .dim.on{background:#4a4a4a;color:#fff;box-shadow:0 0 0 2px #fff,0 2px 6px #0006}
   #hint{color:#777;font-size:12px;padding-bottom:2px}
   canvas{display:block}
 </style>
@@ -33,6 +37,7 @@
   <div id="expand"></div>
   <div id="pad"></div>
   <div id="anyrow"><span class="lbl">or type a total:</span><input id="any" type="number" min="1" inputmode="numeric" placeholder="#"></div>
+  <div id="dims"></div>
   <div id="hint">tap a number · drag to spin · pinch to zoom</div>
 </div>
 
@@ -127,36 +132,50 @@ function shapeOffsets(rem){
   return out;
 }
 
-// Local dot positions for ONE place-value group of `count` dots (origin at the
-// bottom-left-back corner). Ones (1–9) take their number-true shape — a cube for
-// cube-numbers (8 = 2×2×2), else the flat canonical symbol (7 = 2-3-2 flower).
-// Tens fill a 5-wide block, hundreds a 10-wide block (so 20 reads as a tidy 20).
-function clusterPositions(count){
-  if(count<10){
-    const k=Math.round(Math.cbrt(count));
-    if(k*k*k===count){                 // 1 or 8 → a real cube
-      const pts=[]; for(let x=0;x<k;x++)for(let y=0;y<k;y++)for(let z=0;z<k;z++) pts.push([x,y,z]);
-      return {pts, w:k, h:k, d:k};
-    }
-    const off=shapeOffsets(count)||[[0,0]];
-    let mnx=9,mny=9; off.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);});
-    let mxx=0,mxy=0; const pts=off.map(p=>{const x=p[0]-mnx,y=p[1]-mny;mxx=Math.max(mxx,x);mxy=Math.max(mxy,y);return [x,y,0];});
-    return {pts, w:mxx+1, h:mxy+1, d:1};
-  }
-  const wdt = count>=100 ? 10 : 5;
-  const pts=[]; for(let i=0;i<count;i++) pts.push([i%wdt, Math.floor(i/wdt), 0]);
-  return {pts, w:wdt, h:Math.ceil(count/wdt), d:1};
+// ── Dimension mode (button: 1-D · 2-D · 3-D) ──
+let dimMode='3d';
+
+// PLACE-VALUE colour for every one of the n dots, biggest place first.
+// 27 → [orange ×20, brown ×7].  The colour ALWAYS means the digit, in every
+// dimension, so you read the number and can compare/order by colour.
+function placeColorList(n){
+  const groups=placeGroups(n);                 // [{count,color}] biggest place first
+  const list=[], grp=[];
+  groups.forEach((g,gi)=>{ for(let i=0;i<g.count;i++){ list.push(g.color); grp.push(gi); } });
+  return {list, grp, G:Math.max(1,groups.length)};
 }
 
-// Build the figure for n by PLACE VALUE: each place's group as its own cluster,
-// laid side by side (biggest place on the left), bottoms aligned, so the ones
-// land on the bottom-right corner. e.g. 125 = a 100-block + a 20-block (kept
-// together) + the 5 on the corner; 28 = a 20-block + an 8-cube on the corner.
+// Dot positions for the WHOLE number n in the chosen dimension, generated in
+// the SAME order as placeColorList so the colour groups stay together:
+//   1-D → a straight line · 2-D → biggest square + leftover ·
+//   3-D → biggest cube + leftover.  `exp` = "5 × 5" etc. when it's perfect.
+function dimPositions(n, mode){
+  const pts=[];
+  if(mode==='1d'){
+    for(let i=0;i<n;i++) pts.push([i,0,0]);
+    return {pts, exp:null};
+  }
+  if(mode==='2d'){
+    const s=Math.max(1,Math.floor(Math.sqrt(n)+1e-9));
+    for(let x=0;x<s;x++) for(let y=0;y<s;y++) pts.push([x,y,0]);
+    let rem=n-s*s, col=s, row=0;
+    while(rem>0){ pts.push([col,row,0]); rem--; row++; if(row>=s){row=0;col++;} }
+    return {pts, exp:(s*s===n)?`${s} × ${s}`:null};
+  }
+  const k=Math.max(1,Math.floor(Math.cbrt(n)+1e-9));
+  for(let y=0;y<k;y++) for(let z=0;z<k;z++) for(let x=0;x<k;x++) pts.push([x,y,z]);
+  let rem=n-k*k*k, col=0, row=0, ly=k;
+  while(rem>0){ pts.push([col,ly,row]); rem--; col++; if(col>=k){col=0;row++; if(row>=k){row=0;ly++;}} }
+  return {pts, exp:(k*k*k===n)?`${k} × ${k} × ${k}`:null};
+}
+
+// Build n as a single figure in the chosen dimension (1-D line · 2-D square +
+// leftover · 3-D cube + leftover), coloured by PLACE VALUE so the digits read
+// the same in every view (27 = 20 orange + 7 brown, line/square/cube alike).
 function buildShape(n){
   while(group.children.length) group.remove(group.children[0]);
   dots=[];
-  n=Math.max(1, Math.round(n));
-  N=n;
+  N=Math.max(1, Math.round(n));
   const geo=new THREE.SphereGeometry(R,20,16);
   const add=(x,y,z,grp,hex)=>{
     const cc=hex2three(hex);
@@ -165,26 +184,22 @@ function buildShape(n){
     m.position.set(x*STEP,y*STEP,z*STEP); m.castShadow=true;
     group.add(m); dots.push({mesh:m, gy:Math.round(y), grp:grp||0, base:m.position.clone()});
   };
-  const groups=placeGroups(n);                 // [{count,color}] largest place first
-  G=Math.max(1,groups.length);
-  const cls=groups.map(g=>clusterPositions(g.count));
-  const GAP=1.6;
-  const totalW=cls.reduce((s,c)=>s+c.w,0)+GAP*(cls.length-1);
-  const maxH=Math.max(...cls.map(c=>c.h));
-  let xCur=-totalW/2;
-  cls.forEach((cl,gi)=>{
-    const col=groups[gi].color;
-    cl.pts.forEach(p=> add(xCur+p[0], -maxH/2+p[1], -(cl.d-1)/2+p[2], gi, col));
-    xCur += cl.w + GAP;
-  });
-  edgeC=Math.max(2, ...cls.map(c=>Math.max(c.w,c.h,c.d)));
+  const {pts, exp}=dimPositions(N, dimMode);
+  const {list, grp, G:gg}=placeColorList(N);
+  G=gg;
+  // center the whole figure on the origin
+  let cx=0,cy=0,cz=0; pts.forEach(p=>{cx+=p[0];cy+=p[1];cz+=p[2];});
+  const m=pts.length||1; cx/=m; cy/=m; cz/=m;
+  let maxR=2;
+  pts.forEach((p,i)=>{ add(p[0]-cx, p[1]-cy, p[2]-cz, grp[i]||0, list[i]||'#ffffff');
+    maxR=Math.max(maxR, Math.abs(p[0]-cx), Math.abs(p[1]-cy), Math.abs(p[2]-cz)); });
+  edgeC=Math.max(2, maxR*2);
   sep=0;
-  targetLen=Math.max(4, Math.max(maxH,totalW)*STEP*1.5);
-  // equation — keep the cube product when n is a perfect cube (5×5×5 = 125)
-  const k=Math.round(Math.cbrt(n)), isCube=k*k*k===n;
-  document.getElementById('eq').innerHTML =
-    isCube ? `<span class="op">${k} × ${k} × ${k} = </span>`+colorNumber(n) : colorNumber(n);
-  document.getElementById('expand').innerHTML = expandedForm(n);
+  targetLen=Math.max(4, (maxR*2+2)*STEP*1.4);
+  // notes: show the perfect cube/square when it is one (3 × 3 × 3 = 27)
+  const tag = exp ? `<span class="op">${exp} = </span>` : '';
+  document.getElementById('eq').innerHTML = tag + colorNumber(N);
+  document.getElementById('expand').innerHTML = expandedForm(N);
   spinFrames=SPIN_FRAMES; sinceTouch=0;        // gentle intro spin, then ease to readable
   updateHint();
 }
@@ -216,6 +231,16 @@ anyIn.addEventListener('input',()=>{
   if(!v||v<1) return;
   btns.forEach(b=>b.classList.remove('on'));
   buildShape(v);
+});
+
+// ── Dimension buttons: 1-D · 2-D · 3-D — same number, different shape, same colours ──
+const dimWrap=document.getElementById('dims'), dimBtns=[];
+[['1d','1-D'],['2d','2-D'],['3d','3-D']].forEach(([mode,label])=>{
+  const b=document.createElement('button'); b.className='dim'; b.textContent=label;
+  if(mode===dimMode) b.classList.add('on');
+  b.addEventListener('click',()=>{ dimMode=mode;
+    dimBtns.forEach(x=>x.classList.toggle('on', x===b)); buildShape(N); });
+  dimWrap.appendChild(b); dimBtns.push(b);
 });
 
 // ── Hint text reflects how many taps fully separate the current number ──

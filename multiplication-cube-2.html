@@ -132,8 +132,8 @@ function shapeOffsets(rem){
   return out;
 }
 
-// ── Dimension mode (button: 1-D · 2-D · 3-D) ──
-let dimMode='3d';
+// ── Dimension mode (button: 1-D · 2-D · 3-D · Mix) ──
+let dimMode='mix';
 
 // PLACE-VALUE colour for every one of the n dots, biggest place first.
 // 27 → [orange ×20, brown ×7].  The colour ALWAYS means the digit, in every
@@ -145,10 +145,28 @@ function placeColorList(n){
   return {list, grp, G:Math.max(1,groups.length)};
 }
 
-// Dot positions for the WHOLE number n in the chosen dimension, generated in
-// the SAME order as placeColorList so the colour groups stay together:
-//   1-D → a straight line · 2-D → biggest square + leftover ·
-//   3-D → biggest cube + leftover.  `exp` = "5 × 5" etc. when it's perfect.
+// Greedy SQUARE decomposition: pull out the biggest square again and again
+// (30 = 5² + 2² + 1 … 45 = 6² + 3²). What's left under 4 is a COUNTING number
+// (1–3) drawn in its ColorMyMath shape. A perfect square (225) stays 15×15.
+function squareDecompose(n){
+  const parts=[]; let r=n;
+  while(r>=4){ const s=Math.floor(Math.sqrt(r)+1e-9); parts.push({s, count:s*s, square:true}); r-=s*s; }
+  if(r>0) parts.push({s:0, count:r, square:false});   // counting number 1–3
+  return parts;
+}
+// Canonical ColorMyMath shape for a small count (3 = triangle…), origin at 0,0.
+function countingShape(count){
+  const off=shapeOffsets(count);
+  if(off){ let mnx=99,mny=99; off.forEach(p=>{mnx=Math.min(mnx,p[0]);mny=Math.min(mny,p[1]);});
+           return off.map(p=>[p[0]-mnx,p[1]-mny]); }
+  const a=[]; for(let i=0;i<count;i++) a.push([i,0]); return a;
+}
+
+// Dot positions for the WHOLE number n in the chosen dimension, generated
+// left→right so the place-value colour groups stay together:
+//   1-D → a straight line
+//   2-D → biggest square, then squares of the leftover, then a counting shape
+//   3-D → biggest cube + leftover.  `exp` = "5 × 5" / "3×3×3" when it's perfect.
 function dimPositions(n, mode){
   const pts=[];
   if(mode==='1d'){
@@ -156,11 +174,44 @@ function dimPositions(n, mode){
     return {pts, exp:null};
   }
   if(mode==='2d'){
-    const s=Math.max(1,Math.floor(Math.sqrt(n)+1e-9));
-    for(let x=0;x<s;x++) for(let y=0;y<s;y++) pts.push([x,y,0]);
-    let rem=n-s*s, col=s, row=0;
-    while(rem>0){ pts.push([col,row,0]); rem--; row++; if(row>=s){row=0;col++;} }
-    return {pts, exp:(s*s===n)?`${s} × ${s}`:null};
+    const parts=squareDecompose(n);
+    let xCur=0;
+    parts.forEach(p=>{
+      if(p.square){ for(let x=0;x<p.s;x++) for(let y=0;y<p.s;y++) pts.push([xCur+x,y,0]); xCur+=p.s+1; }
+      else { const sh=countingShape(p.count); let mxx=0; sh.forEach(o=>mxx=Math.max(mxx,o[0]));
+             sh.forEach(o=>pts.push([xCur+o[0],o[1],0])); xCur+=mxx+2; }
+    });
+    const perfect = parts.length===1 && parts[0].square;
+    return {pts, exp: perfect?`${parts[0].s} × ${parts[0].s}`:null};
+  }
+  if(mode==='mix'){
+    // HONEST view — "what is this number really?"  Check 3-D, then 2-D, then
+    // fall back: a perfect cube IS a cube (27 = 3×3×3), a perfect square IS a
+    // flat square (25 = 5×5), otherwise the biggest cube we can build with the
+    // leftover sitting ON TOP, the leftover itself broken into squares + its
+    // ColorMyMath counting-shape (29 = 3×3×3 + 2 on top; 31 = cube + a 2×2).
+    const cr=Math.floor(Math.cbrt(n)+1e-9);
+    if(cr>=2 && cr*cr*cr===n){
+      for(let y=0;y<cr;y++) for(let z=0;z<cr;z++) for(let x=0;x<cr;x++) pts.push([x,y,z]);
+      return {pts, exp:`${cr} × ${cr} × ${cr}`};
+    }
+    const sr=Math.floor(Math.sqrt(n)+1e-9);
+    if(sr>=2 && sr*sr===n){
+      for(let x=0;x<sr;x++) for(let y=0;y<sr;y++) pts.push([x,y,0]);
+      return {pts, exp:`${sr} × ${sr}`};
+    }
+    const k=Math.max(1,Math.floor(Math.cbrt(n)+1e-9));
+    for(let y=0;y<k;y++) for(let z=0;z<k;z++) for(let x=0;x<k;x++) pts.push([x,y,z]);
+    const rem=n-k*k*k;
+    if(rem>0){
+      const parts=squareDecompose(rem); let xCur=0; const topY=k;
+      parts.forEach(p=>{
+        if(p.square){ for(let x=0;x<p.s;x++) for(let z=0;z<p.s;z++) pts.push([xCur+x, topY, z]); xCur+=p.s+1; }
+        else { const sh=countingShape(p.count); let mxx=0; sh.forEach(o=>mxx=Math.max(mxx,o[0]));
+               sh.forEach(o=>pts.push([xCur+o[0], topY, o[1]])); xCur+=mxx+2; }
+      });
+    }
+    return {pts, exp:null};
   }
   const k=Math.max(1,Math.floor(Math.cbrt(n)+1e-9));
   for(let y=0;y<k;y++) for(let z=0;z<k;z++) for(let x=0;x<k;x++) pts.push([x,y,z]);
@@ -235,7 +286,7 @@ anyIn.addEventListener('input',()=>{
 
 // ── Dimension buttons: 1-D · 2-D · 3-D — same number, different shape, same colours ──
 const dimWrap=document.getElementById('dims'), dimBtns=[];
-[['1d','1-D'],['2d','2-D'],['3d','3-D']].forEach(([mode,label])=>{
+[['1d','1-D'],['2d','2-D'],['3d','3-D'],['mix','Mix']].forEach(([mode,label])=>{
   const b=document.createElement('button'); b.className='dim'; b.textContent=label;
   if(mode===dimMode) b.classList.add('on');
   b.addEventListener('click',()=>{ dimMode=mode;
@@ -247,7 +298,7 @@ const dimWrap=document.getElementById('dims'), dimBtns=[];
 function updateHint(){
   const h=document.getElementById('hint');
   h.textContent = G>1
-    ? `tap to pull the places apart (${G}) · drag to spin`
+    ? `tap = split the place colours · tap again = join · drag to spin`
     : `tap a number · drag to spin · pinch to zoom`;
 }
 
@@ -260,7 +311,7 @@ let lastX=0,lastY=0,lastD=0,dragging=false,moved=0;
 const el=renderer.domElement;
 el.addEventListener('pointerdown',e=>{dragging=true;moved=0;spinFrames=0;sinceTouch=0;lastX=e.clientX;lastY=e.clientY;});
 window.addEventListener('pointerup',()=>{
-  if(dragging && moved<6) sep=(sep+1)%(G+1);   // a tap pulls the places apart one step (wraps)
+  if(dragging && moved<6) sep = sep>0 ? 0 : G;   // tap = split into place colours · tap again = rejoin
   dragging=false; sinceTouch=0;
 });
 window.addEventListener('pointermove',e=>{

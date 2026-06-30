@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Find a Game — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh; background: #000; color: #fff;
+      font-family: Arial, sans-serif; padding: 28px 16px 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .top-nav a {
+      padding: 9px 18px; font-size: 14px; font-weight: bold;
+      background: transparent; color: #fff; border: 2px solid #fff;
+      border-radius: 999px; text-decoration: none; transition: all 0.25s ease;
+    }
+    .top-nav a:hover { background: #fff; color: #000; }
+    h1 { text-align: center; font-size: clamp(24px, 5vw, 34px); margin: 0 0 6px; letter-spacing: 1px; text-transform: uppercase; }
+    .sub { text-align: center; color: #aaa; margin: 0 0 18px; font-size: 14px; }
+
+    form { display: flex; flex-direction: column; gap: 10px; }
+    textarea {
+      width: 100%; min-height: 64px; resize: vertical; padding: 12px 14px;
+      font-size: 16px; font-family: Arial, sans-serif; color: #fff;
+      background: rgba(255,255,255,0.05); border: 2px solid #fff; border-radius: 14px;
+    }
+    textarea::placeholder { color: #888; }
+    .go {
+      padding: 13px 18px; font-size: 17px; font-weight: bold; letter-spacing: 1px;
+      background: #fff; color: #000; border: none; border-radius: 999px; cursor: pointer;
+      transition: opacity .2s;
+    }
+    .go:disabled { opacity: .5; cursor: default; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 2px; }
+    .chip {
+      padding: 6px 12px; font-size: 12px; color: #ddd; background: rgba(255,255,255,0.06);
+      border: 1px solid #555; border-radius: 999px; cursor: pointer;
+    }
+    .chip:hover { background: #fff; color: #000; }
+
+    #out { margin-top: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { text-align: center; color: #ccc; font-size: 15px; }
+    .pick {
+      display: block; text-decoration: none; color: #fff;
+      padding: 16px 18px; background: rgba(255,255,255,0.04);
+      border: 2px solid #fff; border-radius: 16px; transition: all .2s ease;
+    }
+    .pick:hover { background: #fff; color: #000; transform: translateY(-2px); }
+    .pick .pt { font-size: 19px; font-weight: bold; letter-spacing: .5px; }
+    .pick .pw { font-size: 14px; opacity: .82; margin-top: 5px; line-height: 1.45; }
+    .pick .open { font-size: 12px; opacity: .7; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+
+    .spin { text-align: center; color: #aaa; font-size: 14px; }
+    details { margin: 22px auto 0; max-width: 640px; font-size: 13px; color: #999; }
+    summary { cursor: pointer; color: #bbb; }
+    details p { line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav">
+      <a href="index.html">← Home</a>
+      <a href="games.html">All Games</a>
+    </div>
+
+    <h1>Find a Game</h1>
+    <p class="sub">Tell me what your child is working on — I'll point you to the right game.</p>
+
+    <form id="f">
+      <textarea id="q" placeholder="e.g. My 5-year-old is learning to count backwards" maxlength="500"></textarea>
+      <div class="chips" id="chips">
+        <span class="chip">just starting out</span>
+        <span class="chip">counting backwards</span>
+        <span class="chip">adding small numbers</span>
+        <span class="chip">making 10</span>
+        <span class="chip">bigger or smaller</span>
+        <span class="chip">telling time</span>
+      </div>
+      <button class="go" id="go" type="submit">Find a game →</button>
+    </form>
+
+    <div id="out"></div>
+
+    <details>
+      <summary>ⓘ More information</summary>
+      <p>This helper reads a list of every ColorMyMath game and suggests the best fit for what
+      you describe. It only ever recommends real games on this site. Type a sentence, tap a
+      suggestion, or just say a topic like “addition.” It works best with a short, plain
+      description of what your child needs.</p>
+    </details>
+  </div>
+
+  <script>
+    const f = document.getElementById('f');
+    const q = document.getElementById('q');
+    const go = document.getElementById('go');
+    const out = document.getElementById('out');
+
+    document.getElementById('chips').addEventListener('click', (e) => {
+      if (!e.target.classList.contains('chip')) return;
+      q.value = q.value.trim()
+        ? q.value.trim() + ', ' + e.target.textContent
+        : 'My child is working on ' + e.target.textContent;
+      q.focus();
+    });
+
+    f.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = q.value.trim();
+      if (!text) { q.focus(); return; }
+      go.disabled = true;
+      out.innerHTML = '<div class="spin">Looking for the best game…</div>';
+      try {
+        const r = await fetch('/api/find-game', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ q: text })
+        });
+        const data = await r.json();
+        render(data);
+      } catch (err) {
+        out.innerHTML = '<div class="msg">Something went wrong — please try again.</div>';
+      }
+      go.disabled = false;
+    });
+
+    function render(data) {
+      out.innerHTML = '';
+      if (!data || (!data.picks || !data.picks.length)) {
+        out.innerHTML = '<div class="msg">' +
+          (data && data.message ? esc(data.message) : "I couldn't find a match — try \"counting\" or \"adding\".") +
+          '</div>';
+        return;
+      }
+      if (data.message) {
+        const m = document.createElement('div');
+        m.className = 'msg';
+        m.textContent = data.message;
+        out.appendChild(m);
+      }
+      data.picks.forEach((p) => {
+        const a = document.createElement('a');
+        a.className = 'pick';
+        a.href = p.url;
+        a.innerHTML = '<div class="pt">' + esc(p.title) + '</div>' +
+          (p.why ? '<div class="pw">' + esc(p.why) + '</div>' : '') +
+          '<div class="open">Open this game →</div>';
+        out.appendChild(a);
+      });
+    }
+
+    function esc(s) {
+      return (s + '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+  </script>
+</body>
+</html>

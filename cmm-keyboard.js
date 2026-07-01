@@ -43,7 +43,7 @@
       +   'transition:transform .08s ease, box-shadow .12s ease;}'
       + '.cmk-key:hover{box-shadow:0 0 0 3px rgba(255,255,255,.25);}'
       + '.cmk-key:active{transform:translateY(2px) scale(.96);}'
-      + '.cmk-dots{width:74%;height:74%;object-fit:contain;pointer-events:none;}'
+      + '.cmk-dots{width:96%;height:96%;object-fit:contain;pointer-events:none;}'
       + '.cmk-digit{position:absolute;top:5%;left:8%;line-height:1;font-weight:800;'
       +   'color:#000;font-size:calc(var(--cmk-size)*.30);'
       +   'background:rgba(255,255,255,.82);border-radius:6px;padding:0 .12em;pointer-events:none;}'

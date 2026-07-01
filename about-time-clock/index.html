@@ -49,24 +49,32 @@
 <script>
 "use strict";
 (function(){
-  // About Time — 3D "fish tank": each number is that-many BIG colored balls.
-  // HOUR balls are always bigger than the MINUTE balls.
-  // You READ the time (still), then they drop and bounce around the glass cube.
-  // Rendering: three.js   Physics: cannon.js (3D rigid bodies)
+  // About Time — 3D "fish tank" of colored balls.
+  //  HOUR  = one solid clump of big gold balls (sticks together, tumbles as one).
+  //  MINUTES tens = separate rigid SETS OF 10 (each ten = two fives), one per ten-digit.
+  //  MINUTES ones = individual loose balls that bounce apart.
+  // Read the time while it's still, then it drops & bounces.
+  // Rendering: three.js   Physics: cannon.js (compound rigid bodies)
 
-  const S = 7;                 // interior half-extent -> cube is 14x14x14
-  const T = 1;                 // wall thickness (invisible collision boxes)
+  const S = 9;                 // interior half-extent -> cube is 18x18x18
+  const T = 1;
 
   const ONES_HEX=[null,'#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8','#9b4fd0','#9a6a3a','#f06fb0','#39c0e8'];
   const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
   const HOUR_HEX='#f0b32a';
 
+  // a FIVE (5 balls): one on top, a triangle of 3 in the middle, one on the bottom  (+y = down)
+  const FIVE=[[0,-1.7],[0,-0.6],[-0.6,0.3],[0.6,0.3],[0,1.4]];
+  // a TEN = two fives, side by side (10 balls)
+  const TEN=FIVE.map(o=>[o[0]-0.9,o[1]]).concat(FIVE.map(o=>[o[0]+0.9,o[1]]));
+
+  // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
   const SHAPES={
     1:[[0,0]],
     2:[[-0.5,0],[0.5,0]],
     3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
     4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
-    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],
+    5:FIVE,
     6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
     8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
@@ -74,17 +82,19 @@
   };
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
   function hourShape(h){ return h<=9 ? SHAPES[h] : rowsShape(h,3); }
+  // where each ten-set sits when the clock is readable (up to 5 sets, laid out on the right)
+  function tenAnchors(n){ return rowsShape(n,3).map(o=>({x:4.6+o[0]*2.5, y:2.0-o[1]*4.0})); }
 
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
   renderer.setClearColor(0x070d18, 1);
   const scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0x070d18, 0.010);
-  const camera=new THREE.PerspectiveCamera(46, 1, 0.1, 200);
+  scene.fog=new THREE.FogExp2(0x070d18, 0.008);
+  const camera=new THREE.PerspectiveCamera(46, 1, 0.1, 240);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-  const key=new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(6,12,8); scene.add(key);
-  const rim=new THREE.DirectionalLight(0x88bbff, 0.5); rim.position.set(-8,-2,-6); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const key=new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(8,14,10); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x88bbff, 0.5); rim.position.set(-10,-3,-8); scene.add(rim);
 
   const tank=new THREE.Group(); scene.add(tank);
   const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2),
@@ -96,15 +106,15 @@
   tank.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
     new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85})));
 
-  let G=3.4;
+  let G=3.2;
   const world=new CANNON.World();
   world.gravity.set(0,-G,0);
   world.broadphase=new CANNON.NaiveBroadphase();
   world.solver.iterations=14;
   const mat=new CANNON.Material('m');
-  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.04, restitution:0.92}));
+  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.04, restitution:0.93}));
   world.defaultContactMaterial.friction=0.04;
-  world.defaultContactMaterial.restitution=0.92;
+  world.defaultContactMaterial.restitution=0.93;
 
   function wall(hx,hy,hz, px,py,pz){ const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz))); b.position.set(px,py,pz); world.addBody(b); }
   wall(S+T,T/2,S+T, 0,-S-T/2,0);  wall(S+T,T/2,S+T, 0,S+T/2,0);
@@ -112,43 +122,54 @@
   wall(S+T,S+T,T/2, 0,0,-S-T/2);  wall(S+T,S+T,T/2, 0,0,S+T/2);
 
   function addColon(y){
-    const half=0.55;
+    const half=0.5;
     const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(half,half,half))); b.position.set(0,y,0); world.addBody(b);
     const mesh=new THREE.Mesh(new THREE.BoxGeometry(half*2,half*2,half*2), new THREE.MeshPhongMaterial({color:0xf2f7ff, emissive:0x223a5a, shininess:60}));
     mesh.position.set(0,y,0); tank.add(mesh);
   }
-  addColon(1.4); addColon(-1.4);
+  addColon(1.6); addColon(-1.6);
 
-  const R_HOUR=1.25, R_TEN=0.9, R_ONE=0.85;
-  const M_HOUR=2.2, M_TEN=1.0, M_ONE=0.8;
-  const HSP=2.5, SP=1.9;
+  // ball radii — HOUR balls are big, MINUTE balls are small (a ten is a set of 10 of them)
+  const R_HOUR=1.25, R_MIN=0.46;
+  const M_HOUR=3.5, M_TEN=1.2, M_ONE=0.3;
+  const HSP=2.55;      // spacing between hour balls
+  const MUNIT=0.98;    // spacing between minute balls inside a clump
+  const ONEGAP=1.1;    // spacing between loose ones
 
-  let pieces=[];
-  let SLOWMO=1.0;
-  let frozen=false;
-  let mode='show';
-  let releaseAt=0;
-  const HOLD_MS=1800;
+  let pieces=[];       // {body, obj, group}
+  let SLOWMO=1.0, frozen=false, mode='show', releaseAt=0;
+  const HOLD_MS=2000;
 
   const sphereGeo={};
-  function ball(hex, r){
-    if(!sphereGeo[r]) sphereGeo[r]=new THREE.SphereGeometry(r, 28, 20);
+  function ballMesh(hex, r){
+    if(!sphereGeo[r]) sphereGeo[r]=new THREE.SphereGeometry(r, 24, 18);
     const col=new THREE.Color(hex);
     const m=new THREE.MeshPhongMaterial({color:col, shininess:75, specular:0x666666, emissive:col.clone().multiplyScalar(0.14)});
     return new THREE.Mesh(sphereGeo[r], m);
   }
-  function addBall(hex, r, mass, x, y, z, group){
-    const body=new CANNON.Body({mass:mass, type:CANNON.Body.STATIC, material:mat, position:new CANNON.Vec3(x,y,z), shape:new CANNON.Sphere(r)});
+  // one rigid body holding N balls fused at the given offsets (a "clump")
+  function addClump(hex, r, offsets, unit, cx, cy, mass, group, still){
+    const body=new CANNON.Body({mass:mass, material:mat});
+    const obj=new THREE.Group();
+    for(const o of offsets){
+      const ox=o[0]*unit, oy=-o[1]*unit, oz=(o[2]||0)*unit;   // +y(down) -> world +y up, so negate
+      body.addShape(new CANNON.Sphere(r), new CANNON.Vec3(ox,oy,oz));
+      const mh=ballMesh(hex,r); mh.position.set(ox,oy,oz); obj.add(mh);
+    }
+    body.position.set(cx,cy,0);
     body.linearDamping=0.01; body.angularDamping=0.03;
-    world.addBody(body);
-    const mesh=ball(hex, r); mesh.position.set(x,y,z); tank.add(mesh);
-    pieces.push({body, mesh, group, mass});
+    if(still){ body.type=CANNON.Body.STATIC; }
+    body.updateMassProperties();
+    world.addBody(body); tank.add(obj);
+    pieces.push({body, obj, group});
   }
-  function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.mesh); } pieces=[]; }
+  function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.obj); } pieces=[]; }
 
-  function buildHour(h){ for(const o of hourShape(h)) addBall(HOUR_HEX, R_HOUR, M_HOUR, -3.2+o[0]*HSP, 0.2-o[1]*HSP, 0, 'hour'); }
-  function buildTens(tens){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; for(const o of SHAPES[tens]) addBall(hex, R_TEN, M_TEN, 3.6+o[0]*SP, 3.3-o[1]*SP, 0, 'tens'); }
-  function buildOnes(ones){ if(!ones) return; const hex=ONES_HEX[ones]; for(const o of SHAPES[ones]) addBall(hex, R_ONE, M_ONE, 3.6+o[0]*SP, -1.9-o[1]*SP, 0, 'ones'); }
+  function buildHour(h, still){ addClump(HOUR_HEX, R_HOUR, hourShape(h), HSP, -4.7, 0.4, M_HOUR, 'hour', still); }   // ONE clump
+  function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
+    for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, M_TEN, 'tens', still); }             // one clump per ten
+  function buildOnes(ones, still){ if(!ones) return; const hex=ONES_HEX[ones];
+    for(const o of SHAPES[ones]) addClump(hex, R_MIN, [[0,0]], 1, 4.6+o[0]*ONEGAP, -5.6-o[1]*ONEGAP, M_ONE, 'ones', still); }  // loose singles
 
   let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
@@ -156,7 +177,7 @@
 
   function reform(){
     const t=curT(); clearAll();
-    buildHour(t.h); buildTens(t.tens); buildOnes(t.ones);
+    buildHour(t.h, true); buildTens(t.tens, true); buildOnes(t.ones, true);
     lastKey=keyOf(t); mode='show';
     theta=0; phi=0.12; autoSpin=false;
   }
@@ -165,7 +186,7 @@
       const b=p.body;
       b.type=CANNON.Body.DYNAMIC; b.updateMassProperties();
       b.velocity.set((Math.random()-0.5)*2.2, (Math.random()-0.5)*1.2, (Math.random()-0.5)*2.2);
-      b.angularVelocity.set((Math.random()-0.5)*6,(Math.random()-0.5)*6,(Math.random()-0.5)*6);
+      b.angularVelocity.set((Math.random()-0.5)*5,(Math.random()-0.5)*5,(Math.random()-0.5)*5);
       b.wakeUp();
     }
     mode='live'; autoSpin=true;
@@ -181,10 +202,10 @@
     renderer.setSize(w,h,false);
     camera.aspect=w/h; camera.updateProjectionMatrix();
     const minmax=Math.min(w,h)/Math.max(w,h);
-    R=Math.min(S*3.8, S*2.4*Math.max(1, 0.72/minmax));
+    R=Math.min(S*3.9, S*2.4*Math.max(1, 0.72/minmax));
   }
   window.addEventListener('resize', resize);
-  window.addEventListener('load', resize);          // re-fit once the page has a real size
+  window.addEventListener('load', resize);
   window.addEventListener('orientationchange', resize);
 
   const tmpQ=new THREE.Quaternion();
@@ -197,8 +218,8 @@
     world.step(1/60, dt*SLOWMO, 5);
     for(const p of pieces){
       const b=p.body;
-      p.mesh.position.set(b.position.x, b.position.y, b.position.z);
-      tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.mesh.quaternion.copy(tmpQ);
+      p.obj.position.set(b.position.x, b.position.y, b.position.z);
+      tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.obj.quaternion.copy(tmpQ);
     }
     if(autoSpin && mode==='live' && !frozen) theta += dt*0.11;
     placeCamera();
@@ -230,7 +251,7 @@
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', ()=>{ dragging=false; clearTimeout(pressTimer); });
-  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.7, Math.min(S*4.5, R+e.deltaY*0.01)); }, {passive:false});
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.7, Math.min(S*4.6, R+e.deltaY*0.01)); }, {passive:false});
 
   function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
   function onMotion(e){
@@ -244,7 +265,7 @@
   function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
   if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
-  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=3.4; world.gravity.set(0,-G,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=3.2; world.gravity.set(0,-G,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{

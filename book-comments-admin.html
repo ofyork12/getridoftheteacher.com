@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Audiobook Comments — Admin</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#0f1420;color:#e7ecf5;font-family:Arial,Helvetica,sans-serif;
+    padding:16px;max-width:820px;margin:0 auto;font-size:15px;line-height:1.4;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .muted{color:#8a97ac;font-size:13px;}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0;}
+  input[type=password],input[type=text]{background:#1b2333;border:1px solid #2f3a50;color:#e7ecf5;
+    border-radius:8px;padding:9px 11px;font-size:15px;flex:1;min-width:160px;}
+  button{background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:14px;cursor:pointer;}
+  button.g{background:#2f3a50;}
+  button.r{background:#b23b3b;}
+  button.ok{background:#2f8f4e;}
+  button:disabled{opacity:.5;cursor:default;}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .filters button{background:#1b2333;border:1px solid #2f3a50;padding:6px 11px;font-size:13px;}
+  .filters button.sel{background:#3b82f6;border-color:#3b82f6;}
+  .c{border:1px solid #2f3a50;border-radius:10px;padding:11px 13px;margin-bottom:9px;background:#151c2b;}
+  .c .top{font-size:12px;color:#8a97ac;margin-bottom:5px;}
+  .c .top b{color:#ccd6e6;}
+  .c .body{font-size:15px;white-space:pre-wrap;word-wrap:break-word;}
+  .c .who{font-size:13px;color:#e2c46b;font-weight:bold;margin-bottom:3px;}
+  .c .act{display:flex;gap:6px;margin-top:9px;}
+  .pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;margin-left:6px;vertical-align:middle;}
+  .pill.shown{background:#1e3a2a;color:#7fd39a;}
+  .pill.pending{background:#3a331e;color:#e2c46b;}
+  .pill.hidden{background:#3a1e1e;color:#e59a9a;}
+  #msg{margin:10px 0;font-size:14px;color:#8a97ac;}
+  #msg.err{color:#e59a9a;}
+</style>
+</head>
+<body>
+  <h1>Audiobook Comments</h1>
+  <div class="muted">Read and remove what readers wrote on each chapter board.</div>
+
+  <div class="bar">
+    <input type="password" id="pass" placeholder="Admin password" autocomplete="current-password">
+    <button id="load" onclick="load()">Load comments</button>
+  </div>
+
+  <div class="filters" id="filters" style="display:none">
+    <button data-f="all" class="sel" onclick="setFilter('all',this)">All</button>
+    <button data-f="pending" onclick="setFilter('pending',this)">Pending</button>
+    <button data-f="shown" onclick="setFilter('shown',this)">Shown</button>
+    <button data-f="hidden" onclick="setFilter('hidden',this)">Hidden</button>
+  </div>
+
+  <div id="msg"></div>
+  <div id="list"></div>
+
+<script>
+  var ALL = [], FILTER = 'all';
+  var BOOK_NAMES = {
+    tomsawyer:'Tom Sawyer', montecristo:'Monte Cristo', douglass:'Frederick Douglass',
+    pimpernel:'Scarlet Pimpernel', bartleby:'Bartleby'
+  };
+  function pass(){ return document.getElementById('pass').value; }
+  function msg(t, err){ var m=document.getElementById('msg'); m.textContent=t||''; m.className=err?'err':''; }
+  function fmt(sec){ sec=Math.max(0,Math.floor(sec||0)); var m=Math.floor(sec/60), s=sec%60; return m+':'+String(s).padStart(2,'0'); }
+  function when(ms){ try{ return new Date(ms).toLocaleString(); }catch(e){ return ''; } }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+
+  function api(payload){
+    return fetch('/api/comments',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload)}).then(function(r){return r.json();});
+  }
+
+  function load(){
+    var p = pass();
+    if(!p){ msg('Enter the password first.', true); return; }
+    msg('Loading…');
+    api({action:'admin-list', pass:p}).then(function(d){
+      if(!d.ok){ msg(d.error||'Could not load.', true); return; }
+      ALL = d.comments || [];
+      document.getElementById('filters').style.display = 'flex';
+      render();
+      var pend = ALL.filter(function(c){return c.status==='pending';}).length;
+      msg(ALL.length + ' comment' + (ALL.length===1?'':'s') + (pend? (' · '+pend+' pending'):''));
+    }).catch(function(){ msg('Network error.', true); });
+  }
+
+  function setFilter(f, btn){
+    FILTER = f;
+    document.querySelectorAll('.filters button').forEach(function(b){ b.classList.remove('sel'); });
+    btn.classList.add('sel');
+    render();
+  }
+
+  function render(){
+    var list = document.getElementById('list');
+    var rows = ALL.filter(function(c){ return FILTER==='all' || c.status===FILTER; });
+    if(!rows.length){ list.innerHTML = '<div class="muted">Nothing here.</div>'; return; }
+    list.innerHTML = '';
+    rows.forEach(function(c){
+      var book = BOOK_NAMES[c.book] || c.book;
+      var el = document.createElement('div');
+      el.className = 'c';
+      var status = c.status || 'shown';
+      var top = '<b>'+esc(book)+'</b> · '+esc(c.label || ('Chapter '+c.chapter)) +
+                (c.seconds? ' · at '+fmt(c.seconds):'') + ' · ' + when(c.created) +
+                '<span class="pill '+status+'">'+status+'</span>';
+      el.innerHTML =
+        '<div class="top">'+top+'</div>' +
+        '<div class="who">'+esc(c.name || 'A reader')+'</div>' +
+        '<div class="body">'+esc(c.body)+'</div>' +
+        '<div class="act"></div>';
+      var act = el.querySelector('.act');
+      if(status !== 'shown') act.appendChild(mkBtn('Approve','ok','approve',c.key));
+      if(status === 'shown') act.appendChild(mkBtn('Hide','g','hide',c.key));
+      act.appendChild(mkBtn('Delete','r','delete',c.key));
+      list.appendChild(el);
+    });
+  }
+
+  function mkBtn(text, cls, action, key){
+    var b = document.createElement('button');
+    b.className = cls; b.textContent = text;
+    b.onclick = function(){ act(action, key, b); };
+    return b;
+  }
+
+  function act(action, key, btn){
+    if(action==='delete' && !confirm('Delete this comment permanently?')) return;
+    btn.disabled = true;
+    api({action:action, key:key, pass:pass()}).then(function(d){
+      if(!d.ok){ msg(d.error||'Failed.', true); btn.disabled=false; return; }
+      if(action==='delete'){ ALL = ALL.filter(function(c){return c.key!==key;}); }
+      else { var c = ALL.find(function(x){return x.key===key;}); if(c) c.status = (action==='approve'?'shown':'hidden'); }
+      render();
+    }).catch(function(){ msg('Network error.', true); btn.disabled=false; });
+  }
+
+  document.getElementById('pass').addEventListener('keydown', function(e){ if(e.key==='Enter') load(); });
+</script>
+</body>
+</html>

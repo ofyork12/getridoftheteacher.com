@@ -927,6 +927,15 @@ if('serviceWorker' in navigator){
 if(window.caches && caches.keys){
   caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
 }
+
+/* ---- COMMENTS: per-chapter "What did you think?" board ---- */
+window.CMM_COMMENTS_CFG = {
+  book: 'pimpernel',
+  chapters: CHAPTERS,
+  nowIndex:   function(){ return currentIndex; },
+  nowSeconds: function(){ return (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0; }
+};
 </script>
+<script src="../audiobook-comments.js"></script>
 </body>
 </html>

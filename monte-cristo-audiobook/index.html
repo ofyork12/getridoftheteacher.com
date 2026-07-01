@@ -549,6 +549,15 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().the
 
 function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
 setTimeout(dismissSplash, 2600);
+
+/* ---- COMMENTS: per-chapter "What did you think?" board ---- */
+window.CMM_COMMENTS_CFG = {
+  book: 'montecristo',
+  chapters: CHAPTERS.map(function(c){ return { label: 'Chapter ' + c.n + ' — ' + c.t }; }),
+  nowIndex:   function(){ return currentIndex; },
+  nowSeconds: function(){ return (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0; }
+};
 </script>
+<script src="../audiobook-comments.js"></script>
 </body>
 </html>

@@ -237,9 +237,25 @@
   canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); respawnAll(); } });
   canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
-  // accelerometer: tilt the phone and the dots fall that way.
-  // tilt LEFT sends them LEFT (gravity x must be -a.x so the low edge pulls the dots toward it).
-  function onMotion(e){ const a=e.accelerationIncludingGravity; if(!a||a.x==null) return; world.setGravity(Vec2(-a.x, a.y)); }
+  // accelerometer: tilt the phone and the dots fall that way — real "down" no matter how the phone is held.
+  // the sensor reports in the phone's OWN axes (fixed to the hardware), so when the screen rotates to
+  // landscape we must rotate that vector by the screen angle, or gravity ends up sideways.
+  function screenAngle(){
+    if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle;
+    if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360;
+    return 0;
+  }
+  function onMotion(e){
+    const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
+    let ax=a.x, ay=a.y;
+    switch(screenAngle()){                      // rotate the sensor reading into SCREEN axes
+      case 90:  ax=a.y;  ay=-a.x; break;
+      case 180: ax=-a.x; ay=-a.y; break;
+      case 270: ax=-a.y; ay=a.x;  break;
+      // 0 (portrait): leave as-is
+    }
+    world.setGravity(Vec2(-ax, ay));            // -x so the low edge pulls the dots toward it; +y is screen-down
+  }
   let motionOn=false;
   const needsPerm = (typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
   function enableMotion(){

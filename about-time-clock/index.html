@@ -27,26 +27,16 @@
   .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
-  /* "Install app" pill (top-right) — only shown when the app can be installed */
   .install{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:12px; z-index:7;
     display:none; align-items:center; gap:6px; color:#0b1422; font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     border:none; padding:9px 15px; border-radius:999px; background:#f0b32a; box-shadow:0 4px 14px rgba(0,0,0,.4); cursor:pointer;}
   .install.show{display:inline-flex;}
   .install:active{transform:scale(.94);}
-  /* iOS "Add to Home Screen" instructions (Safari has no install prompt) */
-  .iosguide{position:fixed; inset:0; z-index:10; display:none; align-items:center; justify-content:center;
-    background:rgba(6,12,22,.84); padding:24px;}
-  .iosguide.show{display:flex;}
-  .iosguide .card{max-width:330px; background:#10243d; border:1px solid #2b466e; border-radius:18px; padding:22px 20px; text-align:center;}
-  .iosguide h2{margin:.1em 0 .5em; font-size:18px; color:#fff;}
-  .iosguide p{margin:.5em 0; font-size:15px; line-height:1.45; color:#cfe0f5; text-align:left;}
-  .iosguide b{color:#fff;}
-  .iosguide button{margin-top:16px; border:none; background:#f0b32a; color:#0b1422; font-weight:700; font-size:15px; padding:10px 20px; border-radius:999px; cursor:pointer;}
 </style>
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div class="tip">tap = drop the time · drag = spin the tank · hold = controls</div>
+  <div class="tip">tap = show &amp; drop the time · drag = spin the tank · hold = controls</div>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
     <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
@@ -59,254 +49,163 @@
 <script>
 "use strict";
 (function(){
-  // ============================================================
-  //  About Time — 3D "fish tank" edition
-  //  Rendering: three.js   ·   Physics: cannon.js (3D rigid bodies)
-  //  The time falls into a see-through glass CUBE as colored pieces
-  //  and tumbles in real 3D. Tilt to pour, drag to spin the tank.
-  // ============================================================
+  // About Time — 3D "fish tank": each number is that-many BIG colored balls.
+  // HOUR balls are always bigger than the MINUTE balls.
+  // You READ the time (still), then they drop and bounce around the glass cube.
+  // Rendering: three.js   Physics: cannon.js (3D rigid bodies)
 
-  // ----- the cube (fish tank) size, in world units -----
-  const S = 5;                 // interior half-extent → cube is 10×10×10
+  const S = 7;                 // interior half-extent -> cube is 14x14x14
   const T = 1;                 // wall thickness (invisible collision boxes)
-  const PXU = 640/(S*2);       // old 640px world → maps onto the 10-unit cube (art scale)
-  const u = (px)=>px/PXU;      // old art pixels → world units
 
-  // ----- assets (the original ColorMyMath gfx) -----
-  const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
-  const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
-  function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
+  const ONES_HEX=[null,'#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8','#9b4fd0','#9a6a3a','#f06fb0','#39c0e8'];
+  const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
+  const HOUR_HEX='#f0b32a';
 
-  // canonical ColorMyMath number-line shapes for the minute ONES (grid offsets, unit = a dot)
   const SHAPES={
     1:[[0,0]],
     2:[[-0.5,0],[0.5,0]],
-    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],                       // triangle
-    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],           // square
-    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],                   // ColorMyMath 5: THREE bottom, TWO top
-    6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],      // triangle of 6
-    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // flower (centre + 6)
-    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square, middle missing
-    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3×3
+    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
+    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
+    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],
+    6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],
+    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]
   };
+  function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
+  function hourShape(h){ return h<=9 ? SHAPES[h] : rowsShape(h,3); }
 
-  // ---------- textures ----------
-  const TEX={};
-  const loader=new THREE.TextureLoader();
-  function loadTex(name){ return new Promise(res=>{ TEX[name]=loader.load('gfx/'+name+'.png', t=>{ t.anisotropy=4; res(t); }, undefined, ()=>res(null)); }); }
-  const needed=new Set(['a_five_house']);
-  for(let n=1;n<=9;n++) needed.add(ONES[n]);
-  TENS.forEach(t=>needed.add(t));
-  for(let h=1;h<=12;h++) needed.add(hourImg(h));
-
-  // ============================================================
-  //  THREE.js scene
-  // ============================================================
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
   renderer.setClearColor(0x070d18, 1);
   const scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0x070d18, 0.015);
-
+  scene.fog=new THREE.FogExp2(0x070d18, 0.010);
   const camera=new THREE.PerspectiveCamera(46, 1, 0.1, 200);
 
-  // lights (crossed-plane pieces use MeshBasic so they stay true-color; lights are for the glass)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-  const key=new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(6,10,8); scene.add(key);
-  const rim=new THREE.DirectionalLight(0x66aaff, 0.4); rim.position.set(-8,-4,-6); scene.add(rim);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const key=new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(6,12,8); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x88bbff, 0.5); rim.position.set(-8,-2,-6); scene.add(rim);
 
-  // ---- the glass CUBE (fish tank) ----
   const tank=new THREE.Group(); scene.add(tank);
-  // faint tinted glass walls (BackSide so we see straight through the front)
-  const glassMat=new THREE.MeshPhongMaterial({color:0x8fd0ff, transparent:true, opacity:0.06,
-    side:THREE.BackSide, shininess:90, specular:0x224466, depthWrite:false});
-  const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2), glassMat);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2),
+    new THREE.MeshPhongMaterial({color:0x8fd0ff, transparent:true, opacity:0.06, side:THREE.BackSide, shininess:90, specular:0x224466, depthWrite:false}));
   tank.add(glass);
-  // a soft floor pane so pieces read as "resting on the bottom"
   const floorPane=new THREE.Mesh(new THREE.PlaneGeometry(S*2,S*2),
     new THREE.MeshBasicMaterial({color:0x0d1b2e, transparent:true, opacity:0.55, side:THREE.DoubleSide}));
   floorPane.rotation.x=-Math.PI/2; floorPane.position.y=-S+0.02; tank.add(floorPane);
-  // bright edges — the "aquarium frame"
-  const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
-    new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85}));
-  tank.add(edges);
-  // corner posts glow a touch brighter
-  const edges2=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2.002,S*2.002,S*2.002)),
-    new THREE.LineBasicMaterial({color:0xbfefff, transparent:true, opacity:0.35}));
-  tank.add(edges2);
+  tank.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
+    new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85})));
 
-  // ============================================================
-  //  CANNON.js physics world (inside the cube)
-  // ============================================================
-  const G=12;                                        // gravity strength
+  let G=3.4;
   const world=new CANNON.World();
   world.gravity.set(0,-G,0);
   world.broadphase=new CANNON.NaiveBroadphase();
-  world.solver.iterations=12;
+  world.solver.iterations=14;
   const mat=new CANNON.Material('m');
-  const contact=new CANNON.ContactMaterial(mat, mat, {friction:0.15, restitution:0.55});
-  world.addContactMaterial(contact);
-  world.defaultContactMaterial=contact;
+  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.04, restitution:0.92}));
+  world.defaultContactMaterial.friction=0.04;
+  world.defaultContactMaterial.restitution=0.92;
 
-  // 6 invisible thick walls = the tank interior
-  function wall(hx,hy,hz, px,py,pz){
-    const b=new CANNON.Body({mass:0, material:mat});
-    b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz)));
-    b.position.set(px,py,pz); world.addBody(b);
-  }
-  wall(S+T, T/2, S+T, 0, -S-T/2, 0);   // floor
-  wall(S+T, T/2, S+T, 0,  S+T/2, 0);   // ceiling
-  wall(T/2, S+T, S+T, -S-T/2, 0, 0);   // left
-  wall(T/2, S+T, S+T,  S+T/2, 0, 0);   // right
-  wall(S+T, S+T, T/2, 0, 0, -S-T/2);   // back
-  wall(S+T, S+T, T/2, 0, 0,  S+T/2);   // front
+  function wall(hx,hy,hz, px,py,pz){ const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz))); b.position.set(px,py,pz); world.addBody(b); }
+  wall(S+T,T/2,S+T, 0,-S-T/2,0);  wall(S+T,T/2,S+T, 0,S+T/2,0);
+  wall(T/2,S+T,S+T, -S-T/2,0,0);  wall(T/2,S+T,S+T, S+T/2,0,0);
+  wall(S+T,S+T,T/2, 0,0,-S-T/2);  wall(S+T,S+T,T/2, 0,0,S+T/2);
 
-  // ---- the two white "colon" cubes (digital-clock colon) — solid bumpers in the middle ----
-  const colonMeshes=[];
   function addColon(y){
-    const half=0.42;
-    const b=new CANNON.Body({mass:0, material:mat});
-    b.addShape(new CANNON.Box(new CANNON.Vec3(half,half,half)));
-    b.position.set(0,y,0); world.addBody(b);
-    const mesh=new THREE.Mesh(new THREE.BoxGeometry(half*2,half*2,half*2),
-      new THREE.MeshPhongMaterial({color:0xf2f7ff, emissive:0x223a5a, shininess:60}));
-    mesh.position.set(0,y,0); tank.add(mesh); colonMeshes.push(mesh);
+    const half=0.55;
+    const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(half,half,half))); b.position.set(0,y,0); world.addBody(b);
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(half*2,half*2,half*2), new THREE.MeshPhongMaterial({color:0xf2f7ff, emissive:0x223a5a, shininess:60}));
+    mesh.position.set(0,y,0); tank.add(mesh);
   }
-  addColon(1.1); addColon(-1.1);
+  addColon(1.4); addColon(-1.4);
 
-  // ============================================================
-  //  Pieces — each time-quantity is a body + crossed-plane sprite
-  //  (crossed planes keep the exact 2D art readable from every angle
-  //   while it tumbles in real 3D)
-  // ============================================================
-  let pieces=[];   // {body, mesh, group}
-  let SLOWMO=1.0;  // >1 faster, <1 slower
+  const R_HOUR=1.25, R_TEN=0.9, R_ONE=0.85;
+  const M_HOUR=2.2, M_TEN=1.0, M_ONE=0.8;
+  const HSP=2.5, SP=1.9;
+
+  let pieces=[];
+  let SLOWMO=1.0;
   let frozen=false;
+  let mode='show';
+  let releaseAt=0;
+  const HOLD_MS=1800;
 
-  function crossedMesh(texName, size){
-    const tex=TEX[texName];
-    const g=new THREE.Group();
-    if(!tex) return g;
-    const geo=new THREE.PlaneGeometry(size,size);
-    const material=new THREE.MeshBasicMaterial({map:tex, transparent:true, side:THREE.DoubleSide, alphaTest:0.35, depthWrite:true});
-    const p1=new THREE.Mesh(geo, material);
-    const p2=new THREE.Mesh(geo, material); p2.rotation.y=Math.PI/2;
-    g.add(p1,p2);
-    return g;
+  const sphereGeo={};
+  function ball(hex, r){
+    if(!sphereGeo[r]) sphereGeo[r]=new THREE.SphereGeometry(r, 28, 20);
+    const col=new THREE.Color(hex);
+    const m=new THREE.MeshPhongMaterial({color:col, shininess:75, specular:0x666666, emissive:col.clone().multiplyScalar(0.14)});
+    return new THREE.Mesh(sphereGeo[r], m);
   }
-
-  function addPiece(texName, size, pos, group, still){
-    const radius=size*0.42;
-    const body=new CANNON.Body({
-      mass: still?0:1, material:mat,
-      position:new CANNON.Vec3(pos.x,pos.y,pos.z),
-      shape:new CANNON.Sphere(radius)
-    });
-    if(!still){
-      body.angularVelocity.set((Math.random()-0.5)*4,(Math.random()-0.5)*4,(Math.random()-0.5)*4);
-      body.angularDamping=0.15; body.linearDamping=0.02;
-    }
+  function addBall(hex, r, mass, x, y, z, group){
+    const body=new CANNON.Body({mass:mass, type:CANNON.Body.STATIC, material:mat, position:new CANNON.Vec3(x,y,z), shape:new CANNON.Sphere(r)});
+    body.linearDamping=0.01; body.angularDamping=0.03;
     world.addBody(body);
-    const mesh=crossedMesh(texName, size); tank.add(mesh);
-    pieces.push({body, mesh, group});
+    const mesh=ball(hex, r); mesh.position.set(x,y,z); tank.add(mesh);
+    pieces.push({body, mesh, group, mass});
   }
-  function clearGroup(g){
-    for(let i=pieces.length-1;i>=0;i--){ if(pieces[i].group===g){
-      world.removeBody(pieces[i].body); tank.remove(pieces[i].mesh); pieces.splice(i,1);
-    }}
-  }
+  function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.mesh); } pieces=[]; }
 
-  // ---- sizes (from the original art, mapped into cube units) ----
-  const ONE_SZ=u(30)*1.15, TEN_SZ=u(104), HOUR_SZ_BIG=u(150), HOUR_SZ_SM=u(110);
-  const ONES_S=u(34)*1.15;   // spacing between minute-ones dots
+  function buildHour(h){ for(const o of hourShape(h)) addBall(HOUR_HEX, R_HOUR, M_HOUR, -3.2+o[0]*HSP, 0.2-o[1]*HSP, 0, 'hour'); }
+  function buildTens(tens){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; for(const o of SHAPES[tens]) addBall(hex, R_TEN, M_TEN, 3.6+o[0]*SP, 3.3-o[1]*SP, 0, 'tens'); }
+  function buildOnes(ones){ if(!ones) return; const hex=ONES_HEX[ones]; for(const o of SHAPES[ones]) addBall(hex, R_ONE, M_ONE, 3.6+o[0]*SP, -1.9-o[1]*SP, 0, 'ones'); }
 
-  function rndTop(){ return { x:(Math.random()-0.5)*S*1.4, y:S-1, z:(Math.random()-0.5)*S*1.2 }; }
-
-  // ============================================================
-  //  Build the time as quantities (hour · tens · ones)
-  // ============================================================
-  let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1;
+  let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
+  function keyOf(t){ return t.h+':'+t.tens+':'+t.ones; }
 
-  function spawnHour(h){ addPiece(hourImg(h), h>=5?HOUR_SZ_BIG:HOUR_SZ_SM, {x:-S*0.5, y:S-1, z:(Math.random()-0.5)*2}, 'hour'); }
-  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addPiece(name, TEN_SZ, rndTop(), 'tens'); }
-  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones];
-    for(const o of SHAPES[ones]) addPiece(col, ONE_SZ, {x:S*0.45+o[0]*ONES_S*0.5, y:S-0.6+o[1]*0.2, z:o[1]*ONES_S*0.5}, 'ones'); }
-  function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
-
-  // ---- frozen mode: a tidy, still clock facing the camera ----
-  function spawnFrozen(){
-    const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones');
-    // hour resting on the floor, left
-    const hs=t.h>=5?HOUR_SZ_BIG:HOUR_SZ_SM;
-    addPiece(hourImg(t.h), hs, {x:-S*0.55, y:-S+hs*0.5, z:0}, 'hour', true);
-    // ten-triangles stacked tidily up the middle
-    const name=TENS[Math.max(0,t.tens-1)];
-    for(let i=0;i<t.tens;i++){ const col=i%2, row=Math.floor(i/2);
-      addPiece(name, TEN_SZ, {x:-0.9+col*1.8, y:-S+1+row*1.5, z:0}, 'tens', true); }
-    // ones in their canonical shape, right side, facing camera
-    if(t.ones){ const col=ONES[t.ones];
-      for(const o of SHAPES[t.ones]) addPiece(col, ONE_SZ, {x:S*0.5+o[0]*ONES_S*0.55, y:0.5-o[1]*ONES_S*0.55, z:0}, 'ones', true); }
-    lastH=t.h; lastTens=t.tens; lastOnes=t.ones;
-    // face the pieces flat toward the viewer
-    for(const p of pieces){ if(p.mesh.children[1]) p.mesh.children[1].visible=false; }
+  function reform(){
+    const t=curT(); clearAll();
+    buildHour(t.h); buildTens(t.tens); buildOnes(t.ones);
+    lastKey=keyOf(t); mode='show';
+    theta=0; phi=0.12; autoSpin=false;
   }
-
-  // only re-drop the part that changed — the rest keeps tumbling
-  function checkTime(){ const t=curT();
-    if(frozen){ if(t.h!==lastH||t.tens!==lastTens||t.ones!==lastOnes) spawnFrozen(); return; }
-    if(t.h!==lastH){ clearGroup('hour'); spawnHour(t.h); lastH=t.h; }
-    if(t.tens!==lastTens){ clearGroup('tens'); spawnTens(t.tens); lastTens=t.tens; }
-    if(t.ones!==lastOnes){ clearGroup('ones'); spawnOnes(t.ones); lastOnes=t.ones; }
+  function drop(){
+    for(const p of pieces){
+      const b=p.body;
+      b.type=CANNON.Body.DYNAMIC; b.updateMassProperties();
+      b.velocity.set((Math.random()-0.5)*2.2, (Math.random()-0.5)*1.2, (Math.random()-0.5)*2.2);
+      b.angularVelocity.set((Math.random()-0.5)*6,(Math.random()-0.5)*6,(Math.random()-0.5)*6);
+      b.wakeUp();
+    }
+    mode='live'; autoSpin=true;
   }
+  function reset(now){ reform(); if(!frozen) releaseAt=now+HOLD_MS; }
+  function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
-  // ============================================================
-  //  Camera orbit (drag to spin the tank, gentle auto-rotate)
-  // ============================================================
-  let theta=0.6, phi=0.28, R=S*3.0, autoSpin=true;
-  function placeCamera(){
-    const cp=Math.cos(phi);
-    camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta));
-    camera.lookAt(0,0,0);
-  }
-
+  let theta=0, phi=0.12, R=S*2.4, autoSpin=false;
+  function placeCamera(){ const cp=Math.cos(phi); camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta)); camera.lookAt(0,0,0); }
   function resize(){
     const w=window.innerWidth, h=window.innerHeight;
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
     renderer.setSize(w,h,false);
     camera.aspect=w/h; camera.updateProjectionMatrix();
-    // pull the camera back a bit on tall/narrow phones so the whole tank fits
-    R = S*3.0 * Math.max(1, 0.62/(Math.min(w,h)/Math.max(w,h)));
-    R = Math.min(R, S*4.6);
+    const minmax=Math.min(w,h)/Math.max(w,h);
+    R=Math.min(S*3.8, S*2.4*Math.max(1, 0.72/minmax));
   }
   window.addEventListener('resize', resize);
+  window.addEventListener('load', resize);          // re-fit once the page has a real size
+  window.addEventListener('orientationchange', resize);
 
-  // ============================================================
-  //  Render loop
-  // ============================================================
   const tmpQ=new THREE.Quaternion();
   let lastT=performance.now();
   function frame(t){
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     simMs += dt*1000;
-    checkTime();
-    if(!frozen){ world.step(1/60, dt*SLOWMO, 6); }
-
+    checkTime(t);
+    if(mode==='show' && !frozen && t>=releaseAt) drop();
+    world.step(1/60, dt*SLOWMO, 5);
     for(const p of pieces){
       const b=p.body;
       p.mesh.position.set(b.position.x, b.position.y, b.position.z);
-      if(!frozen){ tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.mesh.quaternion.copy(tmpQ); }
+      tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.mesh.quaternion.copy(tmpQ);
     }
-
-    if(autoSpin && !frozen) theta += dt*0.12;
+    if(autoSpin && mode==='live' && !frozen) theta += dt*0.11;
     placeCamera();
     renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
 
-  // ============================================================
-  //  Interaction: tap=drop · drag=spin · hold=controls
-  // ============================================================
   const knobs=document.querySelector('.knobs');
   let pressTimer=null, longPressed=false, hideTimer=null;
   let dragging=false, moved=0, lx=0, ly=0;
@@ -320,68 +219,42 @@
   canvas.addEventListener('pointermove', e=>{
     if(!dragging) return;
     const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
-    moved += Math.abs(dx)+Math.abs(dy);
-    theta -= dx*0.008;
-    phi = Math.max(-1.2, Math.min(1.2, phi + dy*0.008));
-    if(moved>8) clearTimeout(pressTimer);   // it's a drag, not a long-press
+    moved+=Math.abs(dx)+Math.abs(dy);
+    theta-=dx*0.008; phi=Math.max(-1.2, Math.min(1.2, phi+dy*0.008));
+    if(moved>8) clearTimeout(pressTimer);
   });
   function endDrag(){
     dragging=false; clearTimeout(pressTimer); enableMotion();
-    if(!longPressed && moved<10 && !frozen){ simMs=Date.now(); respawnAll(); }  // a clean tap = re-drop
-    setTimeout(()=>{ autoSpin=true; }, 2500);   // resume gentle spin after a pause
+    if(!longPressed && moved<10 && !frozen){ simMs=Date.now(); reset(performance.now()); }
+    setTimeout(()=>{ if(mode==='live') autoSpin=true; }, 2500);
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', ()=>{ dragging=false; clearTimeout(pressTimer); });
-  // wheel to zoom on desktop
-  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.6, Math.min(S*5, R+e.deltaY*0.01)); }, {passive:false});
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.7, Math.min(S*4.5, R+e.deltaY*0.01)); }, {passive:false});
 
-  // ---- accelerometer: tilt the phone and the pieces pour that way ----
-  function screenAngle(){
-    if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle;
-    if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360;
-    return 0;
-  }
+  function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
   function onMotion(e){
     const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
     let ax=a.x, ay=a.y;
-    switch(screenAngle()){
-      case 90:  ax=-a.y; ay=a.x;  break;
-      case 180: ax=-a.x; ay=-a.y; break;
-      case 270: ax=a.y;  ay=-a.x; break;
-    }
-    // screen-x → world x, screen-y(down) → world -y, device-z → world z (depth)
-    world.gravity.set(-ax*1.2, -ay*1.2, (a.z||0)*0.6);
+    switch(screenAngle()){ case 90: ax=-a.y; ay=a.x; break; case 180: ax=-a.x; ay=-a.y; break; case 270: ax=a.y; ay=-a.x; break; }
+    world.gravity.set(-ax*(G/9.8), -ay*(G/9.8), (a.z||0)*(G/9.8)*0.5);
   }
   let motionOn=false;
-  const needsPerm = (typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
-  function enableMotion(){
-    if(motionOn) return;
-    if(needsPerm){
-      DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{});
-    } else { motionOn=true; window.addEventListener('devicemotion', onMotion); }
-  }
+  const needsPerm=(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
+  function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
   if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
-  // ---- controls ----
-  document.getElementById('btnReset').addEventListener('click', ()=>{
-    SLOWMO=1.0; world.gravity.set(0,-G,0); motionOn=false; frozen=false;
-    document.getElementById('btnFreeze').classList.remove('active');
-    theta=0.6; phi=0.28; autoSpin=true; simMs=Date.now(); respawnAll(); showKnobs();
-  });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=3.4; world.gravity.set(0,-G,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
-  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.2, SLOWMO+0.2); showKnobs(); });
+  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{
     frozen=!frozen;
     document.getElementById('btnFreeze').classList.toggle('active', frozen);
-    if(frozen){ autoSpin=false; theta=0; phi=0.12; spawnFrozen(); }
-    else { autoSpin=true; simMs=Date.now(); respawnAll(); }
+    if(frozen){ reform(); } else { reset(performance.now()); }
     showKnobs();
   });
 
-  // ============================================================
-  //  Go
-  // ============================================================
-  Promise.all([...needed].map(loadTex)).then(()=>{ resize(); placeCamera(); respawnAll(); requestAnimationFrame(frame); });
+  resize(); reset(performance.now()); placeCamera(); requestAnimationFrame(frame);
 
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;

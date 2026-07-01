@@ -110,9 +110,19 @@ export async function onRequestPost(context) {
       max_tokens: 500,
       temperature: 0.3,
     });
-    const text = (out && (out.response || out.result || "")) + "";
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) parsed = JSON.parse(match[0]);
+    // Newer Workers AI models auto-parse a JSON reply, so `out.response` can be
+    // an object already; older/other shapes give a string in response/result or
+    // an OpenAI-style choices[].message.content. Handle all of them.
+    const resp = out && out.response;
+    if (resp && typeof resp === "object") {
+      parsed = resp;
+    } else {
+      const text = (resp || (out && out.result) ||
+        (out && out.choices && out.choices[0] && out.choices[0].message &&
+          out.choices[0].message.content) || "") + "";
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
   } catch (_) {
     parsed = null;
   }

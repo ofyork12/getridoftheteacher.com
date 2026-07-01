@@ -65,8 +65,11 @@
 
   // a FIVE (5 balls): one on top, a triangle of 3 in the middle, one on the bottom  (+y = down)
   const FIVE=[[0,-1.7],[0,-0.6],[-0.6,0.3],[0.6,0.3],[0,1.4]];
-  // a TEN = two fives, side by side (10 balls)
-  const TEN=FIVE.map(o=>[o[0]-0.9,o[1]]).concat(FIVE.map(o=>[o[0]+0.9,o[1]]));
+  // a TEN = a real 3D TRIANGULAR TOWER: three triangles of 3 stacked into three columns
+  //  (base triangle on the floor, next on top, next on top), + 1 ball nestled in the CREST = 10.
+  //  offsets are [x, y(down), z].  TRI = the (x,z) footprint of a triangle of 3.
+  const TRI=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]];
+  const TEN=(function(){ const out=[]; for(const yd of [1,0,-1]) for(const t of TRI) out.push([t[0], yd, t[1]]); out.push([0,-1.82,0]); return out; })();
 
   // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
   const SHAPES={

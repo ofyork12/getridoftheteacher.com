@@ -66,11 +66,12 @@
   // a FIVE (5 balls): a triangle of 3, + one ball in the crest on TOP and one on the BOTTOM
   //  (a trigonal bipyramid — real 3D; offsets are [x, y-down, z])
   const FIVE=[[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29],[0,-0.82,0],[0,0.82,0]];
-  // a TEN = a real 3D TRIANGULAR TOWER: three triangles of 3 stacked into three columns
-  //  (base triangle on the floor, next on top, next on top), + 1 ball nestled in the CREST = 10.
-  //  offsets are [x, y(down), z].  TRI = the (x,z) footprint of a triangle of 3.
-  const TRI=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]];
-  const TEN=(function(){ const out=[]; for(const yd of [1,0,-1]) for(const t of TRI) out.push([t[0], yd, t[1]]); out.push([0,-1.82,0]); return out; })();
+  // a TEN = two squares of 4 stacked into a CUBE of 8, + one ball in the crest on TOP and one on the
+  //  BOTTOM = 10.  offsets are [x, y(down), z].
+  const TEN=(function(){ const out=[];
+    for(const yd of [0.5,-0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]);  // 2x2x2 cube (8)
+    out.push([0,-1.207,0]); out.push([0,1.207,0]);   // crest ball top & bottom
+    return out; })();
 
   // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
   const SHAPES={

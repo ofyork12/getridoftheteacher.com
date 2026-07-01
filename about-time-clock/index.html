@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0d1b2e">
-<title>About Time — ColorMyMath Clock</title>
+<title>About Time — ColorMyMath Clock (3D)</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,12 +16,8 @@
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; height:100%; overflow:hidden;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:#0b1422; color:#eaf1fb; height:100%;}
+    background:#070d18; color:#eaf1fb; height:100%;}
   #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
-  .exit{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:12px; z-index:5;
-    color:#9bb0cc; text-decoration:none; font-size:14px; font-weight:600; border:1px solid #2b466e;
-    padding:7px 12px; border-radius:999px; background:rgba(13,27,46,.55);}
-  .exit:hover{background:#15294a; color:#fff;}
   .knobs{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:5;
     display:none; align-items:center; justify-content:center; gap:14px;}
   .knobs.show{display:flex;}
@@ -50,6 +46,7 @@
 </head>
 <body>
   <canvas id="c"></canvas>
+  <div class="tip">tap = drop the time · drag = spin the tank · hold = controls</div>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
     <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
@@ -57,29 +54,28 @@
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
   </div>
 
-<script src="planck.min.js"></script>
+<script src="three.min.js"></script>
+<script src="cannon.min.js"></script>
 <script>
 "use strict";
 (function(){
-  const pl=planck, Vec2=pl.Vec2;
-  const PM=32;                                       // pixels-per-metre (matches AndEngine)
-  const m=(v)=>v/PM;                                 // world-px -> metres
-  // ---- #1 "Landscape Classic" — the only layout now (the screenshot the user picked) ----
-  const WORLD_W=640, WORLD_H=360;
+  // ============================================================
+  //  About Time — 3D "fish tank" edition
+  //  Rendering: three.js   ·   Physics: cannon.js (3D rigid bodies)
+  //  The time falls into a see-through glass CUBE as colored pieces
+  //  and tumbles in real 3D. Tilt to pour, drag to spin the tank.
+  // ============================================================
 
-  // ----- assets (the original gfx) -----
+  // ----- the cube (fish tank) size, in world units -----
+  const S = 5;                 // interior half-extent → cube is 10×10×10
+  const T = 1;                 // wall thickness (invisible collision boxes)
+  const PXU = 640/(S*2);       // old 640px world → maps onto the 10-unit cube (art scale)
+  const u = (px)=>px/PXU;      // old art pixels → world units
+
+  // ----- assets (the original ColorMyMath gfx) -----
   const ONES=[null,'a_red','a_orange','a_yellow','a_green','a_blue','a_purple','a_brown','a_pink','a_skyblue'];
   const TENS=['ten_red','ten_orange','ten_yellow','ten_green','ten_blue'];   // 1st..5th ten
   function hourImg(h){ const W=['','a_group_one','a_group_two','a_group_three','a_group_four','a_five_house','a_group_six','a_group_seven','a_group_eight','a_group_nine','a_group_ten','a_group_eleven','a_group_twelve']; return W[h]; }
-  // spawn coordinates (top-left in the 640x360 world)
-  const npx10=[296,408,296,408,352], npy10=[164,164,71,71,-22];   // ten-triangles (middle), fall in from here
-  const HOURX=8, HOURY=70;                                        // hour group (left)
-  const ONES_S=34, ONES_CX=566, ONES_CY=120;                     // minute-ones: dot spacing + cluster centre
-
-  // the two white colon squares (centre x, centre y) — SOLID so dots bounce off them
-  const COLON=[[232,150],[232,210]];
-  const COLON_HALF=14;     // physics half-size (square) — a touch bigger so dots never sink in
-  const COLON_DRAW=13;     // drawn half-size
 
   // canonical ColorMyMath number-line shapes for the minute ONES (grid offsets, unit = a dot)
   const SHAPES={
@@ -87,72 +83,176 @@
     2:[[-0.5,0],[0.5,0]],
     3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],                       // triangle
     4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],           // square
-    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],                   // ColorMyMath 5: THREE on the bottom, TWO on top
+    5:[[-1,1],[0,1],[1,1],[-0.5,0],[0.5,0]],                   // ColorMyMath 5: THREE bottom, TWO top
     6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],      // triangle of 6
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // flower (centre + 6)
-    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square with the middle missing
-    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3x3
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]], // square, middle missing
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]          // full 3×3
   };
 
-  const IMG={};
-  function load(name){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(i); i.src='gfx/'+name+'.png'; IMG[name]=i; }); }
+  // ---------- textures ----------
+  const TEX={};
+  const loader=new THREE.TextureLoader();
+  function loadTex(name){ return new Promise(res=>{ TEX[name]=loader.load('gfx/'+name+'.png', t=>{ t.anisotropy=4; res(t); }, undefined, ()=>res(null)); }); }
   const needed=new Set(['a_five_house']);
   for(let n=1;n<=9;n++) needed.add(ONES[n]);
   TENS.forEach(t=>needed.add(t));
   for(let h=1;h<=12;h++) needed.add(hourImg(h));
 
-  // ----- physics -----
-  let pDensity=4.0, pElasticity=1.0, pFriction=0.0;
-  let SLOWMO=0.7;                                    // <1 = slow motion; higher = faster (user wanted #1 a bit faster)
-  const world=pl.World(Vec2(0, 3.0));                // gravity DOWN (y increases downward)
-  const statics=world.createBody();                  // one static body holds all the walls + solid colon
-  function box(cx,cy,w,h){ statics.createFixture(pl.Box(m(w/2),m(h/2),Vec2(m(cx+w/2),m(cy+h/2)),0),{density:1,friction:0,restitution:1}); }
-  // walls + the two middle bumpers, exactly as the original
-  box(0,357,640,3); box(0,0,640,3); box(0,0,3,360); box(637,0,3,360);
-  box(250,140,20,20); box(250,220,20,20);
-  // the colon squares are SOLID obstacles — the falling dots collide with them, they don't float through
-  for(const c of COLON) box(c[0]-COLON_HALF, c[1]-COLON_HALF, COLON_HALF*2, COLON_HALF*2);
+  // ============================================================
+  //  THREE.js scene
+  // ============================================================
+  const canvas=document.getElementById('c');
+  const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setClearColor(0x070d18, 1);
+  const scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x070d18, 0.015);
 
-  let sprites=[];   // {body, img, size, group}
-  function clearGroup(g){ for(let i=sprites.length-1;i>=0;i--){ if(sprites[i].group===g){ world.destroyBody(sprites[i].body); sprites.splice(i,1); } } }
-  function addSprite(name, x, y, size, shape, group, still){
-    const img=IMG[name]; if(!img) return;
-    const fd={density:pDensity, friction:pFriction, restitution:pElasticity};
-    const b=world.createDynamicBody(Vec2(m(x+size/2), m(y+size/2)));
-    if(shape==='triangle'){            // real triangle body (apex up, base down) so it bounces as a triangle
-      const hw=m(size*0.5), hh=m(size*0.5);
-      b.createFixture(pl.Polygon([Vec2(-hw,hh), Vec2(hw,hh), Vec2(0,-hh)]), fd);
-    } else {                            // full-size circle so nothing visually overlaps
-      b.createFixture(pl.Circle(m(size*0.5)), fd);
-    }
-    if(still){ b.setType('static'); }   // frozen mode: the piece is locked in place, centred and still
-    else b.setAngularVelocity((Math.random()-0.5)*1.5);
-    sprites.push({body:b, img, size, group});
+  const camera=new THREE.PerspectiveCamera(46, 1, 0.1, 200);
+
+  // lights (crossed-plane pieces use MeshBasic so they stay true-color; lights are for the glass)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const key=new THREE.DirectionalLight(0xffffff, 0.6); key.position.set(6,10,8); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x66aaff, 0.4); rim.position.set(-8,-4,-6); scene.add(rim);
+
+  // ---- the glass CUBE (fish tank) ----
+  const tank=new THREE.Group(); scene.add(tank);
+  // faint tinted glass walls (BackSide so we see straight through the front)
+  const glassMat=new THREE.MeshPhongMaterial({color:0x8fd0ff, transparent:true, opacity:0.06,
+    side:THREE.BackSide, shininess:90, specular:0x224466, depthWrite:false});
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2), glassMat);
+  tank.add(glass);
+  // a soft floor pane so pieces read as "resting on the bottom"
+  const floorPane=new THREE.Mesh(new THREE.PlaneGeometry(S*2,S*2),
+    new THREE.MeshBasicMaterial({color:0x0d1b2e, transparent:true, opacity:0.55, side:THREE.DoubleSide}));
+  floorPane.rotation.x=-Math.PI/2; floorPane.position.y=-S+0.02; tank.add(floorPane);
+  // bright edges — the "aquarium frame"
+  const edges=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
+    new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85}));
+  tank.add(edges);
+  // corner posts glow a touch brighter
+  const edges2=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2.002,S*2.002,S*2.002)),
+    new THREE.LineBasicMaterial({color:0xbfefff, transparent:true, opacity:0.35}));
+  tank.add(edges2);
+
+  // ============================================================
+  //  CANNON.js physics world (inside the cube)
+  // ============================================================
+  const G=12;                                        // gravity strength
+  const world=new CANNON.World();
+  world.gravity.set(0,-G,0);
+  world.broadphase=new CANNON.NaiveBroadphase();
+  world.solver.iterations=12;
+  const mat=new CANNON.Material('m');
+  const contact=new CANNON.ContactMaterial(mat, mat, {friction:0.15, restitution:0.55});
+  world.addContactMaterial(contact);
+  world.defaultContactMaterial=contact;
+
+  // 6 invisible thick walls = the tank interior
+  function wall(hx,hy,hz, px,py,pz){
+    const b=new CANNON.Body({mass:0, material:mat});
+    b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz)));
+    b.position.set(px,py,pz); world.addBody(b);
+  }
+  wall(S+T, T/2, S+T, 0, -S-T/2, 0);   // floor
+  wall(S+T, T/2, S+T, 0,  S+T/2, 0);   // ceiling
+  wall(T/2, S+T, S+T, -S-T/2, 0, 0);   // left
+  wall(T/2, S+T, S+T,  S+T/2, 0, 0);   // right
+  wall(S+T, S+T, T/2, 0, 0, -S-T/2);   // back
+  wall(S+T, S+T, T/2, 0, 0,  S+T/2);   // front
+
+  // ---- the two white "colon" cubes (digital-clock colon) — solid bumpers in the middle ----
+  const colonMeshes=[];
+  function addColon(y){
+    const half=0.42;
+    const b=new CANNON.Body({mass:0, material:mat});
+    b.addShape(new CANNON.Box(new CANNON.Vec3(half,half,half)));
+    b.position.set(0,y,0); world.addBody(b);
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(half*2,half*2,half*2),
+      new THREE.MeshPhongMaterial({color:0xf2f7ff, emissive:0x223a5a, shininess:60}));
+    mesh.position.set(0,y,0); tank.add(mesh); colonMeshes.push(mesh);
+  }
+  addColon(1.1); addColon(-1.1);
+
+  // ============================================================
+  //  Pieces — each time-quantity is a body + crossed-plane sprite
+  //  (crossed planes keep the exact 2D art readable from every angle
+  //   while it tumbles in real 3D)
+  // ============================================================
+  let pieces=[];   // {body, mesh, group}
+  let SLOWMO=1.0;  // >1 faster, <1 slower
+  let frozen=false;
+
+  function crossedMesh(texName, size){
+    const tex=TEX[texName];
+    const g=new THREE.Group();
+    if(!tex) return g;
+    const geo=new THREE.PlaneGeometry(size,size);
+    const material=new THREE.MeshBasicMaterial({map:tex, transparent:true, side:THREE.DoubleSide, alphaTest:0.35, depthWrite:true});
+    const p1=new THREE.Mesh(geo, material);
+    const p2=new THREE.Mesh(geo, material); p2.rotation.y=Math.PI/2;
+    g.add(p1,p2);
+    return g;
   }
 
-  // ----- build the time as quantities; each group updates on its own (no full reset / repeat) -----
-  let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1, frozen=false;
+  function addPiece(texName, size, pos, group, still){
+    const radius=size*0.42;
+    const body=new CANNON.Body({
+      mass: still?0:1, material:mat,
+      position:new CANNON.Vec3(pos.x,pos.y,pos.z),
+      shape:new CANNON.Sphere(radius)
+    });
+    if(!still){
+      body.angularVelocity.set((Math.random()-0.5)*4,(Math.random()-0.5)*4,(Math.random()-0.5)*4);
+      body.angularDamping=0.15; body.linearDamping=0.02;
+    }
+    world.addBody(body);
+    const mesh=crossedMesh(texName, size); tank.add(mesh);
+    pieces.push({body, mesh, group});
+  }
+  function clearGroup(g){
+    for(let i=pieces.length-1;i>=0;i--){ if(pieces[i].group===g){
+      world.removeBody(pieces[i].body); tank.remove(pieces[i].mesh); pieces.splice(i,1);
+    }}
+  }
+
+  // ---- sizes (from the original art, mapped into cube units) ----
+  const ONE_SZ=u(30)*1.15, TEN_SZ=u(104), HOUR_SZ_BIG=u(150), HOUR_SZ_SM=u(110);
+  const ONES_S=u(34)*1.15;   // spacing between minute-ones dots
+
+  function rndTop(){ return { x:(Math.random()-0.5)*S*1.4, y:S-1, z:(Math.random()-0.5)*S*1.2 }; }
+
+  // ============================================================
+  //  Build the time as quantities (hour · tens · ones)
+  // ============================================================
+  let simMs=Date.now(), lastH=-1, lastTens=-1, lastOnes=-1;
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
-  function spawnHour(h){ addSprite(hourImg(h), HOURX, HOURY, h>=5?150:110, 'circle', 'hour'); }
-  // tens: N ten-triangles, ALL coloured by the tens VALUE (10 red,20 orange,30 yellow,40 green,50 blue)
-  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addSprite(name, npx10[i], npy10[i], 104, 'triangle', 'tens'); }
-  // ones: that many single dots, coloured by the ones digit
-  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones]; for(const o of SHAPES[ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, ONES_CY+o[1]*ONES_S-15, 30, 'circle', 'ones'); }
+
+  function spawnHour(h){ addPiece(hourImg(h), h>=5?HOUR_SZ_BIG:HOUR_SZ_SM, {x:-S*0.5, y:S-1, z:(Math.random()-0.5)*2}, 'hour'); }
+  function spawnTens(tens){ const name=TENS[Math.max(0,tens-1)]; for(let i=0;i<tens;i++) addPiece(name, TEN_SZ, rndTop(), 'tens'); }
+  function spawnOnes(ones){ if(!ones) return; const col=ONES[ones];
+    for(const o of SHAPES[ones]) addPiece(col, ONE_SZ, {x:S*0.45+o[0]*ONES_S*0.5, y:S-0.6+o[1]*0.2, z:o[1]*ONES_S*0.5}, 'ones'); }
   function respawnAll(){ const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones'); spawnHour(t.h); spawnTens(t.tens); spawnOnes(t.ones); lastH=t.h; lastTens=t.tens; lastOnes=t.ones; }
 
-  // ----- frozen mode: a clean, centred, STILL clock (everything snapped to tidy rest spots, no physics) -----
-  const FZ_TENX=[296,408,296,408,352], FZ_TENY=[194,194,101,101,8];   // on-screen tidy ten-triangle cluster
+  // ---- frozen mode: a tidy, still clock facing the camera ----
   function spawnFrozen(){
     const t=curT(); clearGroup('hour'); clearGroup('tens'); clearGroup('ones');
-    const hs=t.h>=5?150:110;
-    addSprite(hourImg(t.h), 22, 357-hs, hs, 'circle', 'hour', true);                 // hour resting on the floor, left
+    // hour resting on the floor, left
+    const hs=t.h>=5?HOUR_SZ_BIG:HOUR_SZ_SM;
+    addPiece(hourImg(t.h), hs, {x:-S*0.55, y:-S+hs*0.5, z:0}, 'hour', true);
+    // ten-triangles stacked tidily up the middle
     const name=TENS[Math.max(0,t.tens-1)];
-    for(let i=0;i<t.tens;i++) addSprite(name, FZ_TENX[i], FZ_TENY[i], 104, 'triangle', 'tens', true);
-    if(t.ones){ const col=ONES[t.ones]; for(const o of SHAPES[t.ones]) addSprite(col, ONES_CX+o[0]*ONES_S-15, 150+o[1]*ONES_S-15, 30, 'circle', 'ones', true); }
+    for(let i=0;i<t.tens;i++){ const col=i%2, row=Math.floor(i/2);
+      addPiece(name, TEN_SZ, {x:-0.9+col*1.8, y:-S+1+row*1.5, z:0}, 'tens', true); }
+    // ones in their canonical shape, right side, facing camera
+    if(t.ones){ const col=ONES[t.ones];
+      for(const o of SHAPES[t.ones]) addPiece(col, ONE_SZ, {x:S*0.5+o[0]*ONES_S*0.55, y:0.5-o[1]*ONES_S*0.55, z:0}, 'ones', true); }
     lastH=t.h; lastTens=t.tens; lastOnes=t.ones;
+    // face the pieces flat toward the viewer
+    for(const p of pieces){ if(p.mesh.children[1]) p.mesh.children[1].visible=false; }
   }
 
-  // only re-drop the part that actually changed — the rest keeps tumbling (or, if frozen, re-snap tidily)
+  // only re-drop the part that changed — the rest keeps tumbling
   function checkTime(){ const t=curT();
     if(frozen){ if(t.h!==lastH||t.tens!==lastTens||t.ones!==lastOnes) spawnFrozen(); return; }
     if(t.h!==lastH){ clearGroup('hour'); spawnHour(t.h); lastH=t.h; }
@@ -160,56 +260,82 @@
     if(t.ones!==lastOnes){ clearGroup('ones'); spawnOnes(t.ones); lastOnes=t.ones; }
   }
 
-  // ----- render -----
-  const canvas=document.getElementById('c'), ctx=canvas.getContext('2d');
-  let CW=0,CH=0,DPR=Math.min(2,window.devicePixelRatio||1), fit=1, offx=0, offy=0;
+  // ============================================================
+  //  Camera orbit (drag to spin the tank, gentle auto-rotate)
+  // ============================================================
+  let theta=0.6, phi=0.28, R=S*3.0, autoSpin=true;
+  function placeCamera(){
+    const cp=Math.cos(phi);
+    camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta));
+    camera.lookAt(0,0,0);
+  }
+
   function resize(){
-    CW=window.innerWidth; CH=window.innerHeight;
-    canvas.width=CW*DPR; canvas.height=CH*DPR; canvas.style.width=CW+'px'; canvas.style.height=CH+'px';
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    fit=Math.min(CW/WORLD_W, CH/WORLD_H);
-    offx=(CW-WORLD_W*fit)/2; offy=(CH-WORLD_H*fit)/2;
+    const w=window.innerWidth, h=window.innerHeight;
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    renderer.setSize(w,h,false);
+    camera.aspect=w/h; camera.updateProjectionMatrix();
+    // pull the camera back a bit on tall/narrow phones so the whole tank fits
+    R = S*3.0 * Math.max(1, 0.62/(Math.min(w,h)/Math.max(w,h)));
+    R = Math.min(R, S*4.6);
   }
   window.addEventListener('resize', resize);
 
+  // ============================================================
+  //  Render loop
+  // ============================================================
+  const tmpQ=new THREE.Quaternion();
   let lastT=performance.now();
   function frame(t){
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     simMs += dt*1000;
     checkTime();
-    if(!frozen) world.step(SLOWMO/60, 8, 3);   // frozen = static clock, no physics
+    if(!frozen){ world.step(1/60, dt*SLOWMO, 6); }
 
-    ctx.clearRect(0,0,CW,CH);
-    ctx.save(); ctx.translate(offx,offy); ctx.scale(fit,fit);
-    ctx.fillStyle='#0d1b2e'; ctx.fillRect(0,0,WORLD_W,WORLD_H);   // play-field backdrop
-    for(const s of sprites){
-      const p=s.body.getPosition(), a=s.body.getAngle();
-      const x=p.x*PM, y=p.y*PM;
-      const iw=s.img.naturalWidth||s.size, ih=s.img.naturalHeight||s.size;
-      const scale=s.size/Math.max(iw,ih), dw=iw*scale, dh=ih*scale;
-      ctx.save(); ctx.translate(x,y); ctx.rotate(a);
-      ctx.drawImage(s.img, -dw/2, -dh/2, dw, dh);
-      ctx.restore();
+    for(const p of pieces){
+      const b=p.body;
+      p.mesh.position.set(b.position.x, b.position.y, b.position.z);
+      if(!frozen){ tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.mesh.quaternion.copy(tmpQ); }
     }
-    // the two white colon SQUARES — like a digital clock, solid (dots bounce off them)
-    ctx.fillStyle='#e6eefb';
-    for(const c of COLON){ ctx.fillRect(c[0]-COLON_DRAW, c[1]-COLON_DRAW, COLON_DRAW*2, COLON_DRAW*2); }
-    ctx.restore();
+
+    if(autoSpin && !frozen) theta += dt*0.12;
+    placeCamera();
+    renderer.render(scene, camera);
     requestAnimationFrame(frame);
   }
 
-  // ----- interaction -----
-  // tap = drop the time; press & hold = show the controls (and turn on tilt)
+  // ============================================================
+  //  Interaction: tap=drop · drag=spin · hold=controls
+  // ============================================================
   const knobs=document.querySelector('.knobs');
   let pressTimer=null, longPressed=false, hideTimer=null;
+  let dragging=false, moved=0, lx=0, ly=0;
   function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 7000); }
-  canvas.addEventListener('pointerdown', ()=>{ longPressed=false; clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
-  canvas.addEventListener('pointerup', ()=>{ clearTimeout(pressTimer); enableMotion(); if(!longPressed && !frozen){ simMs=Date.now(); respawnAll(); } });
-  canvas.addEventListener('pointercancel', ()=>{ clearTimeout(pressTimer); });
 
-  // accelerometer: tilt the phone and the dots fall that way — real "down" no matter how the phone is held.
-  // the sensor reports in the phone's OWN axes (fixed to the hardware), so when the screen rotates to
-  // landscape we must rotate that vector by the screen angle, or gravity ends up sideways.
+  canvas.addEventListener('pointerdown', e=>{
+    longPressed=false; dragging=true; moved=0; lx=e.clientX; ly=e.clientY; autoSpin=false;
+    clearTimeout(pressTimer);
+    pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved += Math.abs(dx)+Math.abs(dy);
+    theta -= dx*0.008;
+    phi = Math.max(-1.2, Math.min(1.2, phi + dy*0.008));
+    if(moved>8) clearTimeout(pressTimer);   // it's a drag, not a long-press
+  });
+  function endDrag(){
+    dragging=false; clearTimeout(pressTimer); enableMotion();
+    if(!longPressed && moved<10 && !frozen){ simMs=Date.now(); respawnAll(); }  // a clean tap = re-drop
+    setTimeout(()=>{ autoSpin=true; }, 2500);   // resume gentle spin after a pause
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', ()=>{ dragging=false; clearTimeout(pressTimer); });
+  // wheel to zoom on desktop
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.6, Math.min(S*5, R+e.deltaY*0.01)); }, {passive:false});
+
+  // ---- accelerometer: tilt the phone and the pieces pour that way ----
   function screenAngle(){
     if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle;
     if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360;
@@ -218,38 +344,44 @@
   function onMotion(e){
     const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
     let ax=a.x, ay=a.y;
-    switch(screenAngle()){                      // rotate the sensor reading into SCREEN axes
+    switch(screenAngle()){
       case 90:  ax=-a.y; ay=a.x;  break;
       case 180: ax=-a.x; ay=-a.y; break;
       case 270: ax=a.y;  ay=-a.x; break;
-      // 0 (portrait): leave as-is
     }
-    world.setGravity(Vec2(-ax, ay));            // -x so the low edge pulls the dots toward it; +y is screen-down
+    // screen-x → world x, screen-y(down) → world -y, device-z → world z (depth)
+    world.gravity.set(-ax*1.2, -ay*1.2, (a.z||0)*0.6);
   }
   let motionOn=false;
   const needsPerm = (typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
   function enableMotion(){
     if(motionOn) return;
-    if(needsPerm){   // iOS: must ask, and only from a tap
+    if(needsPerm){
       DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{});
     } else { motionOn=true; window.addEventListener('devicemotion', onMotion); }
   }
-  // Android / desktop don't need permission — start listening right away so tilt just works
   if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
-  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=0.7; pDensity=4; pElasticity=1; pFriction=0; world.setGravity(Vec2(0,3)); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); respawnAll(); showKnobs(); });
-  document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.2, SLOWMO-0.15); showKnobs(); });   // slower
-  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(1.6, SLOWMO+0.15); showKnobs(); });   // faster
+  // ---- controls ----
+  document.getElementById('btnReset').addEventListener('click', ()=>{
+    SLOWMO=1.0; world.gravity.set(0,-G,0); motionOn=false; frozen=false;
+    document.getElementById('btnFreeze').classList.remove('active');
+    theta=0.6; phi=0.28; autoSpin=true; simMs=Date.now(); respawnAll(); showKnobs();
+  });
+  document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
+  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.2, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{
     frozen=!frozen;
     document.getElementById('btnFreeze').classList.toggle('active', frozen);
-    if(frozen) spawnFrozen();                         // snap to the clean centred layout and hold
-    else { simMs=Date.now(); respawnAll(); }          // let it tumble again
+    if(frozen){ autoSpin=false; theta=0; phi=0.12; spawnFrozen(); }
+    else { autoSpin=true; simMs=Date.now(); respawnAll(); }
     showKnobs();
   });
 
-  // ----- go -----
-  Promise.all([...needed].map(load)).then(()=>{ resize(); respawnAll(); requestAnimationFrame(frame); });
+  // ============================================================
+  //  Go
+  // ============================================================
+  Promise.all([...needed].map(loadTex)).then(()=>{ resize(); placeCamera(); respawnAll(); requestAnimationFrame(frame); });
 
   if('serviceWorker' in navigator){
     let refreshing=false; const had=!!navigator.serviceWorker.controller;

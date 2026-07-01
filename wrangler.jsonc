@@ -1,0 +1,15 @@
+{
+  // Cloudflare Pages configuration for getridoftheteacher.
+  // Deployed by the GitHub Action (.github/workflows/deploy-cloudflare.yml)
+  // via `wrangler pages deploy .`. Defining the AI binding here turns on
+  // Workers AI for the Pages Functions automatically on every deploy —
+  // no dashboard step needed. This file is now the source of truth for
+  // these settings (they can't also be edited in the dashboard).
+  "name": "getridoftheteacher",
+  "pages_build_output_dir": ".",
+  "compatibility_date": "2026-07-01",
+
+  // Workers AI — powers functions/api/find-game.js and functions/api/ask-notes.js.
+  // Referenced in code as env.AI.
+  "ai": { "binding": "AI" }
+}

@@ -1,6 +1,7 @@
-/* About Time clock — network-first; own cache prefix so it won't clash with the other apps */
-const CACHE = 'atc-v27';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './planck.min.js',
+/* About Time 3D — network-first; own cache prefix so it won't clash with the 2D clock */
+const CACHE = 'atc3d-v1';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './three.min.js', './cannon.min.js',
+  './gfx/device_frozen_time.png', './gfx/device_frozen_time_slow.png', './gfx/device_frozen_reset.png', './gfx/device_frozen_time_fast.png',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/icon-180.png'];
 
 self.addEventListener('install', e => {
@@ -8,7 +9,7 @@ self.addEventListener('install', e => {
 });
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('atc-') && k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('atc3d-') && k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

@@ -1,0 +1,16 @@
+{
+  "name": "About Time 3D — ColorMyMath Clock",
+  "short_name": "About Time 3D",
+  "description": "The ColorMyMath time as big colored balls bouncing in a see-through 3D cube.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1b2e",
+  "theme_color": "#0d1b2e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

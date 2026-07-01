@@ -195,7 +195,6 @@
 
     <div class="controls">
       <button class="ctl accent" id="btnNew"><span class="cic">🎲</span>New</button>
-      <button class="ctl" id="btnInstall"><span class="cic">📲</span>Install</button>
       <button class="ctl" id="btnHint"><span class="cic">💡</span>Hint</button>
       <button class="ctl" id="btnUndo"><span class="cic">↶</span>Undo</button>
       <button class="ctl" id="btnSettings"><span class="cic">⚙</span>Settings</button>
@@ -678,7 +677,6 @@
 
     // bottom control row
     $('btnNew').addEventListener('click',()=>show('newOverlay'));
-    $('btnInstall').addEventListener('click', triggerInstall);
     $('btnHint').addEventListener('click', hint);
     $('btnUndo').addEventListener('click', undo);
     $('btnSettings').addEventListener('click',()=>show('setOverlay'));

@@ -1,5 +1,5 @@
 /* Color My Sudoku service worker — network-first so updates show up immediately when online */
-const CACHE = 'cms-v19';
+const CACHE = 'cms-v20';
 const ASSETS = [
   './',
   './index.html',

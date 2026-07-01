@@ -286,9 +286,9 @@
     world.gravity.set(-ax*0.28, -ay*0.28, (a.z||0)*0.14);   // tilt still pours, even with base gravity 0
   }
   let motionOn=false;
-  const needsPerm=(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
-  function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
-  if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
+  // Tilt-to-pour is DISABLED: the accelerometer reading includes real gravity, which was
+  // sneaking weight back into the weightless tank. Keeping it off so there is truly NO gravity.
+  function enableMotion(){ /* no-op — tank stays weightless */ }
 
   document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });

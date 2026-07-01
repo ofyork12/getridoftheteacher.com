@@ -63,8 +63,9 @@
   const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
   const HOUR_HEX='#f0b32a';
 
-  // a FIVE (5 balls): a triangle of 3, with a ball tucked into the indent on EACH side  (+y = down)
-  const FIVE=[[0,-0.9],[-0.55,0.4],[0.55,0.4],[-1.15,-0.25],[1.15,-0.25]];
+  // a FIVE (5 balls): a triangle of 3, + one ball in the crest on TOP and one on the BOTTOM
+  //  (a trigonal bipyramid — real 3D; offsets are [x, y-down, z])
+  const FIVE=[[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29],[0,-0.82,0],[0,0.82,0]];
   // a TEN = a real 3D TRIANGULAR TOWER: three triangles of 3 stacked into three columns
   //  (base triangle on the floor, next on top, next on top), + 1 ball nestled in the CREST = 10.
   //  offsets are [x, y(down), z].  TRI = the (x,z) footprint of a triangle of 3.
@@ -78,7 +79,7 @@
     3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
     4:[[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],   // triangle of 3 + 1 in the crest (3D tetrahedron)
     5:FIVE,
-    6:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5],[-1.25,0],[1.25,0]],   // a square of 4 + one ball on each side
+    6:[[0.5,0,0.5],[0.5,0,-0.5],[-0.5,0,0.5],[-0.5,0,-0.5],[0,-0.71,0],[0,0.71,0]],   // square of 4 + one in the crest on TOP and BOTTOM (octahedron)
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
     8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
     9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]

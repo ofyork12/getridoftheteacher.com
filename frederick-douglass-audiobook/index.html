@@ -901,7 +901,8 @@ window.CMM_COMMENTS_CFG = {
   book: 'douglass',
   chapters: CHAPTERS,
   nowIndex:   function(){ return currentIndex; },
-  nowSeconds: function(){ return (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0; }
+  nowSeconds: function(){ return (audio && isFinite(audio.currentTime)) ? audio.currentTime : 0; },
+  readerIndex: function(){ return (typeof readerChapter !== 'undefined') ? readerChapter : -1; }
 };
 </script>
 <script src="../audiobook-comments.js"></script>

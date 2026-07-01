@@ -24,6 +24,7 @@
   var CHAPTERS = cfg.chapters;
   var nowIndex = cfg.nowIndex || function () { return -1; };
   var nowSeconds = cfg.nowSeconds || function () { return 0; };
+  var readerIndex = cfg.readerIndex || null;   // chapter shown in the read-along reader (optional)
   var openFor = -1;                         // chapter index the modal is showing
 
   // ---- helpers ----
@@ -250,7 +251,27 @@
     xrow.appendChild(btn);
   }
 
-  function init() { addRowButtons(); addPlayerButton(); }
+  // A 💬 button in the read-along reader header, opening the board for the
+  // chapter whose text is on screen (which may differ from what's playing).
+  function addReaderButton() {
+    if (!readerIndex) return;
+    var rhead = document.querySelector("#reader .rhead");
+    if (!rhead || rhead.querySelector(".cmt-rbtn")) return;
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "rnav cmt-rbtn";
+    btn.title = "What did you think of this chapter?";
+    btn.innerHTML = "&#128172;";
+    btn.addEventListener("click", function () {
+      var i = readerIndex();
+      if (i < 0) i = (nowIndex() >= 0 ? nowIndex() : 0);
+      openBoard(i);
+    });
+    var closeBtn = rhead.querySelector('.rnav[onclick*="closeReader"]');
+    if (closeBtn) rhead.insertBefore(btn, closeBtn); else rhead.appendChild(btn);
+  }
+
+  function init() { addRowButtons(); addPlayerButton(); addReaderButton(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
   // Rows are built by the player's own script; re-scan shortly in case we ran first.

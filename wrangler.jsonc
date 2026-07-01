@@ -1,12 +1,14 @@
 {
   // Cloudflare Pages config. The GitHub Action runs `wrangler pages deploy`,
   // which reads this file and attaches the bindings below to every deploy.
-  // COMMENTS = KV namespace backing the per-chapter audiobook message boards
-  // (see functions/api/comments.js). Created 2026-07-01.
+  // COMMENTS = KV namespace "audiobook-comments" backing the per-chapter
+  // audiobook message boards (see functions/api/comments.js). This is the
+  // namespace already bound on the Pages project from an earlier session;
+  // declaring it here keeps repo + project config in agreement.
   "name": "getridoftheteacher",
   "pages_build_output_dir": ".",
   "compatibility_date": "2024-11-01",
   "kv_namespaces": [
-    { "binding": "COMMENTS", "id": "1fa3089079734152b6643028b3c93c2c" }
+    { "binding": "COMMENTS", "id": "51a9f7f9aacd4eb2b6ce65ac058eb37b" }
   ]
 }

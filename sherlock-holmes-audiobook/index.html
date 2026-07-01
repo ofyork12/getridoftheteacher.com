@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#123536">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sherlock Holmes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>The Adventures of Sherlock Holmes — Audiobook</title>
+<style>
+  :root{
+    --navy:#123536; --navy2:#0a1f20; --gold:#c9a24b; --gold-soft:#e6cf93;
+    --ink:#ede6d3; --muted:#9fb0c8; --red:#e0524a; --line:rgba(201,162,75,.25);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%;}
+  body{
+    font-family:Georgia,'Times New Roman',serif;
+    background:radial-gradient(120% 100% at 50% 0%, #194a4b 0%, var(--navy) 45%, var(--navy2) 100%);
+    color:var(--ink);
+    display:flex; flex-direction:column; min-height:100%;
+    padding-top:env(safe-area-inset-top);
+  }
+  /* ---------- Splash ---------- */
+  #splash{
+    position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px;
+    background:radial-gradient(120% 100% at 50% 0%, #194a4b 0%, var(--navy) 60%, var(--navy2) 100%);
+    transition:opacity .6s ease; text-align:center; padding:24px;
+  }
+  #splash.hide{opacity:0; pointer-events:none;}
+  #splash img{width:210px; max-width:62vw; border-radius:6px;
+    box-shadow:0 18px 50px rgba(0,0,0,.55); border:1px solid var(--line);}
+  #splash .tap{color:var(--gold-soft); font-size:15px; letter-spacing:.12em;
+    text-transform:uppercase; opacity:.85; animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  /* ---------- Header ---------- */
+  header{padding:18px 20px 8px; text-align:center; border-bottom:1px solid var(--line);}
+  header h1{margin:0; font-size:21px; color:var(--gold); letter-spacing:.04em;
+    text-shadow:0 1px 0 rgba(0,0,0,.4);}
+  header .by{margin:3px 0 0; font-size:13px; color:var(--muted); font-style:italic;}
+  #quote{margin:12px auto 2px; max-width:560px; font-size:14px; font-style:italic;
+    color:var(--gold-soft); min-height:34px; line-height:1.4; padding:0 6px;}
+  .home{position:absolute; left:14px; top:calc(14px + env(safe-area-inset-top));
+    color:var(--gold-soft); text-decoration:none; font-size:13px; opacity:.8;}
+
+  /* ---------- Chapter list ---------- */
+  main{flex:1; overflow-y:auto; padding:10px 14px 200px; -webkit-overflow-scrolling:touch;}
+  .chapters{max-width:620px; margin:0 auto; display:flex; flex-direction:column; gap:8px;}
+  .chap{
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    border:1px solid var(--line); color:var(--ink);
+    border-radius:12px; padding:14px 16px; font-family:inherit; font-size:16px;
+    cursor:pointer; transition:transform .08s, border-color .2s, background .2s;
+  }
+  .chap:active{transform:scale(.985);}
+  .chap .nbox{
+    flex:0 0 42px; height:42px; border-radius:9px; display:flex; align-items:center;
+    justify-content:center; font-size:15px; font-weight:bold;
+    background:rgba(255,255,255,.08); color:var(--gold); border:1px solid var(--line);
+  }
+  .chap .ctitle{flex:1;}
+  .chap.active{border-color:var(--gold); background:rgba(255,255,255,.10);}
+  .chap.active .ctitle{color:var(--gold-soft);}
+  .chap.active .nbox{background:var(--gold); color:var(--navy2);}
+
+  /* ---------- Player bar ---------- */
+  #player{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:linear-gradient(180deg, rgba(10,31,32,.92), rgba(10,31,32,.99));
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    border-top:1px solid var(--line); padding:12px 16px;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px rgba(0,0,0,.4);
+  }
+  #player .wrap{max-width:620px; margin:0 auto;}
+  #nowPlaying{font-size:14px; color:var(--gold-soft); text-align:center;
+    margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  #nowPlaying.err{color:var(--red); cursor:pointer; text-decoration:underline; white-space:normal;}
+  .seekrow{display:flex; align-items:center; gap:10px;}
+  .seekrow time{font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:42px;}
+  .seekrow time:last-child{text-align:right;}
+  input[type=range]{
+    -webkit-appearance:none; appearance:none; flex:1; height:5px; border-radius:5px;
+    background:rgba(255,255,255,.18); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+    width:17px; height:17px; border-radius:50%; background:var(--gold);
+    border:2px solid #fff3; box-shadow:0 2px 6px rgba(0,0,0,.5); cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:17px; height:17px; border-radius:50%;
+    background:var(--gold); border:2px solid #fff3; cursor:pointer;}
+  .controls{display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px;}
+  .ctrl{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--ink);
+    border-radius:11px; padding:9px 12px; font-family:inherit; font-size:13px;
+    cursor:pointer; min-width:60px; transition:background .15s, transform .08s;
+  }
+  .ctrl:active{transform:scale(.93); background:rgba(255,255,255,.14);}
+  .ctrl small{display:block; font-size:10px; color:var(--muted); letter-spacing:.05em;}
+  #btnPlay{
+    background:var(--gold); color:var(--navy2); border:none; font-weight:bold;
+    width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 18px rgba(0,0,0,.4); transition:transform .08s;
+  }
+  #btnPlay:active{transform:scale(.92);}
+  #spinner{display:none; width:22px; height:22px; border:3px solid rgba(0,0,0,.25);
+    border-top-color:var(--navy2); border-radius:50%; animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #player.loading #spinner{display:block;}
+  #player.loading #playGlyph{display:none;}
+
+  footer{text-align:center; font-size:11px; color:var(--muted); padding:14px 16px 4px; opacity:.8;}
+  footer a{color:var(--gold-soft);}
+
+  /* ---------- Resume banner ---------- */
+  #resumeBar{max-width:620px; margin:0 auto 14px; display:none;}
+  #resumeBar.show{display:block;}
+  #resumeBtn{
+    width:100%; display:flex; align-items:center; gap:12px; cursor:pointer;
+    background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+    border:1px solid var(--gold); color:var(--gold-soft);
+    border-radius:12px; padding:13px 16px; font-family:inherit; font-size:15px; text-align:left;
+  }
+  #resumeBtn .big{font-size:22px;}
+  #resumeBtn b{color:var(--gold);}
+  #resumeBtn small{display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+
+  /* ---------- Downloads toolbar ---------- */
+  #dlbar{max-width:620px; margin:0 auto 16px; border:1px solid var(--line);
+    border-radius:12px; padding:12px 14px; background:rgba(255,255,255,.03);}
+  #dlbar .row{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .dlbtn{
+    background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:9px; padding:9px 13px; font-family:inherit; font-size:13px; cursor:pointer;
+  }
+  .dlbtn:active{transform:scale(.96);}
+  .dlbtn.ghost{background:transparent; color:var(--muted);}
+  #storeInfo{font-size:12px; color:var(--muted); margin-left:auto;}
+  .toggle{display:flex; align-items:center; gap:10px; margin-top:11px;
+    font-size:13px; color:var(--ink); cursor:pointer;}
+  .toggle input{display:none;}
+  .toggle .sw{flex:0 0 auto; width:42px; height:24px; border-radius:999px;
+    background:rgba(255,255,255,.18); position:relative; transition:background .2s;}
+  .toggle .sw::after{content:""; position:absolute; top:2px; left:2px; width:20px; height:20px;
+    border-radius:50%; background:#fff; transition:transform .2s;}
+  .toggle input:checked + .sw{background:var(--gold);}
+  .toggle input:checked + .sw::after{transform:translateX(18px);}
+  .toggle .lbl small{display:block; color:var(--muted); font-size:11px; line-height:1.3;}
+  #dlAllProg{height:5px; border-radius:5px; background:rgba(255,255,255,.15);
+    margin-top:10px; overflow:hidden; display:none;}
+  #dlAllProg.show{display:block;}
+  #dlAllProg i{display:block; height:100%; width:0; background:var(--gold); transition:width .2s;}
+
+  /* ---------- Per-chapter download button ---------- */
+  .chap .dl{
+    flex:0 0 auto; width:38px; height:38px; border-radius:9px; border:1px solid var(--line);
+    background:rgba(255,255,255,.04); color:var(--muted); font-size:17px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .chap .dl.saved{color:#6fcf7f; border-color:rgba(111,207,127,.5); background:rgba(111,207,127,.10);}
+  .chap .dl.busy{color:var(--gold);}
+  .chap .dl .ring{position:absolute; font-size:9px; bottom:-1px; right:-1px;}
+
+  /* ---------- Speed button ---------- */
+  .xrow{display:flex; gap:10px; justify-content:center; margin-top:11px;}
+  .xbtn{
+    background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:11px; padding:8px 14px; font-family:inherit; font-size:13px; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .xbtn:active{transform:scale(.95);}
+  #btnSpeed{min-width:90px; justify-content:center; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Install banner + popup ---------- */
+  #installBar{max-width:620px; margin:0 auto 14px;}
+  #installBtn{
+    width:100%; background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+    border:1px solid var(--gold); color:var(--gold-soft); border-radius:12px;
+    padding:13px 16px; font-family:inherit; font-size:15px; cursor:pointer;
+  }
+  #installModal{position:fixed; inset:0; z-index:60; display:none; align-items:center;
+    justify-content:center; background:rgba(0,0,0,.65); padding:20px;}
+  #installModal.show{display:flex;}
+  .imodal{background:var(--navy2); border:1px solid var(--gold); border-radius:16px; max-width:430px;
+    width:100%; padding:22px; color:var(--ink); box-shadow:0 20px 60px rgba(0,0,0,.6);}
+  .imodal h3{margin:0 0 16px; color:var(--gold); text-align:center; font-size:20px;}
+  .imodal .isteps p{font-size:15px; line-height:1.6; margin:0 0 16px;}
+  .imodal .isteps b{color:var(--gold-soft);}
+  #androidInstallWrap{margin-bottom:16px; display:none;}
+  #androidInstallBtn{width:100%; background:var(--gold); color:var(--navy2); border:none;
+    border-radius:10px; padding:13px; font-weight:bold; font-size:15px; cursor:pointer;}
+  .iclose{width:100%; margin-top:4px; background:rgba(255,255,255,.06); border:1px solid var(--line);
+    color:var(--ink); border-radius:10px; padding:12px; font-family:inherit; font-size:14px; cursor:pointer;}
+</style>
+</head>
+<body>
+
+  <div id="splash" onclick="dismissSplash()">
+    <img src="cover.png" alt="" id="splashCover">
+    <div class="tap">Tap to begin</div>
+  </div>
+
+  <header>
+    <a class="home" href="../audiobooks.html">&#8249; Books</a>
+    <h1 id="bookTitle"></h1>
+    <p class="by" id="bookBy"></p>
+    <div id="quote"></div>
+  </header>
+
+  <main>
+    <div id="installBar">
+      <button id="installBtn" onclick="showInstall()">&#128241; Add this to your phone as an app</button>
+    </div>
+
+    <div id="resumeBar">
+      <button id="resumeBtn" onclick="resumeLast()">
+        <span class="big">&#9654;</span>
+        <span><b id="resumeLabel">Resume</b><small id="resumeWhere"></small></span>
+      </button>
+    </div>
+
+    <div id="dlbar">
+      <div class="row">
+        <button class="dlbtn" id="btnDlAll" onclick="downloadAll()">&#11015; Download whole book</button>
+        <button class="dlbtn ghost" id="btnClear" onclick="deleteAll()">Clear downloads</button>
+        <span id="storeInfo"></span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="saveSpace" onchange="onSaveSpaceToggle()">
+        <span class="sw"></span>
+        <span class="lbl">Save space mode
+          <small>Auto-download the chapter you're listening to and delete the others as you go.</small>
+        </span>
+      </label>
+      <div id="dlAllProg"><i></i></div>
+    </div>
+
+    <div class="chapters" id="chapterList"></div>
+    <footer id="footer"></footer>
+  </main>
+
+  <div id="player">
+    <div class="wrap">
+      <div id="nowPlaying">Choose a chapter to begin</div>
+      <div class="seekrow">
+        <time id="curTime">0:00</time>
+        <input type="range" id="seek" min="0" max="100" value="0" step="1">
+        <time id="totTime">0:00</time>
+      </div>
+      <div class="controls">
+        <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
+        <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
+        <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
+        <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
+        <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
+      </div>
+      <div class="xrow">
+        <button class="xbtn" onclick="prevChapter()">&#9198; Previous</button>
+        <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
+        <button class="xbtn" onclick="nextChapter()">Next &#9197;</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="installModal" onclick="hideInstall()">
+    <div class="imodal" onclick="event.stopPropagation()">
+      <h3>Get the app on your phone</h3>
+      <div id="androidInstallWrap">
+        <button id="androidInstallBtn" onclick="androidInstall()">&#11015; Install app</button>
+      </div>
+      <div class="isteps">
+        <p><b>&#127822; iPhone &amp; iPad</b><br>
+          Open this page in <b>Safari</b>, tap the <b>Share</b> button
+          (the square with an up-arrow), then choose <b>"Add to Home Screen."</b></p>
+        <p><b>&#129302; Android</b><br>
+          Open this page in <b>Chrome</b>, tap the <b>&#8942;</b> menu (top-right),
+          then choose <b>"Install app"</b> or <b>"Add to Home screen."</b></p>
+      </div>
+      <button class="iclose" onclick="hideInstall()">Got it</button>
+    </div>
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+
+<script>
+/* =====================================================================
+   BOOK CONFIG — the only part that differs between titles.
+   Each chapter is its own MP3 on archive.org (LibriVox, public domain),
+   so a chapter always starts at 0:00 in its own file.
+   ===================================================================== */
+const BOOK = {
+  key: 'gridbook.sherlock',
+  title: 'The Adventures of Sherlock Holmes',
+  author: 'Arthur Conan Doyle',
+  by: 'by Arthur Conan Doyle Â· read by LibriVox volunteers',
+  base: 'https://archive.org/download/adventures_holmes/',
+  gutenberg: 'https://www.gutenberg.org/ebooks/1661',
+  skip: 20,
+  chapters: [
+    {label:'A Scandal in Bohemia', file:'adventureholmes_01_doyle_64kb.mp3'},
+    {label:'The Red-Headed League', file:'adventureholmes_02_doyle_64kb.mp3'},
+    {label:'A Case of Identity', file:'adventureholmes_03_doyle_64kb.mp3'},
+    {label:'The Boscombe Valley Mystery', file:'adventureholmes_04_doyle_64kb.mp3'},
+    {label:'The Five Orange Pips', file:'adventureholmes_05_doyle_64kb.mp3'},
+    {label:'The Man with the Twisted Lip', file:'adventureholmes_06_doyle_64kb.mp3'},
+    {label:'The Blue Carbuncle', file:'adventureholmes_07_doyle_64kb.mp3'},
+    {label:'The Speckled Band', file:'adventureholmes_08_doyle_64kb.mp3'},
+    {label:'The Engineer\'s Thumb', file:'adventureholmes_09_doyle_64kb.mp3'},
+    {label:'The Noble Bachelor', file:'adventureholmes_10_doyle_64kb.mp3'},
+    {label:'The Beryl Coronet', file:'adventureholmes_11_doyle_64kb.mp3'},
+    {label:'The Copper Beeches', file:'adventureholmes_12_doyle_64kb.mp3'}
+  ],
+  quotes: [
+    'When you have eliminated the impossible, whatever remains, however improbable, must be the truth. â€” Sherlock Holmes',
+    'You see, but you do not observe. â€” Sherlock Holmes',
+    'The game is afoot. â€” Sherlock Holmes'
+  ]
+};
+
+/* ---- derived ---- */
+const CHAPTERS = BOOK.chapters;
+document.title = BOOK.title + ' — Audiobook';
+document.getElementById('bookTitle').textContent = BOOK.title;
+document.getElementById('bookBy').textContent = BOOK.by;
+document.getElementById('splashCover').alt = BOOK.title;
+document.getElementById('footer').innerHTML =
+  'Audio: public-domain LibriVox recording via archive.org.' +
+  (BOOK.gutenberg ? '<br>Read the text free at <a href="'+BOOK.gutenberg+'" target="_blank" rel="noopener">Project Gutenberg</a>.' : '');
+
+const audio   = document.getElementById('audio');
+const player  = document.getElementById('player');
+const seek    = document.getElementById('seek');
+const curTime = document.getElementById('curTime');
+const totTime = document.getElementById('totTime');
+const nowPlaying = document.getElementById('nowPlaying');
+const playGlyph  = document.getElementById('playGlyph');
+let currentIndex = -1;
+let seeking = false;
+
+// Build chapter list
+const list = document.getElementById('chapterList');
+CHAPTERS.forEach((c, i) => {
+  const row = document.createElement('div');
+  row.className = 'chap';
+  row.dataset.idx = i;
+  row.dataset.file = c.file;
+  row.innerHTML = `<span class="nbox">${i+1}</span>`
+              + `<span class="ctitle">${c.label}</span>`
+              + `<button class="dl" title="Save this chapter to your device">&#11015;</button>`;
+  row.addEventListener('click', e => { if(e.target.closest('.dl')) return; playChapter(i); });
+  row.querySelector('.dl').addEventListener('click', e => { e.stopPropagation(); toggleDownload(c.file); });
+  list.appendChild(row);
+});
+
+// Rotating quote
+function newQuote(){
+  if(!BOOK.quotes || !BOOK.quotes.length){ document.getElementById('quote').style.display='none'; return; }
+  document.getElementById('quote').textContent = BOOK.quotes[Math.floor(Math.random()*BOOK.quotes.length)];
+}
+newQuote(); setInterval(newQuote, 12000);
+
+function fmt(sec){
+  if(!isFinite(sec)||sec<0) sec=0;
+  const m=Math.floor(sec/60), s=Math.floor(sec%60);
+  return m+':'+String(s).padStart(2,'0');
+}
+
+function playChapter(i, resumeTime){
+  if(i<0 || i>=CHAPTERS.length) return;
+  const c = CHAPTERS[i];
+  const sameFile = currentIndex>=0 && CHAPTERS[currentIndex].file===c.file;
+  currentIndex = i;
+  highlight(i);
+  clearError();
+  hideResume();
+  nowPlaying.textContent = c.label;
+
+  // Skip the spoken LibriVox intro ("This is a LibriVox recording… visit
+  // librivox.org"). The page already credits LibriVox, so we jump past it.
+  // Per-chapter `entry` overrides the book-wide `skip` if present.
+  const introSkip = (c.entry != null ? c.entry : (BOOK.skip || 0));
+  const target = (resumeTime != null ? resumeTime : introSkip);
+  const seekTo = () => { try{ audio.currentTime = target; }catch(e){} };
+
+  if(sameFile && audio.readyState>0){
+    seekTo();
+    audio.play().catch(()=>{});
+  } else {
+    player.classList.add('loading');
+    audio.src = srcFor(c.file);   // offline copy if downloaded, else stream
+    audio.load();
+    // iOS/Safari: play() MUST run inside the originating tap, or audio is blocked.
+    audio.play().catch(()=>{});
+    audio.addEventListener('loadedmetadata', function once(){
+      audio.removeEventListener('loadedmetadata', once);
+      seekTo();
+      audio.play().catch(()=>{});
+    }, {once:true});
+  }
+  if(saveSpaceOn) manageSpace(c.file);
+}
+
+// Play source: a downloaded blob (offline) if we have it, otherwise stream.
+function srcFor(file){ return (downloaded[file] && downloaded[file].url) || (BOOK.base + file); }
+
+function clearError(){ nowPlaying.classList.remove('err'); }
+function showError(){
+  player.classList.remove('loading');
+  nowPlaying.classList.add('err');
+  nowPlaying.textContent = '⚠ Couldn’t load audio — tap here to try again';
+}
+nowPlaying.addEventListener('click', ()=>{ if(nowPlaying.classList.contains('err') && currentIndex>=0) playChapter(currentIndex); });
+
+function highlight(i){
+  document.querySelectorAll('.chap').forEach((el,idx)=> el.classList.toggle('active', idx===i));
+  const el = document.querySelector('.chap[data-idx="'+i+'"]');
+  if(el) el.scrollIntoView({block:'nearest'});
+}
+
+function togglePlay(){
+  if(currentIndex<0){ playChapter(0); return; }
+  if(audio.paused) audio.play(); else audio.pause();
+}
+function nextChapter(){ if(currentIndex < CHAPTERS.length-1) playChapter(currentIndex+1); }
+function prevChapter(){ if(currentIndex > 0) playChapter(currentIndex-1); }
+
+function skip(sec){
+  if(currentIndex<0) return;
+  audio.currentTime = Math.max(0, Math.min(audio.duration||1e9, audio.currentTime+sec));
+}
+
+// ---- audio events ----
+audio.addEventListener('playing', ()=>{ player.classList.remove('loading'); playGlyph.innerHTML='&#10074;&#10074;'; });
+audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; });
+audio.addEventListener('waiting', ()=>{ player.classList.add('loading'); });
+audio.addEventListener('canplay', ()=>{ player.classList.remove('loading'); });
+audio.addEventListener('ended',   ()=>{ nextChapter(); });   // auto-advance to next chapter
+audio.addEventListener('error',   ()=>{
+  const code = audio.error && audio.error.code;
+  if(!audio.src || code === 1) return;        // 1 = MEDIA_ERR_ABORTED (e.g. chapter switch)
+  showError();
+});
+audio.addEventListener('loadedmetadata', ()=>{ seek.max = Math.floor(audio.duration||100); totTime.textContent = fmt(audio.duration); });
+audio.addEventListener('timeupdate', ()=>{
+  if(seeking) return;
+  seek.value = Math.floor(audio.currentTime);
+  curTime.textContent = fmt(audio.currentTime);
+  if(audio.duration) totTime.textContent = fmt(audio.duration);
+});
+
+// ---- seek bar ----
+seek.addEventListener('input', ()=>{ seeking=true; curTime.textContent = fmt(seek.value); });
+seek.addEventListener('change',()=>{ audio.currentTime = +seek.value; seeking=false; });
+
+// ---- Media Session (lock-screen controls) ----
+if('mediaSession' in navigator){
+  navigator.mediaSession.setActionHandler('play',  ()=>audio.play());
+  navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
+  navigator.mediaSession.setActionHandler('seekbackward', ()=>skip(-10));
+  navigator.mediaSession.setActionHandler('seekforward',  ()=>skip(10));
+  try{
+    navigator.mediaSession.setActionHandler('previoustrack', ()=>prevChapter());
+    navigator.mediaSession.setActionHandler('nexttrack',     ()=>nextChapter());
+  }catch(e){}
+}
+audio.addEventListener('playing', ()=>{
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: CHAPTERS[currentIndex]?.label || BOOK.title,
+      artist: BOOK.author, album: BOOK.title,
+      artwork:[{src:'cover.png', sizes:'480x600', type:'image/png'}]
+    });
+  }
+});
+
+/* ---- BOOKMARK ---- */
+const POS_KEY = BOOK.key + '.pos';
+let lastSave = 0;
+function savePos(){
+  if(currentIndex < 0 || !isFinite(audio.currentTime)) return;
+  try{ localStorage.setItem(POS_KEY, JSON.stringify({
+    index: currentIndex, time: audio.currentTime, label: CHAPTERS[currentIndex].label
+  })); }catch(e){}
+}
+function loadPos(){ try{ return JSON.parse(localStorage.getItem(POS_KEY)); }catch(e){ return null; } }
+audio.addEventListener('timeupdate', ()=>{ const t=Date.now(); if(t-lastSave>4000){ lastSave=t; savePos(); } });
+audio.addEventListener('pause', savePos);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) savePos(); });
+window.addEventListener('pagehide', savePos);
+
+function showResume(p){
+  document.getElementById('resumeLabel').textContent = 'Resume ' + p.label;
+  document.getElementById('resumeWhere').textContent = 'You stopped at ' + fmt(p.time);
+  document.getElementById('resumeBar').classList.add('show');
+}
+function hideResume(){ document.getElementById('resumeBar').classList.remove('show'); }
+function resumeLast(){ const p = loadPos(); if(p) playChapter(p.index, p.time); }
+
+/* ---- DOWNLOADS (each chapter = one MP3, stored in IndexedDB for offline) ---- */
+const downloaded = {};
+const downloading = {};
+let saveSpaceOn = localStorage.getItem(BOOK.key+'.savespace') === '1';
+
+let _dbPromise = null;
+function idb(){
+  if(_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((res, rej)=>{
+    let settled = false;
+    const done = (fn, v) => { if(!settled){ settled = true; fn(v); } };
+    const r = indexedDB.open(BOOK.key+'-audio', 1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore('files');
+    r.onsuccess = ()=> done(res, r.result);
+    r.onerror   = ()=> done(rej, r.error);
+    r.onblocked = ()=> done(rej, new Error('idb blocked'));
+    setTimeout(()=> done(rej, new Error('idb timeout')), 2500);
+  }).catch(e => { _dbPromise = null; throw e; });
+  return _dbPromise;
+}
+function idbDo(mode, fn){
+  return idb().then(db => new Promise((res, rej)=>{
+    const tx = db.transaction('files', mode);
+    const req = fn(tx.objectStore('files'));
+    req.onsuccess = ()=> res(req.result);
+    req.onerror   = ()=> rej(req.error);
+  }));
+}
+const idbGet  = k => idbDo('readonly',  st => st.get(k));
+const idbPut  = (k,v) => idbDo('readwrite', st => st.put(v, k));
+const idbDel  = k => idbDo('readwrite', st => st.delete(k));
+const idbKeys = () => idbDo('readonly',  st => st.getAllKeys());
+
+async function loadDownloads(){
+  let keys = [];
+  try{ keys = await idbKeys(); }catch(e){ return; }
+  for(const file of keys){
+    try{
+      const blob = await idbGet(file);
+      if(blob){ downloaded[file] = { url: URL.createObjectURL(blob), size: blob.size }; }
+    }catch(e){}
+  }
+  refreshAllDlUI();
+}
+
+function uniqueFiles(){ return Array.from(new Set(CHAPTERS.map(c=>c.file))); }
+function mb(bytes){ return (bytes/1048576).toFixed(bytes < 10485760 ? 1 : 0) + ' MB'; }
+
+async function download(file){
+  if(downloaded[file] || downloading[file]) return;
+  downloading[file] = true;
+  setDlState(file, 'busy');
+  if(navigator.storage && navigator.storage.persist) { try{ navigator.storage.persist(); }catch(e){} }
+  try{
+    const resp = await fetch(BOOK.base + file);
+    if(!resp.ok) throw new Error('http '+resp.status);
+    const total = +resp.headers.get('content-length') || 0;
+    const reader = resp.body.getReader();
+    const chunks = []; let got = 0;
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      chunks.push(value); got += value.length;
+      if(total) setDlState(file, 'busy', Math.round(got/total*100));
+    }
+    const blob = new Blob(chunks, {type:'audio/mpeg'});
+    await idbPut(file, blob);
+    downloaded[file] = { url: URL.createObjectURL(blob), size: blob.size };
+  }catch(e){
+    setDlState(file, 'idle');
+    nowPlaying.classList.add('err');
+    nowPlaying.textContent = '⚠ Download failed — check your connection and try again';
+  }finally{
+    downloading[file] = false;
+    refreshAllDlUI(); updateStoreInfo();
+  }
+}
+
+async function removeFile(file){
+  try{ await idbDel(file); }catch(e){}
+  if(downloaded[file]){ URL.revokeObjectURL(downloaded[file].url); delete downloaded[file]; }
+  refreshAllDlUI(); updateStoreInfo();
+}
+function toggleDownload(file){
+  if(downloading[file]) return;
+  if(downloaded[file]) removeFile(file); else download(file);
+}
+async function downloadAll(){
+  const files = uniqueFiles().filter(f=>!downloaded[f]);
+  const bar = document.getElementById('dlAllProg');
+  bar.classList.add('show');
+  for(let i=0;i<files.length;i++){
+    await download(files[i]);
+    bar.querySelector('i').style.width = Math.round((i+1)/files.length*100) + '%';
+  }
+  setTimeout(()=>{ bar.classList.remove('show'); bar.querySelector('i').style.width='0'; }, 800);
+}
+async function deleteAll(){
+  for(const f of Object.keys(downloaded)) await removeFile(f);
+}
+async function manageSpace(currentFile){
+  if(!downloaded[currentFile] && !downloading[currentFile]) download(currentFile);
+  for(const f of Object.keys(downloaded)){ if(f !== currentFile) removeFile(f); }
+}
+function onSaveSpaceToggle(){
+  saveSpaceOn = document.getElementById('saveSpace').checked;
+  localStorage.setItem(BOOK.key+'.savespace', saveSpaceOn ? '1' : '0');
+  document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
+  if(saveSpaceOn && currentIndex>=0) manageSpace(CHAPTERS[currentIndex].file);
+}
+
+function rowsForFile(file){ return list.querySelectorAll('.chap[data-file="'+CSS.escape(file)+'"] .dl'); }
+function setDlState(file, state, pct){
+  rowsForFile(file).forEach(btn=>{
+    btn.classList.remove('saved','busy');
+    if(state==='saved'){ btn.classList.add('saved'); btn.innerHTML='&#10003;'; btn.title='Saved — tap to delete'; }
+    else if(state==='busy'){ btn.classList.add('busy'); btn.innerHTML = (pct!=null? '<span class="ring">'+pct+'%</span>&#8230;' : '&#8230;'); btn.title='Downloading…'; }
+    else { btn.innerHTML='&#11015;'; btn.title='Save this chapter to your device'; }
+  });
+}
+function refreshAllDlUI(){
+  uniqueFiles().forEach(f=> setDlState(f, downloaded[f] ? 'saved' : (downloading[f] ? 'busy' : 'idle')) );
+}
+function updateStoreInfo(){
+  const total = Object.values(downloaded).reduce((s,d)=>s+d.size, 0);
+  const n = Object.keys(downloaded).length;
+  document.getElementById('storeInfo').textContent = n ? ('Saved on device: ' + mb(total)) : '';
+  document.getElementById('btnClear').style.display = n ? '' : 'none';
+}
+
+/* ---- PLAYBACK SPEED ---- */
+const RATES = [0.75, 1, 1.25, 1.5, 2];
+let rate = parseFloat(localStorage.getItem(BOOK.key+'.rate')) || 1;
+function applyRate(){
+  try{ audio.playbackRate = rate; }catch(e){}
+  document.getElementById('btnSpeed').innerHTML = 'Speed ' + rate + '&times;';
+}
+function cycleSpeed(){
+  rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length];
+  localStorage.setItem(BOOK.key+'.rate', rate);
+  applyRate();
+}
+audio.addEventListener('play', applyRate);
+
+/* ---- INSTALL ---- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('androidInstallWrap').style.display = 'block';
+});
+function isInstalled(){
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+function showInstall(){ document.getElementById('installModal').classList.add('show'); }
+function hideInstall(){ document.getElementById('installModal').classList.remove('show'); }
+async function androidInstall(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  try{ await deferredPrompt.userChoice; }catch(e){}
+  deferredPrompt = null;
+  document.getElementById('androidInstallWrap').style.display = 'none';
+  hideInstall();
+}
+window.addEventListener('appinstalled', ()=>{ document.getElementById('installBar').style.display='none'; });
+
+/* ---- SPLASH ---- */
+function dismissSplash(){ document.getElementById('splash').classList.add('hide'); }
+setTimeout(dismissSplash, 2600);
+
+/* ---- STARTUP ---- */
+(async function init(){
+  document.getElementById('saveSpace').checked = saveSpaceOn;
+  document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
+  applyRate();
+  if(isInstalled()) document.getElementById('installBar').style.display = 'none';
+  await loadDownloads();
+  updateStoreInfo();
+  const p = loadPos();
+  if(p && CHAPTERS[p.index]){ highlight(p.index); showResume(p); }
+})();
+
+// No service worker: on iPhone, an installed PWA with a service worker hits a
+// WebKit bug that blocks cross-origin audio (archive.org). Clean up any old one.
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())).catch(()=>{});
+}
+if(window.caches && caches.keys){
+  caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
+}
+
+/* ---- COMMENTS: per-chapter "What did you think?" board ---- */
+window.CMM_COMMENTS_CFG = {
+  book: (BOOK.key || 'book').replace(/^gridbook\./, ''),
+  chapters: CHAPTERS,
+  nowIndex:   () => currentIndex,
+  nowSeconds: () => (audio && isFinite(audio.currentTime) ? audio.currentTime : 0)
+};
+</script>
+<script src="../audiobook-comments.js"></script>
+</body>
+</html>

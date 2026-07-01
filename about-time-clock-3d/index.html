@@ -36,7 +36,7 @@
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div class="tip">tap = show &amp; drop the time · drag = spin the tank · hold = controls</div>
+  <div class="tip">tap = drop · drag = spin · pinch = resize · hold = controls</div>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
     <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
@@ -204,7 +204,7 @@
   function reset(now){ reform(); if(!frozen) releaseAt=now+HOLD_MS; }
   function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
-  let theta=0, phi=0.12, R=S*2.9, autoSpin=false;
+  let theta=0, phi=0.12, zoom=1, Rfit=S*3, R=S*3, autoSpin=false;
   function placeCamera(){ const cp=Math.cos(phi); camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta)); camera.lookAt(0,0,0); }
   function resize(){
     const w=window.innerWidth, h=window.innerHeight;
@@ -214,9 +214,10 @@
     // pull the camera back so the WHOLE spinning cube fits the screen (with margin), on any aspect
     const tanV=Math.tan(camera.fov*Math.PI/360);   // tan(vertical fov / 2)
     const tanH=tanV*camera.aspect;                 // horizontal half-angle
-    const fitR=S*1.73;                             // cube-corner distance (fits at any rotation)
-    const margin=1.45;                             // >1 = extra breathing room so it sits INSIDE the phone
-    R=fitR*margin/Math.min(tanV,tanH);
+    const fitR=S*1.5;                              // ~cube half-diagonal (fits the spinning cube)
+    const margin=1.06;                             // barely any gap -> starts BIG; pinch to resize
+    Rfit=fitR*margin/Math.min(tanV,tanH);
+    R=Rfit/zoom;                                   // zoom = pinch/wheel factor (>1 = bigger)
   }
   window.addEventListener('resize', resize);
   window.addEventListener('load', resize);
@@ -243,29 +244,38 @@
 
   const knobs=document.querySelector('.knobs');
   let pressTimer=null, longPressed=false, hideTimer=null;
-  let dragging=false, moved=0, lx=0, ly=0;
+  let moved=0, lx=0, ly=0;
+  const ptrs=new Map();                          // active touches, for pinch-zoom
+  let pinching=false, pinchStartDist=0, pinchStartZoom=1;
   function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 7000); }
+  function setZoom(z){ zoom=Math.max(0.35, Math.min(5, z)); R=Rfit/zoom; }
+  function pinchDist(){ const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); }
 
   canvas.addEventListener('pointerdown', e=>{
-    longPressed=false; dragging=true; moved=0; lx=e.clientX; ly=e.clientY; autoSpin=false;
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){ pinching=true; pinchStartDist=pinchDist(); pinchStartZoom=zoom; clearTimeout(pressTimer); return; }
+    longPressed=false; moved=0; lx=e.clientX; ly=e.clientY; autoSpin=false;
     clearTimeout(pressTimer);
     pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500);
   });
   canvas.addEventListener('pointermove', e=>{
-    if(!dragging) return;
+    if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinching && ptrs.size>=2){ const d=pinchDist(); if(d>0&&pinchStartDist>0) setZoom(pinchStartZoom*(d/pinchStartDist)); return; }   // two fingers = resize
+    if(ptrs.size!==1) return;
     const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
     moved+=Math.abs(dx)+Math.abs(dy);
     theta-=dx*0.008; phi=Math.max(-1.2, Math.min(1.2, phi+dy*0.008));
     if(moved>8) clearTimeout(pressTimer);
   });
-  function endDrag(){
-    dragging=false; clearTimeout(pressTimer); enableMotion();
-    if(!longPressed && moved<10 && !frozen){ simMs=Date.now(); reset(performance.now()); }
+  function ptrUp(e){
+    const wasPinch=pinching;
+    ptrs.delete(e.pointerId); clearTimeout(pressTimer); if(ptrs.size<2) pinching=false; enableMotion();
+    if(!wasPinch && !longPressed && moved<10 && !frozen){ simMs=Date.now(); reset(performance.now()); }   // clean tap = re-drop (never right after a pinch)
     setTimeout(()=>{ if(mode==='live') autoSpin=true; }, 2500);
   }
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', ()=>{ dragging=false; clearTimeout(pressTimer); });
-  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.2, Math.min(S*20, R+e.deltaY*0.04)); }, {passive:false});
+  canvas.addEventListener('pointerup', ptrUp);
+  canvas.addEventListener('pointercancel', e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinching=false; clearTimeout(pressTimer); });
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); setZoom(zoom - e.deltaY*0.0015); }, {passive:false});
 
   function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
   function onMotion(e){

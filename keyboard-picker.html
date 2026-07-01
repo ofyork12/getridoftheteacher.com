@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>ColorMyMath Keyboard — pick a style</title>
+  <style>
+    *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+    body{background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;padding:34px 16px 80px;
+      -webkit-tap-highlight-color:transparent;}
+    .top-nav{max-width:900px;margin:0 auto 18px;}
+    .top-nav a{display:inline-block;padding:8px 14px;border:2px solid #fff;border-radius:10px;color:#fff;text-decoration:none;font-size:14px;}
+    .top-nav a:hover{background:#fff;color:#000;}
+    h1{text-align:center;font-size:clamp(26px,5.5vw,42px);letter-spacing:2px;text-transform:uppercase;margin:14px 0 4px;}
+    .sub{text-align:center;color:#aaa;margin:0 0 30px;font-size:clamp(13px,2.2vw,16px);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;max-width:1000px;margin:0 auto;}
+    .card{border:3px solid #333;border-radius:18px;padding:18px 16px 20px;background:rgba(255,255,255,.02);
+      display:flex;flex-direction:column;align-items:center;gap:12px;}
+    .card h2{margin:0;font-size:18px;letter-spacing:1px;text-transform:uppercase;text-align:center;}
+    .card .desc{margin:0;color:#9aa3ad;font-size:13px;text-align:center;min-height:34px;}
+    .card .tag{font-size:12px;color:#000;background:#cfe3ff;border-radius:999px;padding:2px 10px;font-weight:800;}
+
+    /* keypad */
+    .pad{--k:52px;display:flex;flex-direction:column;gap:calc(var(--k)*.14);}
+    .pad .row{display:grid;grid-template-columns:repeat(5,var(--k));gap:calc(var(--k)*.14);}
+    .k{position:relative;width:var(--k);height:var(--k);border-radius:calc(var(--k)*.18);
+      cursor:default;display:flex;align-items:center;justify-content:center;padding:0;overflow:hidden;border:none;}
+    .k img{object-fit:contain;pointer-events:none;}
+    .erase{height:calc(var(--k)*.7);border-radius:calc(var(--k)*.18);background:#111;border:2px solid #fff;color:#fff;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--k)*.3);}
+
+    /* ---- Style A: dots big + tiny corner number (current) ---- */
+    .A .k{background:#fff;border:3px solid var(--hue);}
+    .A .k img{width:74%;height:74%;}
+    .A .k .num{position:absolute;top:4%;left:7%;font-weight:800;color:#000;font-size:calc(var(--k)*.3);
+      background:rgba(255,255,255,.8);border-radius:5px;padding:0 .1em;line-height:1;}
+    .A .k.zero .num{position:static;background:none;font-size:calc(var(--k)*.5);}
+
+    /* ---- Style B: NUMBER on top (black), dots underneath ---- */
+    .B .k{background:#fff;border:3px solid #e6e6e6;flex-direction:column;gap:1px;padding-top:8%;}
+    .B .k .num{font-weight:800;color:#000;font-size:calc(var(--k)*.34);line-height:1;}
+    .B .k img{width:60%;height:44%;}
+    .B .k.zero .num{font-size:calc(var(--k)*.5);}
+
+    /* ---- Style C: NUMBER on top (white), dots underneath, dark key ---- */
+    .C .k{background:#12233d;border:3px solid #26456f;flex-direction:column;gap:1px;padding-top:8%;}
+    .C .k .num{font-weight:800;color:#fff;font-size:calc(var(--k)*.34);line-height:1;}
+    .C .k img{width:60%;height:44%;}
+    .C .k.zero .num{font-size:calc(var(--k)*.5);}
+
+    /* ---- Style D: just the dots, no number ---- */
+    .D .k{background:#fff;border:3px solid var(--hue);}
+    .D .k img{width:80%;height:80%;}
+    .D .k.zero{border-style:dashed;} .D .k.zero .num{color:#000;font-weight:800;font-size:calc(var(--k)*.5);}
+  </style>
+</head>
+<body>
+  <div class="top-nav"><a href="index.html">← Back to Home</a> <a href="keyboard.html" style="margin-left:8px;">Standard keyboard</a></div>
+  <h1>Pick a Keyboard Style</h1>
+  <p class="sub">Every dot shows the quantity in ColorMyMath colors — 1 = one red dot, 2 = two orange dots… Tell me which letter you like (A / B / C / D), or mix ideas.</p>
+
+  <div class="grid" id="grid"></div>
+
+  <script>
+    var BASE='color-my-sudoku/img/';
+    var HUE={1:'#FF0000',2:'#FF8C00',3:'#F4FF07',4:'#00C800',5:'#1D50FE',6:'#C814FF',7:'#B06A1F',8:'#FF3DD1',9:'#1AFFFF',0:'#9aa3ad'};
+    var ORDER=[1,2,3,4,5,6,7,8,9,0];
+    var STYLES=[
+      {id:'A',name:'A · Dots + corner number',desc:'The dots fill the key; the number sits small in the corner. (what’s live now)'},
+      {id:'B',name:'B · Number over dots',desc:'Black number on top, the colored dots underneath it.'},
+      {id:'C',name:'C · Number over dots — dark key',desc:'White number on a dark key, dots underneath. “Depending on how it goes.”'},
+      {id:'D',name:'D · Just the dots',desc:'Pure ColorMyMath — only the colored dots, no number.'}
+    ];
+    function key(n,styleHasNum){
+      var b=document.createElement('div');
+      b.className='k'+(n===0?' zero':'');
+      b.style.setProperty('--hue',HUE[n]);
+      var html='';
+      if(n!==0) html+='<img src="'+BASE+'dot'+n+'.png" alt="">';
+      if(styleHasNum || n===0) html+='<span class="num">'+n+'</span>';
+      b.innerHTML=html;
+      return b;
+    }
+    var grid=document.getElementById('grid');
+    STYLES.forEach(function(s){
+      var card=document.createElement('div'); card.className='card';
+      card.innerHTML='<span class="tag">'+s.id+'</span><h2>'+s.name.replace(/^[A-D] · /,'')+'</h2><p class="desc">'+s.desc+'</p>';
+      var pad=document.createElement('div'); pad.className='pad '+s.id;
+      var hasNum = s.id!=='D';
+      for(var r=0;r<2;r++){
+        var row=document.createElement('div'); row.className='row';
+        for(var c=0;c<5;c++){ row.appendChild(key(ORDER[r*5+c],hasNum)); }
+        pad.appendChild(row);
+      }
+      var erase=document.createElement('div'); erase.className='erase'; erase.textContent='⌫ ERASE';
+      pad.appendChild(erase);
+      card.appendChild(pad);
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

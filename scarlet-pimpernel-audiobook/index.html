@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -560,7 +560,7 @@ audio.addEventListener('playing', ()=>{
    BOOKMARK — remember where you stopped (survives closing the app or a
    dropped connection). Stored in localStorage as {index, file, time}.
    ===================================================================== */
-const POS_KEY = 'tomsawyer.pos';
+const POS_KEY = 'pimpernel.pos';
 let lastSave = 0;
 function savePos(){
   if(currentIndex < 0 || !isFinite(audio.currentTime)) return;
@@ -592,7 +592,7 @@ function resumeLast(){ const p = loadPos(); if(p) playChapter(p.index, p.time); 
    ===================================================================== */
 const downloaded = {};       // file -> { url, size }
 const downloading = {};      // file -> true while in progress
-let saveSpaceOn = localStorage.getItem('tomsawyer.savespace') === '1';
+let saveSpaceOn = localStorage.getItem('pimpernel.savespace') === '1';
 
 let _dbPromise = null;
 function idb(){
@@ -600,7 +600,7 @@ function idb(){
   _dbPromise = new Promise((res, rej)=>{
     let settled = false;
     const done = (fn, v) => { if(!settled){ settled = true; fn(v); } };
-    const r = indexedDB.open('tomsawyer-audio', 1);
+    const r = indexedDB.open('pimpernel-audio', 1);
     r.onupgradeneeded = ()=> r.result.createObjectStore('files');
     r.onsuccess = ()=> done(res, r.result);
     r.onerror   = ()=> done(rej, r.error);
@@ -701,7 +701,7 @@ async function manageSpace(currentFile){
 }
 function onSaveSpaceToggle(){
   saveSpaceOn = document.getElementById('saveSpace').checked;
-  localStorage.setItem('tomsawyer.savespace', saveSpaceOn ? '1' : '0');
+  localStorage.setItem('pimpernel.savespace', saveSpaceOn ? '1' : '0');
   document.getElementById('btnDlAll').style.display = saveSpaceOn ? 'none' : '';
   if(saveSpaceOn && currentIndex>=0) manageSpace(CHAPTERS[currentIndex].file);
 }
@@ -743,14 +743,14 @@ function updateStoreInfo(){
    PLAYBACK SPEED
    ===================================================================== */
 const RATES = [0.75, 1, 1.25, 1.5, 2];
-let rate = parseFloat(localStorage.getItem('tomsawyer.rate')) || 1;
+let rate = parseFloat(localStorage.getItem('pimpernel.rate')) || 1;
 function applyRate(){
   try{ audio.playbackRate = rate; }catch(e){}
   document.getElementById('btnSpeed').innerHTML = 'Speed ' + rate + '&times;';
 }
 function cycleSpeed(){
   rate = RATES[(RATES.indexOf(rate) + 1) % RATES.length];
-  localStorage.setItem('tomsawyer.rate', rate);
+  localStorage.setItem('pimpernel.rate', rate);
   applyRate();
 }
 audio.addEventListener('play', applyRate);   // some browsers reset rate on new src
@@ -848,7 +848,7 @@ function renderReader(){
    try to match words to the audio; it just glides so you can read hands-free.
    ===================================================================== */
 let autoScrollOn = false, scrollTimer = null, scrollLastTs = 0, scrollAccum = 0;
-let scrollLevel = Math.min(10, Math.max(1, parseInt(localStorage.getItem('tomsawyer.scrolllevel')) || 3));
+let scrollLevel = Math.min(10, Math.max(1, parseInt(localStorage.getItem('pimpernel.scrolllevel')) || 3));
 function levelToPxPerSec(){ return scrollLevel * 11; }   // level 1≈11px/s … 10≈110px/s
 
 function scrollStep(){
@@ -879,7 +879,7 @@ function stopAutoScroll(){
 function toggleAutoScroll(){ autoScrollOn ? stopAutoScroll() : startAutoScroll(); }
 function changeScrollSpeed(d){
   scrollLevel = Math.min(10, Math.max(1, scrollLevel + d));
-  localStorage.setItem('tomsawyer.scrolllevel', scrollLevel);
+  localStorage.setItem('pimpernel.scrolllevel', scrollLevel);
   updateScrollUI();
 }
 function updateScrollUI(){

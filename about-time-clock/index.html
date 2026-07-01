@@ -49,16 +49,6 @@
 </style>
 </head>
 <body>
-  <a class="exit" href="../games.html">← Games</a>
-  <button class="install" id="btnInstall">⬇ Install app</button>
-  <div class="tip">Tap to drop the time · tilt to tumble · press &amp; hold for speed &amp; freeze</div>
-  <div class="iosguide" id="iosGuide"><div class="card">
-    <h2>Add About Time to your Home Screen</h2>
-    <p>1. Tap the <b>Share</b> button (<b>the square with an ↑</b>) in Safari's toolbar.</p>
-    <p>2. Scroll down and choose <b>“Add to Home Screen.”</b></p>
-    <p>3. Tap <b>Add</b> — it then opens like a real app, full screen.</p>
-    <button id="iosOk">Got it</button>
-  </div></div>
   <canvas id="c"></canvas>
   <div class="knobs">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
@@ -67,26 +57,6 @@
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
   </div>
 
-<script>
-/* ---- "Install app" experience: makes this PWA installable on Android, desktop Chrome/Edge, and iOS ---- */
-(function(){
-  const btn=document.getElementById('btnInstall'), guide=document.getElementById('iosGuide');
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
-  if(standalone) return;                              // already installed as an app — no button needed
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
-             || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);   // iPadOS reports as Mac
-  let deferred=null;
-  window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferred=e; btn.classList.add('show'); });
-  window.addEventListener('appinstalled', ()=>{ btn.classList.remove('show'); deferred=null; });
-  if(isIOS) btn.classList.add('show');               // iOS Safari has no prompt — show button -> manual steps
-  btn.addEventListener('click', async ()=>{
-    if(deferred){ deferred.prompt(); const r=await deferred.userChoice; if(r&&r.outcome==='accepted') btn.classList.remove('show'); deferred=null; return; }
-    guide.classList.add('show');                      // iOS / unsupported: show Add-to-Home-Screen instructions
-  });
-  document.getElementById('iosOk').addEventListener('click', ()=>guide.classList.remove('show'));
-  guide.addEventListener('click', e=>{ if(e.target===guide) guide.classList.remove('show'); });
-})();
-</script>
 <script src="planck.min.js"></script>
 <script>
 "use strict";

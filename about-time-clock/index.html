@@ -106,15 +106,15 @@
   tank.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
     new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85})));
 
-  let G=3.2;
+  let G=1.8;                                          // LOW gravity so they bounce around in the air
   const world=new CANNON.World();
   world.gravity.set(0,-G,0);
   world.broadphase=new CANNON.NaiveBroadphase();
-  world.solver.iterations=14;
+  world.solver.iterations=16;
   const mat=new CANNON.Material('m');
-  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.04, restitution:0.93}));
-  world.defaultContactMaterial.friction=0.04;
-  world.defaultContactMaterial.restitution=0.93;
+  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.03, restitution:0.95}));
+  world.defaultContactMaterial.friction=0.03;
+  world.defaultContactMaterial.restitution=0.95;
 
   function wall(hx,hy,hz, px,py,pz){ const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz))); b.position.set(px,py,pz); world.addBody(b); }
   wall(S+T,T/2,S+T, 0,-S-T/2,0);  wall(S+T,T/2,S+T, 0,S+T/2,0);
@@ -131,7 +131,11 @@
 
   // ball radii — HOUR balls are big, MINUTE balls are small (a ten is a set of 10 of them)
   const R_HOUR=1.25, R_MIN=0.46;
-  const M_HOUR=3.5, M_TEN=1.2, M_ONE=0.3;
+  // ACTUAL physics: every ball has real mass proportional to its volume (r^3). A clump
+  // weighs the SUM of its balls, so a ten (10 balls) weighs 10x a one, and the hour clump
+  // weighs its ball-count; a big hour ball far outweighs a tiny minute ball.
+  const DENS=2.0;
+  function ballMass(r){ return DENS*r*r*r; }
   const HSP=2.55;      // spacing between hour balls
   const MUNIT=0.98;    // spacing between minute balls inside a clump
   const ONEGAP=1.1;    // spacing between loose ones
@@ -148,8 +152,8 @@
     return new THREE.Mesh(sphereGeo[r], m);
   }
   // one rigid body holding N balls fused at the given offsets (a "clump")
-  function addClump(hex, r, offsets, unit, cx, cy, mass, group, still){
-    const body=new CANNON.Body({mass:mass, material:mat});
+  function addClump(hex, r, offsets, unit, cx, cy, group, still){
+    const body=new CANNON.Body({mass:ballMass(r)*offsets.length, material:mat});   // real mass = sum of the balls
     const obj=new THREE.Group();
     for(const o of offsets){
       const ox=o[0]*unit, oy=-o[1]*unit, oz=(o[2]||0)*unit;   // +y(down) -> world +y up, so negate
@@ -157,7 +161,7 @@
       const mh=ballMesh(hex,r); mh.position.set(ox,oy,oz); obj.add(mh);
     }
     body.position.set(cx,cy,0);
-    body.linearDamping=0.01; body.angularDamping=0.03;
+    body.linearDamping=0.006; body.angularDamping=0.02;
     if(still){ body.type=CANNON.Body.STATIC; }
     body.updateMassProperties();
     world.addBody(body); tank.add(obj);
@@ -165,11 +169,11 @@
   }
   function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.obj); } pieces=[]; }
 
-  function buildHour(h, still){ addClump(HOUR_HEX, R_HOUR, hourShape(h), HSP, -4.7, 0.4, M_HOUR, 'hour', still); }   // ONE clump
+  function buildHour(h, still){ addClump(HOUR_HEX, R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); }   // ONE clump
   function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
-    for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, M_TEN, 'tens', still); }             // one clump per ten
+    for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, 'tens', still); }             // one clump per ten
   function buildOnes(ones, still){ if(!ones) return; const hex=ONES_HEX[ones];
-    for(const o of SHAPES[ones]) addClump(hex, R_MIN, [[0,0]], 1, 4.6+o[0]*ONEGAP, -5.6-o[1]*ONEGAP, M_ONE, 'ones', still); }  // loose singles
+    for(const o of SHAPES[ones]) addClump(hex, R_MIN, [[0,0]], 1, 4.6+o[0]*ONEGAP, -5.6-o[1]*ONEGAP, 'ones', still); }  // loose singles
 
   let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
@@ -185,8 +189,8 @@
     for(const p of pieces){
       const b=p.body;
       b.type=CANNON.Body.DYNAMIC; b.updateMassProperties();
-      b.velocity.set((Math.random()-0.5)*2.2, (Math.random()-0.5)*1.2, (Math.random()-0.5)*2.2);
-      b.angularVelocity.set((Math.random()-0.5)*5,(Math.random()-0.5)*5,(Math.random()-0.5)*5);
+      b.velocity.set((Math.random()-0.5)*9, (Math.random()*0.7+0.35)*7.5, (Math.random()-0.5)*9);   // fling UP & around
+      b.angularVelocity.set((Math.random()-0.5)*7,(Math.random()-0.5)*7,(Math.random()-0.5)*7);
       b.wakeUp();
     }
     mode='live'; autoSpin=true;
@@ -265,7 +269,7 @@
   function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
   if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
-  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=3.2; world.gravity.set(0,-G,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=1.8; world.gravity.set(0,-G,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{

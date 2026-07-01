@@ -211,8 +211,12 @@
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
     renderer.setSize(w,h,false);
     camera.aspect=w/h; camera.updateProjectionMatrix();
-    const minmax=Math.min(w,h)/Math.max(w,h);
-    R=Math.min(S*4.6, S*2.9*Math.max(1, 0.72/minmax));
+    // pull the camera back so the WHOLE spinning cube fits the screen (with margin), on any aspect
+    const tanV=Math.tan(camera.fov*Math.PI/360);   // tan(vertical fov / 2)
+    const tanH=tanV*camera.aspect;                 // horizontal half-angle
+    const fitR=S*1.73;                             // cube-corner distance (fits at any rotation)
+    const margin=1.45;                             // >1 = extra breathing room so it sits INSIDE the phone
+    R=fitR*margin/Math.min(tanV,tanH);
   }
   window.addEventListener('resize', resize);
   window.addEventListener('load', resize);
@@ -261,7 +265,7 @@
   }
   canvas.addEventListener('pointerup', endDrag);
   canvas.addEventListener('pointercancel', ()=>{ dragging=false; clearTimeout(pressTimer); });
-  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.7, Math.min(S*4.6, R+e.deltaY*0.01)); }, {passive:false});
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); R=Math.max(S*1.2, Math.min(S*20, R+e.deltaY*0.04)); }, {passive:false});
 
   function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
   function onMotion(e){

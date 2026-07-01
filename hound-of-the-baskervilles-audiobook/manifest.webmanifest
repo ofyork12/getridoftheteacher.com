@@ -1,7 +1,7 @@
 {
-  "name": "The Adventures of Sherlock Holmes — Audiobook",
-  "short_name": "Sherlock Holmes",
-  "description": "Free LibriVox audiobook of The Adventures of Sherlock Holmes by Arthur Conan Doyle.",
+  "name": "The Hound of the Baskervilles — Audiobook",
+  "short_name": "The Hound",
+  "description": "Free LibriVox audiobook of The Hound of the Baskervilles by Arthur Conan Doyle.",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",

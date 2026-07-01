@@ -1,7 +1,7 @@
 {
-  "name": "The Adventures of Sherlock Holmes — Audiobook",
-  "short_name": "Sherlock Holmes",
-  "description": "Free LibriVox audiobook of The Adventures of Sherlock Holmes by Arthur Conan Doyle.",
+  "name": "A Study in Scarlet — Audiobook",
+  "short_name": "Study in Scarlet",
+  "description": "Free LibriVox audiobook of A Study in Scarlet by Arthur Conan Doyle.",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",

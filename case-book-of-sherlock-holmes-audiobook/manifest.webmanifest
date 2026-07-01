@@ -1,7 +1,7 @@
 {
-  "name": "The Adventures of Sherlock Holmes — Audiobook",
-  "short_name": "Sherlock Holmes",
-  "description": "Free LibriVox audiobook of The Adventures of Sherlock Holmes by Arthur Conan Doyle.",
+  "name": "The Case-Book of Sherlock Holmes — Audiobook",
+  "short_name": "Case-Book",
+  "description": "Free LibriVox audiobook of The Case-Book of Sherlock Holmes by Arthur Conan Doyle.",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",

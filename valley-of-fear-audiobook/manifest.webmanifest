@@ -1,7 +1,7 @@
 {
-  "name": "The Adventures of Sherlock Holmes — Audiobook",
-  "short_name": "Sherlock Holmes",
-  "description": "Free LibriVox audiobook of The Adventures of Sherlock Holmes by Arthur Conan Doyle.",
+  "name": "The Valley of Fear — Audiobook",
+  "short_name": "Valley of Fear",
+  "description": "Free LibriVox audiobook of The Valley of Fear by Arthur Conan Doyle.",
   "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",

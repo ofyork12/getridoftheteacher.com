@@ -63,8 +63,8 @@
   const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
   const HOUR_HEX='#f0b32a';
 
-  // a FIVE (5 balls): one on top, a triangle of 3 in the middle, one on the bottom  (+y = down)
-  const FIVE=[[0,-1.7],[0,-0.6],[-0.6,0.3],[0.6,0.3],[0,1.4]];
+  // a FIVE (5 balls): a triangle of 3, with a ball tucked into the indent on EACH side  (+y = down)
+  const FIVE=[[0,-0.9],[-0.55,0.4],[0.55,0.4],[-1.15,-0.25],[1.15,-0.25]];
   // a TEN = a real 3D TRIANGULAR TOWER: three triangles of 3 stacked into three columns
   //  (base triangle on the floor, next on top, next on top), + 1 ball nestled in the CREST = 10.
   //  offsets are [x, y(down), z].  TRI = the (x,z) footprint of a triangle of 3.
@@ -76,7 +76,7 @@
     1:[[0,0]],
     2:[[-0.5,0],[0.5,0]],
     3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
-    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],
+    4:[[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],   // triangle of 3 + 1 in the crest (3D tetrahedron)
     5:FIVE,
     6:[[0,-1],[-0.55,0],[0.55,0],[-1.1,1],[0,1],[1.1,1]],
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
@@ -155,7 +155,7 @@
     return new THREE.Mesh(sphereGeo[r], m);
   }
   // one rigid body holding N balls fused at the given offsets (a "clump")
-  function addClump(hex, r, offsets, unit, cx, cy, group, still){
+  function addClump(hex, r, offsets, unit, cx, cy, group, still, cz){
     const body=new CANNON.Body({mass:ballMass(r)*offsets.length, material:mat});   // real mass = sum of the balls
     const obj=new THREE.Group();
     for(const o of offsets){
@@ -163,7 +163,7 @@
       body.addShape(new CANNON.Sphere(r), new CANNON.Vec3(ox,oy,oz));
       const mh=ballMesh(hex,r); mh.position.set(ox,oy,oz); obj.add(mh);
     }
-    body.position.set(cx,cy,0);
+    body.position.set(cx,cy,cz||0);
     body.linearDamping=0.006; body.angularDamping=0.02;
     if(still){ body.type=CANNON.Body.STATIC; }
     body.updateMassProperties();
@@ -176,7 +176,7 @@
   function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
     for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, 'tens', still); }             // one clump per ten
   function buildOnes(ones, still){ if(!ones) return; const hex=ONES_HEX[ones];
-    for(const o of SHAPES[ones]) addClump(hex, R_MIN, [[0,0]], 1, 4.6+o[0]*ONEGAP, -5.6-o[1]*ONEGAP, 'ones', still); }  // loose singles
+    for(const o of SHAPES[ones]) addClump(hex, R_MIN, [[0,0]], 1, 4.6+o[0]*ONEGAP, -5.6-o[1]*ONEGAP, 'ones', still, (o[2]||0)*ONEGAP); }  // loose singles (o[2]=z depth)
 
   let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }

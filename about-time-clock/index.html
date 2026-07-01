@@ -249,9 +249,9 @@
     const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
     let ax=a.x, ay=a.y;
     switch(screenAngle()){                      // rotate the sensor reading into SCREEN axes
-      case 90:  ax=a.y;  ay=-a.x; break;
+      case 90:  ax=-a.y; ay=a.x;  break;
       case 180: ax=-a.x; ay=-a.y; break;
-      case 270: ax=-a.y; ay=a.x;  break;
+      case 270: ax=a.y;  ay=-a.x; break;
       // 0 (portrait): leave as-is
     }
     world.setGravity(Vec2(-ax, ay));            // -x so the low edge pulls the dots toward it; +y is screen-down

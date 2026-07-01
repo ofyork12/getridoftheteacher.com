@@ -75,6 +75,25 @@ Both run on **Cloudflare Workers AI** (a Llama model), through small files in th
 
 ---
 
+## The clocks (in detail)
+
+There are **four clocks**, plus a hub page (`clocks.html`) that lists them. Every clock shows time the ColorMyMath way — as quantities and colors, not just digits.
+
+- **About Time Clock** (`about-time-clock/`) — **the main, blessed one.** Time falls as colored pieces and tumbles with real physics: the hour is a number-group picture on the left, the tens-of-minutes are colored "ten" triangles in the middle, and the ones are colored dots in their ColorMyMath shapes on the right. Tap to re-drop the time, tilt to tumble, press & hold for speed and freeze. It installs as an app (PWA) on a phone or computer.
+  - It has a **design-picker page** (`compare.html`) that shows **5 different layouts** side by side. **Design #1, "Landscape Classic," is the chosen, live one — we're keeping it and not changing anything.** (`clocklab.html` is just the helper page those little previews are pulled from.)
+- **ColorMyMath Clock** (`colormymath-clock/`) — an earlier version. Shows the time as ColorMyMath number-groups that fall and bounce on a light background. Tap to drop, shake, or tilt.
+- **Annie's Clock** (`annies-clock/`) and **Quantitative / Analog Clock** (`colormymath-quantitative-clock/`) — two analog clock faces (white face) with a **🎨 color button**: tap a number and pick its color, or reset the colors.
+
+Only the About Time Clock has a design-picker page; the other three are single pages — just the clock itself, no notes hidden inside them.
+
+---
+
+## Folder breadcrumbs (this is the master)
+
+**This file is the master — the shared brain.** Every content folder in the site has a small breadcrumb note (`_NOTES.md`, or a pointer added to an existing `README.md`) that says "the master notes live at `the-notes.md` / `/the-notes.html` — go there." So whoever lands in any folder is sent back here. When something changes in a folder, update THIS file so everyone stays in sync.
+
+---
+
 ## How the site is built & published
 
 - Hosted on **Cloudflare Pages**, own domain + SSL.

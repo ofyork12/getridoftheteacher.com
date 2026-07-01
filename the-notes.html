@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>The Notes — ColorMyMath</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { min-height: 100vh; background: #000; color: #fff; font-family: Arial, sans-serif; padding: 26px 16px 80px; -webkit-tap-highlight-color: transparent; }
+    .wrap { max-width: 760px; margin: 0 auto; }
+    .top-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    .top-nav a { padding: 9px 18px; font-size: 14px; font-weight: bold; background: transparent; color: #fff; border: 2px solid #fff; border-radius: 999px; text-decoration: none; }
+    .top-nav a:hover { background: #fff; color: #000; }
+    .lede { text-align: center; color: #bbb; font-size: 14px; margin: 0 0 16px; }
+
+    /* Ask box */
+    .ask { display: flex; flex-direction: column; gap: 8px; margin: 0 0 14px; padding: 14px; border: 2px solid #44C8F5; border-radius: 14px; background: rgba(68,200,245,0.06); }
+    .ask .aq { display: flex; gap: 8px; }
+    .ask input { flex: 1; padding: 11px 13px; font-size: 15px; color: #fff; background: rgba(255,255,255,0.05); border: 2px solid #fff; border-radius: 10px; font-family: inherit; }
+    .ask input::placeholder { color: #888; }
+    .ask button { padding: 11px 16px; font-size: 15px; font-weight: bold; background: #44C8F5; color: #000; border: none; border-radius: 10px; cursor: pointer; }
+    .ask button:disabled { opacity: .5; cursor: default; }
+    .ask .aa { font-size: 14px; color: #d6f4ff; line-height: 1.5; white-space: pre-wrap; }
+    .ask .lbl { font-size: 12px; color: #9fdcf0; text-transform: uppercase; letter-spacing: 1px; }
+
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .bar button { background: #fff; color: #000; border: 0; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
+
+    .md h1 { font-size: 24px; margin: 6px 0 10px; }
+    .md h2 { font-size: 19px; margin: 26px 0 8px; padding-top: 10px; border-top: 1px solid #333; color: #44C8F5; }
+    .md h3 { font-size: 16px; margin: 16px 0 6px; color: #ddd; }
+    .md h4 { font-size: 14px; margin: 12px 0 5px; color: #ccc; }
+    .md p { margin: 8px 0; font-size: 14px; line-height: 1.55; }
+    .md ul, .md ol { margin: 8px 0 8px 22px; font-size: 14px; }
+    .md li { margin: 4px 0; line-height: 1.5; }
+    .md hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
+    .md blockquote { border-left: 3px solid #44C8F5; background: rgba(255,255,255,0.03); padding: 8px 14px; margin: 10px 0; color: #bbb; font-size: 13.5px; }
+    .md code { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 1px 5px; font-family: Consolas, Menlo, monospace; font-size: 12.5px; color: #7fe0ff; word-break: break-word; }
+    .md strong { color: #fff; }
+    .md a { color: #44C8F5; }
+    .md table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; display: block; overflow-x: auto; }
+    .md th, .md td { border: 1px solid #333; padding: 7px 10px; text-align: left; vertical-align: top; }
+    .md th { background: #111; color: #44C8F5; font-size: 11.5px; text-transform: uppercase; }
+    .md .cb { position: relative; margin: 10px 0; }
+    .md .cb pre { background: #111; color: #e8f0e6; border-radius: 9px; padding: 12px 13px; overflow-x: auto; }
+    .md .cb pre code { background: none; border: 0; padding: 0; color: inherit; font-size: 12px; line-height: 1.5; white-space: pre; }
+    .md .cb .cpy { position: absolute; top: 7px; right: 7px; background: #44C8F5; color: #000; border: 0; border-radius: 7px; padding: 5px 11px; font: 700 11.5px Arial, sans-serif; cursor: pointer; }
+    .md .cb .cpy.done { background: #34a853; color: #fff; }
+    .loading, .err { color: #999; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-nav"><a href="index.html">← Home</a> <a href="find-a-game.html">🔎 Find a Game</a></div>
+    <div class="lede">📝 <b>The Notes</b> — how things work, in plain English. Always shows the latest saved version.</div>
+
+    <div class="ask">
+      <div class="lbl">Ask the notes</div>
+      <div class="aq">
+        <input id="q" type="text" placeholder="e.g. how do I publish a change?" maxlength="300">
+        <button id="ask" type="button">Ask</button>
+      </div>
+      <div class="aa" id="answer"></div>
+    </div>
+
+    <div class="bar"><button id="copyNotes" type="button">📋 Copy all</button></div>
+    <div class="md" id="md"><div class="loading">Loading The Notes…</div></div>
+  </div>
+
+  <script>
+    function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function inline(s){
+      s = escHtml(s);
+      s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      return s;
+    }
+    function splitRow(ln){ return ln.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(function(c){ return c.trim(); }); }
+    function renderMd(md){
+      var lines = md.split(/\r?\n/), out = [], i = 0;
+      while(i < lines.length){
+        var ln = lines[i];
+        if(/^```/.test(ln)){ var code=[]; i++; while(i<lines.length && !/^```/.test(lines[i])){ code.push(lines[i]); i++; } i++; out.push('<div class="cb"><button class="cpy" type="button">Copy</button><pre><code>'+escHtml(code.join('\n'))+'</code></pre></div>'); continue; }
+        if(/^---+\s*$/.test(ln)){ out.push('<hr>'); i++; continue; }
+        var hm = ln.match(/^(#{1,4})\s+(.*)$/);
+        if(hm){ var lvl=hm[1].length; out.push('<h'+lvl+'>'+inline(hm[2])+'</h'+lvl+'>'); i++; continue; }
+        if(/\|/.test(ln) && i+1<lines.length && /-/.test(lines[i+1]) && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1])){
+          var header=splitRow(ln); i+=2; var rows=[];
+          while(i<lines.length && /\|/.test(lines[i]) && lines[i].trim()!==''){ rows.push(splitRow(lines[i])); i++; }
+          var t='<table><thead><tr>'+header.map(function(c){return '<th>'+inline(c)+'</th>';}).join('')+'</tr></thead><tbody>';
+          t+=rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+inline(c)+'</td>';}).join('')+'</tr>';}).join('');
+          out.push(t+'</tbody></table>'); continue;
+        }
+        if(/^>\s?/.test(ln)){ var bq=[]; while(i<lines.length && /^>\s?/.test(lines[i])){ bq.push(inline(lines[i].replace(/^>\s?/,''))); i++; } out.push('<blockquote>'+bq.join('<br>')+'</blockquote>'); continue; }
+        if(/^\s*\d+\.\s+/.test(ln)){ var oi=[]; while(i<lines.length && /^\s*\d+\.\s+/.test(lines[i])){ oi.push('<li>'+inline(lines[i].replace(/^\s*\d+\.\s+/,''))+'</li>'); i++; } out.push('<ol>'+oi.join('')+'</ol>'); continue; }
+        if(/^\s*[-*]\s+/.test(ln)){ var ui=[]; while(i<lines.length && /^\s*[-*]\s+/.test(lines[i])){ ui.push('<li>'+inline(lines[i].replace(/^\s*[-*]\s+/,''))+'</li>'); i++; } out.push('<ul>'+ui.join('')+'</ul>'); continue; }
+        if(ln.trim()===''){ i++; continue; }
+        var para=[ln]; i++;
+        while(i<lines.length && lines[i].trim()!=='' && !/^(#{1,4}\s|>\s?|\s*[-*]\s|\s*\d+\.\s|---+\s*$)/.test(lines[i]) && !/\|/.test(lines[i])){ para.push(lines[i]); i++; }
+        out.push('<p>'+para.map(inline).join('<br>')+'</p>');
+      }
+      return out.join('\n');
+    }
+
+    var notesText = '';
+
+    (async function(){
+      var el = document.getElementById('md');
+      try{
+        var r = await fetch('/the-notes.md', { cache:'no-store' });
+        if(!r.ok){ el.innerHTML = '<div class="err">Could not load The Notes (HTTP '+r.status+').</div>'; return; }
+        notesText = await r.text();
+        el.innerHTML = renderMd(notesText);
+        el.addEventListener('click', function(e){
+          var b = e.target.closest('.cpy'); if(!b) return;
+          var pre = b.parentNode.querySelector('pre'); if(!pre) return;
+          var txt = pre.innerText;
+          function done(){ b.textContent='Copied!'; b.classList.add('done'); setTimeout(function(){ b.textContent='Copy'; b.classList.remove('done'); }, 1400); }
+          if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done, function(){ window.prompt('Copy:', txt); }); }
+          else window.prompt('Copy:', txt);
+        });
+        var cbtn = document.getElementById('copyNotes');
+        cbtn.onclick = function(){
+          function done(){ cbtn.textContent='✓ Copied'; setTimeout(function(){ cbtn.textContent='📋 Copy all'; }, 2000); }
+          if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(notesText).then(done, function(){ window.prompt('Copy The Notes:', notesText); }); }
+          else window.prompt('Copy The Notes:', notesText);
+        };
+      }catch(e){ el.innerHTML = '<div class="err">Could not load The Notes.</div>'; }
+    })();
+
+    // ── Ask the notes (Cloudflare AI answers from the notes text) ──
+    var q = document.getElementById('q'), askBtn = document.getElementById('ask'), ans = document.getElementById('answer');
+    async function ask(){
+      var text = q.value.trim();
+      if(!text){ q.focus(); return; }
+      askBtn.disabled = true; ans.textContent = 'Thinking…';
+      try{
+        var r = await fetch('/api/ask-notes', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ q: text, notes: notesText.slice(0, 12000) }) });
+        var data = await r.json();
+        ans.textContent = (data && data.answer) ? data.answer : "I couldn't find that in the notes.";
+      }catch(e){ ans.textContent = 'Something went wrong — please try again.'; }
+      askBtn.disabled = false;
+    }
+    askBtn.addEventListener('click', ask);
+    q.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ ask(); } });
+  </script>
+</body>
+</html>

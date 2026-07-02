@@ -1,0 +1,16 @@
+{
+  "name": "About Time 4D — ColorMyMath Clock",
+  "short_name": "About Time 4D",
+  "description": "Version 3 — the ColorMyMath time as colored balls in a see-through cube (4D).",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d1b2e",
+  "theme_color": "#0d1b2e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

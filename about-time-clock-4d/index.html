@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0d1b2e">
+<title>About Time 4D — ColorMyMath Clock</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="About Time 4D">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; height:100%; overflow:hidden;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:#070d18; color:#eaf1fb; height:100%;}
+  #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
+  .knobs{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:5;
+    display:none; align-items:center; justify-content:center; gap:14px;}
+  .knobs.show{display:flex;}
+  .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
+  .knob:active{transform:scale(.9);}
+  .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
+  .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
+    font-size:12px; color:#6f86a8; pointer-events:none;}
+  .install{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:12px; z-index:7;
+    display:none; align-items:center; gap:6px; color:#0b1422; font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    border:none; padding:9px 15px; border-radius:999px; background:#f0b32a; box-shadow:0 4px 14px rgba(0,0,0,.4); cursor:pointer;}
+  .install.show{display:inline-flex;}
+  .install:active{transform:scale(.94);}
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div class="tip">tap = stop / go · drag = spin · pinch = resize · hold = controls</div>
+  <div class="knobs">
+    <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
+    <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
+    <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
+    <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
+  </div>
+
+<script src="three.min.js"></script>
+<script src="cannon.min.js"></script>
+<script>
+"use strict";
+(function(){
+  // About Time — 3D "fish tank" of colored balls.
+  //  HOUR  = one solid clump of big gold balls (sticks together, tumbles as one).
+  //  MINUTES tens = separate rigid SETS OF 10 (each ten = two fives), one per ten-digit.
+  //  MINUTES ones = individual loose balls that bounce apart.
+  // Read the time while it's still, then it drops & bounces.
+  // Rendering: three.js   Physics: cannon.js (compound rigid bodies)
+
+  const S = 9;                 // interior half-extent -> cube is 18x18x18
+  const T = 1;
+
+  const ONES_HEX=[null,'#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8','#9b4fd0','#9a6a3a','#f06fb0','#39c0e8'];
+  const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
+  const HOUR_HEX='#f0b32a';
+
+  // a FIVE (5 balls): a triangle of 3, + one ball in the crest on TOP and one on the BOTTOM
+  //  (a trigonal bipyramid — real 3D; offsets are [x, y-down, z])
+  const FIVE=[[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29],[0,-0.82,0],[0,0.82,0]];
+  // a TEN = two squares of 4 stacked into a CUBE of 8, + one ball in the crest on TOP and one on the
+  //  BOTTOM = 10.  offsets are [x, y(down), z].
+  const TEN=(function(){ const out=[];
+    for(const yd of [0.5,-0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]);  // 2x2x2 cube (8)
+    out.push([0,-1.207,0]); out.push([0,1.207,0]);   // crest ball top & bottom
+    return out; })();
+
+  // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
+  const SHAPES={
+    1:[[0,0]],
+    2:[[-0.5,0],[0.5,0]],
+    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
+    4:[[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],   // triangle of 3 + 1 in the crest (3D tetrahedron)
+    5:FIVE,
+    6:[[0.5,0,0.5],[0.5,0,-0.5],[-0.5,0,0.5],[-0.5,0,-0.5],[0,-0.71,0],[0,0.71,0]],   // square of 4 + one in the crest on TOP and BOTTOM (octahedron)
+    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]
+  };
+  function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
+  function hourShape(h){ return h<=9 ? SHAPES[h] : rowsShape(h,3); }
+  // the N ten-sets are arranged by their own ColorMyMath number-shape:
+  //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
+  const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
+    4:[[-0.55,-0.5],[0.55,-0.5],[-0.55,0.5],[0.55,0.5]], 5:[[-1.1,0.5],[0,0.5],[1.1,0.5],[-0.55,-0.5],[0.55,-0.5]] };
+  function tenAnchors(n){ const TSX=2.7, TSY=4.3, CX=3.8, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
+
+  const canvas=document.getElementById('c');
+  const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setClearColor(0x070d18, 1);
+  const scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x070d18, 0.008);
+  const camera=new THREE.PerspectiveCamera(46, 1, 0.1, 240);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.78));
+  const key=new THREE.DirectionalLight(0xffffff, 0.7); key.position.set(8,14,10); scene.add(key);
+  const rim=new THREE.DirectionalLight(0x88bbff, 0.5); rim.position.set(-10,-3,-8); scene.add(rim);
+
+  const tank=new THREE.Group(); scene.add(tank);
+  const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2),
+    new THREE.MeshPhongMaterial({color:0x8fd0ff, transparent:true, opacity:0.06, side:THREE.BackSide, shininess:90, specular:0x224466, depthWrite:false}));
+  tank.add(glass);
+  const floorPane=new THREE.Mesh(new THREE.PlaneGeometry(S*2,S*2),
+    new THREE.MeshBasicMaterial({color:0x0d1b2e, transparent:true, opacity:0.55, side:THREE.DoubleSide}));
+  floorPane.rotation.x=-Math.PI/2; floorPane.position.y=-S+0.02; tank.add(floorPane);
+  tank.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
+    new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85})));
+
+  let G=0;                                            // NO gravity — they float & keep bouncing around the tank
+  const world=new CANNON.World();
+  world.gravity.set(0,0,0);
+  world.allowSleep=false;                             // keep them all LIVE (never let a piece fall asleep)
+  world.broadphase=new CANNON.NaiveBroadphase();
+  world.solver.iterations=16;
+  const mat=new CANNON.Material('m');
+  world.addContactMaterial(new CANNON.ContactMaterial(mat, mat, {friction:0.02, restitution:0.97}));
+  world.defaultContactMaterial.friction=0.02;
+  world.defaultContactMaterial.restitution=0.97;
+
+  function wall(hx,hy,hz, px,py,pz){ const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz))); b.position.set(px,py,pz); world.addBody(b); }
+  wall(S+T,T/2,S+T, 0,-S-T/2,0);  wall(S+T,T/2,S+T, 0,S+T/2,0);
+  wall(T/2,S+T,S+T, -S-T/2,0,0);  wall(T/2,S+T,S+T, S+T/2,0,0);
+  wall(S+T,S+T,T/2, 0,0,-S-T/2);  wall(S+T,S+T,T/2, 0,0,S+T/2);
+
+  function addColon(y){
+    const half=0.5;
+    const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(half,half,half))); b.position.set(0,y,0); world.addBody(b);
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(half*2,half*2,half*2), new THREE.MeshPhongMaterial({color:0xf2f7ff, emissive:0x223a5a, shininess:60}));
+    mesh.position.set(0,y,0); tank.add(mesh);
+  }
+  addColon(1.6); addColon(-1.6);
+
+  // ball radii — HOUR balls are big, MINUTE balls are small (a ten is a set of 10 of them)
+  const R_HOUR=1.25, R_MIN=0.6;    // minutes bumped bigger
+  // ACTUAL physics: every ball has real mass proportional to its volume (r^3). A clump
+  // weighs the SUM of its balls, so a ten (10 balls) weighs 10x a one, and the hour clump
+  // weighs its ball-count; a big hour ball far outweighs a tiny minute ball.
+  const DENS=2.0;
+  function ballMass(r){ return DENS*r*r*r; }
+  const HSP=2.55;      // spacing between hour balls
+  const MUNIT=1.22;    // spacing between minute balls inside a clump
+  const ONEGAP=1.45;   // spacing between loose ones
+
+  let pieces=[];       // {body, obj, group}
+  let SLOWMO=1.0, frozen=false, mode='show', releaseAt=0, paused=false;   // paused = tap to STOP in place / GO again
+  const HOLD_MS=1200;
+
+  const sphereGeo={};
+  function ballMesh(hex, r){
+    if(!sphereGeo[r]) sphereGeo[r]=new THREE.SphereGeometry(r, 24, 18);
+    const col=new THREE.Color(hex);
+    const m=new THREE.MeshPhongMaterial({color:col, shininess:75, specular:0x666666, emissive:col.clone().multiplyScalar(0.14)});
+    return new THREE.Mesh(sphereGeo[r], m);
+  }
+  // one rigid body holding N balls fused at the given offsets (a "clump")
+  function addClump(hex, r, offsets, unit, cx, cy, group, still, cz){
+    const body=new CANNON.Body({mass:ballMass(r)*offsets.length, material:mat});   // real mass = sum of the balls
+    const obj=new THREE.Group();
+    for(const o of offsets){
+      const ox=o[0]*unit, oy=-o[1]*unit, oz=(o[2]||0)*unit;   // +y(down) -> world +y up, so negate
+      body.addShape(new CANNON.Sphere(r), new CANNON.Vec3(ox,oy,oz));
+      const mh=ballMesh(hex,r); mh.position.set(ox,oy,oz); obj.add(mh);
+    }
+    body.position.set(cx,cy,cz||0);
+    body.linearDamping=0.006; body.angularDamping=0.02;
+    if(still){ body.type=CANNON.Body.STATIC; }
+    body.updateMassProperties();
+    world.addBody(body); tank.add(obj);
+    pieces.push({body, obj, group});
+  }
+  function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.obj); } pieces=[]; }
+
+  function hourCol(h){ return h<=9 ? ONES_HEX[h] : HOUR_HEX; }   // hour is the COLOR of its number (5 -> blue), so 5:55 is all blue
+  function buildHour(h, still){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); }   // ONE clump
+  function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
+    for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, 'tens', still); }             // one clump per ten
+  function buildOnes(ones, still){ if(!ones) return;
+    addClump(ONES_HEX[ones], R_MIN, SHAPES[ones], MUNIT, 4.7, -6.2, 'ones', still); }  // ONE rigid clump — balls touch tangentially (stuck together)
+
+  let simMs=Date.now(), lastKey='';
+  function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
+  function keyOf(t){ return t.h+':'+t.tens+':'+t.ones; }
+
+  function reform(){
+    const t=curT(); clearAll();
+    buildHour(t.h, true); buildTens(t.tens, true); buildOnes(t.ones, true);
+    lastKey=keyOf(t); mode='show';
+    theta=0; phi=0.12; autoSpin=false;
+  }
+  function drop(){
+    for(const p of pieces){
+      const b=p.body;
+      b.type=CANNON.Body.DYNAMIC; b.updateMassProperties();
+      b.velocity.set((Math.random()-0.5)*16, (Math.random()-0.5)*16, (Math.random()-0.5)*16);   // BIG first burst (zero-g: they keep going)
+      b.angularVelocity.set((Math.random()-0.5)*11,(Math.random()-0.5)*11,(Math.random()-0.5)*11);
+      b.wakeUp();
+    }
+    mode='live'; autoSpin=true;
+  }
+  function reset(now){ reform(); if(!frozen) releaseAt=now+HOLD_MS; }
+  function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
+
+  let theta=0, phi=0.12, zoom=1, Rfit=S*3, R=S*3, autoSpin=false;
+  function placeCamera(){ const cp=Math.cos(phi); camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta)); camera.lookAt(0,0,0); }
+  function resize(){
+    const w=window.innerWidth, h=window.innerHeight;
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+    renderer.setSize(w,h,false);
+    camera.aspect=w/h; camera.updateProjectionMatrix();
+    // pull the camera back so the WHOLE spinning cube fits the screen (with margin), on any aspect
+    const tanV=Math.tan(camera.fov*Math.PI/360);   // tan(vertical fov / 2)
+    const tanH=tanV*camera.aspect;                 // horizontal half-angle
+    const fitR=S*1.5;                              // ~cube half-diagonal (fits the spinning cube)
+    const margin=1.06;                             // barely any gap -> starts BIG; pinch to resize
+    Rfit=fitR*margin/Math.min(tanV,tanH);
+    R=Rfit/zoom;                                   // zoom = pinch/wheel factor (>1 = bigger)
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('load', resize);
+  window.addEventListener('orientationchange', resize);
+
+  const tmpQ=new THREE.Quaternion();
+  let lastT=performance.now();
+  function frame(t){
+    const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
+    if(!paused){                                   // STOP freezes everything in place; GO resumes the SAME motion
+      simMs += dt*1000;
+      checkTime(t);
+      if(mode==='show' && !frozen && t>=releaseAt) drop();
+      world.step(1/60, dt*SLOWMO, 5);
+      for(const p of pieces){
+        const b=p.body;
+        p.obj.position.set(b.position.x, b.position.y, b.position.z);
+        tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.obj.quaternion.copy(tmpQ);
+      }
+      if(autoSpin && mode==='live' && !frozen) theta += dt*0.11;
+    }
+    placeCamera();
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+
+  const knobs=document.querySelector('.knobs');
+  let pressTimer=null, longPressed=false, hideTimer=null;
+  let moved=0, lx=0, ly=0;
+  const ptrs=new Map();                          // active touches, for pinch-zoom
+  let pinching=false, pinchStartDist=0, pinchStartZoom=1;
+  function showKnobs(){ knobs.classList.add('show'); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.classList.remove('show'), 7000); }
+  function setZoom(z){ zoom=Math.max(0.35, Math.min(5, z)); R=Rfit/zoom; }
+  function pinchDist(){ const a=[...ptrs.values()]; return Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y); }
+
+  canvas.addEventListener('pointerdown', e=>{
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size===2){ pinching=true; pinchStartDist=pinchDist(); pinchStartZoom=zoom; clearTimeout(pressTimer); return; }
+    longPressed=false; moved=0; lx=e.clientX; ly=e.clientY; autoSpin=false;
+    clearTimeout(pressTimer);
+    pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500);
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pinching && ptrs.size>=2){ const d=pinchDist(); if(d>0&&pinchStartDist>0) setZoom(pinchStartZoom*(d/pinchStartDist)); return; }   // two fingers = resize
+    if(ptrs.size!==1) return;
+    const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy);
+    theta-=dx*0.008; phi=Math.max(-1.2, Math.min(1.2, phi+dy*0.008));
+    if(moved>8) clearTimeout(pressTimer);
+  });
+  function ptrUp(e){
+    const wasPinch=pinching;
+    ptrs.delete(e.pointerId); clearTimeout(pressTimer); if(ptrs.size<2) pinching=false; enableMotion();
+    if(!wasPinch && !longPressed && moved<10){ paused=!paused; }   // clean tap = STOP / GO (not a reset)
+    setTimeout(()=>{ if(mode==='live') autoSpin=true; }, 2500);
+  }
+  canvas.addEventListener('pointerup', ptrUp);
+  canvas.addEventListener('pointercancel', e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) pinching=false; clearTimeout(pressTimer); });
+  canvas.addEventListener('wheel', e=>{ e.preventDefault(); setZoom(zoom - e.deltaY*0.0015); }, {passive:false});
+
+  function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
+  // HIGH-PASS tilt: accelerationIncludingGravity always contains Earth's ~9.8, which would sink the
+  // balls. We track that steady pull in gBase and apply only the CHANGE, so a still phone (in ANY
+  // orientation) stays weightless, and only tilting/shaking nudges the balls. No constant gravity.
+  const gBase={x:0,y:0,z:0}; let gInit=false;
+  function onMotion(e){
+    const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
+    let ax=a.x, ay=a.y, az=(a.z||0);
+    switch(screenAngle()){ case 90: ax=-a.y; ay=a.x; break; case 180: ax=-a.x; ay=-a.y; break; case 270: ax=a.y; ay=-a.x; break; }
+    if(!gInit){ gBase.x=ax; gBase.y=ay; gBase.z=az; gInit=true; return; }   // 1st reading calibrates "rest" (no jolt)
+    const k=0.03;                                                            // how fast "rest" re-centres (weightless again when steady)
+    gBase.x+=(ax-gBase.x)*k; gBase.y+=(ay-gBase.y)*k; gBase.z+=(az-gBase.z)*k;
+    const s=1.8;                                                             // tilt/shake strength
+    world.gravity.set(-(ax-gBase.x)*s, -(ay-gBase.y)*s, (az-gBase.z)*s*0.6);
+  }
+  let motionOn=false;
+  const needsPerm=(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
+  function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
+  if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
+
+  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
+  document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
+  document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
+  document.getElementById('btnFreeze').addEventListener('click', ()=>{
+    frozen=!frozen;
+    document.getElementById('btnFreeze').classList.toggle('active', frozen);
+    if(frozen){ reform(); } else { reset(performance.now()); }
+    showKnobs();
+  });
+
+  resize(); reset(performance.now()); placeCamera(); requestAnimationFrame(frame);
+
+  if('serviceWorker' in navigator){
+    let refreshing=false; const had=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(refreshing||!had) return; refreshing=true; location.reload(); });
+    window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>

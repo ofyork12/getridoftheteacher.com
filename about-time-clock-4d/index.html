@@ -40,6 +40,9 @@
     border:none; padding:9px 15px; border-radius:999px; background:#f0b32a; box-shadow:0 4px 14px rgba(0,0,0,.4); cursor:pointer;}
   .install.show{display:inline-flex;}
   .install:active{transform:scale(.94);}
+  /* screensaver / kiosk display mode (?ss) — just the clock, always turning, no chrome */
+  body.ss .tip, body.ss .install, body.ss .knobs{display:none!important;}
+  body.ss{cursor:none;}
 </style>
 </head>
 <body>
@@ -140,6 +143,8 @@
   // ten-pyramids sit parallel with a clear gap between them (room to "walk between")
   function tenAnchors(n){ const TSX=3.9, TSY=4.7, CX=3.4, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
 
+  const ssMode=new URLSearchParams(location.search).has('ss');   // ?ss = screensaver display mode (clean, always turning)
+  if(ssMode) document.body.classList.add('ss');
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
   renderer.setClearColor(0x070d18, 1);
@@ -292,7 +297,7 @@
         p.obj.position.set(b.position.x, b.position.y, b.position.z);
         tmpQ.set(b.quaternion.x,b.quaternion.y,b.quaternion.z,b.quaternion.w); p.obj.quaternion.copy(tmpQ);
       }
-      if(autoSpin && mode==='live' && !frozen) theta += dt*0.11;
+      if(ssMode || (autoSpin && mode==='live' && !frozen)) theta += dt*0.09;   // screensaver: keep turning always
     }
     placeCamera();
     renderer.render(scene, camera);

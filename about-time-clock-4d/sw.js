@@ -1,5 +1,5 @@
 /* About Time 4D — network-first; own cache prefix so it won't clash with the other clocks */
-const CACHE = 'atc4d-v12';
+const CACHE = 'atc4d-v13';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './three.min.js', './cannon.min.js',
   './gfx/device_frozen_time.png', './gfx/device_frozen_time_slow.png', './gfx/device_frozen_reset.png', './gfx/device_frozen_time_fast.png',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/icon-180.png'];

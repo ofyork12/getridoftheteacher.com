@@ -29,6 +29,8 @@
     border:1px solid rgba(95,208,255,.4); border-radius:12px; padding:9px 13px;
     font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.4);}
   .knob.txt .dot{border-radius:50%; display:inline-block; flex:none;}
+  .knob.txt.arrow{padding:9px 14px; font-size:17px; line-height:1;}
+  .knob.txt.lbl{cursor:default;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
   .install{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:12px; z-index:7;
@@ -48,8 +50,12 @@
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
     <button class="knob txt" id="btnHourSize" title="Bigger hour balls"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span>Hour +</button>
     <button class="knob txt" id="btnMinSize" title="Bigger minute balls"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span>Min +</button>
-    <button class="knob txt" id="btnHourDim" title="Hour shape: 2D or 3D"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span><span id="hourDimLbl">Hour 3D</span></button>
-    <button class="knob txt" id="btnMinDim" title="Minute shape: 2D or 3D"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span><span id="minDimLbl">Min 3D</span></button>
+    <button class="knob txt arrow" data-grp="hour" data-dir="-1" title="Hour: previous shape">◂</button>
+    <span class="knob txt lbl"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span><span id="hourShapeLbl">Hour 1</span></span>
+    <button class="knob txt arrow" data-grp="hour" data-dir="1" title="Hour: next shape">▸</button>
+    <button class="knob txt arrow" data-grp="min" data-dir="-1" title="Minutes: previous shape">◂</button>
+    <span class="knob txt lbl"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span><span id="minShapeLbl">Min 1</span></span>
+    <button class="knob txt arrow" data-grp="min" data-dir="1" title="Minutes: next shape">▸</button>
   </div>
 
 <script src="three.min.js"></script>
@@ -71,53 +77,48 @@
   const TENS_HEX=['#e6352f','#f0871f','#f5c400','#3fb63f','#2e78d8'];   // 10,20,30,40,50
   const HOUR_HEX='#f0b32a';
 
-  // a FIVE (5 balls): a triangle of 3, + one ball in the crest on TOP and one on the BOTTOM
-  //  (a trigonal bipyramid — real 3D; offsets are [x, y-down, z])
-  const FIVE=[[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29],[0,-0.82,0],[0,0.82,0]];
-  // a TEN = two squares of 4 stacked into a CUBE of 8, + one ball in the crest on TOP and one on the
-  //  BOTTOM = 10.  offsets are [x, y(down), z].
-  const TEN=(function(){ const out=[];
-    for(const yd of [0.5,-0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]);  // 2x2x2 cube (8)
-    out.push([0,-1.207,0]); out.push([0,1.207,0]);   // crest ball top & bottom
-    return out; })();
-  // a NINE = the old TEN's triangular TOWER but WITHOUT the top crest ball: three triangles of 3
-  //  stacked into 3 vertical columns folded into a triangle (a triangular prism) = 9.
-  //  offsets are [x, y(down), z].
-  const NINE=(function(){ const tri=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]]; const out=[];   // triangle footprint (x,z)
-    for(const yd of [1,0,-1]) for(const p of tri) out.push([p[0], yd, p[1]]);            // 3 stacked layers = 9
-    return out; })();
-  // an EIGHT (3D) = a solid 2x2x2 CUBE of 8.  offsets [x, y(down), z].
-  const EIGHT=(function(){ const out=[]; for(const yd of [-0.5,0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]); return out; })();
+  // ============ SHAPE LIBRARY ============
+  // For each number 1..10, an ORDERED list of shape "variants", arranged MOST NATURAL (how equal
+  // balls actually nestle & close-pack in nature — triangles / tetrahedra first) to LEAST natural
+  // (squares, cubes, flat grids last). The "Hour" / "Min" ◂ ▸ buttons cycle through them.
+  // Offsets are [x, y(down), z]; a 2-element [x,y] entry = a flat shape (z = 0).
+  const tri=[[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29]];                    // a flat triangle of 3 (in xz)
+  const triAt=(y,rot)=> tri.map(p => rot ? [-p[0], y, -p[2]] : [p[0], y, p[2]]);   // stamp it at height y (rot=twist 180°)
+  const ringN=(n,r,y)=>{ const o=[]; for(let k=0;k<n;k++){ const a=k/n*Math.PI*2; o.push([r*Math.sin(a), y, r*Math.cos(a)]); } return o; };
+  const cube8=(function(){ const o=[]; for(const yd of [-0.5,0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) o.push([x,yd,z]); return o; })();
 
-  // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
-  const SHAPES={
-    1:[[0,0]],
-    2:[[-0.5,0],[0.5,0]],
-    3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
-    4:[[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],   // triangle of 3 + 1 in the crest (3D tetrahedron)
-    5:FIVE,
-    6:[[0.5,0,0.5],[0.5,0,-0.5],[-0.5,0,0.5],[-0.5,0,-0.5],[0,-0.71,0],[0,0.71,0]],   // square of 4 + one in the crest on TOP and BOTTOM (octahedron)
-    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
-    8:EIGHT,   // 3D cube of 8 (2x2x2)
-    9:NINE     // triangular tower of 9 (the old ten, minus the top crest ball)
+  const SH={
+    1: [ [[0,0]] ],
+    2: [ [[-0.5,0],[0.5,0]] ],
+    3: [ [[0,-0.6],[-0.55,0.5],[0.55,0.5]],                                // triangle (natural)
+         [[-1,0],[0,0],[1,0]] ],                                          // line
+    4: [ [[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],      // tetrahedron (3 + 1 on top)
+         [[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],                    // square
+         [[-1.5,0],[-0.5,0],[0.5,0],[1.5,0]] ],                           // line
+    5: [ [[0,0,0.58],[0.5,0,-0.29],[-0.5,0,-0.29],[0,-0.82,0],[0,0.82,0]], // trigonal bipyramid (triangle + top + bottom)
+         [[-1,0.5],[0,0.5],[1,0.5],[-0.5,-0.5],[0.5,-0.5]],               // 3-and-2 (flat)
+         [[-0.7,-0.7],[0.7,-0.7],[0,0],[-0.7,0.7],[0.7,0.7]] ],           // die-5 (flat)
+    6: [ triAt(0.5,false).concat(triAt(-0.5,true)),                       // octahedron = two triangles of 3 (antiprism)
+         [[0,-1],[-0.5,0],[0.5,0],[-1,1],[0,1],[1,1]],                     // triangle of 6 (flat)
+         [[-0.5,-1],[0.5,-1],[-0.5,0],[0.5,0],[-0.5,1],[0.5,1]] ],        // 2x3 grid (flat)
+    7: [ ringN(5,0.85,0).concat([[0,-1,0],[0,1,0]]),                      // pentagonal bipyramid (5-ring + top + bottom)
+         [[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]] ],  // centred hexagon (flat)
+    8: [ triAt(0.4,false).concat([[0,1.25,0]], triAt(-0.4,true), [[0,-1.25,0]]),   // two tetrahedra (all triangles)
+         [[0.5,0.5,0.5],[0.5,0.5,-0.5],[-0.5,0.5,0.5],[-0.5,0.5,-0.5],[0.707,-0.5,0],[-0.707,-0.5,0],[0,-0.5,0.707],[0,-0.5,-0.707]],  // square antiprism
+         cube8,                                                           // cube (2x2x2)
+         [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]] ],       // 3x3 ring (flat)
+    9: [ (function(){ const t=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]], o=[]; for(const yd of [1,0,-1]) for(const p of t) o.push([p[0],yd,p[1]]); return o; })(),  // triangular tower
+         [[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]] ], // 3x3 grid (flat)
+    10:[ [[-1,1,-0.58],[0,1,-0.58],[1,1,-0.58],[-0.5,1,0.29],[0.5,1,0.29],[0,1,1.15],   // TETRAHEDRON of 10 (cannonball stack 6+3+1)
+          [-0.5,0,-0.29],[0.5,0,-0.29],[0,0,0.58], [0,-1,0]],
+         [[0,-1.5],[-0.5,-0.5],[0.5,-0.5],[-1,0.5],[0,0.5],[1,0.5],[-1.5,1.5],[-0.5,1.5],[0.5,1.5],[1.5,1.5]],   // flat triangle of 10
+         cube8.concat([[0,-1.207,0],[0,1.207,0]]) ]                       // cube-of-8 + crest top & bottom
   };
-  // ---- 2D (flat) shape set: the classic ColorMyMath figures, all lying in one plane (z=0) ----
-  const SHAPES_2D={
-    1:[[0,0]], 2:[[-0.5,0],[0.5,0]], 3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
-    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],                 // square of 4
-    5:[[-1,0.5],[0,0.5],[1,0.5],[-0.5,-0.5],[0.5,-0.5]],            // 3 on the bottom, 2 on top
-    6:[[0,-1],[-0.5,0],[0.5,0],[-1,1],[0,1],[1,1]],                 // triangle of 6
-    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // hexagon + centre (looks good, keep for both)
-    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],      // 3x3 ring
-    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]] // 3x3 grid
-  };
-  const TEN_2D=[[0,-1.5],[-0.5,-0.5],[0.5,-0.5],[-1,0.5],[0,0.5],[1,0.5],[-1.5,1.5],[-0.5,1.5],[0.5,1.5],[1.5,1.5]];  // flat triangle/pyramid of 10
-  // per-group shape dimension, toggled by the Hour / Min "2D · 3D" buttons
-  let hourDim='3D', minDim='3D';
-  function onesSet(dim){ return dim==='2D' ? SHAPES_2D : SHAPES; }
-  function tenSet(dim){ return dim==='2D' ? TEN_2D : TEN; }
+  const MAXV=4;                                    // shape-index range (widest number, 8, has 4)
+  let hourShapeIdx=0, minShapeIdx=0;
+  function pickVar(n, idx){ const v=SH[n]||[[[0,0]]]; return v[((idx%v.length)+v.length)%v.length]; }
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
-  function hourShape(h){ return h<=9 ? onesSet(hourDim)[h] : rowsShape(h,3); }
+  function hourShape(h){ return h<=10 ? pickVar(h, hourShapeIdx) : rowsShape(h,3); }
   // the N ten-sets are arranged by their own ColorMyMath number-shape:
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
@@ -211,10 +212,10 @@
 
   function hourCol(h){ return h<=9 ? ONES_HEX[h] : HOUR_HEX; }   // hour is the COLOR of its number (5 -> blue), so 5:55 is all blue
   function buildHour(h, still){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); }   // ONE clump
-  function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
-    for(let i=0;i<tens;i++) addClump(hex, R_MIN, tenSet(minDim), MUNIT, a[i].x, a[i].y, 'tens', still); }   // one clump per ten
+  function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens); const sh=pickVar(10, minShapeIdx);
+    for(let i=0;i<tens;i++) addClump(hex, R_MIN, sh, MUNIT, a[i].x, a[i].y, 'tens', still); }   // one clump per ten
   function buildOnes(ones, still){ if(!ones) return;
-    addClump(ONES_HEX[ones], R_MIN, onesSet(minDim)[ones], MUNIT, 4.7, -6.2, 'ones', still); }  // ONE rigid clump — balls touch tangentially (stuck together)
+    addClump(ONES_HEX[ones], R_MIN, pickVar(ones, minShapeIdx), MUNIT, 4.7, -6.2, 'ones', still); }  // ONE rigid clump — balls touch tangentially (stuck together)
 
   let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
@@ -366,19 +367,19 @@
     reset(performance.now()); showKnobs();
   });
 
-  // --- SEPARATE shape buttons: flip the HOUR / MINUTE numbers between their 2D (flat) and 3D shapes ---
-  try{ hourDim=localStorage.getItem('atc4d-hourdim')||'3D'; minDim=localStorage.getItem('atc4d-mindim')||'3D'; }catch(e){}
-  function updDimLbls(){ document.getElementById('hourDimLbl').textContent='Hour '+hourDim; document.getElementById('minDimLbl').textContent='Min '+minDim; }
-  updDimLbls();
-  document.getElementById('btnHourDim').addEventListener('click', ()=>{
-    hourDim = hourDim==='3D' ? '2D' : '3D';
-    try{ localStorage.setItem('atc4d-hourdim', hourDim); }catch(e){}
-    updDimLbls(); reset(performance.now()); showKnobs();
-  });
-  document.getElementById('btnMinDim').addEventListener('click', ()=>{
-    minDim = minDim==='3D' ? '2D' : '3D';
-    try{ localStorage.setItem('atc4d-mindim', minDim); }catch(e){}
-    updDimLbls(); reset(performance.now()); showKnobs();
+  // --- SEPARATE shape carousels: ◂ ▸ cycle the HOUR / MINUTE numbers through their shape variants ---
+  try{ hourShapeIdx=((+localStorage.getItem('atc4d-hshape')||0)%MAXV+MAXV)%MAXV;
+       minShapeIdx =((+localStorage.getItem('atc4d-mshape')||0)%MAXV+MAXV)%MAXV; }catch(e){}
+  function updShapeLbls(){ document.getElementById('hourShapeLbl').textContent='Hour '+(hourShapeIdx+1);
+                           document.getElementById('minShapeLbl').textContent='Min '+(minShapeIdx+1); }
+  updShapeLbls();
+  document.querySelectorAll('.knob.arrow').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const dir=+btn.dataset.dir;
+      if(btn.dataset.grp==='hour'){ hourShapeIdx=((hourShapeIdx+dir)%MAXV+MAXV)%MAXV; try{ localStorage.setItem('atc4d-hshape', hourShapeIdx); }catch(e){} }
+      else { minShapeIdx=((minShapeIdx+dir)%MAXV+MAXV)%MAXV; try{ localStorage.setItem('atc4d-mshape', minShapeIdx); }catch(e){} }
+      updShapeLbls(); reset(performance.now()); showKnobs();
+    });
   });
 
   resize(); reset(performance.now()); placeCamera(); requestAnimationFrame(frame);

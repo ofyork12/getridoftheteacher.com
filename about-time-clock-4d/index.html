@@ -13,7 +13,8 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <style>
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;
+     -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;}  /* no text-select / "define" popup stealing taps */
   html,body{margin:0; height:100%; overflow:hidden;}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:#070d18; color:#eaf1fb; height:100%;}
@@ -131,7 +132,7 @@
   let hourShapeIdx=0, minShapeIdx=0;
   function pickVar(n, idx){ const v=SH[n]||[[[0,0]]]; return v[((idx%v.length)+v.length)%v.length]; }
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
-  function hourShape(h){ return h<=9 ? pickVar(h, hourShapeIdx) : pickVar(10, hourShapeIdx+1); }   // h>=10: the ten (default idx 0 = flat TRIANGLE)
+  function hourShape(h){ return h<=9 ? pickVar(h, hourShapeIdx) : pickVar(10, hourShapeIdx); }   // h>=10: the ten (default idx 0 = cannonball tetrahedron)
   // the N ten-sets are arranged by their own ColorMyMath number-shape:
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
@@ -141,6 +142,7 @@
 
   const ssMode=new URLSearchParams(location.search).has('ss');   // ?ss = screensaver display mode (clean, always turning)
   if(ssMode) document.body.classList.add('ss');
+  window.addEventListener('contextmenu', e=>e.preventDefault());  // kill long-press "define/select" popup that was hijacking the buttons
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
   renderer.setClearColor(0x070d18, 1);
@@ -230,10 +232,14 @@
   function hourCol(h){ return h>=10 ? TENS_HEX[0] : ONES_HEX[h]; }   // hour = COLOR of its number; 10,11,12 are all tens -> RED
   function buildHour(h, still){
     if(h<=9){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); return; }
-    addClump(TENS_HEX[0], R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still);              // the ten = RED
-    const extra=h-10;                                                                        // 11 -> 1, 12 -> 2
-    if(extra>0){ const side=[[1.9,0.433],[1.9,-0.567]];                                       // extra ones on the SIDE (stay within the triangle's height)
-      addClump(ONES_HEX[extra], R_HOUR, side.slice(0,extra), HSP, -4.7, 0.4, 'hour', still); } // colored by the ones digit: 11 -> red, 12 -> orange
+    const ten=hourShape(h);
+    addClump(TENS_HEX[0], R_HOUR, ten, HSP, -4.7, 0.4, 'hour', still);                        // the ten = RED cannonball
+    if(h===11){                                                                              // 11 = + one RED ball on TOP
+      let minY=Infinity; for(const o of ten){ const y=o[1]||0; if(y<minY) minY=y; }
+      addClump(ONES_HEX[1], R_HOUR, [[0,minY-1,0]], HSP, -4.7, 0.4, 'hour', still);
+    } else if(h===12){                                                                       // 12 = + two ORANGE balls on the SIDE
+      addClump(ONES_HEX[2], R_HOUR, [[2.0,0.816,-0.288],[2.0,0.816,0.712]], HSP, -4.7, 0.4, 'hour', still);
+    }
   }
   function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens); const sh=pickVar(10, minShapeIdx);
     for(let i=0;i<tens;i++) addClump(hex, R_MIN, sh, MUNIT, a[i].x, a[i].y, 'tens', still); }   // one clump per ten

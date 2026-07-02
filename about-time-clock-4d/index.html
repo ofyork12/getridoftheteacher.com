@@ -78,6 +78,12 @@
     for(const yd of [0.5,-0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]);  // 2x2x2 cube (8)
     out.push([0,-1.207,0]); out.push([0,1.207,0]);   // crest ball top & bottom
     return out; })();
+  // a NINE = the old TEN's triangular TOWER but WITHOUT the top crest ball: three triangles of 3
+  //  stacked into 3 vertical columns folded into a triangle (a triangular prism) = 9.
+  //  offsets are [x, y(down), z].
+  const NINE=(function(){ const tri=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]]; const out=[];   // triangle footprint (x,z)
+    for(const yd of [1,0,-1]) for(const p of tri) out.push([p[0], yd, p[1]]);            // 3 stacked layers = 9
+    return out; })();
 
   // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
   const SHAPES={
@@ -89,7 +95,7 @@
     6:[[0.5,0,0.5],[0.5,0,-0.5],[-0.5,0,0.5],[-0.5,0,-0.5],[0,-0.71,0],[0,0.71,0]],   // square of 4 + one in the crest on TOP and BOTTOM (octahedron)
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
     8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
-    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]]
+    9:NINE   // triangular tower of 9 (the old ten, minus the top crest ball)
   };
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
   function hourShape(h){ return h<=9 ? SHAPES[h] : rowsShape(h,3); }

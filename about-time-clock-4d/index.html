@@ -48,6 +48,8 @@
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
     <button class="knob txt" id="btnHourSize" title="Bigger hour balls"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span>Hour +</button>
     <button class="knob txt" id="btnMinSize" title="Bigger minute balls"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span>Min +</button>
+    <button class="knob txt" id="btnHourDim" title="Hour shape: 2D or 3D"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span><span id="hourDimLbl">Hour 3D</span></button>
+    <button class="knob txt" id="btnMinDim" title="Minute shape: 2D or 3D"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span><span id="minDimLbl">Min 3D</span></button>
   </div>
 
 <script src="three.min.js"></script>
@@ -84,6 +86,8 @@
   const NINE=(function(){ const tri=[[0,0.58],[0.5,-0.29],[-0.5,-0.29]]; const out=[];   // triangle footprint (x,z)
     for(const yd of [1,0,-1]) for(const p of tri) out.push([p[0], yd, p[1]]);            // 3 stacked layers = 9
     return out; })();
+  // an EIGHT (3D) = a solid 2x2x2 CUBE of 8.  offsets [x, y(down), z].
+  const EIGHT=(function(){ const out=[]; for(const yd of [-0.5,0.5]) for(const x of [-0.5,0.5]) for(const z of [-0.5,0.5]) out.push([x,yd,z]); return out; })();
 
   // canonical ColorMyMath shapes for the ONES (5 uses the FIVE above)
   const SHAPES={
@@ -94,11 +98,26 @@
     5:FIVE,
     6:[[0.5,0,0.5],[0.5,0,-0.5],[-0.5,0,0.5],[-0.5,0,-0.5],[0,-0.71,0],[0,0.71,0]],   // square of 4 + one in the crest on TOP and BOTTOM (octahedron)
     7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],
-    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],
-    9:NINE   // triangular tower of 9 (the old ten, minus the top crest ball)
+    8:EIGHT,   // 3D cube of 8 (2x2x2)
+    9:NINE     // triangular tower of 9 (the old ten, minus the top crest ball)
   };
+  // ---- 2D (flat) shape set: the classic ColorMyMath figures, all lying in one plane (z=0) ----
+  const SHAPES_2D={
+    1:[[0,0]], 2:[[-0.5,0],[0.5,0]], 3:[[0,-0.6],[-0.55,0.5],[0.55,0.5]],
+    4:[[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],                 // square of 4
+    5:[[-1,0.5],[0,0.5],[1,0.5],[-0.5,-0.5],[0.5,-0.5]],            // 3 on the bottom, 2 on top
+    6:[[0,-1],[-0.5,0],[0.5,0],[-1,1],[0,1],[1,1]],                 // triangle of 6
+    7:[[0,0],[0,-1],[0.87,-0.5],[0.87,0.5],[0,1],[-0.87,0.5],[-0.87,-0.5]],  // hexagon + centre (looks good, keep for both)
+    8:[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]],      // 3x3 ring
+    9:[[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[-1,1],[0,1],[1,1]] // 3x3 grid
+  };
+  const TEN_2D=[[0,-1.5],[-0.5,-0.5],[0.5,-0.5],[-1,0.5],[0,0.5],[1,0.5],[-1.5,1.5],[-0.5,1.5],[0.5,1.5],[1.5,1.5]];  // flat triangle/pyramid of 10
+  // per-group shape dimension, toggled by the Hour / Min "2D · 3D" buttons
+  let hourDim='3D', minDim='3D';
+  function onesSet(dim){ return dim==='2D' ? SHAPES_2D : SHAPES; }
+  function tenSet(dim){ return dim==='2D' ? TEN_2D : TEN; }
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
-  function hourShape(h){ return h<=9 ? SHAPES[h] : rowsShape(h,3); }
+  function hourShape(h){ return h<=9 ? onesSet(hourDim)[h] : rowsShape(h,3); }
   // the N ten-sets are arranged by their own ColorMyMath number-shape:
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
@@ -193,9 +212,9 @@
   function hourCol(h){ return h<=9 ? ONES_HEX[h] : HOUR_HEX; }   // hour is the COLOR of its number (5 -> blue), so 5:55 is all blue
   function buildHour(h, still){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); }   // ONE clump
   function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens);
-    for(let i=0;i<tens;i++) addClump(hex, R_MIN, TEN, MUNIT, a[i].x, a[i].y, 'tens', still); }             // one clump per ten
+    for(let i=0;i<tens;i++) addClump(hex, R_MIN, tenSet(minDim), MUNIT, a[i].x, a[i].y, 'tens', still); }   // one clump per ten
   function buildOnes(ones, still){ if(!ones) return;
-    addClump(ONES_HEX[ones], R_MIN, SHAPES[ones], MUNIT, 4.7, -6.2, 'ones', still); }  // ONE rigid clump — balls touch tangentially (stuck together)
+    addClump(ONES_HEX[ones], R_MIN, onesSet(minDim)[ones], MUNIT, 4.7, -6.2, 'ones', still); }  // ONE rigid clump — balls touch tangentially (stuck together)
 
   let simMs=Date.now(), lastKey='';
   function curT(){ const d=new Date(simMs); let h=d.getHours()%12; if(h===0) h=12; return {h, tens:Math.floor(d.getMinutes()/10), ones:d.getMinutes()%10}; }
@@ -345,6 +364,21 @@
     hourIdx=(hourIdx+1)%HOUR_SIZES.length; applySizes();
     try{ localStorage.setItem('atc4d-hour', hourIdx); }catch(e){}
     reset(performance.now()); showKnobs();
+  });
+
+  // --- SEPARATE shape buttons: flip the HOUR / MINUTE numbers between their 2D (flat) and 3D shapes ---
+  try{ hourDim=localStorage.getItem('atc4d-hourdim')||'3D'; minDim=localStorage.getItem('atc4d-mindim')||'3D'; }catch(e){}
+  function updDimLbls(){ document.getElementById('hourDimLbl').textContent='Hour '+hourDim; document.getElementById('minDimLbl').textContent='Min '+minDim; }
+  updDimLbls();
+  document.getElementById('btnHourDim').addEventListener('click', ()=>{
+    hourDim = hourDim==='3D' ? '2D' : '3D';
+    try{ localStorage.setItem('atc4d-hourdim', hourDim); }catch(e){}
+    updDimLbls(); reset(performance.now()); showKnobs();
+  });
+  document.getElementById('btnMinDim').addEventListener('click', ()=>{
+    minDim = minDim==='3D' ? '2D' : '3D';
+    try{ localStorage.setItem('atc4d-mindim', minDim); }catch(e){}
+    updDimLbls(); reset(performance.now()); showKnobs();
   });
 
   resize(); reset(performance.now()); placeCamera(); requestAnimationFrame(frame);

@@ -277,9 +277,10 @@
   function preview(){ paused=false; reform(); if(!frozen) releaseAt=performance.now()+5000; }   // shape/size change: hold the still shape ~5s so you can SEE it before it drops
   function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
-  const CAM_AZ=0.30, CAM_EL=0.24;                  // fixed 3/4 tilt so it reads as a 3D BOX (you can see the side & top edges)
-  function placeCamera(){ const ce=Math.cos(CAM_EL), R=120;
-    camera.position.set(Math.sin(CAM_AZ)*ce*R, Math.sin(CAM_EL)*R, Math.cos(CAM_AZ)*ce*R);
+  const CAM_AZ=0.30, CAM_EL=0.24;                  // fixed 3/4 BASE tilt so it reads as a 3D BOX (side & top edges visible)
+  let tiltAz=0, tiltEl=0, orBase=null, tiltOn=false;   // phone-tilt offsets — swing the camera to peek around the box
+  function placeCamera(){ const az=CAM_AZ+tiltAz, el=Math.max(-1.3,Math.min(1.3, CAM_EL+tiltEl)), ce=Math.cos(el), R=120;
+    camera.position.set(Math.sin(az)*ce*R, Math.sin(el)*R, Math.cos(az)*ce*R);
     camera.up.set(0,1,0); camera.lookAt(0,0,0); }
   function fitFrustum(){                            // frame the tilted box so the WHOLE rectangular prism fits the screen
     placeCamera(); camera.updateMatrixWorld();
@@ -289,7 +290,7 @@
     for(const sx of [-1,1]) for(const sy of [-1,1]) for(const sz of [-1,1]){
       p.set(sx*HX, sy*HY, sz*HZ); mx=Math.max(mx,Math.abs(p.dot(right))); my=Math.max(my,Math.abs(p.dot(up)));
     }
-    const aspect=window.innerWidth/window.innerHeight, M=1.07; mx*=M; my*=M;
+    const aspect=window.innerWidth/window.innerHeight, M=1.22; mx*=M; my*=M;   // extra room so tilting to peek doesn't clip the box
     let hw=mx, hh=my; if(hw/hh < aspect) hw=hh*aspect; else hh=hw/aspect;
     camera.left=-hw; camera.right=hw; camera.top=hh; camera.bottom=-hh; camera.updateProjectionMatrix();
   }
@@ -330,33 +331,27 @@
   let pressTimer=null, longPressed=false, hideTimer=null, moved=0, px0=0, py0=0;
   function showKnobs(){ knobs.forEach(k=>k.classList.add('show')); clearTimeout(hideTimer); hideTimer=setTimeout(()=>knobs.forEach(k=>k.classList.remove('show')), 12000); }
   // FIXED tank — no spin, no zoom. A clean tap = STOP / GO; a long-press = show the controls.
-  canvas.addEventListener('pointerdown', e=>{ longPressed=false; moved=0; px0=e.clientX; py0=e.clientY;
-    clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); enableMotion(); }, 500); });
+  canvas.addEventListener('pointerdown', e=>{ enableMotion(); longPressed=false; moved=0; px0=e.clientX; py0=e.clientY;
+    clearTimeout(pressTimer); pressTimer=setTimeout(()=>{ longPressed=true; showKnobs(); }, 500); });
   canvas.addEventListener('pointermove', e=>{ moved+=Math.abs(e.clientX-px0)+Math.abs(e.clientY-py0); px0=e.clientX; py0=e.clientY; if(moved>10) clearTimeout(pressTimer); });
   canvas.addEventListener('pointerup', e=>{ clearTimeout(pressTimer); if(!longPressed && moved<10) paused=!paused; });
   canvas.addEventListener('pointercancel', e=>{ clearTimeout(pressTimer); });
 
-  function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
-  // HIGH-PASS tilt: accelerationIncludingGravity always contains Earth's ~9.8, which would sink the
-  // balls. We track that steady pull in gBase and apply only the CHANGE, so a still phone (in ANY
-  // orientation) stays weightless, and only tilting/shaking nudges the balls. No constant gravity.
-  const gBase={x:0,y:0,z:0}; let gInit=false;
-  function onMotion(e){
-    const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
-    let ax=a.x, ay=a.y, az=(a.z||0);
-    switch(screenAngle()){ case 90: ax=-a.y; ay=a.x; break; case 180: ax=-a.x; ay=-a.y; break; case 270: ax=a.y; ay=-a.x; break; }
-    if(!gInit){ gBase.x=ax; gBase.y=ay; gBase.z=az; gInit=true; return; }   // 1st reading calibrates "rest" (no jolt)
-    const k=0.03;                                                            // how fast "rest" re-centres (weightless again when steady)
-    gBase.x+=(ax-gBase.x)*k; gBase.y+=(ay-gBase.y)*k; gBase.z+=(az-gBase.z)*k;
-    const s=1.8;                                                             // tilt/shake strength
-    world.gravity.set(-(ax-gBase.x)*s, -(ay-gBase.y)*s, (az-gBase.z)*s*0.6);
+  // TILT THE PHONE to peek around the box — the phone's orientation swings the CAMERA angle (not gravity),
+  // so tilting lets you look at the side / top / back walls. Limited range + re-centres to the fixed 3/4 view.
+  function onOrient(e){
+    if(e.gamma==null || e.beta==null) return;
+    if(orBase===null){ orBase={g:e.gamma, b:e.beta}; return; }   // 1st reading = rest position (no jolt)
+    const LIM=0.42;
+    const az=(e.gamma-orBase.g)*Math.PI/180, el=(e.beta-orBase.b)*Math.PI/180;
+    tiltAz += (Math.max(-LIM,Math.min(LIM, az)) - tiltAz)*0.15;   // smoothed
+    tiltEl += (Math.max(-LIM,Math.min(LIM, el)) - tiltEl)*0.15;
   }
-  let motionOn=false;
-  const needsPerm=(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
-  function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
-  if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
+  const needsPerm=(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function');
+  function enableMotion(){ if(tiltOn) return; if(needsPerm){ DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted'){ tiltOn=true; window.addEventListener('deviceorientation', onOrient); } }).catch(()=>{}); } else { tiltOn=true; window.addEventListener('deviceorientation', onOrient); } }
+  if(!needsPerm){ tiltOn=true; window.addEventListener('deviceorientation', onOrient); }
 
-  document.getElementById('btnReset').addEventListener('click', ()=>{ paused=false; SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ paused=false; SLOWMO=1.0; G=0; world.gravity.set(0,0,0); frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{

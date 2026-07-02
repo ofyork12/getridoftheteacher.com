@@ -123,9 +123,8 @@
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
     4:[[-0.55,-0.5],[0.55,-0.5],[-0.55,0.5],[0.55,0.5]], 5:[[-1.1,0.5],[0,0.5],[1.1,0.5],[-0.55,-0.5],[0.55,-0.5]] };
-  // wider gaps than the old cube used — the cannonball-10 pyramid is bigger, so the sets must sit apart
-  // (no fusing at the corners) and stay aligned on their rows. 5-tens (:50-:59) tucks in tighter to fit.
-  function tenAnchors(n){ const TSX=(n>=5?3.0:3.9), TSY=4.7, CX=3.6, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
+  // ten-pyramids sit parallel with a clear gap between them (room to "walk between")
+  function tenAnchors(n){ const TSX=3.9, TSY=4.7, CX=3.4, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
 
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
@@ -208,6 +207,7 @@
     if(still){ body.type=CANNON.Body.STATIC; }
     body.updateMassProperties();
     world.addBody(body); tank.add(obj);
+    obj.position.set(cx,cy,cz||0);                   // place the mesh NOW (so a rebuild while PAUSED shows correctly, not stuck at origin)
     pieces.push({body, obj, group});
   }
   function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.obj); } pieces=[]; }
@@ -340,7 +340,7 @@
   function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
   if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
-  document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
+  document.getElementById('btnReset').addEventListener('click', ()=>{ paused=false; SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });
   document.getElementById('btnFast').addEventListener('click', ()=>{ SLOWMO=Math.min(2.4, SLOWMO+0.2); showKnobs(); });
   document.getElementById('btnFreeze').addEventListener('click', ()=>{

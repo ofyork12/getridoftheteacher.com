@@ -120,9 +120,7 @@
   const glass=new THREE.Mesh(new THREE.BoxGeometry(S*2,S*2,S*2),
     new THREE.MeshPhongMaterial({color:0x8fd0ff, transparent:true, opacity:0.06, side:THREE.BackSide, shininess:90, specular:0x224466, depthWrite:false}));
   tank.add(glass);
-  const floorPane=new THREE.Mesh(new THREE.PlaneGeometry(S*2,S*2),
-    new THREE.MeshBasicMaterial({color:0x0d1b2e, transparent:true, opacity:0.55, side:THREE.DoubleSide}));
-  floorPane.rotation.x=-Math.PI/2; floorPane.position.y=-S+0.02; tank.add(floorPane);
+  // (no separate floor pane — all 6 faces are the same see-through glass)
   tank.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(S*2,S*2,S*2)),
     new THREE.LineBasicMaterial({color:0x5fd0ff, transparent:true, opacity:0.85})));
 
@@ -223,7 +221,10 @@
   function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
   let theta=0, phi=0.12, zoom=1, Rfit=S*3, R=S*3, autoSpin=false;
-  function placeCamera(){ const cp=Math.cos(phi); camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta)); camera.lookAt(0,0,0); }
+  function placeCamera(){ const cp=Math.cos(phi);
+    camera.position.set(R*cp*Math.sin(theta), R*Math.sin(phi), R*cp*Math.cos(theta));
+    camera.up.set(0, cp>=0?1:-1, 0);          // flip "up" past the poles so you can orbit the box ALL the way around
+    camera.lookAt(0,0,0); }
   function resize(){
     const w=window.innerWidth, h=window.innerHeight;
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
@@ -284,7 +285,7 @@
     if(ptrs.size!==1) return;
     const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
     moved+=Math.abs(dx)+Math.abs(dy);
-    theta-=dx*0.008; phi=Math.max(-1.2, Math.min(1.2, phi+dy*0.008));
+    theta-=dx*0.008; phi+=dy*0.008;           // no clamp -> full vertical orbit (see the bottom too)
     if(moved>8) clearTimeout(pressTimer);
   });
   function ptrUp(e){

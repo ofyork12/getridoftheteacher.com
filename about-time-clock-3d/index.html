@@ -279,16 +279,24 @@
   canvas.addEventListener('wheel', e=>{ e.preventDefault(); setZoom(zoom - e.deltaY*0.0015); }, {passive:false});
 
   function screenAngle(){ if(screen.orientation && typeof screen.orientation.angle==='number') return screen.orientation.angle; if(typeof window.orientation==='number') return ((window.orientation%360)+360)%360; return 0; }
+  // HIGH-PASS tilt: accelerationIncludingGravity always contains Earth's ~9.8, which would sink the
+  // balls. We track that steady pull in gBase and apply only the CHANGE, so a still phone (in ANY
+  // orientation) stays weightless, and only tilting/shaking nudges the balls. No constant gravity.
+  const gBase={x:0,y:0,z:0}; let gInit=false;
   function onMotion(e){
     const a=e.accelerationIncludingGravity; if(!a||a.x==null) return;
-    let ax=a.x, ay=a.y;
+    let ax=a.x, ay=a.y, az=(a.z||0);
     switch(screenAngle()){ case 90: ax=-a.y; ay=a.x; break; case 180: ax=-a.x; ay=-a.y; break; case 270: ax=a.y; ay=-a.x; break; }
-    world.gravity.set(-ax*0.28, -ay*0.28, (a.z||0)*0.14);   // tilt still pours, even with base gravity 0
+    if(!gInit){ gBase.x=ax; gBase.y=ay; gBase.z=az; gInit=true; return; }   // 1st reading calibrates "rest" (no jolt)
+    const k=0.03;                                                            // how fast "rest" re-centres (weightless again when steady)
+    gBase.x+=(ax-gBase.x)*k; gBase.y+=(ay-gBase.y)*k; gBase.z+=(az-gBase.z)*k;
+    const s=1.8;                                                             // tilt/shake strength
+    world.gravity.set(-(ax-gBase.x)*s, -(ay-gBase.y)*s, (az-gBase.z)*s*0.6);
   }
   let motionOn=false;
-  // Tilt-to-pour is DISABLED: the accelerometer reading includes real gravity, which was
-  // sneaking weight back into the weightless tank. Keeping it off so there is truly NO gravity.
-  function enableMotion(){ /* no-op — tank stays weightless */ }
+  const needsPerm=(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function');
+  function enableMotion(){ if(motionOn) return; if(needsPerm){ DeviceMotionEvent.requestPermission().then(s=>{ if(s==='granted'){ motionOn=true; window.addEventListener('devicemotion', onMotion); } }).catch(()=>{}); } else { motionOn=true; window.addEventListener('devicemotion', onMotion); } }
+  if(!needsPerm){ motionOn=true; window.addEventListener('devicemotion', onMotion); }
 
   document.getElementById('btnReset').addEventListener('click', ()=>{ SLOWMO=1.0; G=0; world.gravity.set(0,0,0); motionOn=false; frozen=false; document.getElementById('btnFreeze').classList.remove('active'); simMs=Date.now(); reset(performance.now()); showKnobs(); });
   document.getElementById('btnSlow').addEventListener('click', ()=>{ SLOWMO=Math.max(0.25, SLOWMO-0.2); showKnobs(); });

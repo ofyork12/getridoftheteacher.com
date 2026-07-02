@@ -288,7 +288,7 @@
   function frame(t){
     const dt=Math.min(0.05,(t-lastT)/1000); lastT=t;
     if(!paused){                                   // STOP freezes everything in place; GO resumes the SAME motion
-      simMs += dt*1000;
+      simMs = Date.now();                          // always the REAL current time (so a pause never leaves it stuck behind)
       checkTime(t);
       if(mode==='show' && !frozen && t>=releaseAt) drop();
       world.step(1/60, dt*SLOWMO, 5);

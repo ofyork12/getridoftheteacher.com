@@ -101,13 +101,13 @@
   .ctrl{
     background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--ink);
     border-radius:11px; padding:9px 12px; font-family:inherit; font-size:13px;
-    cursor:pointer; min-width:60px; transition:background .15s, transform .08s;
+    cursor:pointer; min-width:52px; flex:0 1 auto; transition:background .15s, transform .08s;
   }
   .ctrl:active{transform:scale(.93); background:rgba(255,255,255,.14);}
   .ctrl small{display:block; font-size:10px; color:var(--muted); letter-spacing:.05em;}
   #btnPlay{
     background:var(--gold); color:var(--navy2); border:none; font-weight:bold;
-    width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;
+    flex:0 0 64px; width:64px; height:64px; aspect-ratio:1/1; padding:0; border-radius:50%; font-size:26px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 6px 18px rgba(0,0,0,.4); transition:transform .08s;
   }
@@ -117,6 +117,40 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   #player.loading #spinner{display:block;}
   #player.loading #playGlyph{display:none;}
+
+  /* collapsible player */
+  #player .xrow{flex-wrap:wrap}
+  #pbar{display:flex; align-items:center; gap:10px;}
+  #pbar #nowPlaying{flex:1; margin:0;}
+  .minibtn{flex:0 0 auto; width:40px; height:40px; border-radius:50%; padding:0;
+    background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--gold-soft);
+    font-size:16px; line-height:1; cursor:pointer; display:none;
+    align-items:center; justify-content:center; transition:transform .08s;}
+  .minibtn:active{transform:scale(.9);}
+  #miniToggle{display:flex;}
+  #pbody{margin-top:10px;}
+  #player.mini #pbody{display:none;}
+  #player.mini #miniPlay{display:flex;}
+  #player.mini #pbar #nowPlaying{cursor:pointer;}
+
+  /* read-along reader */
+  #reader{position:fixed; left:0; right:0; top:0; z-index:40; display:none; flex-direction:column;
+    background:linear-gradient(180deg, var(--navy), var(--navy2)); bottom:166px; padding-top:env(safe-area-inset-top);}
+  #reader.show{display:flex;}
+  #reader .rhead{display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--line);}
+  #reader .rtitle{flex:1; text-align:center; color:var(--gold); font-size:16px; font-weight:bold; line-height:1.25;}
+  #reader .rnav{background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--gold-soft);
+    width:40px; height:40px; border-radius:10px; font-size:18px; cursor:pointer; flex:0 0 auto;}
+  #reader .rnav:active{transform:scale(.92);}
+  #readerText{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:18px 20px 30px;
+    font-size:21px; line-height:1.75; color:var(--ink); max-width:720px; margin:0 auto; width:100%;}
+  #readerText p{margin:0 0 16px;}
+  #readerCtrls{display:flex; gap:10px; justify-content:center; padding:10px 16px 0;}
+  .rsc{background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--gold-soft);
+    border-radius:11px; padding:9px 14px; font-family:inherit; font-size:14px; cursor:pointer;}
+  .rsc:active{transform:scale(.95);}
+  .rsc.main{background:var(--gold); color:var(--navy2); font-weight:bold; min-width:140px;}
+  #readerHint{text-align:center; color:var(--muted); font-size:12px; font-style:italic; padding:6px 16px 0;}
 
   footer{text-align:center; font-size:11px; color:var(--muted); padding:14px 16px 4px; opacity:.8;}
   footer a{color:var(--gold-soft);}
@@ -248,25 +282,48 @@
     <footer id="footer"></footer>
   </main>
 
+  <div id="reader">
+    <div class="rhead">
+      <button class="rnav" onclick="readerPrev()" title="Previous chapter">&#8249;</button>
+      <div class="rtitle" id="readerTitle">Read Along</div>
+      <button class="rnav" onclick="readerNext()" title="Next chapter">&#8250;</button>
+      <button class="rnav" onclick="closeReader()" title="Close">&#10005;</button>
+    </div>
+    <div id="readerText"></div>
+    <div id="readerCtrls">
+      <button class="rsc" onclick="changeScrollSpeed(-1)" title="Slower">&#8211; Slower</button>
+      <button class="rsc main" id="autoScrollBtn" onclick="toggleAutoScroll()">&#9654; Auto-scroll</button>
+      <button class="rsc" onclick="changeScrollSpeed(1)" title="Faster">Faster &#43;</button>
+    </div>
+    <div id="readerHint">Speed <span id="scrollSpeedLbl">3</span> &middot; you can also scroll by hand any time.</div>
+  </div>
+
   <div id="player">
     <div class="wrap">
-      <div id="nowPlaying">Choose a chapter to begin</div>
-      <div class="seekrow">
-        <time id="curTime">0:00</time>
-        <input type="range" id="seek" min="0" max="100" value="0" step="1">
-        <time id="totTime">0:00</time>
+      <div id="pbar" onclick="if(document.getElementById('player').classList.contains('mini'))setMini(false);">
+        <button id="miniPlay" class="minibtn" onclick="event.stopPropagation();togglePlay();" aria-label="Play or pause"><span id="miniGlyph">&#9654;</span></button>
+        <div id="nowPlaying">Choose a chapter to begin</div>
+        <button id="miniToggle" class="minibtn" onclick="event.stopPropagation();toggleMini();" aria-label="Collapse or expand the player">&#9662;</button>
       </div>
-      <div class="controls">
-        <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
-        <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
-        <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
-        <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
-        <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
-      </div>
-      <div class="xrow">
-        <button class="xbtn" onclick="prevChapter()">&#9198; Previous</button>
-        <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
-        <button class="xbtn" onclick="nextChapter()">Next &#9197;</button>
+      <div id="pbody">
+        <div class="seekrow">
+          <time id="curTime">0:00</time>
+          <input type="range" id="seek" min="0" max="100" value="0" step="1">
+          <time id="totTime">0:00</time>
+        </div>
+        <div class="controls">
+          <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
+          <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
+          <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
+          <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
+          <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
+        </div>
+        <div class="xrow">
+          <button class="xbtn" onclick="prevChapter()">&#9198; Previous</button>
+          <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
+          <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
+          <button class="xbtn" onclick="nextChapter()">Next &#9197;</button>
+        </div>
       </div>
     </div>
   </div>
@@ -377,6 +434,7 @@ function playChapter(i, resumeTime){
   const sameFile = currentIndex>=0 && CHAPTERS[currentIndex].file===c.file;
   currentIndex = i;
   highlight(i);
+  if(document.getElementById('reader') && document.getElementById('reader').classList.contains('show')) renderReader();
   clearError();
   hideResume();
   nowPlaying.textContent = c.label;
@@ -691,6 +749,152 @@ if('serviceWorker' in navigator){
 }
 if(window.caches && caches.keys){
   caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
+}
+
+let TEXT = null;
+let textLoading = null;
+async function loadText(){
+  if(TEXT && TEXT['1']) return TEXT;            // already good
+  if(textLoading) return textLoading;           // a load is in progress — share it
+  textLoading = (async () => {
+    // Use a cached copy only if it actually contains chapters (guards bad/old caches).
+    try{ const c = await idbGet('__text__'); if(c && c['1']){ TEXT = c; return TEXT; } }catch(e){}
+    // Otherwise fetch fresh from the site.
+    const res = await fetch('text.json', { cache: 'no-cache' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if(!(j && j['1'])) throw new Error('bad text');
+    TEXT = j;
+    try{ await idbPut('__text__', j); }catch(e){}   // cache for offline (best effort)
+    return TEXT;
+  })().finally(() => { textLoading = null; });
+  return textLoading;
+}
+
+let readerWords = [], readerFrac = [], readerChapter = -1, lastWord = -1;
+const readerEl = () => document.getElementById('reader');
+function escapeHtml(s){ return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// Rough syllable count — a better predictor of speaking time than letter count.
+function syllables(w){
+  w = w.toLowerCase().replace(/[^a-z]/g, '');
+  if(!w) return 1;
+  w = w.replace(/e\b/g, '');               // drop common silent trailing e
+  const m = w.match(/[aeiouy]+/g);
+  return Math.max(1, m ? m.length : 1);
+}
+// Extra time the reader spends pausing after punctuation.
+function tailPause(tok){
+  if(/[.!?…][)"'”’\]]*$/.test(tok)) return 6;   // end of sentence
+  if(/[,;:][)"'”’\]]*$/.test(tok)) return 2.5;  // clause pause
+  if(/[—–-]$/.test(tok)) return 2;              // dash
+  return 0;
+}
+
+/* ---- Collapsible player (frees room for the read-along text) ---- */
+function fitReader(){
+  var r = document.getElementById('reader');
+  if(r && r.classList.contains('show'))
+    r.style.bottom = document.getElementById('player').offsetHeight + 'px';
+}
+function setMini(on){
+  var p = document.getElementById('player');
+  p.classList.toggle('mini', !!on);
+  var t = document.getElementById('miniToggle');
+  if(t) t.innerHTML = on ? '&#9652;' : '&#9662;';   /* up = tap to expand, down = tap to collapse */
+  fitReader();
+}
+function toggleMini(){ setMini(!document.getElementById('player').classList.contains('mini')); }
+window.addEventListener('resize', fitReader);
+window.addEventListener('orientationchange', function(){ setTimeout(fitReader, 250); });
+
+function toggleReader(){ readerEl().classList.contains('show') ? closeReader() : openReader(); }
+function openReader(){
+  if(currentIndex < 0){ currentIndex = 0; highlight(0); }
+  readerEl().classList.add('show');
+  setMini(true);
+  renderReader();
+  updateScrollUI();
+  if(autoScrollOn){ scrollLastTs = 0; if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33); }
+}
+function closeReader(){ readerEl().classList.remove('show'); }
+function readerPrev(){ if(currentIndex > 0) playChapter(currentIndex - 1); }
+function readerNext(){ if(currentIndex < CHAPTERS.length - 1) playChapter(currentIndex + 1); }
+
+function renderReader(){
+  if(!readerEl().classList.contains('show')) return;
+  const i = currentIndex < 0 ? 0 : currentIndex;
+  readerChapter = i; lastWord = -1;
+  document.getElementById('readerTitle').textContent = CHAPTERS[i].label;
+  const cont = document.getElementById('readerText');
+  const txt = TEXT && TEXT[i];
+  if(!txt){
+    // Load the text on demand (handles first open, a slow start, or a stale cache).
+    cont.innerHTML = '<p style="color:var(--muted)">Loading the text…</p>';
+    readerWords = []; readerFrac = [];
+    loadText()
+      .then(() => { if(readerChapter === i) renderReader(); })
+      .catch(() => {
+        if(readerChapter !== i) return;
+        cont.innerHTML = '<p style="color:var(--muted)">Couldn’t load the text. '
+          + '<a onclick="renderReader()" style="color:var(--gold);text-decoration:underline;cursor:pointer">Tap to try again</a></p>';
+      });
+    return;
+  }
+  // Plain scrollable text — read along at your own pace (no narrator matching).
+  let html = '';
+  for(const para of txt.split(/\n\n+/)){
+    const clean = para.replace(/_/g, '').trim();   // _word_ = Gutenberg italics
+    if(clean) html += '<p>' + escapeHtml(clean) + '</p>';
+  }
+  cont.innerHTML = html;
+  cont.scrollTop = 0;
+}
+
+/* =====================================================================
+   AUTO-SCROLL — a steady crawl down the page, speed you set. It does NOT
+   try to match words to the audio; it just glides so you can read hands-free.
+   ===================================================================== */
+let autoScrollOn = false, scrollTimer = null, scrollLastTs = 0, scrollAccum = 0;
+let scrollLevel = Math.min(10, Math.max(1, parseInt(localStorage.getItem((BOOK.key||'book')+'.scrolllevel')) || 3));
+function levelToPxPerSec(){ return scrollLevel * 11; }   // level 1≈11px/s … 10≈110px/s
+
+function scrollStep(){
+  if(!autoScrollOn || !readerEl().classList.contains('show')) return;
+  const cont = document.getElementById('readerText');
+  const now = Date.now();
+  if(scrollLastTs){
+    scrollAccum += levelToPxPerSec() * (now - scrollLastTs) / 1000;
+    if(scrollAccum >= 1){
+      const inc = Math.floor(scrollAccum); scrollAccum -= inc;
+      const before = cont.scrollTop;
+      cont.scrollTop = before + inc;
+      if(cont.scrollTop === before){ stopAutoScroll(); return; }   // reached the bottom
+    }
+  }
+  scrollLastTs = now;
+}
+function startAutoScroll(){
+  autoScrollOn = true; scrollLastTs = 0; scrollAccum = 0;
+  if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33);   // ~30 fps
+  updateScrollUI();
+}
+function stopAutoScroll(){
+  autoScrollOn = false;
+  if(scrollTimer){ clearInterval(scrollTimer); scrollTimer = null; }
+  updateScrollUI();
+}
+function toggleAutoScroll(){ autoScrollOn ? stopAutoScroll() : startAutoScroll(); }
+function changeScrollSpeed(d){
+  scrollLevel = Math.min(10, Math.max(1, scrollLevel + d));
+  localStorage.setItem((BOOK.key||'book')+'.scrolllevel', scrollLevel);
+  updateScrollUI();
+}
+function updateScrollUI(){
+  const b = document.getElementById('autoScrollBtn');
+  if(b) b.innerHTML = autoScrollOn ? '&#10073;&#10073; Pause scroll' : '&#9654; Auto-scroll';
+  const s = document.getElementById('scrollSpeedLbl');
+  if(s) s.textContent = scrollLevel;
 }
 
 /* ---- COMMENTS: per-chapter "What did you think?" board ---- */

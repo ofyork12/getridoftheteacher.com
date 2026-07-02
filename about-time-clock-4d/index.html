@@ -19,12 +19,16 @@
     background:#070d18; color:#eaf1fb; height:100%;}
   #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
   .knobs{position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:5;
-    display:none; align-items:center; justify-content:center; gap:14px;}
+    display:none; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; padding:0 10px;}
   .knobs.show{display:flex;}
   .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
   .knob:active{transform:scale(.9);}
   .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
   .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
+  .knob.txt{display:inline-flex; align-items:center; gap:6px; background:rgba(13,27,46,.9); color:#eaf1fb;
+    border:1px solid rgba(95,208,255,.4); border-radius:12px; padding:9px 13px;
+    font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .knob.txt .dot{border-radius:50%; display:inline-block; flex:none;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
   .install{position:fixed; top:calc(10px + env(safe-area-inset-top)); right:12px; z-index:7;
@@ -42,6 +46,8 @@
     <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
     <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
+    <button class="knob txt" id="btnHourSize" title="Bigger hour balls"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span>Hour +</button>
+    <button class="knob txt" id="btnMinSize" title="Bigger minute balls"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span>Min +</button>
   </div>
 
 <script src="three.min.js"></script>
@@ -138,16 +144,18 @@
   }
   addColon(1.6); addColon(-1.6);
 
-  // ball radii — HOUR balls are big, MINUTE balls are small (a ten is a set of 10 of them)
-  const R_HOUR=1.25, R_MIN=0.6;    // minutes bumped bigger
+  // ball radii — HOUR balls are big, MINUTE balls are small (a ten is a set of 10 of them).
+  // These are adjustable live via the "Hour +" / "Min +" buttons (see below), so they're `let`.
+  let R_HOUR=1.25, R_MIN=0.6;
   // ACTUAL physics: every ball has real mass proportional to its volume (r^3). A clump
   // weighs the SUM of its balls, so a ten (10 balls) weighs 10x a one, and the hour clump
   // weighs its ball-count; a big hour ball far outweighs a tiny minute ball.
   const DENS=2.0;
   function ballMass(r){ return DENS*r*r*r; }
-  const HSP=2.55;      // spacing between hour balls
-  const MUNIT=1.22;    // spacing between minute balls inside a clump
-  const ONEGAP=1.45;   // spacing between loose ones
+  // spacing scales WITH the ball size so the number-shapes stay readable (balls stay ~tangent) as they grow
+  let HSP, MUNIT, ONEGAP;
+  function recalcSpacing(){ HSP=R_HOUR*2.04; MUNIT=R_MIN*2.03; ONEGAP=R_MIN*2.42; }
+  recalcSpacing();
 
   let pieces=[];       // {body, obj, group}
   let SLOWMO=1.0, frozen=false, mode='show', releaseAt=0, paused=false;   // paused = tap to STOP in place / GO again
@@ -311,6 +319,25 @@
     document.getElementById('btnFreeze').classList.toggle('active', frozen);
     if(frozen){ reform(); } else { reset(performance.now()); }
     showKnobs();
+  });
+
+  // --- SEPARATE size buttons: "Hour +" grows the hour balls, "Min +" grows the minute balls.
+  //     Each tap steps up one size and wraps back to the smallest. Choice is saved per device. ---
+  const MIN_SIZES=[0.6,0.75,0.92,1.12], HOUR_SIZES=[1.25,1.55,1.9,2.3];
+  let minIdx=0, hourIdx=0;
+  try{ minIdx=(+localStorage.getItem('atc4d-min')||0)%MIN_SIZES.length;
+       hourIdx=(+localStorage.getItem('atc4d-hour')||0)%HOUR_SIZES.length; }catch(e){}
+  function applySizes(){ R_MIN=MIN_SIZES[minIdx]; R_HOUR=HOUR_SIZES[hourIdx]; recalcSpacing(); }
+  applySizes();
+  document.getElementById('btnMinSize').addEventListener('click', ()=>{
+    minIdx=(minIdx+1)%MIN_SIZES.length; applySizes();
+    try{ localStorage.setItem('atc4d-min', minIdx); }catch(e){}
+    reset(performance.now()); showKnobs();
+  });
+  document.getElementById('btnHourSize').addEventListener('click', ()=>{
+    hourIdx=(hourIdx+1)%HOUR_SIZES.length; applySizes();
+    try{ localStorage.setItem('atc4d-hour', hourIdx); }catch(e){}
+    reset(performance.now()); showKnobs();
   });
 
   resize(); reset(performance.now()); placeCamera(); requestAnimationFrame(frame);

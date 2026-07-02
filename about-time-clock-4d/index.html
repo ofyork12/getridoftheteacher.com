@@ -90,7 +90,7 @@
   const SH={
     1: [ [[0,0]] ],
     2: [ [[-0.5,0],[0.5,0]] ],
-    3: [ [[0,-0.6],[-0.55,0.5],[0.55,0.5]],                                // triangle (natural)
+    3: [ [[0,-0.577],[-0.5,0.289],[0.5,0.289]],                            // equilateral triangle, balls TANGENT (side 1.0, like the 8/9)
          [[-1,0],[0,0],[1,0]] ],                                          // line
     4: [ [[0,0.4,0.58],[0.5,0.4,-0.29],[-0.5,0.4,-0.29],[0,-0.42,0]],      // tetrahedron (3 + 1 on top)
          [[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]],                    // square
@@ -123,7 +123,9 @@
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
     4:[[-0.55,-0.5],[0.55,-0.5],[-0.55,0.5],[0.55,0.5]], 5:[[-1.1,0.5],[0,0.5],[1.1,0.5],[-0.55,-0.5],[0.55,-0.5]] };
-  function tenAnchors(n){ const TSX=2.7, TSY=4.3, CX=3.8, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
+  // wider gaps than the old cube used — the cannonball-10 pyramid is bigger, so the sets must sit apart
+  // (no fusing at the corners) and stay aligned on their rows. 5-tens (:50-:59) tucks in tighter to fit.
+  function tenAnchors(n){ const TSX=(n>=5?3.0:3.9), TSY=4.7, CX=3.6, CY=0.6; return (TENLAY[n]||[[0,0]]).map(o=>({x:CX+o[0]*TSX, y:CY-o[1]*TSY})); }
 
   const canvas=document.getElementById('c');
   const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});

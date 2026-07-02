@@ -131,15 +131,7 @@
   let hourShapeIdx=0, minShapeIdx=0;
   function pickVar(n, idx){ const v=SH[n]||[[[0,0]]]; return v[((idx%v.length)+v.length)%v.length]; }
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
-  function hourShape(h){
-    if(h<=9) return pickVar(h, hourShapeIdx);
-    // 10/11/12: the ten shape from the carousel (default = flat TRIANGLE), + extra ones stacked on top (outside)
-    const ten=pickVar(10, hourShapeIdx+1);               // +1 so the DEFAULT (idx 0) is SH[10][1] = the triangle
-    if(h===10) return ten;
-    let minY=Infinity; for(const o of ten){ const y=o[1]||0; if(y<minY) minY=y; }   // topmost ball (y is "down")
-    const ex=[]; for(let i=0;i<h-10;i++) ex.push([0, minY-1-i, 0]);
-    return ten.concat(ex);
-  }
+  function hourShape(h){ return h<=9 ? pickVar(h, hourShapeIdx) : pickVar(10, hourShapeIdx+1); }   // h>=10: the ten (default idx 0 = flat TRIANGLE)
   // the N ten-sets are arranged by their own ColorMyMath number-shape:
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
   const TENLAY={ 1:[[0,0]], 2:[[-0.55,0],[0.55,0]], 3:[[-0.55,0.5],[0.55,0.5],[0,-0.55]],
@@ -236,7 +228,13 @@
   function clearAll(){ for(const p of pieces){ world.removeBody(p.body); tank.remove(p.obj); } pieces=[]; }
 
   function hourCol(h){ return h>=10 ? TENS_HEX[0] : ONES_HEX[h]; }   // hour = COLOR of its number; 10,11,12 are all tens -> RED
-  function buildHour(h, still){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); }   // ONE clump
+  function buildHour(h, still){
+    if(h<=9){ addClump(hourCol(h), R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still); return; }
+    addClump(TENS_HEX[0], R_HOUR, hourShape(h), HSP, -4.7, 0.4, 'hour', still);              // the ten = RED
+    const extra=h-10;                                                                        // 11 -> 1, 12 -> 2
+    if(extra>0){ const side=[[1.9,0.433],[1.9,-0.567]];                                       // extra ones on the SIDE (stay within the triangle's height)
+      addClump(ONES_HEX[extra], R_HOUR, side.slice(0,extra), HSP, -4.7, 0.4, 'hour', still); } // colored by the ones digit: 11 -> red, 12 -> orange
+  }
   function buildTens(tens, still){ if(!tens) return; const hex=TENS_HEX[Math.max(0,tens-1)]; const a=tenAnchors(tens); const sh=pickVar(10, minShapeIdx);
     for(let i=0;i<tens;i++) addClump(hex, R_MIN, sh, MUNIT, a[i].x, a[i].y, 'tens', still); }   // one clump per ten
   function buildOnes(ones, still){ if(!ones) return;

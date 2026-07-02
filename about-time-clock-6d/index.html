@@ -307,7 +307,7 @@
     const w=window.innerWidth, h=window.innerHeight;
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
     renderer.setSize(w,h,false);
-    HY=9; HX=HY*(w/h); HZ=7;                        // rectangular BOX with real DEPTH (room to bounce off the back wall)
+    HY=9; HX=HY*(w/h); HZ=HX;                       // DEPTH = WIDTH (square footprint), height = the screen
     const sB=Math.max(HX,HY)+3;                     // shadow frustum covers the whole tank
     key.shadow.camera.left=-sB; key.shadow.camera.right=sB; key.shadow.camera.top=sB; key.shadow.camera.bottom=-sB; key.shadow.camera.updateProjectionMatrix();
     fitFrustum();                                   // fit the tilted 3D box to the screen

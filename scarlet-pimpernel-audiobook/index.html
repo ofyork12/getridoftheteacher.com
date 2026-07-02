@@ -101,13 +101,14 @@
   .ctrl{
     background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--ink);
     border-radius:11px; padding:9px 12px; font-family:inherit; font-size:13px;
-    cursor:pointer; min-width:60px; transition:background .15s, transform .08s;
+    cursor:pointer; min-width:52px; flex:0 1 auto; transition:background .15s, transform .08s;
   }
   .ctrl:active{transform:scale(.93); background:rgba(216,178,90,.18);}
   .ctrl small{display:block; font-size:10px; color:var(--muted); letter-spacing:.05em;}
   #btnPlay{
     background:var(--gold); color:var(--navy2); border:none; font-weight:bold;
-    width:64px; height:64px; border-radius:50%; font-size:26px; cursor:pointer;
+    flex:0 0 64px; width:64px; height:64px; aspect-ratio:1/1; padding:0;
+    border-radius:50%; font-size:26px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 6px 18px rgba(216,178,90,.4); transition:transform .08s;
   }
@@ -117,6 +118,20 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   #player.loading #spinner{display:block;}
   #player.loading #playGlyph{display:none;}
+
+  /* collapsible player */
+  #pbar{display:flex; align-items:center; gap:10px;}
+  #pbar #nowPlaying{flex:1; margin:0;}
+  .minibtn{flex:0 0 auto; width:40px; height:40px; border-radius:50%; padding:0;
+    background:rgba(255,255,255,.08); border:1px solid var(--line); color:var(--gold-soft);
+    font-size:16px; line-height:1; cursor:pointer; display:none;
+    align-items:center; justify-content:center; transition:transform .08s;}
+  .minibtn:active{transform:scale(.9);}
+  #miniToggle{display:flex;}
+  #pbody{margin-top:10px;}
+  #player.mini #pbody{display:none;}
+  #player.mini #miniPlay{display:flex;}
+  #player.mini #pbar #nowPlaying{cursor:pointer;}
 
   footer{text-align:center; font-size:11px; color:var(--muted); padding:14px 16px 4px; opacity:.8;}
   footer a{color:var(--gold-soft);}
@@ -199,7 +214,7 @@
   #reader .rnav:active{transform:scale(.92);}
   #readerText{
     flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
-    padding:18px 20px 28px; font-size:19px; line-height:1.7; color:var(--ink);
+    padding:18px 20px 28px; font-size:21px; line-height:1.75; color:var(--ink);
     max-width:720px; margin:0 auto; width:100%;
   }
   #readerText p{margin:0 0 16px;}
@@ -303,22 +318,28 @@
 
   <div id="player">
     <div class="wrap">
-      <div id="nowPlaying">Choose a chapter to begin</div>
-      <div class="seekrow">
-        <time id="curTime">0:00</time>
-        <input type="range" id="seek" min="0" max="100" value="0" step="1">
-        <time id="totTime">0:00</time>
+      <div id="pbar" onclick="if(document.getElementById('player').classList.contains('mini'))setMini(false);">
+        <button id="miniPlay" class="minibtn" onclick="event.stopPropagation();togglePlay();" aria-label="Play or pause"><span id="miniGlyph">&#9654;</span></button>
+        <div id="nowPlaying">Choose a chapter to begin</div>
+        <button id="miniToggle" class="minibtn" onclick="event.stopPropagation();toggleMini();" aria-label="Collapse or expand the player">&#9662;</button>
       </div>
-      <div class="controls">
-        <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
-        <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
-        <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
-        <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
-        <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
-      </div>
-      <div class="xrow">
-        <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
-        <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
+      <div id="pbody">
+        <div class="seekrow">
+          <time id="curTime">0:00</time>
+          <input type="range" id="seek" min="0" max="100" value="0" step="1">
+          <time id="totTime">0:00</time>
+        </div>
+        <div class="controls">
+          <button class="ctrl" onclick="skip(-120)">&#8722;2<small>MIN</small></button>
+          <button class="ctrl" onclick="skip(-10)">&#8722;10<small>SEC</small></button>
+          <button id="btnPlay" onclick="togglePlay()"><span id="playGlyph">&#9654;</span><span id="spinner"></span></button>
+          <button class="ctrl" onclick="skip(10)">+10<small>SEC</small></button>
+          <button class="ctrl" onclick="skip(120)">+2<small>MIN</small></button>
+        </div>
+        <div class="xrow">
+          <button class="xbtn" id="btnReader" onclick="toggleReader()">&#128214; Read Along</button>
+          <button class="xbtn" id="btnSpeed" onclick="cycleSpeed()">Speed 1&times;</button>
+        </div>
       </div>
     </div>
   </div>
@@ -517,8 +538,8 @@ function skip(sec){
 }
 
 // ---- audio events ----
-audio.addEventListener('playing', ()=>{ player.classList.remove('loading'); playGlyph.innerHTML='&#10074;&#10074;'; });
-audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; });
+audio.addEventListener('playing', ()=>{ player.classList.remove('loading'); playGlyph.innerHTML='&#10074;&#10074;'; var m=document.getElementById('miniGlyph'); if(m)m.innerHTML='&#10074;&#10074;'; });
+audio.addEventListener('pause',   ()=>{ playGlyph.innerHTML='&#9654;'; var m=document.getElementById('miniGlyph'); if(m)m.innerHTML='&#9654;'; });
 audio.addEventListener('waiting', ()=>{ player.classList.add('loading'); });
 audio.addEventListener('canplay', ()=>{ player.classList.remove('loading'); });
 audio.addEventListener('error',   ()=>{
@@ -800,11 +821,28 @@ function tailPause(tok){
   return 0;
 }
 
+/* ---- Collapsible player (frees room for the read-along text) ---- */
+function fitReader(){
+  var r = document.getElementById('reader');
+  if(r && r.classList.contains('show'))
+    r.style.bottom = document.getElementById('player').offsetHeight + 'px';
+}
+function setMini(on){
+  var p = document.getElementById('player');
+  p.classList.toggle('mini', !!on);
+  var t = document.getElementById('miniToggle');
+  if(t) t.innerHTML = on ? '&#9652;' : '&#9662;';   /* up = tap to expand, down = tap to collapse */
+  fitReader();
+}
+function toggleMini(){ setMini(!document.getElementById('player').classList.contains('mini')); }
+window.addEventListener('resize', fitReader);
+window.addEventListener('orientationchange', function(){ setTimeout(fitReader, 250); });
+
 function toggleReader(){ readerEl().classList.contains('show') ? closeReader() : openReader(); }
 function openReader(){
   if(currentIndex < 0){ currentIndex = 0; highlight(0); }
   readerEl().classList.add('show');
-  readerEl().style.bottom = document.getElementById('player').offsetHeight + 'px';
+  setMini(true);
   renderReader();
   updateScrollUI();
   if(autoScrollOn){ scrollLastTs = 0; if(scrollTimer == null) scrollTimer = setInterval(scrollStep, 33); }

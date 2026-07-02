@@ -175,7 +175,7 @@
   world.defaultContactMaterial.friction=0.02;
   world.defaultContactMaterial.restitution=0.97;
 
-  let wallBodies=[], colonMesh=[], colonBody=[];
+  let wallBodies=[], colonMesh=[];
   function addWall(hx,hy,hz, px,py,pz){ const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(hx,hy,hz))); b.position.set(px,py,pz); world.addBody(b); wallBodies.push(b); }
   // (re)build the glass box, cyan frame, 6 physics walls, and the colon at the current tank size
   function buildTank(){
@@ -187,10 +187,9 @@
     addWall(HX+T,T/2,HZ+T, 0,-HY-T/2,0);  addWall(HX+T,T/2,HZ+T, 0,HY+T/2,0);   // floor / ceiling
     addWall(T/2,HY+T,HZ+T, -HX-T/2,0,0);  addWall(T/2,HY+T,HZ+T, HX+T/2,0,0);   // left / right
     addWall(HX+T,HY+T,T/2, 0,0,-HZ-T/2);  addWall(HX+T,HY+T,T/2, 0,0,HZ+T/2);   // front / back
-    for(const m of colonMesh) tank.remove(m); for(const b of colonBody) world.removeBody(b); colonMesh=[]; colonBody=[];
+    for(const m of colonMesh) tank.remove(m); colonMesh=[];
     const cx=LX_COLON();
-    for(const cy of [1.6,-1.6]){
-      const b=new CANNON.Body({mass:0, material:mat}); b.addShape(new CANNON.Box(new CANNON.Vec3(0.5,0.5,0.5))); b.position.set(cx,cy,0); world.addBody(b); colonBody.push(b);
+    for(const cy of [1.6,-1.6]){    // colon = VISUAL marker only (no physics body) so numbers never get stuck on it
       const m=new THREE.Mesh(new THREE.BoxGeometry(1,1,1), colonMat); m.position.set(cx,cy,0); tank.add(m); colonMesh.push(m);
     }
   }
@@ -278,17 +277,30 @@
   function preview(){ paused=false; reform(); if(!frozen) releaseAt=performance.now()+5000; }   // shape/size change: hold the still shape ~5s so you can SEE it before it drops
   function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
-  function placeCamera(){ camera.position.set(0,0,45); camera.lookAt(0,0,0); }   // FIXED straight-on view
+  const CAM_AZ=0.30, CAM_EL=0.24;                  // fixed 3/4 tilt so it reads as a 3D BOX (you can see the side & top edges)
+  function placeCamera(){ const ce=Math.cos(CAM_EL), R=120;
+    camera.position.set(Math.sin(CAM_AZ)*ce*R, Math.sin(CAM_EL)*R, Math.cos(CAM_AZ)*ce*R);
+    camera.up.set(0,1,0); camera.lookAt(0,0,0); }
+  function fitFrustum(){                            // frame the tilted box so the WHOLE rectangular prism fits the screen
+    placeCamera(); camera.updateMatrixWorld();
+    const right=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0);
+    const up=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,1);
+    let mx=0,my=0; const p=new THREE.Vector3();
+    for(const sx of [-1,1]) for(const sy of [-1,1]) for(const sz of [-1,1]){
+      p.set(sx*HX, sy*HY, sz*HZ); mx=Math.max(mx,Math.abs(p.dot(right))); my=Math.max(my,Math.abs(p.dot(up)));
+    }
+    const aspect=window.innerWidth/window.innerHeight, M=1.07; mx*=M; my*=M;
+    let hw=mx, hh=my; if(hw/hh < aspect) hw=hh*aspect; else hh=hw/aspect;
+    camera.left=-hw; camera.right=hw; camera.top=hh; camera.bottom=-hh; camera.updateProjectionMatrix();
+  }
   function resize(){
-    const w=window.innerWidth, h=window.innerHeight, aspect=w/h;
+    const w=window.innerWidth, h=window.innerHeight;
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
     renderer.setSize(w,h,false);
-    HY=9; HX=HY*aspect; HZ=4.5;                    // the tank takes the SHAPE of the screen
-    const M=1.04;                                  // tiny margin so the cyan frame shows just inside the edges
-    camera.left=-HX*M; camera.right=HX*M; camera.top=HY*M; camera.bottom=-HY*M;
-    camera.updateProjectionMatrix();
-    buildTank();                                   // rebuild glass / frame / walls / colon at the new size
-    reset(performance.now());                      // re-lay the clock across the new width
+    HY=9; HX=HY*(w/h); HZ=7;                        // rectangular BOX with real DEPTH (room to bounce off the back wall)
+    fitFrustum();                                   // fit the tilted 3D box to the screen
+    buildTank();                                    // rebuild glass / frame / walls / colon
+    reset(performance.now());
   }
   window.addEventListener('resize', resize);
   window.addEventListener('load', resize);

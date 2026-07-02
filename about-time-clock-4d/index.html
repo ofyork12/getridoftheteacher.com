@@ -18,20 +18,22 @@
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:#070d18; color:#eaf1fb; height:100%;}
   #c{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none;}
-  .knobs{position:fixed; left:0; right:0; z-index:5;
-    display:none; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap; padding:0 8px;}
+  .knobs{position:fixed; left:0; right:0; z-index:5; max-width:100%;
+    display:none; align-items:center; justify-content:center; gap:clamp(4px,1.5vmin,10px); flex-wrap:wrap; padding:0 6px;}
   .knobs.show{display:flex;}
-  .knobs-top{top:calc(40px + env(safe-area-inset-top));}
-  .knobs-bottom{bottom:calc(14px + env(safe-area-inset-bottom));}
+  .knobs-top{top:calc(38px + env(safe-area-inset-top));}
+  .knobs-bottom{bottom:calc(12px + env(safe-area-inset-bottom));}
   .knob{border:none; background:none; padding:0; cursor:pointer; transition:transform .06s;}
   .knob:active{transform:scale(.9);}
-  .knob img{height:46px; width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  /* sizes scale with the SMALLER screen dimension (vmin) so they shrink in landscape / on small phones */
+  .knob img{height:clamp(24px, 6vmin, 44px); width:auto; display:block; border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.4);}
   .knob.active img{outline:3px solid #f0b32a; outline-offset:1px;}
-  .knob.txt{display:inline-flex; align-items:center; gap:6px; background:rgba(13,27,46,.9); color:#eaf1fb;
-    border:1px solid rgba(95,208,255,.4); border-radius:12px; padding:9px 13px;
-    font:700 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.4);}
-  .knob.txt .dot{border-radius:50%; display:inline-block; flex:none;}
-  .knob.txt.arrow{padding:9px 14px; font-size:17px; line-height:1;}
+  .knob.txt{display:inline-flex; align-items:center; gap:.4em; background:rgba(13,27,46,.9); color:#eaf1fb;
+    border:1px solid rgba(95,208,255,.4); border-radius:10px; padding:clamp(4px,1.2vmin,9px) clamp(6px,1.9vmin,13px);
+    font-weight:700; font-size:clamp(10px,2.9vmin,14px); line-height:1;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.4);}
+  .knob.txt .dot{border-radius:50%; display:inline-block; flex:none; width:.85em; height:.85em;}
+  .knob.txt.arrow{padding:clamp(4px,1.2vmin,9px) clamp(8px,2.3vmin,14px); font-size:clamp(13px,3.8vmin,18px);}
   .knob.txt.lbl{cursor:default;}
   .tip{position:fixed; left:0; right:0; top:calc(12px + env(safe-area-inset-top)); z-index:4; text-align:center;
     font-size:12px; color:#6f86a8; pointer-events:none;}
@@ -48,24 +50,24 @@
 <body>
   <canvas id="c"></canvas>
   <div class="tip">tap = stop / go · drag = spin · pinch = resize · hold = controls</div>
-  <!-- TOP bar: shape + size (kept above the cube so it never covers the dots) -->
+  <!-- TOP bar: change shape (kept above the cube so it never covers the dots) -->
   <div class="knobs knobs-top">
-    <span class="knob txt lbl" style="opacity:.8">Change shape</span>
+    <span class="knob txt lbl" style="opacity:.8">Shape</span>
     <button class="knob txt arrow" data-grp="hour" data-dir="-1" title="Hour: previous shape">◂</button>
-    <span class="knob txt lbl"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span><span id="hourShapeLbl">Hour 1</span></span>
+    <span class="knob txt lbl"><span class="dot" style="background:#f0b32a"></span><span id="hourShapeLbl">Hour 1</span></span>
     <button class="knob txt arrow" data-grp="hour" data-dir="1" title="Hour: next shape">▸</button>
     <button class="knob txt arrow" data-grp="min" data-dir="-1" title="Minutes: previous shape">◂</button>
-    <span class="knob txt lbl"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span><span id="minShapeLbl">Min 1</span></span>
+    <span class="knob txt lbl"><span class="dot" style="background:#2e78d8"></span><span id="minShapeLbl">Min 1</span></span>
     <button class="knob txt arrow" data-grp="min" data-dir="1" title="Minutes: next shape">▸</button>
-    <button class="knob txt" id="btnHourSize" title="Bigger hour balls"><span class="dot" style="width:13px;height:13px;background:#f0b32a"></span>Size +</button>
-    <button class="knob txt" id="btnMinSize" title="Bigger minute balls"><span class="dot" style="width:9px;height:9px;background:#2e78d8"></span>Size +</button>
   </div>
-  <!-- BOTTOM bar: time controls -->
+  <!-- BOTTOM bar: time controls + size -->
   <div class="knobs knobs-bottom">
     <button class="knob" id="btnFreeze" title="Freeze / let it move"><img src="gfx/device_frozen_time.png" alt="Freeze"></button>
     <button class="knob" id="btnSlow"  title="Slower"><img src="gfx/device_frozen_time_slow.png" alt="Slower"></button>
     <button class="knob" id="btnReset" title="Reset"><img src="gfx/device_frozen_reset.png" alt="Reset"></button>
     <button class="knob" id="btnFast"  title="Faster"><img src="gfx/device_frozen_time_fast.png" alt="Faster"></button>
+    <button class="knob txt" id="btnHourSize" title="Bigger hour balls"><span class="dot" style="background:#f0b32a"></span>Size +</button>
+    <button class="knob txt" id="btnMinSize" title="Bigger minute balls"><span class="dot" style="background:#2e78d8"></span>Size +</button>
   </div>
 
 <script src="three.min.js"></script>
@@ -131,10 +133,12 @@
   function rowsShape(n, perRow){ const rows=Math.ceil(n/perRow), out=[]; for(let r=0;r<rows;r++){ const inRow=Math.min(perRow,n-r*perRow); for(let c=0;c<inRow;c++) out.push([c-(inRow-1)/2, r-(rows-1)/2]); } return out; }
   function hourShape(h){
     if(h<=9) return pickVar(h, hourShapeIdx);
-    const tri10=SH[10][1];                               // 10 laid out as a flat TRIANGLE (clean read for the hour)
-    // 11 / 12 = the red triangle-of-10 + 1 or 2 extra balls stacked on top, OUTSIDE the triangle (touching)
-    const extra=[[0,-2.299],[0,-3.299]];
-    return tri10.concat(extra.slice(0, h-10));
+    // 10/11/12: the ten shape from the carousel (default = flat TRIANGLE), + extra ones stacked on top (outside)
+    const ten=pickVar(10, hourShapeIdx+1);               // +1 so the DEFAULT (idx 0) is SH[10][1] = the triangle
+    if(h===10) return ten;
+    let minY=Infinity; for(const o of ten){ const y=o[1]||0; if(y<minY) minY=y; }   // topmost ball (y is "down")
+    const ex=[]; for(let i=0;i<h-10;i++) ex.push([0, minY-1-i, 0]);
+    return ten.concat(ex);
   }
   // the N ten-sets are arranged by their own ColorMyMath number-shape:
   //  3 = triangle (two on the bottom, one on their shoulders), 4 = square, 5 = three-and-two
@@ -259,6 +263,7 @@
     mode='live'; autoSpin=true;
   }
   function reset(now){ reform(); if(!frozen) releaseAt=now+HOLD_MS; }
+  function preview(){ paused=false; reform(); if(!frozen) releaseAt=performance.now()+5000; }   // shape/size change: hold the still shape ~5s so you can SEE it before it drops
   function checkTime(now){ const t=curT(); if(keyOf(t)!==lastKey) reset(now); }
 
   let theta=0, phi=0.12, zoom=1, Rfit=S*3, R=S*3, autoSpin=false;
@@ -380,12 +385,12 @@
   document.getElementById('btnMinSize').addEventListener('click', ()=>{
     minIdx=(minIdx+1)%MIN_SIZES.length; applySizes();
     try{ localStorage.setItem('atc4d-min', minIdx); }catch(e){}
-    reset(performance.now()); showKnobs();
+    preview(); showKnobs();
   });
   document.getElementById('btnHourSize').addEventListener('click', ()=>{
     hourIdx=(hourIdx+1)%HOUR_SIZES.length; applySizes();
     try{ localStorage.setItem('atc4d-hour', hourIdx); }catch(e){}
-    reset(performance.now()); showKnobs();
+    preview(); showKnobs();
   });
 
   // --- SEPARATE shape carousels: ◂ ▸ cycle the HOUR / MINUTE numbers through their shape variants ---
@@ -399,7 +404,7 @@
       const dir=+btn.dataset.dir;
       if(btn.dataset.grp==='hour'){ hourShapeIdx=((hourShapeIdx+dir)%MAXV+MAXV)%MAXV; try{ localStorage.setItem('atc4d-hshape', hourShapeIdx); }catch(e){} }
       else { minShapeIdx=((minShapeIdx+dir)%MAXV+MAXV)%MAXV; try{ localStorage.setItem('atc4d-mshape', minShapeIdx); }catch(e){} }
-      updShapeLbls(); reset(performance.now()); showKnobs();
+      updShapeLbls(); preview(); showKnobs();
     });
   });
 
